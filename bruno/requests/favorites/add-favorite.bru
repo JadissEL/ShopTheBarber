@@ -1,0 +1,13 @@
+meta {
+  name: Add to Favorites
+  type: http
+  seq: 2
+}
+
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "barberId": {{barberId}}
+} 

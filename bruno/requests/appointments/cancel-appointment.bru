@@ -1,0 +1,8 @@
+meta {
+  name: Cancel Appointment
+  type: http
+  seq: 3
+}
+
+PUT {{baseUrl}}/api/appointments/{{appointmentId}}/cancel
+Authorization: Bearer {{authToken}} 

@@ -1,0 +1,29 @@
+meta {
+  name: Create Appointment
+  type: http
+  seq: 1
+}
+
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "barberId": {{barberId}},
+  "services": [{{serviceId}}],
+  "date": "2024-01-15",
+  "time": "14:00",
+  "locationType": "shop",
+  "address": "123 Barber Street",
+  "notes": "First time visit"
+}
+
+> {%
+  // Extract appointment ID from response and set it as environment variable
+  if (response.status === 201 || response.status === 200) {
+    const responseData = response.body;
+    if (responseData.appointmentId) {
+      bruno.setVar('appointmentId', responseData.appointmentId);
+    }
+  }
+%} 

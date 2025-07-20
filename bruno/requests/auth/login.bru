@@ -1,0 +1,23 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}",
+  "password": "{{testPassword}}"
+}
+
+> {%
+  // Extract token from response and set it as environment variable
+  if (response.status === 200) {
+    const responseData = response.body;
+    if (responseData.token) {
+      bruno.setVar('authToken', responseData.token);
+    }
+  }
+%} 

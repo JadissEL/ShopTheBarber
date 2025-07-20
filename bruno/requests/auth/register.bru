@@ -1,0 +1,28 @@
+meta {
+  name: Register
+  type: http
+  seq: 2
+}
+
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "phone": "+1234567890",
+  "city": "New York",
+  "role": "client"
+}
+
+> {%
+  // Extract token from response and set it as environment variable
+  if (response.status === 201 || response.status === 200) {
+    const responseData = response.body;
+    if (responseData.token) {
+      bruno.setVar('authToken', responseData.token);
+    }
+  }
+%} 

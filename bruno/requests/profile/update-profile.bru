@@ -1,0 +1,17 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 2
+}
+
+PUT {{baseUrl}}/api/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Updated",
+  "lastName": "Name",
+  "phone": "+1234567890",
+  "city": "Updated City",
+  "address": "123 Updated Street"
+} 

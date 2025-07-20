@@ -1,0 +1,250 @@
+meta {
+  name: ShopTheBarber API
+  type: http
+  seq: 1
+}
+
+# ShopTheBarber API Collection
+
+This collection contains all the API endpoints for the ShopTheBarber application, organized by functionality.
+
+## Authentication Endpoints
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@demo.com",
+  "password": "demo123"
+}
+
+### Register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "phone": "+1234567890",
+  "city": "New York",
+  "role": "client"
+}
+
+## Health Check
+
+### Health Status
+GET {{baseUrl}}/api/health
+
+## User Profile Endpoints
+
+### Get Profile (Authenticated)
+GET {{baseUrl}}/api/profile
+Authorization: Bearer {{authToken}}
+
+### Update Profile (Authenticated)
+PUT {{baseUrl}}/api/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Updated",
+  "lastName": "Name",
+  "phone": "+1234567890",
+  "city": "Updated City",
+  "address": "123 Updated Street"
+}
+
+## Barbers Endpoints
+
+### Get All Barbers
+GET {{baseUrl}}/api/barbers
+
+### Get Barbers by City
+GET {{baseUrl}}/api/barbers?location=New York
+
+### Get Barbers with Filters
+GET {{baseUrl}}/api/barbers?services=1,2&locationType=home
+
+### Get Barber by ID
+GET {{baseUrl}}/api/barbers/1
+
+## Services Endpoints
+
+### Get All Services
+GET {{baseUrl}}/api/services
+
+### Get Service by ID
+GET {{baseUrl}}/api/services/1
+
+## Appointments Endpoints
+
+### Get All Appointments (Authenticated)
+GET {{baseUrl}}/api/appointments
+Authorization: Bearer {{authToken}}
+
+### Create Appointment (Authenticated)
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "barberId": 1,
+  "services": [1, 2],
+  "date": "2024-01-15",
+  "time": "14:00",
+  "locationType": "shop",
+  "address": "123 Barber Street",
+  "notes": "First time visit"
+}
+
+### Cancel Appointment (Authenticated)
+PUT {{baseUrl}}/api/appointments/1/cancel
+Authorization: Bearer {{authToken}}
+
+## Favorites Endpoints
+
+### Get Favorites (Authenticated)
+GET {{baseUrl}}/api/favorites
+Authorization: Bearer {{authToken}}
+
+### Add to Favorites (Authenticated)
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "barberId": 1
+}
+
+### Remove from Favorites (Authenticated)
+DELETE {{baseUrl}}/api/favorites/1
+Authorization: Bearer {{authToken}}
+
+## Reviews Endpoints
+
+### Get Reviews by Barber
+GET {{baseUrl}}/api/reviews?barberId=1
+
+### Create Review (Authenticated)
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "appointmentId": 1,
+  "rating": 5,
+  "comment": "Excellent service! Very professional."
+}
+
+## Search Endpoints
+
+### Search Barbers and Services
+GET {{baseUrl}}/api/search?q=haircut
+
+## Notifications Endpoints
+
+### Get Notifications (Authenticated)
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{authToken}}
+
+### Mark Notification as Read (Authenticated)
+PUT {{baseUrl}}/api/notifications/1/read
+Authorization: Bearer {{authToken}}
+
+### Mark All Notifications as Read (Authenticated)
+PUT {{baseUrl}}/api/notifications/read-all
+Authorization: Bearer {{authToken}}
+
+## Analytics Endpoints (Admin/Barber)
+
+### Get Overview Analytics (Authenticated)
+GET {{baseUrl}}/api/analytics/overview
+Authorization: Bearer {{authToken}}
+
+### Get Client Analytics (Authenticated)
+GET {{baseUrl}}/api/analytics/client
+Authorization: Bearer {{authToken}}
+
+### Get Barber Analytics (Authenticated)
+GET {{baseUrl}}/api/analytics/barber
+Authorization: Bearer {{authToken}}
+
+## Settings Endpoints
+
+### Get Client Settings (Authenticated)
+GET {{baseUrl}}/api/settings/client
+Authorization: Bearer {{authToken}}
+
+### Update Client Settings (Authenticated)
+PUT {{baseUrl}}/api/settings/client
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "notifications": {
+    "email": true,
+    "sms": false,
+    "push": true
+  },
+  "preferences": {
+    "language": "en",
+    "timezone": "America/New_York"
+  }
+}
+
+### Get Barber Settings (Authenticated)
+GET {{baseUrl}}/api/settings/barber
+Authorization: Bearer {{authToken}}
+
+### Update Barber Settings (Authenticated)
+PUT {{baseUrl}}/api/settings/barber
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "availability": {
+    "monday": {"start": "09:00", "end": "17:00"},
+    "tuesday": {"start": "09:00", "end": "17:00"},
+    "wednesday": {"start": "09:00", "end": "17:00"},
+    "thursday": {"start": "09:00", "end": "17:00"},
+    "friday": {"start": "09:00", "end": "17:00"},
+    "saturday": {"start": "10:00", "end": "16:00"},
+    "sunday": {"start": "closed", "end": "closed"}
+  },
+  "services": [1, 2, 3],
+  "location": {
+    "address": "123 Barber Street",
+    "city": "New York",
+    "acceptsHome": true,
+    "acceptsShop": true
+  }
+}
+
+### Change Password (Authenticated)
+PUT {{baseUrl}}/api/settings/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "oldpassword",
+  "newPassword": "newpassword123"
+}
+
+## File Upload Endpoints
+
+### Upload Profile Image (Authenticated)
+POST {{baseUrl}}/api/upload/profile-image
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data
+
+// Form data: file (image file)
+
+### Upload Barber Image (Authenticated)
+POST {{baseUrl}}/api/upload/barber-image
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data
+
+// Form data: file (image file) 
