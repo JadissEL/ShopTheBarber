@@ -14,21 +14,12 @@ import {
   Plus,
   Calendar,
   Filter,
-  ArrowUpDown,
-  ArrowDownUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { MetaTags } from '@/components/seo/MetaTags';
 import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 const ACCOLADE_ICONS = {
@@ -60,8 +51,8 @@ export default function BrandProfile() {
   const urlParams = new URLSearchParams(window.location.search);
   const brandId = urlParams.get('id');
 
-  const [catalogCategory, setCatalogCategory] = useState('all');
-  const [catalogSort, setCatalogSort] = useState('');
+  const [catalogCategory, _setCatalogCategory] = useState('all');
+  const [catalogSort, _setCatalogSort] = useState('');
   const [followedBrands, setFollowedBrands] = useState(() => getFollowedBrands());
 
   const isFollowed = brandId ? followedBrands.includes(brandId) : false;
@@ -120,7 +111,7 @@ export default function BrandProfile() {
   const sortedAccolades = [...accolades].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   const sortedCollections = [...collections].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-  const catalogProducts = useMemo(() => {
+  const _catalogProducts = useMemo(() => {
     let list = [...products];
     if (catalogCategory !== 'all') {
       list = list.filter((p) => (p.category || '').toLowerCase() === catalogCategory.toLowerCase());
@@ -130,7 +121,7 @@ export default function BrandProfile() {
     return list;
   }, [products, catalogCategory, catalogSort]);
 
-  const catalogCategories = useMemo(() => {
+  const _catalogCategories = useMemo(() => {
     const set = new Set(products.map((p) => (p.category || 'Product').toLowerCase()));
     return ['all', ...[...set].sort()];
   }, [products]);

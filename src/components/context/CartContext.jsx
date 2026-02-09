@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -52,7 +52,7 @@ export function CartProvider({ children }) {
         } else {
             setItems(loadGuestCart());
         }
-    }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isAuthenticated]);
 
     const addItem = useCallback(async (productId, quantity = 1, productSnapshot = null) => {
         const q = Math.max(1, Math.min(99, quantity));

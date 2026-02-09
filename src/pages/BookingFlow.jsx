@@ -293,7 +293,7 @@ export default function BookingFlow() {
   }, [availableServices, selectedServices]);
 
   // Fetch barbers (always enabled to show provider names)
-  const { data: allBarbers = [], isLoading: isLoadingBarbers, isError: barbersListError } = useQuery({
+  const { data: allBarbers = [], isLoading: isLoadingBarbers, isError: _barbersListError } = useQuery({
     queryKey: ['barbers'],
     queryFn: async () => {
       try {
@@ -309,7 +309,7 @@ export default function BookingFlow() {
   });
 
   // Fetch specific barber if ID is present
-  const { data: selectedBarber, isError: selectedBarberError, isFetched: selectedBarberFetched } = useQuery({
+  const { data: selectedBarber, isError: _selectedBarberError, isFetched: selectedBarberFetched } = useQuery({
     queryKey: ['barber', activeBarberId],
     queryFn: async () => {
       if (!activeBarberId) return null;

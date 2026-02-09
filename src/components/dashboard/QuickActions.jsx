@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { RefreshCcw, Gift, Wallet, HelpCircle, Package, Archive } from 'lucide-react';
+import { RefreshCcw, Wallet, HelpCircle, Package, Archive } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 

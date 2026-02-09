@@ -17,8 +17,8 @@ export default function ShoppingBag() {
     const navigate = useNavigate();
     const { items, isLoading, updateQuantity, removeItem, itemCount } = useCart();
     const { isAuthenticated } = useAuth();
-    const [promoCode, setPromoCode] = useState('');
-    const [appliedPromo, setAppliedPromo] = useState(null);
+    const [_promoCode, setPromoCode] = useState('');
+    const [appliedPromo, _setAppliedPromo] = useState(null);
 
     const subtotal = items.reduce((sum, i) => sum + Number(i.product?.price ?? 0) * (i.quantity || 0), 0);
     const shipping = subtotal >= SHIPPING_FREE_THRESHOLD ? 0 : 0;
@@ -94,7 +94,7 @@ export default function ShoppingBag() {
                         <ul className="space-y-4 mb-8">
                             {items.map((item) => {
                                 const price = Number(item.product?.price ?? 0);
-                                const lineTotal = price * (item.quantity || 1);
+                                const _lineTotal = price * (item.quantity || 1);
                                 const details = [item.product?.vendor_name, item.product?.category].filter(Boolean).join(' • ') || 'Premium';
                                 return (
                                     <li key={item.product_id} className="rounded-2xl bg-slate-50 border border-slate-100 p-4 flex gap-4">

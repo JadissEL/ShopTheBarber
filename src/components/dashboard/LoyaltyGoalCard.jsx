@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 
-export default function LoyaltyGoalCard({ percent = 75, currentPoints = 8420, nextTier = 'Platinum', pointsToNext = 1500 }) {
+export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentPoints = 8420, nextTier = 'Platinum', pointsToNext = 1500 }) {
   const circumference = 2 * Math.PI * 36;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 

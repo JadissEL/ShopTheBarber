@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
-import { APP_ZONES } from '@/components/navigationConfig';
 
 /**
  * APP LAYOUT
- * 
+ *
  * Layout wrapper for authenticated app pages (CLIENT, PROVIDER, ADMIN zones).
  * Unified light experience: all zones use bg-background and design tokens.
  */
-export default function AppLayout({ children, zone, branding: _branding, menuItems: _menuItems }) {
+export default function AppLayout({ children, zone: _zone, branding: _branding, menuItems: _menuItems }) {
   const [_isSidebarOpen, _setIsSidebarOpen] = useState(false);
   const _location = useLocation();
 

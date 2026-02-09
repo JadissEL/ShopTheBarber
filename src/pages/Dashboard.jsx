@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Search, MapPin, Bell, Menu, MessageSquare, Calendar, Award, DollarSign, Zap, UserCheck, CloudSun, Check } from 'lucide-react';
+import { Search, MapPin, Bell, Menu, Calendar, Award, DollarSign, UserCheck, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -21,7 +21,6 @@ import QuickInsights from '@/components/dashboard/QuickInsights';
 import AIRecommendations from '@/components/dashboard/AIRecommendations';
 import MessagesPanel from '@/components/dashboard/MessagesPanel';
 import NotificationsPanel from '@/components/dashboard/NotificationsPanel';
-import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Dashboard() {
@@ -108,7 +107,7 @@ export default function Dashboard() {
     { text: "You've saved $120 with loyalty rewards this year. Nice work!", icon: <DollarSign className="w-3 h-3" /> }
   ];
 
-  const getGreeting = () => {
+  const _getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';

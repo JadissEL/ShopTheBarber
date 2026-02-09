@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
-import { ArrowLeft, Search, Calendar, MessageCircle, Bookmark } from 'lucide-react';
+import { ArrowLeft, Search, Calendar, MessageCircle } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
