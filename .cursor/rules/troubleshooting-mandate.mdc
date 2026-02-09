@@ -1,0 +1,17 @@
+---
+description: When the user reports a bug, error, "not working," "issue persists," "double-check," or "retry," follow the troubleshooting skill. Reproduce first, scope and hypothesize, verify don't assume, fix at root, verify fix, close the loop. Maintain .cursor/TROUBLESHOOTING_SESSION.md. Never claim a fix without a verification step—either re-run the scenario or give the user exact steps to confirm. When user says "still broken," read the session file first and do not repeat the same fix or hypothesis.
+alwaysApply: false
+globs: []
+---
+
+# Troubleshooting mandate
+
+When the conversation is about **debugging**, **a bug**, **an error**, **"not working"**, **"issue persists"**, **"please double-check"**, or **"retry"**:
+
+1. **Use the troubleshooting skill** (`.cursor/skills/troubleshooting/SKILL.md`). Follow the protocol: Reproduce → Scope → Hypothesize → Verify → Fix at root → Verify fix → Close loop.
+
+2. **Maintain session state** in `.cursor/TROUBLESHOOTING_SESSION.md`. Create it from the skill's session template when starting; update it after each step (hypotheses, checked files, changed files, verification). When the user says **"still broken"** or **"retry"**, read the session file first and do not repeat what was already tried or ruled out.
+
+3. **Verification before "fixed"**: Do not say "this should fix it" or "the issue is resolved" without either (a) re-running the exact scenario and confirming the error is gone, or (b) stating clearly how the user should verify (exact steps) and asking them to confirm. No claim of fix without a defined verification step.
+
+4. **Deep or multi-file issues**: If the bug spans many files or the user has said "issue persists" after attempts, consider invoking the **Troubleshooter** subagent with context (observed, ruled out, checked). Use its report to apply the fix and run verification.

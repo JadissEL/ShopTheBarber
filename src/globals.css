@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    /* Background: #F7F7F9 -> 240 9% 97% */
+    --background: 240 9% 97%;
+    /* Foreground (Text Primary): #111827 -> 220 39% 13% */
+    --foreground: 220 39% 13%;
+ 
+    /* Card: #FFFFFF -> 0 0% 100% */
+    --card: 0 0% 100%;
+    --card-foreground: 220 39% 13%;
+ 
+    /* Popover: #FFFFFF */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 39% 13%;
+ 
+    /* Primary (Accent): #00C389 -> 162 100% 38% */
+    --primary: 162 100% 38%;
+    --primary-foreground: 0 0% 100%;
+ 
+    /* Secondary: #F7F7F9 (Background) or slightly darker for elements */
+    --secondary: 240 5% 90%;
+    --secondary-foreground: 220 39% 13%;
+ 
+    /* Muted: #F7F7F9 or #E1E3E8 */
+    --muted: 240 9% 96%;
+    /* Text Subtle: #9CA3AF -> 218 11% 65% */
+    --muted-foreground: 218 11% 65%;
+ 
+    /* Accent: #00C389 */
+    --accent: 162 100% 38%;
+    --accent-foreground: 0 0% 100%;
+ 
+    /* Destructive/Error: #EF4444 -> 0 84% 60% */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+ 
+    /* Warning (Custom variable if needed, but for standard shadcn vars): #F97316 */
+    --warning: 24 94% 53%;
+ 
+    /* Border: #E1E3E8 -> 220 13% 91% */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 162 100% 38%;
+ 
+    /* Radius: 12px = 0.75rem */
+    --radius: 0.75rem;
+  }
+ 
+  .dark {
+    /* Forcing the same light theme as requested "zero deviation" global design */
+    --background: 240 9% 97%;
+    --foreground: 220 39% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 39% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 39% 13%;
+    --primary: 162 100% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 90%;
+    --secondary-foreground: 220 39% 13%;
+    --muted: 240 9% 96%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 162 100% 38%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 162 100% 38%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

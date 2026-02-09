@@ -1,0 +1,12 @@
+---
+description: Use 2-space indentation and single quotes. Directories lowercase-with-dashes; components and interfaces PascalCase. Prefer strict TypeScript; minimize @ts-ignore. Break logic into modular functions; aim for O(n) or O(1) where possible and flag code that exceeds these complexity benchmarks.
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+alwaysApply: false
+---
+
+# Formatting and code standards
+
+- **Indentation and quotes**: 2 spaces; single quotes.
+- **Naming**: Directories lowercase-with-dashes (e.g. `auth-wizard`). Components and interfaces PascalCase.
+- **TypeScript**: Prefer `strict: true`; explicitly type function returns and object literals where it helps. Minimize `@ts-ignore`.
+- **Complexity**: Prefer modular functions. Aim for O(n) or O(1); flag code that clearly exceeds these benchmarks.

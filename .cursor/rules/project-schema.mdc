@@ -1,0 +1,16 @@
+---
+description: Follow PROJECT_SCHEMA.md for structure and where to put code. New pages go in src/pages/, new UI in src/components/ui/ or the correct feature folder, API in src/api/, server logic in server/src/logic/. Use naming: PascalCase for components/pages, camelCase for utils/server modules, lowercase-with-dashes for config and directories.
+globs: ["**/*.jsx", "**/*.tsx", "**/*.ts", "**/*.js"]
+alwaysApply: false
+---
+
+# Project structure
+
+When adding or moving code in this repo, follow **PROJECT_SCHEMA.md** at the project root.
+
+- **New page/screen** → `src/pages/<Name>.jsx` + register route.
+- **New reusable UI** → `src/components/ui/` (primitives) or the right feature folder under `src/components/`.
+- **New API call/entity** → `src/api/` (extend or add file).
+- **New server route** → `server/src/<domain>/` (e.g. auth, admin, payments); keep handlers thin, logic in `server/src/logic/`.
+- **New business rule** → `server/src/logic/`.
+- **Naming**: React components/pages PascalCase; hooks `use*`; utils and server modules camelCase; directories and config files lowercase-with-dashes.

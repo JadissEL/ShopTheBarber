@@ -1,0 +1,75 @@
+---
+description: This project is a desktop-first web platform (SaaS/marketplace/dashboard). Desktop (≥1024px) is the primary experience; mobile and tablet are adaptations. Never treat it as a mobile app stretched to desktop. All layouts, components, and features must respect this.
+globs: ["**/*.jsx", "**/*.tsx", "**/*.css", "**/layout/**", "**/pages/**"]
+alwaysApply: true
+---
+
+# Desktop-first web platform (non-negotiable)
+
+This is a **WEB PLATFORM FIRST**, not a mobile app that runs on desktop.
+
+- **Primary experience**: Desktop (PC / laptop, ≥ 1024px).
+- **Adaptations**: Mobile and tablet are responsive adaptations of the desktop experience.
+- **Goal**: On PC it must feel like a full web platform (Shopify, Stripe, Linear, Notion style), **not** like a mobile app stretched to desktop.
+
+## Core principle
+
+- **Desktop is the primary experience.** Mobile and tablet are adaptations, not the base design.
+- When used on a PC (≥ 1024px): it must feel like a real web platform and must **not** feel like a mobile app stretched to desktop.
+- All current and future features, pages, components, and layouts must respect this.
+
+## Desktop behavior (mandatory)
+
+**On desktop (≥ 1024px):**
+
+- Use wide layouts and available horizontal space.
+- Use multi-column grids where appropriate.
+- Use sidebar navigation or full top navigation (never bottom tab nav on desktop).
+- Design for information-dense UI suitable for mouse and keyboard.
+- Aim for platform-style UX (dashboards, tables, sidebars, top navs).
+
+**Not allowed on desktop:**
+
+- Bottom tab navigation.
+- Floating “+” mobile-style action buttons as the primary CTA.
+- Single-column-only layouts when content could use multiple columns.
+- Touch-first spacing everywhere (excessive padding, oversized tap targets).
+- Artificial max-width constraints that lock the layout to mobile width.
+
+## Responsive definition
+
+- **Responsive** means the **structure** changes at breakpoints, not just font size or padding.
+- Desktop, tablet, and mobile each get intentionally designed layouts.
+- Breakpoints to use:
+  - **Mobile**: &lt; 768px
+  - **Tablet**: 768px – 1023px
+  - **Desktop**: ≥ 1024px
+  - **Large desktop**: ≥ 1440px
+- Desktop layouts must continue to scale and improve past 1024px (e.g. max-w-7xl, multi-column), not freeze at a narrow width.
+
+## Development order
+
+For every new task:
+
+1. **Start with desktop layout first.**
+2. Then adapt for tablet.
+3. Then adapt for mobile.
+
+If a component or pattern is mobile-specific (e.g. bottom nav, FAB):
+
+- It must be **conditionally rendered** (e.g. hidden on desktop via `lg:hidden` or `useIsDesktop()`).
+- It must **not** appear on desktop.
+
+## Self-check before completing any task
+
+- “Does this feel like a real web platform on PC?”
+- “Would a SaaS user be comfortable using this all day on desktop?”
+- “Is this optimized for mouse, keyboard, and large screens?”
+
+If the answer is no → revise.
+
+## Reference
+
+- Layout and breakpoints: `docs/RESPONSIVE_LAYOUT.md`.
+- Client zone: sidebar on desktop (`ClientDesktopSidebar`), bottom nav only on mobile (`ClientBottomNav` hidden when `useIsDesktop()`).
+- Hook: `useIsDesktop()` from `@/hooks/useMediaQuery` for conditional desktop-only or mobile-only UI.

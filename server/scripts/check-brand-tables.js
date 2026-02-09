@@ -1,0 +1,11 @@
+const Database = require('better-sqlite3');
+const path = require('path');
+const dbPath = path.join(__dirname, '..', 'sovereign.sqlite');
+const db = new Database(dbPath);
+const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'brand%'").all();
+console.log('Brand tables:', tables.map(t => t.name));
+const cols = db.prepare('PRAGMA table_info(products)').all().filter(r => r.name === 'brand_id');
+console.log('products.brand_id column:', cols.length ? 'exists' : 'missing');
+const brandCount = db.prepare('SELECT COUNT(*) as n FROM brands').get();
+console.log('Brands count:', brandCount.n);
+db.close();

@@ -1,0 +1,262 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* :root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+} */
+
+
+
+/* ============================================
+   SHOPTHEBARBER — UNIFIED DESIGN SYSTEM
+   Light mode only. One palette, one experience.
+   ============================================ */
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 240 9% 97%;
+    --foreground: 220 26% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 26% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 26% 14%;
+    /* Brand primary (teal) — CTAs, links, key accents */
+    --primary: 162 100% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 92%;
+    --secondary-foreground: 220 26% 14%;
+    --muted: 240 6% 94%;
+    --muted-foreground: 220 9% 32%;
+    --accent: 240 6% 94%;
+    --accent-foreground: 220 26% 14%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 162 100% 38%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 36%;
+    --sidebar-primary: 162 100% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 96%;
+    --sidebar-accent-foreground: 220 26% 14%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 162 100% 38%;
+    --chart-1: 162 100% 38%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+  .dark {
+    --background: 240 9% 97%;
+    --foreground: 220 26% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 26% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 26% 14%;
+    --primary: 162 100% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 92%;
+    --secondary-foreground: 220 26% 14%;
+    --muted: 240 6% 94%;
+    --muted-foreground: 220 9% 32%;
+    --accent: 240 6% 94%;
+    --accent-foreground: 220 26% 14%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 162 100% 38%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 36%;
+    --sidebar-primary: 162 100% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 96%;
+    --sidebar-accent-foreground: 220 26% 14%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 162 100% 38%;
+    --chart-1: 162 100% 38%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Readable text on white/light backgrounds (fixes contrast in dark mode when cards/sections use white) */
+.surface-light,
+.bg-white,
+.bg-white\/95,
+.bg-gray-50,
+.bg-gray-50\/50 {
+  color: hsl(0, 0%, 9%);
+}
+.surface-light .text-foreground,
+.bg-white .text-foreground,
+.bg-white\/95 .text-foreground,
+.bg-gray-50 .text-foreground,
+.bg-gray-50\/50 .text-foreground {
+  color: hsl(0, 0%, 9%);
+}
+.surface-light .text-muted-foreground,
+.bg-white .text-muted-foreground,
+.bg-white\/95 .text-muted-foreground,
+.bg-gray-50 .text-muted-foreground,
+.bg-gray-50\/50 .text-muted-foreground {
+  color: hsl(220, 9%, 46%);
+}
+
+/* Readable text on grey surfaces (grey buttons, grey zones, grey cards) */
+/* Dark theme: grey backgrounds (muted, slate-800) need lighter text for contrast */
+.dark .bg-muted,
+.dark .bg-muted .text-foreground,
+.dark .bg-muted\/50 .text-foreground,
+.dark .bg-secondary,
+.dark .bg-secondary .text-foreground {
+  color: hsl(0, 0%, 92%);
+}
+.dark .bg-muted .text-muted-foreground,
+.dark .bg-muted\/50 .text-muted-foreground,
+.dark .bg-secondary .text-muted-foreground,
+.dark [class*="bg-slate-800"] .text-muted-foreground,
+.dark [class*="bg-slate-700"] .text-muted-foreground {
+  color: hsl(0, 0%, 88%);
+}
+
+/* Light grey surfaces (gray-50, gray-100, gray-200): always use dark text – these backgrounds stay light in both themes */
+.bg-gray-100,
+.bg-gray-200 {
+  color: hsl(220, 9%, 26%);
+}
+.bg-gray-100 .text-muted-foreground,
+.bg-gray-200 .text-muted-foreground,
+.bg-gray-100 .text-foreground,
+.bg-gray-200 .text-foreground {
+  color: hsl(220, 9%, 38%);
+}
+
+/* High contrast on muted/light gray surfaces (footer, cards, etc.) — ensure text is always readable */
+.bg-muted,
+.bg-muted\/50,
+.bg-secondary {
+  color: hsl(220, 14%, 18%);
+}
+.bg-muted .text-foreground,
+.bg-muted\/50 .text-foreground,
+.bg-secondary .text-foreground {
+  color: hsl(220, 14%, 18%);
+}
+.bg-muted a,
+.bg-muted\/50 a,
+.bg-secondary a {
+  color: hsl(220, 14%, 18%);
+}
+.bg-muted .text-muted-foreground,
+.bg-muted\/50 .text-muted-foreground,
+.bg-secondary .text-muted-foreground {
+  color: hsl(220, 10%, 35%);
+}
+.bg-muted a:hover,
+.bg-muted\/50 a:hover,
+.bg-secondary a:hover {
+  color: hsl(162, 100%, 38%);
+}
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
+  color: hsl(220, 9%, 26%);
+}
+.dark .bg-gray-100 .text-muted-foreground,
+.dark .bg-gray-200 .text-muted-foreground,
+.dark .bg-gray-100 .text-foreground,
+.dark .bg-gray-200 .text-foreground {
+  color: hsl(220, 9%, 46%);
+}
+
+/* Hide scrollbar for horizontal scroll areas (Marketplace, Explore, etc.) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

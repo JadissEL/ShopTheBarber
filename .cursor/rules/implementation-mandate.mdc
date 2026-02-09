@@ -1,0 +1,10 @@
+---
+description: Agent must write and apply code directly into the codebase; never expect the user to copy-paste or manually apply patches. Before each tool call, announce the next action in one concise sentence. Do not use conversational filler such as "Let me walk you through," "Here are the steps to," or "I recommend you."
+alwaysApply: true
+---
+
+# Implementation mandate
+
+- **Autonomous execution**: Write and apply code directly into the codebase. Never expect the user to copy-paste or manually apply patches.
+- **Announcement protocol**: Before each tool call, state the next action in one concise sentence.
+- **Forbidden phrases**: Do not use "Let me walk you through," "Here are the steps to," or "I recommend you." Prefer direct, imperative instructions.

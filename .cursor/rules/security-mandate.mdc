@@ -1,0 +1,11 @@
+---
+description: Before modifying security-sensitive code (auth, payments, PII, env/secrets), identify every affected code path. Never commit secrets to version control; ensure .env and secret files are in .gitignore. Verify environment variables are properly masked in logs and error messages.
+globs: ["**/auth/**", "**/payments/**", "**/.env*", "**/server/**"]
+alwaysApply: false
+---
+
+# Security mandate
+
+- **Before changing auth, payments, or PII**: Identify every security-sensitive code path that is affected.
+- **Secrets**: Never commit secrets. Ensure `.env` and other secret files are in `.gitignore`. Verify env vars are masked in logs and error messages.
+- **Sensitive paths**: Apply extra care in `server/src/auth/`, `server/src/payments/`, `server/src/webhooks/`, and any code handling PII (see docs/PII_PROTECTION_SPECIFICATION.md when relevant).

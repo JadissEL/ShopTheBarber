@@ -1,0 +1,19 @@
+---
+description: When changing UX, navigation, or journey-critical files (routes, nav, layout, guards), suggest running the journey/UX audit to avoid regressions. Run /audit-journeys or invoke the Journey Auditor subagent for a full check.
+globs: ["**/App.jsx", "**/Layout.jsx", "**/pages.config.js", "**/navigationConfig.jsx", "**/navigationVisibility.js", "**/RouteGuard.jsx", "**/layout/**", "**/pages/**"]
+alwaysApply: false
+---
+
+# UX & journey audit suggestion
+
+When you modify any of the following:
+
+- **Routing**: `src/App.jsx`, `src/pages.config.js`
+- **Navigation / zone**: `src/components/navigationConfig.jsx`, `src/components/navigation/navigationVisibility.js`
+- **Guards**: `src/components/routing/RouteGuard.jsx`
+- **Layout**: `src/Layout.jsx`, `src/components/layout/` (AppLayout, Navbar, PublicLayout, SidebarNav)
+- **Pages**: `src/pages/**` (especially entry/exit points of user, barber, shop, admin journeys)
+
+**Suggest** to the user: "I’ve changed journey/UX-related files. Run `/audit-journeys` (or invoke the Journey Auditor subagent) to check for regressions and inconsistencies."
+
+Do not run the full audit automatically unless the user asks. Only suggest it.
