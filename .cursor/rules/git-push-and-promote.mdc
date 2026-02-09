@@ -1,0 +1,15 @@
+# Git: Push for testing, then promote to main (MANDATORY)
+
+Whenever we perform a change on the project:
+
+1. **Push the new code for testing**  
+   Commit and push to **`master`** (never push directly to `main`). CI runs on `master`.
+
+2. **After CI passes on `master`**  
+   Promote from `master` to **`main`** (via "Promote to main" workflow, or locally: checkout main → merge origin/master → push main → checkout master).
+
+3. **Do not push to `main`** until tests/CI on `master` have passed.
+
+Summary: **Change → push to master → wait for green CI → promote to main.**
+
+Reference: [docs/GIT_BRANCHING_AND_DEPLOYMENT.md](docs/GIT_BRANCHING_AND_DEPLOYMENT.md).

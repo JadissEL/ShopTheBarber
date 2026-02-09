@@ -98,6 +98,10 @@ fastify.register(paymentRoutes);
 import { cartRoutes } from './cart/routes';
 fastify.register(cartRoutes);
 
+// 0.3 Integrations (Google Calendar OAuth + status)
+import { integrationRoutes } from './integrations/routes';
+fastify.register(integrationRoutes);
+
 // 0.3 Order Routes (tracking, my orders)
 import { orderRoutes } from './orders/routes';
 fastify.register(orderRoutes);

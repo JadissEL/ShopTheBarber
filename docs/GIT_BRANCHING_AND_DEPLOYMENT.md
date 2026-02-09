@@ -33,6 +33,11 @@ This project uses a **two-branch** model: all development and CI run on `master`
 6. **`main` always reflects the latest tested and approved state of `master`.**  
    After each promotion, `main` should be a fast-forward or merge of the `master` commit(s) that passed CI.
 
+7. **Mandatory workflow for every change:**  
+   (1) Push the new code to **`master`** for testing.  
+   (2) After CI passes on `master`, promote to **`main`**.  
+   Do not push to `main` until tests have passed.
+
 ---
 
 ## Promotion: master → main

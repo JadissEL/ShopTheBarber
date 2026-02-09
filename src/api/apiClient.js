@@ -470,6 +470,32 @@ export const sovereign = {
             return res.json();
         }
     },
+    integrations: {
+        googleCalendar: {
+            getAuthorizeUrl: async () => {
+                const headers = getAuthHeaders();
+                const res = await fetch(`${BASE_URL}/integrations/google/authorize`, { headers });
+                if (!res.ok) {
+                    const d = await res.json().catch(() => ({}));
+                    throw new Error(d.error || 'Failed to get Google Calendar link');
+                }
+                const data = await res.json();
+                return data.url;
+            },
+            getStatus: async () => {
+                const headers = getAuthHeaders();
+                const res = await fetch(`${BASE_URL}/integrations/google/status`, { headers });
+                if (!res.ok) return { connected: false, configured: false };
+                return res.json();
+            },
+            disconnect: async () => {
+                const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+                const res = await fetch(`${BASE_URL}/integrations/google/disconnect`, { method: 'POST', headers });
+                if (!res.ok) throw new Error('Failed to disconnect');
+                return res.json();
+            }
+        }
+    },
     analytics: {
         track: (event) => {
             // console.log('[Analytics]', event);

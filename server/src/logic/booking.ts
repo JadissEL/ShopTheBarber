@@ -1,9 +1,10 @@
 import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { parse, addMinutes, format } from 'date-fns';
+import { parse, addMinutes } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { sendEmail } from './email';
+import { isGoogleCalendarConfigured, syncBookingToCalendars } from './calendar';
 
 function parseTimeString(timeStr: string) {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -171,7 +172,45 @@ export async function createBookingLogic(payload: any) {
         }).catch(err => console.error('Failed to send booking email:', err));
     }
 
-    // 7. Audit Log
+    // 7. Google Calendar sync (if configured and users have connected calendar)
+    if (isGoogleCalendarConfigured() && booking.id) {
+        const clientToken = client?.google_calendar_refresh_token ?? null;
+        let barberToken: string | null = null;
+        if (barber?.user_id) {
+            const barberUser = await db.query.users.findFirst({
+                where: eq(schema.users.id, barber.user_id),
+                columns: { google_calendar_refresh_token: true },
+            });
+            barberToken = barberUser?.google_calendar_refresh_token ?? null;
+        }
+        if (clientToken || barberToken) {
+            const serviceName = payload.service_snapshot?.services?.[0]?.name || 'Barber Service';
+            const calendarResult = await syncBookingToCalendars(
+                {
+                    id: booking.id,
+                    start_time: booking.start_time,
+                    end_time: booking.end_time,
+                    service_name: serviceName,
+                    client_name: client?.full_name ?? null,
+                    barber_name: barber?.name ?? null,
+                    barber_id: payload.barber_id,
+                    client_id: payload.client_id,
+                },
+                clientToken,
+                barberToken
+            );
+            if (calendarResult.clientEventId || calendarResult.barberEventId) {
+                await db.update(schema.bookings)
+                    .set({
+                        calendar_sync: JSON.stringify(calendarResult),
+                        updated_at: new Date().toISOString(),
+                    })
+                    .where(eq(schema.bookings.id, booking.id));
+            }
+        }
+    }
+
+    // 8. Audit Log
     console.log(`[AUDIT] Booking ${booking.id} created.`);
 
     return booking;

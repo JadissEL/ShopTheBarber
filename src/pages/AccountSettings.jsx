@@ -11,7 +11,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { User, Shield, Bell, MapPin, Key, LogOut, Loader, CheckCircle, ExternalLink } from 'lucide-react';
+import { User, Shield, Bell, MapPin, Key, LogOut, Loader, CheckCircle, ExternalLink, Calendar, Link2, Unlink } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { clientProfileSchema } from '@/lib/validations';
@@ -19,10 +20,39 @@ import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 
 export default function AccountSettings() {
     const queryClient = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { data: user, isLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => sovereign.auth.me()
     });
+
+    const { data: googleCalendarStatus, isLoading: googleCalendarLoading, refetch: refetchGoogleCalendar } = useQuery({
+        queryKey: ['integrations', 'googleCalendar'],
+        queryFn: () => sovereign.integrations.googleCalendar.getStatus(),
+        enabled: !!user
+    });
+
+    const disconnectGoogleMutation = useMutation({
+        mutationFn: () => sovereign.integrations.googleCalendar.disconnect(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['integrations', 'googleCalendar'] });
+            toast.success('Google Calendar disconnected');
+        },
+        onError: (e) => toast.error(e.message || 'Failed to disconnect')
+    });
+
+    useEffect(() => {
+        const status = searchParams.get('google_calendar');
+        if (status === 'connected') {
+            toast.success('Google Calendar connected. New bookings will sync to your calendar.');
+            refetchGoogleCalendar();
+            setSearchParams((p) => { p.delete('google_calendar'); p.delete('message'); return p; }, { replace: true });
+        } else if (status === 'error') {
+            const msg = searchParams.get('message') || 'Connection failed';
+            toast.error(msg);
+            setSearchParams((p) => { p.delete('google_calendar'); p.delete('message'); return p; }, { replace: true });
+        }
+    }, [searchParams, refetchGoogleCalendar, setSearchParams]);
 
     const [notifSettings, setNotifSettings] = useState({
         booking_reminders: true,
@@ -111,6 +141,9 @@ export default function AccountSettings() {
                         </TabsTrigger>
                         <TabsTrigger value="preferences" className="justify-start px-6 py-4 rounded-2xl w-full data-[state=active]:bg-card data-[state=active]:shadow-xl data-[state=active]:border-border border border-transparent transition-all font-bold text-muted-foreground data-[state=active]:text-primary">
                             <Bell className="w-4 h-4 mr-3" /> Notifications
+                        </TabsTrigger>
+                        <TabsTrigger value="integrations" className="justify-start px-6 py-4 rounded-2xl w-full data-[state=active]:bg-card data-[state=active]:shadow-xl data-[state=active]:border-border border border-transparent transition-all font-bold text-muted-foreground data-[state=active]:text-primary">
+                            <Calendar className="w-4 h-4 mr-3" /> Integrations
                         </TabsTrigger>
                         <TabsTrigger value="security" className="justify-start px-6 py-4 rounded-2xl w-full data-[state=active]:bg-card data-[state=active]:shadow-xl data-[state=active]:border-border border border-transparent transition-all font-bold text-muted-foreground data-[state=active]:text-primary">
                             <Shield className="w-4 h-4 mr-3" /> Login & Safety
@@ -213,6 +246,54 @@ export default function AccountSettings() {
                                         </div>
                                         <Switch checked={notifSettings.security_alerts} onCheckedChange={(v) => setNotifSettings(s => ({ ...s, security_alerts: v }))} />
                                     </div>
+                                </div>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="integrations" className="mt-0">
+                            <Card className="border-none shadow-2xl rounded-[32px] bg-card border border-border p-10 space-y-8">
+                                <div>
+                                    <h2 className="text-2xl font-black text-foreground mb-2">Integrations</h2>
+                                    <p className="text-muted-foreground font-medium">Connect your calendar and other services.</p>
+                                </div>
+                                <div className="p-6 bg-muted/50 rounded-3xl border border-border space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                                            <Calendar className="w-6 h-6" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-foreground">Google Calendar</p>
+                                            <p className="text-xs text-muted-foreground font-medium">New bookings will appear in your Google Calendar automatically.</p>
+                                        </div>
+                                    </div>
+                                    {googleCalendarLoading ? (
+                                        <div className="flex items-center gap-2 text-muted-foreground"><Loader className="w-4 h-4 animate-spin" /> Checking…</div>
+                                    ) : !googleCalendarStatus?.configured ? (
+                                        <p className="text-sm text-muted-foreground">Google Calendar is not configured for this app yet.</p>
+                                    ) : googleCalendarStatus?.connected ? (
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-600">
+                                                <CheckCircle className="w-4 h-4" /> Connected
+                                            </span>
+                                            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => disconnectGoogleMutation.mutate()} disabled={disconnectGoogleMutation.isPending}>
+                                                <Unlink className="w-4 h-4 mr-1.5" /> Disconnect
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            className="rounded-xl bg-primary text-primary-foreground hover:opacity-95"
+                                            onClick={async () => {
+                                                try {
+                                                    const url = await sovereign.integrations.googleCalendar.getAuthorizeUrl();
+                                                    window.location.href = url;
+                                                } catch (e) {
+                                                    toast.error(e.message || 'Could not open Google');
+                                                }
+                                            }}
+                                        >
+                                            <Link2 className="w-4 h-4 mr-2" /> Connect Google Calendar
+                                        </Button>
+                                    )}
                                 </div>
                             </Card>
                         </TabsContent>

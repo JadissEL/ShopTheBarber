@@ -11,6 +11,7 @@ export const users = sqliteTable("users", {
     phone: text("phone"),
     stripe_account_id: text("stripe_account_id"),
     stripe_connect_status: text("stripe_connect_status").default("unconnected"), // 'unconnected', 'pending', 'active'
+    google_calendar_refresh_token: text("google_calendar_refresh_token"),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
@@ -70,6 +71,7 @@ export const bookings = sqliteTable("bookings", {
     financial_breakdown: text("financial_breakdown"), // JSON string
     price_at_booking: real("price_at_booking"),
     notes: text("notes"),
+    calendar_sync: text("calendar_sync"), // JSON: { clientEventId?, barberEventId? }
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
