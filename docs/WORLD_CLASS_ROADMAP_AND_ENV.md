@@ -91,6 +91,76 @@
 
 ---
 
+### 8. **Observability & Performance**
+
+As you scale, "knowing" what's happening becomes more important than "doing" the task.
+
+| Variable | Description | Use Case |
+|----------|-------------|----------|
+| **SENTRY_DSN** | Error tracking DSN. | Catching frontend/backend crashes in real-time before users report them. |
+| **DATADOG_API_KEY** | Infrastructure monitoring. | Monitoring CPU/RAM spikes and database query latency. |
+| **NEW_RELIC_LICENSE_KEY** | Application Performance Monitoring (APM). | Identifying slow API endpoints and bottlenecks in the booking logic. |
+| **LOG_LEVEL** | `debug`, `info`, `warn`, `error`. | Controlling verbosity without redeploying code. |
+
+---
+
+### 9. **High-Scale Infrastructure & Storage**
+
+Local storage and basic SQLite won't cut it when you have thousands of barbers uploading high-res portfolio photos.
+
+| Variable | Description | Use Case |
+|----------|-------------|----------|
+| **AWS_S3_BUCKET_NAME** | Cloud storage bucket name. | Storing high-resolution barber portfolio images and videos. |
+| **AWS_ACCESS_KEY_ID** | AWS credentials. | Programmatic access to S3 or CloudFront. |
+| **AWS_REGION** | The physical location of data. | Minimizing latency for image uploads/downloads. |
+| **CDN_URL** | e.g. CloudFront or Cloudflare. | Serving static assets and images via a global edge network to speed up load times. |
+| **REDIS_URL** | Connection string for Redis. | Distributed caching for session data and rate-limiting across multiple server instances. |
+
+---
+
+### 10. **Localization & Internationalization (i18n)**
+
+For a world-class ecosystem, you need to handle currencies and timezones like a pro.
+
+| Variable | Description | Use Case |
+|----------|-------------|----------|
+| **DEFAULT_CURRENCY** | e.g. `USD`, `EUR`, `MAD`. | Setting the baseline for multi-currency shop setups. |
+| **SUPPORTED_LOCALES** | e.g. `en,fr,es,ar`. | Restricting the app to specific markets during phased rollouts. |
+| **IPSTACK_API_KEY** | IP Geolocation service. | Automatically detecting a user's country to set their local currency and language. |
+
+---
+
+### 11. **Advanced Security & Compliance**
+
+High-stakes contracts and business deals require enterprise-grade security.
+
+| Variable | Description | Use Case |
+|----------|-------------|----------|
+| **ENCRYPTION_KEY** | 32-byte string. | Encrypting sensitive data at rest (e.g. OAuth tokens or tax IDs) in the database. |
+| **CORS_ALLOWED_ORIGINS** | Comma-separated list. | Strictly controlling which domains can talk to your API (essential for security). |
+| **CLOUDFLARE_WEBHOOK_SECRET** | Secret for CF Turnstile/Captcha. | Preventing bot-driven fake appointments or account creation spam. |
+
+---
+
+### 12. **Specialized Styling & Business Tools**
+
+Deepening the ecosystem for professional "Stylisme."
+
+| Variable | Description | Use Case |
+|----------|-------------|----------|
+| **CLOUDINARY_URL** | Image optimization API. | Auto-resizing and "beautifying" barber portfolio photos (e.g. auto-cropping for thumbnails). |
+| **VAT_LAYER_API_KEY** | Tax calculation service. | Calculating real-time VAT/Sales Tax for different countries during checkout. |
+| **PDF_GENERATOR_API_KEY** | e.g. Browserless or PDFMonkey. | Generating professional invoices and high-stakes contract PDFs for business deals. |
+| **INTERCOM_APP_ID** | Customer Support/Success. | Real-time chat for shop owners needing technical assistance. |
+| **UNSPLASH_ACCESS_KEY** | Stock image API. | Helping shop owners find professional placeholder images for their storefronts. |
+
+**Pro-Tip: Secret Management**  
+When you reach this many variables, your `.env` file becomes a security risk. In a high-scale operation, move these into a **Secret Manager** (e.g. AWS Secrets Manager, HashiCorp Vault, or the native "Secrets" UI in Render/Vercel) rather than keeping them in a flat file.
+
+**Note on high-stakes deals:** Since you are targeting 25-year industry veterans, ensure `PDF_GENERATOR_API_KEY` is linked to a service that supports **digital signatures** (e.g. DocuSign or HelloSign API) for those high-value contracts.
+
+---
+
 ## Part 2 — All Environment Variables
 
 ### Server (`server/.env` or Render env)
@@ -126,6 +196,26 @@
 | **SENTRY_ENVIRONMENT** | Optional | e.g. `production`, `staging`. | Sentry backend init. |
 | **ANALYTICS_WRITE_KEY** | Optional | Server-side analytics (e.g. Segment write key). | Not yet implemented. |
 | **NAVIGATION_TRACKING_ENABLED** | Optional | If `true`, backend may log nav events (e.g. POST `/api/analytics/navigation`). | Not yet implemented. |
+| **DATADOG_API_KEY** | Optional | Datadog API key for infrastructure monitoring. | CPU/RAM, DB query latency. |
+| **NEW_RELIC_LICENSE_KEY** | Optional | New Relic APM license key. | Slow endpoints, booking logic bottlenecks. |
+| **LOG_LEVEL** | Optional | `debug` \| `info` \| `warn` \| `error`. | Control log verbosity without redeploy. |
+| **AWS_S3_BUCKET_NAME** | Optional | S3 bucket for uploads. | Barber portfolio images/videos. |
+| **AWS_ACCESS_KEY_ID** | Optional | AWS access key (S3/CloudFront). | Programmatic S3 access. |
+| **AWS_SECRET_ACCESS_KEY** | Optional | AWS secret key. | With AWS_ACCESS_KEY_ID. |
+| **AWS_REGION** | Optional | e.g. `us-east-1`. | Data location, upload latency. |
+| **CDN_URL** | Optional | e.g. CloudFront or Cloudflare origin. | Serve assets/images from edge. |
+| **REDIS_URL** | Optional | Redis connection string. | Sessions, rate-limiting, multi-instance cache. |
+| **DEFAULT_CURRENCY** | Optional | e.g. `USD`, `EUR`, `MAD`. | Multi-currency shop baseline. |
+| **SUPPORTED_LOCALES** | Optional | e.g. `en,fr,es,ar`. | Phased market rollouts. |
+| **IPSTACK_API_KEY** | Optional | IP geolocation API key. | Auto-detect country for currency/locale. |
+| **ENCRYPTION_KEY** | Optional | 32-byte key (e.g. base64). | Encrypt OAuth tokens, tax IDs at rest. |
+| **CORS_ALLOWED_ORIGINS** | Optional | Comma-separated origins. | Strict API origin allowlist (override FRONTEND_URL list). |
+| **CLOUDFLARE_WEBHOOK_SECRET** | Optional | Cloudflare Turnstile/Captcha secret. | Bot protection for bookings/signup. |
+| **CLOUDINARY_URL** | Optional | Cloudinary cloud URL. | Image optimization, thumbnails for portfolios. |
+| **VAT_LAYER_API_KEY** | Optional | VAT Layer (or similar) API key. | Real-time VAT/sales tax at checkout. |
+| **PDF_GENERATOR_API_KEY** | Optional | e.g. Browserless, PDFMonkey, DocuSign. | Invoices, contracts; prefer one with digital signatures. |
+| **INTERCOM_APP_ID** | Optional | Intercom app ID. | Customer support chat (can be passed to frontend). |
+| **UNSPLASH_ACCESS_KEY** | Optional | Unsplash API key. | Stock placeholder images for storefronts. |
 
 ### Frontend (Vite / build-time)
 
@@ -140,6 +230,8 @@
 | **VITE_PLAUSIBLE_DOMAIN** | No | Plausible domain (e.g. `yourapp.com`). | Reserved; script in index.html or analytics module. |
 | **VITE_MIXPANEL_TOKEN** | No | Mixpanel project token. | Reserved; wire in analytics init. |
 | **VITE_SENTRY_DSN** | No | Sentry DSN for frontend error tracking. | Reserved; init in `main.jsx`. |
+| **VITE_INTERCOM_APP_ID** | No | Intercom app ID for support widget. | Reserved; load Intercom script when set. |
+| **VITE_CDN_URL** | No | CDN base URL for images/assets (if different from API). | Reserved; asset URLs when using S3/CloudFront. |
 
 ### CI / Hosting (e.g. GitHub Actions, Render, Vercel)
 
@@ -154,10 +246,10 @@
 ## Part 3 — Single Checklist (Copy-Paste)
 
 **Server (e.g. Render)**  
-`JWT_SECRET` · `FRONTEND_URL` · `BACKEND_URL` · `PORT` · `NODE_ENV` · `STRIPE_API_KEY` · `STRIPE_PUBLISHABLE_KEY` · `STRIPE_WEBHOOK_SECRET` · `RESEND_API_KEY` · `EMAIL_FROM` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` · `FACEBOOK_APP_ID` · `FACEBOOK_APP_SECRET` · `LINKEDIN_CLIENT_ID` · `LINKEDIN_CLIENT_SECRET` · `GOOGLE_MAPS_API_KEY` · `MAPBOX_ACCESS_TOKEN` · `TWILIO_ACCOUNT_SID` · `TWILIO_AUTH_TOKEN` · `TWILIO_WHATSAPP_NUMBER` · `LOCAL_AI_ENDPOINT` · `GROK_API_KEY` · `DATABASE_PATH` · `SENTRY_DSN` · `SENTRY_AUTH_TOKEN` · `SENTRY_ENVIRONMENT` · `ANALYTICS_WRITE_KEY` · `NAVIGATION_TRACKING_ENABLED`
+`JWT_SECRET` · `FRONTEND_URL` · `BACKEND_URL` · `PORT` · `NODE_ENV` · `STRIPE_API_KEY` · `STRIPE_PUBLISHABLE_KEY` · `STRIPE_WEBHOOK_SECRET` · `RESEND_API_KEY` · `EMAIL_FROM` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` · `FACEBOOK_APP_ID` · `FACEBOOK_APP_SECRET` · `LINKEDIN_CLIENT_ID` · `LINKEDIN_CLIENT_SECRET` · `GOOGLE_MAPS_API_KEY` · `MAPBOX_ACCESS_TOKEN` · `TWILIO_ACCOUNT_SID` · `TWILIO_AUTH_TOKEN` · `TWILIO_WHATSAPP_NUMBER` · `LOCAL_AI_ENDPOINT` · `GROK_API_KEY` · `DATABASE_PATH` · `SENTRY_DSN` · `SENTRY_AUTH_TOKEN` · `SENTRY_ENVIRONMENT` · `ANALYTICS_WRITE_KEY` · `NAVIGATION_TRACKING_ENABLED` · `DATADOG_API_KEY` · `NEW_RELIC_LICENSE_KEY` · `LOG_LEVEL` · `AWS_S3_BUCKET_NAME` · `AWS_ACCESS_KEY_ID` · `AWS_SECRET_ACCESS_KEY` · `AWS_REGION` · `CDN_URL` · `REDIS_URL` · `DEFAULT_CURRENCY` · `SUPPORTED_LOCALES` · `IPSTACK_API_KEY` · `ENCRYPTION_KEY` · `CORS_ALLOWED_ORIGINS` · `CLOUDFLARE_WEBHOOK_SECRET` · `CLOUDINARY_URL` · `VAT_LAYER_API_KEY` · `PDF_GENERATOR_API_KEY` · `INTERCOM_APP_ID` · `UNSPLASH_ACCESS_KEY`
 
 **Frontend (e.g. Vercel)**  
-`VITE_API_URL` · `VITE_sovereign_APP_ID` · `VITE_sovereign_BACKEND_URL` · `VITE_GA_MEASUREMENT_ID` · `VITE_POSTHOG_KEY` · `VITE_POSTHOG_HOST` · `VITE_PLAUSIBLE_DOMAIN` · `VITE_MIXPANEL_TOKEN` · `VITE_SENTRY_DSN`
+`VITE_API_URL` · `VITE_sovereign_APP_ID` · `VITE_sovereign_BACKEND_URL` · `VITE_GA_MEASUREMENT_ID` · `VITE_POSTHOG_KEY` · `VITE_POSTHOG_HOST` · `VITE_PLAUSIBLE_DOMAIN` · `VITE_MIXPANEL_TOKEN` · `VITE_SENTRY_DSN` · `VITE_INTERCOM_APP_ID` · `VITE_CDN_URL`
 
 ---
 

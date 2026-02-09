@@ -4,6 +4,9 @@
 !.env.example
 server/.stripe-keys.json
 
+# Local env vault (HTML page with your keys — do not publish)
+env-vault/
+
 # Logs
 logs
 *.log
