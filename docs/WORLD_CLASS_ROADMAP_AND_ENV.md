@@ -75,6 +75,22 @@
 
 ---
 
+### 7. **Analytics, Security & User Navigation Tracking**
+
+| Area | What to add | Env / integration |
+|------|-------------|-------------------|
+| **Analytics** | Product analytics: page views, funnels, conversion. Use one of: **Google Analytics 4**, **PostHog**, **Plausible**, or **Mixpanel**. | **Frontend:** `VITE_GA_MEASUREMENT_ID` (GA4), or `VITE_POSTHOG_KEY` + `VITE_POSTHOG_HOST`, or `VITE_PLAUSIBLE_DOMAIN`, or `VITE_MIXPANEL_TOKEN`. **Backend (optional):** server-side events via `ANALYTICS_WRITE_KEY` (Segment) or PostHog/Mixpanel server API key. |
+| **Security / Error tracking** | **Sentry** (or similar) for frontend and backend errors, stack traces, release tracking. | **Frontend:** `VITE_SENTRY_DSN`. **Backend:** `SENTRY_DSN`. Optional: `SENTRY_AUTH_TOKEN` for releases, `SENTRY_ENVIRONMENT` (e.g. `production`). |
+| **User navigation tracking** | Track which pages users visit and when (for UX, funnels, support). Your app already has `NavigationTracker` and `sovereign.analytics.track()`; wire them to your analytics provider. | Same as Analytics: when `VITE_POSTHOG_KEY` or `VITE_GA_MEASUREMENT_ID` is set, **NavigationTracker** can send `page_view` (pathname, page name) and **sovereign.analytics.track** can send custom events (e.g. `booking_started`, `profile_view`) to that provider. Optional backend: `NAVIGATION_TRACKING_ENABLED` + POST `/api/analytics/navigation` to store server-side if you want your own DB of page views. |
+
+**Implementation notes**
+
+- **Analytics:** Add a small init module (e.g. `src/lib/analytics.js`) that, when `VITE_GA_MEASUREMENT_ID` or `VITE_POSTHOG_KEY` etc. is set, initializes the SDK and exposes `track(eventName, properties)` and `pageView(path, name)`. Call `pageView` from `NavigationTracker` and keep calling `sovereign.analytics.track()` from BookingFlow, BarberProfile, etc.; have the client send those to the chosen provider.
+- **Security (Sentry):** Frontend: init Sentry with `VITE_SENTRY_DSN` in `main.jsx`. Backend: add `@sentry/node` (or Fastify plugin), init with `SENTRY_DSN`. Redact PII in both (e.g. no emails in breadcrumbs).
+- **Navigation:** No extra env beyond analytics; navigation is a subset of analytics. If you add a backend endpoint to log nav events (e.g. for compliance or custom dashboards), use `NAVIGATION_TRACKING_ENABLED` and optionally `ANALYTICS_API_KEY` or the same Sentry/PostHog backend key.
+
+---
+
 ## Part 2 — All Environment Variables
 
 ### Server (`server/.env` or Render env)
@@ -105,6 +121,11 @@
 | **TWILIO_WHATSAPP_NUMBER** | For WhatsApp | Twilio WhatsApp number (e.g. `whatsapp:+14155238886`). | Reserved. |
 | **LOCAL_AI_ENDPOINT** | Optional | Local LLM endpoint (e.g. `http://localhost:1234/v1`). | `server/src/logic/ai.ts`. |
 | **GROK_API_KEY** | Optional | Grok API key if you add cloud AI fallback. | Not yet implemented. |
+| **SENTRY_DSN** | Optional | Sentry DSN for backend error tracking. | Not yet implemented; use with `@sentry/node` or Fastify plugin. |
+| **SENTRY_AUTH_TOKEN** | Optional | Sentry auth token for release uploads (source maps). | CI or deploy. |
+| **SENTRY_ENVIRONMENT** | Optional | e.g. `production`, `staging`. | Sentry backend init. |
+| **ANALYTICS_WRITE_KEY** | Optional | Server-side analytics (e.g. Segment write key). | Not yet implemented. |
+| **NAVIGATION_TRACKING_ENABLED** | Optional | If `true`, backend may log nav events (e.g. POST `/api/analytics/navigation`). | Not yet implemented. |
 
 ### Frontend (Vite / build-time)
 
@@ -113,6 +134,12 @@
 | **VITE_API_URL** | Yes (prod) | Backend base URL (e.g. `https://shopthebarber-api.onrender.com`). No trailing slash. | `src/api/apiClient.js` (BASE_URL). |
 | **VITE_sovereign_APP_ID** | No | Legacy/app param default. | `src/lib/app-params.js`. |
 | **VITE_sovereign_BACKEND_URL** | No | Legacy server URL default. | `src/lib/app-params.js`. |
+| **VITE_GA_MEASUREMENT_ID** | No | Google Analytics 4 measurement ID (e.g. `G-XXXXXXXXXX`). | Reserved; wire in `src/lib/analytics.js` + NavigationTracker. |
+| **VITE_POSTHOG_KEY** | No | PostHog project API key (covers analytics + nav tracking). | Reserved; wire in analytics init + NavigationTracker. |
+| **VITE_POSTHOG_HOST** | No | PostHog host (e.g. `https://app.posthog.com`). | Reserved. |
+| **VITE_PLAUSIBLE_DOMAIN** | No | Plausible domain (e.g. `yourapp.com`). | Reserved; script in index.html or analytics module. |
+| **VITE_MIXPANEL_TOKEN** | No | Mixpanel project token. | Reserved; wire in analytics init. |
+| **VITE_SENTRY_DSN** | No | Sentry DSN for frontend error tracking. | Reserved; init in `main.jsx`. |
 
 ### CI / Hosting (e.g. GitHub Actions, Render, Vercel)
 
@@ -127,10 +154,10 @@
 ## Part 3 — Single Checklist (Copy-Paste)
 
 **Server (e.g. Render)**  
-`JWT_SECRET` · `FRONTEND_URL` · `BACKEND_URL` · `PORT` · `NODE_ENV` · `STRIPE_API_KEY` · `STRIPE_PUBLISHABLE_KEY` · `STRIPE_WEBHOOK_SECRET` · `RESEND_API_KEY` · `EMAIL_FROM` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` · `FACEBOOK_APP_ID` · `FACEBOOK_APP_SECRET` · `LINKEDIN_CLIENT_ID` · `LINKEDIN_CLIENT_SECRET` · `GOOGLE_MAPS_API_KEY` · `MAPBOX_ACCESS_TOKEN` · `TWILIO_ACCOUNT_SID` · `TWILIO_AUTH_TOKEN` · `TWILIO_WHATSAPP_NUMBER` · `LOCAL_AI_ENDPOINT` · `GROK_API_KEY` · `DATABASE_PATH`
+`JWT_SECRET` · `FRONTEND_URL` · `BACKEND_URL` · `PORT` · `NODE_ENV` · `STRIPE_API_KEY` · `STRIPE_PUBLISHABLE_KEY` · `STRIPE_WEBHOOK_SECRET` · `RESEND_API_KEY` · `EMAIL_FROM` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` · `FACEBOOK_APP_ID` · `FACEBOOK_APP_SECRET` · `LINKEDIN_CLIENT_ID` · `LINKEDIN_CLIENT_SECRET` · `GOOGLE_MAPS_API_KEY` · `MAPBOX_ACCESS_TOKEN` · `TWILIO_ACCOUNT_SID` · `TWILIO_AUTH_TOKEN` · `TWILIO_WHATSAPP_NUMBER` · `LOCAL_AI_ENDPOINT` · `GROK_API_KEY` · `DATABASE_PATH` · `SENTRY_DSN` · `SENTRY_AUTH_TOKEN` · `SENTRY_ENVIRONMENT` · `ANALYTICS_WRITE_KEY` · `NAVIGATION_TRACKING_ENABLED`
 
 **Frontend (e.g. Vercel)**  
-`VITE_API_URL` · `VITE_sovereign_APP_ID` · `VITE_sovereign_BACKEND_URL`
+`VITE_API_URL` · `VITE_sovereign_APP_ID` · `VITE_sovereign_BACKEND_URL` · `VITE_GA_MEASUREMENT_ID` · `VITE_POSTHOG_KEY` · `VITE_POSTHOG_HOST` · `VITE_PLAUSIBLE_DOMAIN` · `VITE_MIXPANEL_TOKEN` · `VITE_SENTRY_DSN`
 
 ---
 
