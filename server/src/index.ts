@@ -69,6 +69,14 @@ function isDbSchemaError(e: any): boolean {
 
 // --- ROUTES ---
 
+// Root: 200 so Render/default health probes don't get 404 (detailed health: /api/health)
+fastify.get('/', async (_request, reply) => {
+    return reply.send({ service: 'ShopTheBarber API', health: '/api/health' });
+});
+fastify.get('/api', async (_request, reply) => {
+    return reply.send({ service: 'ShopTheBarber API', health: '/api/health' });
+});
+
 // Health check (no auth) — confirms DB is reachable
 fastify.get('/api/health', async (_request, reply) => {
     try {

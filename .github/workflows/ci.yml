@@ -53,5 +53,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Apply DB schema (push)
+        run: npx drizzle-kit push --force
+
       - name: Test
         run: npm run test

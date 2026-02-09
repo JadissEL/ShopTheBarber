@@ -7,10 +7,15 @@ import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { hashPassword } from '../auth/password';
+import { ensureMigrations } from './globalSetup';
 
 describe('auth/register (DB)', () => {
     const testEmail = `register-test-${Date.now()}@example.com`;
     const testId = crypto.randomUUID();
+
+    beforeAll(() => {
+        ensureMigrations();
+    });
 
     afterAll(async () => {
         await db.delete(schema.users).where(eq(schema.users.id, testId));
