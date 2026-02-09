@@ -7,6 +7,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { AuthProvider } from '@/lib/AuthContext';
+import { CartProvider } from '@/components/context/CartContext';
 import Explore from '@/pages/Explore';
 
 const mockBarbers = [
@@ -54,7 +56,11 @@ function renderExplore() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <Explore />
+          <AuthProvider>
+            <CartProvider>
+              <Explore />
+            </CartProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>

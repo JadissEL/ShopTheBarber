@@ -6,6 +6,8 @@ This guide gets the **frontend** on **Vercel** and the **backend** on **Render**
 
 **Want to do it via MCP?** Add the [Vercel](https://vercel.com/docs/ai-resources/vercel-mcp) and [Render](https://mcp.render.com) MCP servers in Cursor, then ask the AI to deploy using those connections. Full steps: **[DEPLOYMENT_MCP.md](DEPLOYMENT_MCP.md)**.
 
+**Why Vercel + Render (and not e.g. Hostinger free)?** This app is a **Vite + Node** full-stack: the frontend is a Vite/React SPA and the backend is a Node/Fastify API. Vercel’s free tier is built for SPAs and Vite (auto-detects, instant previews, GitHub integration). Render’s free tier runs the Node API and fits the existing `render.yaml`. Hostinger’s free plan is aimed at static or cPanel sites and doesn’t match this stack as well; you’d still need a separate place for the Node API. Using Vercel (frontend) + Render (backend) keeps one workflow, free tiers, and no server management.
+
 ---
 
 ## 1. Push your code to GitHub
