@@ -2,24 +2,28 @@
 
 This guide gets the **frontend** on **Vercel** and the **backend** on **Render**, with **GitHub** so each push can redeploy.
 
+**Branching:** Production deploys use the **`main`** branch only. All development and CI run on **`master`**; changes are promoted to `main` only after tests pass. See **[GIT_BRANCHING_AND_DEPLOYMENT.md](GIT_BRANCHING_AND_DEPLOYMENT.md)** for the full workflow.
+
 **Want to do it via MCP?** Add the [Vercel](https://vercel.com/docs/ai-resources/vercel-mcp) and [Render](https://mcp.render.com) MCP servers in Cursor, then ask the AI to deploy using those connections. Full steps: **[DEPLOYMENT_MCP.md](DEPLOYMENT_MCP.md)**.
 
 ---
 
 ## 1. Push your code to GitHub
 
-If the project is not yet on GitHub:
+If the project is not yet on GitHub, push both branches. Use **`master`** for daily work and CI; use **`main`** for production (see [GIT_BRANCHING_AND_DEPLOYMENT.md](GIT_BRANCHING_AND_DEPLOYMENT.md)):
 
 ```bash
 git init
 git add .
 git commit -m "Initial commit"
 git remote add origin https://github.com/YOUR_USERNAME/shop-the-barber.git
-git branch -M main
+git branch -M master
+git push -u origin master
+git checkout -b main
 git push -u origin main
 ```
 
-Use your own repo URL. From then on, **pushing to `main`** will trigger deploys (after you connect the repo in step 2 and 3).
+Connect the repo in step 2 and 3 and set **production** to deploy from **`main`** only. Pushing to **`main`** (after promoting from `master`) triggers production deploys.
 
 ---
 
@@ -71,12 +75,11 @@ After this, the site is “always on”: the frontend runs on Vercel and the API
 
 ---
 
-## 5. Deployments on every push
+## 5. Deployments on every push to `main`
 
-- **Vercel**: Redeploys automatically when you push to the connected branch (usually `main`).
-- **Render**: Redeploys automatically when you push to the same branch.
-
-So: **push to GitHub** → both frontend and backend can rebuild and go live without extra steps.
+- **Vercel** and **Render** must be configured to use the **`main`** branch for production.
+- A push to **`main`** triggers a production deploy (frontend and backend).
+- Do **not** deploy production from `master`. Develop and run CI on `master`; promote to `main` only after CI passes. See [GIT_BRANCHING_AND_DEPLOYMENT.md](GIT_BRANCHING_AND_DEPLOYMENT.md).
 
 ---
 
@@ -94,9 +97,9 @@ You still must set **secret** env vars (e.g. `JWT_SECRET`, `STRIPE_*`, `FRONTEND
 
 | Step | Where | What |
 |------|--------|------|
-| 1 | GitHub | Repo with latest code, push to `main` |
-| 2 | Render | New Web Service, root `server`, start `npm run start`, set `JWT_SECRET`, `FRONTEND_URL`, Stripe keys |
-| 3 | Vercel | New Project from repo, set `VITE_API_URL` = Render backend URL |
+| 1 | GitHub | Repo with `master` (development/CI) and `main` (production). Deploy from `main` only. |
+| 2 | Render | New Web Service, branch **main**, root `server`, start `npm run start`, set `JWT_SECRET`, `FRONTEND_URL`, Stripe keys |
+| 3 | Vercel | New Project from repo, production branch **main**, set `VITE_API_URL` = Render backend URL |
 | 4 | Both | `FRONTEND_URL` = Vercel URL; `VITE_API_URL` = Render URL |
 
-After that, the project is always running; push to GitHub to update both frontend and backend.
+After that, the project is always running. Promote `master` → `main` after CI passes to update production (see [GIT_BRANCHING_AND_DEPLOYMENT.md](GIT_BRANCHING_AND_DEPLOYMENT.md)).

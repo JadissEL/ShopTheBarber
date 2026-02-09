@@ -85,6 +85,13 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
     - Functions now call sovereign backend email endpoints
     - Frontend compiles and loads successfully
 
+### 2026-02-09 - Git Branching and Deployment Workflow
+13. ✅ **Branch roles**: `master` = CI/testing only; `main` = production-only, stable.
+14. ✅ **Branches**: Created and pushed `main` (in sync with `master`); CI runs on both.
+15. ✅ **Docs**: Added `docs/GIT_BRANCHING_AND_DEPLOYMENT.md` (workflow, promotion steps, protection).
+16. ✅ **Promote workflow**: Added `.github/workflows/promote-to-main.yml` (manual run, type "promote" to merge master → main).
+17. ✅ **CI**: `.github/workflows/ci.yml` comments updated; DEPLOYMENT.md updated to deploy from `main` only.
+
 ---
 
 ## 📂 REPLACED BASE44 COMPONENTS
@@ -136,6 +143,11 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 ---
 
 ## � USER PROMPTS LOG
+
+### [2026-02-09] - GIT BRANCHING AND DEPLOYMENT WORKFLOW
+**Request**: Establish master (CI/testing) and main (production-only); no untested code on main; controlled promotion master → main.
+**Action**: Created `main` and pushed; added `docs/GIT_BRANCHING_AND_DEPLOYMENT.md`, `.github/workflows/promote-to-main.yml`; updated CI and DEPLOYMENT.md to deploy from `main` only.
+**Status**: ✅ Documented and enforced via workflow and docs.
 
 ### [2026-01-28 21:46:34] - BASE44 ERADICATION MANDATE
 **Request**: "🔥 BASE44 ERADICATION MANDATE (CRITICAL)... Provide a Base44-free, future-proof, production-grade system."  

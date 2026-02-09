@@ -1,10 +1,13 @@
+# CI runs on master (validation) and main (re-verify after promotion).
+# Development and PRs target master. Only promote master → main after CI passes on master.
+# Production deploys use main only.
 name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [master, main]
   pull_request:
-    branches: [main, master]
+    branches: [master, main]
 
 jobs:
   frontend:

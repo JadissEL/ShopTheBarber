@@ -1,0 +1,35 @@
+# Promote master → main only after CI has passed on master.
+# Run manually from Actions tab when you are ready to release.
+name: Promote to main
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "promote" to merge master into main'
+        required: true
+        default: ''
+
+jobs:
+  promote:
+    name: Merge master into main
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'promote'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge master into main
+        run: |
+          git checkout main
+          git pull origin main
+          git merge origin/master -m "chore: promote master to main"
+          git push origin main
