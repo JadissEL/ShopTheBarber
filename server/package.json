@@ -8,6 +8,7 @@
     "start": "tsx src/index.ts",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
+    "push:neon": "drizzle-kit push --config=drizzle.config.neon.ts",
     "seed": "tsx src/db/seed.ts",
     "create-products-table": "node scripts/create-products-table.js",
     "studio": "drizzle-kit studio",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.0.0",
+    "@neondatabase/serverless": "^1.0.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",
@@ -30,7 +32,8 @@
     "jsonwebtoken": "^9.0.3",
     "resend": "^6.9.1",
     "stripe": "^20.3.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -38,7 +41,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.1.0",
     "drizzle-kit": "^0.31.8",
-    "tsx": "^4.21.0",
     "vitest": "^2.1.6"
   }
 }
