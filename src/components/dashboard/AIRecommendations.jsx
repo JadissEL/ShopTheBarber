@@ -98,25 +98,25 @@ Consider:
 
 Return EXACTLY 3 barber recommendations with specific reasoning for each.`;
 
-      const res = await sovereign.functions.invoke('ai-advisor', {
-        prompt: prompt
-      });
+      let res;
+      try {
+        res = await sovereign.functions.invoke('ai-advisor', { prompt });
+      } catch {
+        throw new Error('AI service unavailable');
+      }
+
+      if (!res || !res.response) throw new Error('Empty AI response');
 
       let aiData;
-      try {
-        const cleanResponse = res.response
-          .replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '')
-          .trim();
+      const cleanResponse = res.response
+        .replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '')
+        .trim();
 
-        const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          aiData = JSON.parse(jsonMatch[0]);
-        } else {
-          aiData = JSON.parse(cleanResponse);
-        }
-      } catch (e) {
-        console.warn('Failed to parse AI recommendations JSON:', e);
-        throw new Error('Invalid AI response format');
+      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        aiData = JSON.parse(jsonMatch[0]);
+      } else {
+        aiData = JSON.parse(cleanResponse);
       }
 
       const recommendedBarbers = (aiData.recommendations || [])
@@ -138,8 +138,7 @@ Return EXACTLY 3 barber recommendations with specific reasoning for each.`;
         .slice(0, 3);
 
       setRecommendations(recommendedBarbers);
-    } catch (error) {
-      console.error('AI Recommendation Error:', error);
+    } catch {
       const fallback = allBarbers
         .sort((a, b) => (b.rating || 0) - (a.rating || 0))
         .slice(0, 3);

@@ -264,7 +264,7 @@ export default function ProviderSettings() {
                                             </div>
                                             <div>
                                                 <p className="font-bold text-foreground">{svc.name}</p>
-                                                <p className="text-[11px] text-muted-foreground font-bold uppercase">{svc.duration_min}m • ${svc.price}</p>
+                                                <p className="text-[11px] text-muted-foreground font-bold uppercase">{svc.duration_minutes || svc.duration_min}m • ${svc.price}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

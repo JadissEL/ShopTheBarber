@@ -61,7 +61,7 @@ async function seed() {
         full_name: 'James St. Patrick',
         password_hash: passwordHash,
         role: 'barber',
-        avatar_url: 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=100&auto=format&fit=crop'
+        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
     }).returning().get();
 
     const user2 = await db.insert(schema.users).values({
@@ -91,7 +91,7 @@ async function seed() {
         'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800&auto=format&fit=crop',   // modern salon
         'https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=800&auto=format&fit=crop',   // barber station
         'https://images.unsplash.com/photo-1493256338650-d82f7acb2b38?w=800&auto=format&fit=crop',   // interior
-        'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=800&auto=format&fit=crop',   // barber at work
+        'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop',   // barbershop tools
         'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop',   // barbershop
         'https://images.unsplash.com/photo-1599356023803-1c0e1a2196e3?w=800&auto=format&fit=crop',   // grooming
         'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop',   // salon
@@ -115,7 +115,7 @@ async function seed() {
         location: 'Downtown',
         rating: 5.0,
         review_count: 88,
-        image_url: 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=400&auto=format&fit=crop'
+        image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop'
     });
 
     await db.insert(schema.barbers).values({
@@ -170,13 +170,13 @@ async function seed() {
             role: i <= 10 ? 'shop_owner' : 'barber',
             avatar_url: i % 2 === 0
                 ? 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop'
-                : 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=100&auto=format&fit=crop'
+                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
         });
     }
 
     // Distinct barber profile photos (Unsplash – barbers, grooming, professional portraits)
     const barberPhotos = [
-        'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=400&auto=format&fit=crop',   // barber at work
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop',   // man smiling
         'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=400&auto=format&fit=crop',   // stylist
         'https://images.unsplash.com/photo-1599356023803-1c0e1a2196e3?w=400&auto=format&fit=crop',   // man portrait
         'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop',     // professional
@@ -457,8 +457,8 @@ async function seed() {
     await db.insert(schema.jobs).values([
         { id: 'job1', title: 'Regional Operations Director', category: 'management', employer_type: 'company', company_id: 'co1', employment_type: 'full_time', location_type: 'hybrid', location_text: 'London, UK', description: 'Architect of scale for our high-end barbershop network.', responsibilities: 'P&L Management; Talent Logistics; Quality Assurance.', salary_min: 85000, salary_max: 110000, salary_currency: 'GBP', status: 'published', featured: true, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop' },
         { id: 'job2', title: 'Logistics Manager', category: 'logistics', employer_type: 'company', company_id: 'co2', employment_type: 'full_time', location_type: 'on_site', location_text: 'Paris', description: 'Supply chain and operations for premium retail.', status: 'published', featured: true, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800&auto=format&fit=crop' },
-        { id: 'job3', title: 'Senior Barber', category: 'grooming', employer_type: 'shop', shop_id: 's1', employment_type: 'full_time', location_type: 'on_site', location_text: 'Athens, Syntagma', description: 'Master barber for our flagship location.', status: 'published', created_by: 'admin' },
-        { id: 'job4', title: 'Brand Partnership Manager', category: 'branding', employer_type: 'company', company_id: 'co3', employment_type: 'full_time', location_type: 'hybrid', location_text: 'Los Angeles', salary_min: 120000, salary_max: 140000, status: 'published', created_by: 'admin' },
+        { id: 'job3', title: 'Senior Barber', category: 'grooming', employer_type: 'shop', shop_id: 's1', employment_type: 'full_time', location_type: 'on_site', location_text: 'Athens, Syntagma', description: 'Master barber for our flagship location.', status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop' },
+        { id: 'job4', title: 'Brand Partnership Manager', category: 'branding', employer_type: 'company', company_id: 'co3', employment_type: 'full_time', location_type: 'hybrid', location_text: 'Los Angeles', salary_min: 120000, salary_max: 140000, status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop' },
     ]);
 
     console.log('Seeding completed!');

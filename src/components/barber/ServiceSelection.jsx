@@ -42,7 +42,7 @@ export default function ServiceSelection({
 
     const getServiceDetails = (service) => {
         const data = service.data || service;
-        const baseMinutes = data.duration_min || parseInt((data.duration_text || '0').match(/\d+/)?.[0] || 0);
+        const baseMinutes = data.duration_minutes || data.duration_min || parseInt((data.duration_text || '0').match(/\d+/)?.[0] || 0);
         const basePrice = data.price || parseFloat((data.price_text || '0').replace(/[^0-9.]/g, '') || 0);
 
         if (staffConfig && staffConfig.length > 0) {

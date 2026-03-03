@@ -30,7 +30,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
         id: barber.id,
         name: barber.name || 'Unknown Barber',
         location: barber.location || 'Location Not Set',
-        image_url: barber.image_url || "https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=800&auto=format&fit=crop",
+        image_url: barber.image_url || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop",
         rating: barber.rating || 0,
         review_count: barber.review_count || 0,
         title: barber.title || 'Professional Barber',
@@ -88,7 +88,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                             width={100}
                             height={100}
                             aspectRatio="1/1"
-                            fallbackSrc={barberData.image_url}
+                            fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=80"
                             imgClassName="rounded-2xl"
                         />
                         <div className={isLight ? "absolute -bottom-2 -right-2 bg-white rounded-lg p-1 shadow border border-slate-200" : "absolute -bottom-2 -right-2 bg-primary rounded-lg p-1 shadow-sm border border-primary/30"}>
@@ -143,7 +143,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                             width={600}
                             height={800}
                             aspectRatio="3/4"
-                            fallbackSrc={barberData.image_url}
+                            fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=80"
                             className="w-full h-full"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />

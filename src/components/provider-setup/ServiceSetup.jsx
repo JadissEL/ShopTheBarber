@@ -126,7 +126,7 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
                         <div>
                             <h3 className="font-bold text-white">{service.name}</h3>
                             <div className="flex gap-3 text-sm text-gray-400">
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.duration_min || service.duration_text}m</span>
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.duration_minutes || service.duration_min || service.duration_text}m</span>
                                 <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> {service.price || service.price_text}</span>
                             </div>
                         </div>

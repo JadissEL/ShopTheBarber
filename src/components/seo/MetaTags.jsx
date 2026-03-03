@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 export const MetaTags = ({
   title,
   description = "Premium grooming services at your fingertips. Book appointments with top barbers near you.",
-  image = "https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=1200&auto=format&fit=crop",
+  image = "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop",
   type = "website",
   canonicalUrl = '' // Optional - falls back to current URL
 }) => {

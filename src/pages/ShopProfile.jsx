@@ -254,7 +254,7 @@ export default function ShopProfile() {
                                                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-xl">✂️</div>
                                                     <div>
                                                         <h3 className="font-black text-foreground mb-1">{sData.name}</h3>
-                                                        <p className="text-sm font-bold text-muted-foreground">{sData.duration_min || 30} mins</p>
+                                                        <p className="text-sm font-bold text-muted-foreground">{sData.duration_minutes || sData.duration_min || 30} mins</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">

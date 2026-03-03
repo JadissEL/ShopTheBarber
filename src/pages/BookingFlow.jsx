@@ -391,7 +391,7 @@ export default function BookingFlow() {
     if (!service) return { duration: 0, price: 0, name: '', category: '' };
 
     const serviceData = service.data || service;
-    const baseMinutes = serviceData.duration_min || parseInt((serviceData.duration_text || '0').match(/\d+/)?.[0] || 0);
+    const baseMinutes = serviceData.duration_minutes || serviceData.duration_min || parseInt((serviceData.duration_text || '0').match(/\d+/)?.[0] || 0);
     const baseAmount = serviceData.price || parseFloat((serviceData.price_text || '0').replace(/[^0-9.]/g, '') || 0);
 
     if (staffConfig?.configs) {
@@ -1148,7 +1148,7 @@ export default function BookingFlow() {
                       const categoryImages = {
                         'Hair': 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&fit=crop',
                         'Beard': 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&fit=crop',
-                        'Shave': 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=800&fit=crop',
+                        'Shave': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&fit=crop',
                         'Color': 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&fit=crop',
                         'Facial': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&fit=crop',
                         'Other': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&fit=crop'
@@ -1221,7 +1221,7 @@ export default function BookingFlow() {
                                 const isSelected = selectedServices.includes(service.id);
                                 const details = getServiceDetails(service.id);
 
-                                const baseDuration = serviceData.duration_min || parseInt((serviceData.duration_text || '0').match(/\d+/)?.[0] || 0);
+                                const baseDuration = serviceData.duration_minutes || serviceData.duration_min || parseInt((serviceData.duration_text || '0').match(/\d+/)?.[0] || 0);
                                 const basePrice = serviceData.price || parseFloat((serviceData.price_text || '0').replace(/[^0-9.]/g, '') || 0);
 
                                 return (
@@ -1948,7 +1948,7 @@ export default function BookingFlow() {
                             <div className="flex items-start gap-4 mb-4">
                               <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
                                 <OptimizedImage
-                                  src={(barber.data || barber).image_url || "https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=200&fit=crop"}
+                                  src={(barber.data || barber).image_url || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=200&fit=crop"}
                                   alt={(barber.data || barber).name}
                                   fill
                                   width={100}

@@ -63,7 +63,7 @@ export default function NextAppointmentCard({ booking }) {
             </div>
             <div className="shrink-0">
               <OptimizedImage
-                src={booking.barber_image || 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=100&auto=format&fit=crop'}
+                src={booking.barber_image || 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=100&auto=format&fit=crop'}
                 alt={booking.barber_name || 'Barber'}
                 className="w-14 h-14 rounded-full object-cover border-2 border-slate-200"
                 width={56}

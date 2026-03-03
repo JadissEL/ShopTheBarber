@@ -54,13 +54,12 @@ export const OptimizedImage = ({
   imgClassName = "",
   ...props
 }) => {
-  const [isLoading, setIsLoading] = useState(!priority);
-  const [error, setError] = useState(false);
+  const rawSrc = typeof src === 'string' && src.trim() && !src.startsWith('data:;') ? src : null;
+  const [isLoading, setIsLoading] = useState(!priority && !!rawSrc);
+  const [error, setError] = useState(!rawSrc);
   const [currentSrc, setCurrentSrc] = useState('');
   const imgRef = useRef(null);
 
-  // Generate optimized source; avoid empty or invalid URLs (e.g. data:;base64,=)
-  const rawSrc = typeof src === 'string' && src.trim() && !src.startsWith('data:;') ? src : null;
   const optimizedSrc = rawSrc ? getOptimizedUnsplashUrl(rawSrc, width, quality) : null;
 
   // Generate srcset for responsiveness if it's an Unsplash image

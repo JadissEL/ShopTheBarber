@@ -31,7 +31,7 @@ export default function FavoriteCard({ fav, onRemove }) {
       </div>
       <div className="md:w-[400px] bg-gray-100 relative order-1 md:order-2">
         <OptimizedImage
-          src={fav.barber_image || "https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=800&auto=format&fit=crop"} 
+          src={fav.barber_image || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop"} 
           alt={fav.barber_name} 
           className="w-full h-full object-cover"
           fill

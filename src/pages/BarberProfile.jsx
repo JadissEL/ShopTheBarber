@@ -315,7 +315,7 @@ export default function BarberProfile() {
             {/* Immersive Hero Section */}
             <div className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
                 <OptimizedImage
-                    src="https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=1600&auto=format&fit=crop"
+                    src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&auto=format&fit=crop"
                     className="w-full h-full"
                     fill
                     alt="Cover"
@@ -405,8 +405,8 @@ export default function BarberProfile() {
                                         <span className="text-xs text-muted-foreground block">Verified</span>
                                     </div>
                                     <div className="bg-gray-50 rounded-xl p-3 text-center border border-border">
-                                        <span className="block font-bold text-foreground">{displayBarber.experience}</span>
-                                        <span className="text-xs text-muted-foreground block">Experience</span>
+                                        <span className="block font-bold text-foreground">{displayBarber.review_count || 0}</span>
+                                        <span className="text-xs text-muted-foreground block">Reviews</span>
                                     </div>
                                 </div>
 
@@ -451,7 +451,7 @@ export default function BarberProfile() {
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     {[
                                         "https://images.unsplash.com/photo-1621605815971-fbc98d665033",
-                                        "https://images.unsplash.com/photo-1503951914290-93d32b06769c",
+                                        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70",
                                         "https://images.unsplash.com/photo-1599351431202-6e0c06e7838d",
                                         "https://images.unsplash.com/photo-1534643960519-11ad79bc19df",
                                         "https://images.unsplash.com/photo-1635273051932-a56976a4a49c",
@@ -460,7 +460,7 @@ export default function BarberProfile() {
                                         <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-gray-100 relative group cursor-pointer border border-border">
                                             <OptimizedImage
                                                 src={`${url}?w=400&auto=format&fit=crop`}
-                                                fallbackSrc="https://images.unsplash.com/photo-1621605815971-fbc98d6d4e84?w=400&fit=crop"
+                                                fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&fit=crop"
                                                 alt={`Portfolio Item ${i + 1}`}
                                                 fill
                                                 imgClassName="group-hover:scale-110 transition-transform duration-500"

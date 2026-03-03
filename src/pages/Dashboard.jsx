@@ -84,17 +84,30 @@ export default function Dashboard() {
     enabled: !!user
   });
 
-  const nextBooking = {
-    month: 'DEC',
-    day: '12',
-    time: '10:30',
-    time_label: 'Tomorrow at 10:30 AM · 45 mins',
-    duration_minutes: 45,
-    service_name: 'Signature Fade & Beard Sculpt',
-    barber_name: 'James St. Patrick',
-    barber_image: 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=100&auto=format&fit=crop',
-    shop_name: 'Mayfair, London'
-  };
+  const nextBooking = (() => {
+    const upcoming = (myBookings || [])
+      .filter(b => b.status !== 'cancelled' && b.status !== 'no_show' && new Date(b.start_time) > new Date())
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+    if (upcoming.length > 0) {
+      const b = upcoming[0];
+      const dt = new Date(b.start_time);
+      const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      const barber = barbers.find(br => br.id === b.barber_id);
+      const shop = shops.find(s => s.id === b.shop_id);
+      return {
+        month: months[dt.getMonth()],
+        day: String(dt.getDate()),
+        time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+        time_label: `${dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
+        duration_minutes: b.duration_at_booking || 30,
+        service_name: b.service_name || 'Appointment',
+        barber_name: barber?.name || 'Your Barber',
+        barber_image: barber?.image_url || 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=100&auto=format&fit=crop',
+        shop_name: shop?.name || shop?.location || ''
+      };
+    }
+    return null;
+  })();
 
   const isRefreshing = isUserFetching || isBarbersFetching || isShopsFetching;
   const lastBooking = myBookings && myBookings.length > 0 ? myBookings[0] : null;
@@ -115,7 +128,7 @@ export default function Dashboard() {
   };
 
   const displayBarbers = barbers.length > 0 ? barbers : [
-    { id: '1', name: 'James St. Patrick', rating: 5.0, review_count: 88, location: 'Tribeca', image_url: 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=200&fit=crop' },
+    { id: '1', name: 'James St. Patrick', rating: 5.0, review_count: 88, location: 'Tribeca', image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop' },
     { id: '2', name: 'Tasha Green', rating: 4.9, review_count: 124, location: 'SoHo', image_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=200&fit=crop' },
     { id: '3', name: 'Marcus Brooks', rating: 4.8, review_count: 56, location: 'Brooklyn', image_url: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=200&fit=crop' },
   ];
@@ -261,7 +274,7 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {(services.length > 0 ? services.slice(0, 4) : [
-                { name: 'Hot Towel Shave', category: 'Relaxing add-on', price: 25, image_url: 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=400' },
+                { name: 'Hot Towel Shave', category: 'Relaxing add-on', price: 25, image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400' },
                 { name: 'Scalp Treatment', category: 'Deep cleansing', price: 35, image_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=400' },
                 { name: 'Beard Sculpting', category: 'Precision detail', price: 30, image_url: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400' },
                 { name: 'Gray Blending', category: 'Natural look', price: 45, image_url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400' }

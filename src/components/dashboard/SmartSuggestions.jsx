@@ -9,7 +9,7 @@ const suggestions = [
     id: 1,
     title: 'Hot Towel Shave',
     subtitle: 'Based on your last visit',
-    image_url: 'https://images.unsplash.com/photo-1503951914290-93d32b06769c?w=400&auto=format&fit=crop',
+    image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&auto=format&fit=crop',
     link: 'Explore?q=Hot+Towel+Shave',
   },
   {
