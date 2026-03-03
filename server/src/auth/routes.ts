@@ -109,11 +109,12 @@ export async function authRoutes(fastify: FastifyInstance) {
         } catch (e: any) {
             fastify.log.error({ message: e?.message, code: e?.code, stack: e?.stack }, 'REGISTER catch');
             if (e instanceof z.ZodError) {
-                const first = e.errors[0];
+                const issues = e.issues || e.errors || [];
+                const first = issues[0];
                 const message = first
-                    ? `${first.path.join('.')}: ${first.message}`
+                    ? `${(first.path || []).join('.')}: ${first.message}`
                     : 'Validation failed';
-                return reply.status(400).send({ error: message, details: e.errors });
+                return reply.status(400).send({ error: message, details: issues });
             }
             if (e?.code === 'SQLITE_CONSTRAINT_UNIQUE' || (e?.message && /UNIQUE|unique/.test(e.message))) {
                 return reply.status(409).send({ error: 'Email already registered' });
@@ -185,7 +186,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         } catch (e: any) {
             fastify.log.error({ message: e?.message, code: e?.code, stack: e?.stack }, 'LOGIN catch');
             if (e instanceof z.ZodError) {
-                return reply.status(400).send({ error: e.errors[0]?.message || 'Invalid input' });
+                const issues = e.issues || e.errors || [];
+                return reply.status(400).send({ error: issues[0]?.message || 'Invalid input' });
             }
             const msg = (e?.message || '').toLowerCase();
             const schemaError = msg.includes('no such table') || msg.includes('sqlite') || String(e?.code ?? '').toLowerCase().startsWith('sqlite');

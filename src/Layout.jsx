@@ -3,6 +3,7 @@ import { APP_ZONES, getZoneFromPath, NAV_MENUS, ZONE_BRANDING } from '@/componen
 import PublicLayout from '@/components/layout/PublicLayout';
 import AppLayout from '@/components/layout/AppLayout';
 import ClientLayout from '@/components/layout/ClientLayout';
+import ProviderDesktopSidebar from '@/components/layout/ProviderDesktopSidebar';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryOptimizer } from '@/components/QueryOptimizer';
@@ -56,6 +57,13 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
                   <GlobalNavigation />
                   {zone === APP_ZONES.CLIENT ? (
                     <ClientLayout>{children}</ClientLayout>
+                  ) : zone === APP_ZONES.PROVIDER ? (
+                    <div className="flex flex-1 min-h-0">
+                      <ProviderDesktopSidebar />
+                      <main id="main-content" className="flex-1 overflow-auto">
+                        {children}
+                      </main>
+                    </div>
                   ) : (
                     <main id="main-content" className="flex-1">
                       {children}
