@@ -4,6 +4,7 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import AppLayout from '@/components/layout/AppLayout';
 import ClientLayout from '@/components/layout/ClientLayout';
 import ProviderDesktopSidebar from '@/components/layout/ProviderDesktopSidebar';
+import ProviderBottomNav from '@/components/layout/ProviderBottomNav';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryOptimizer } from '@/components/QueryOptimizer';
@@ -60,9 +61,10 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
                   ) : zone === APP_ZONES.PROVIDER ? (
                     <div className="flex flex-1 min-h-0">
                       <ProviderDesktopSidebar />
-                      <main id="main-content" className="flex-1 overflow-auto">
+                      <main id="main-content" className="flex-1 overflow-auto pb-20 lg:pb-0">
                         {children}
                       </main>
+                      <ProviderBottomNav />
                     </div>
                   ) : (
                     <main id="main-content" className="flex-1">

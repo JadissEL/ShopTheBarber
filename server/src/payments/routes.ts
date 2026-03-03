@@ -25,7 +25,7 @@ if (stripeApiKey && stripeApiKey.startsWith('sk_')) {
             typescript: true,
         });
     } catch (e) {
-        console.warn('Failed to initialize Stripe client. Payment features will fail.', e);
+        // Stripe init failed — payment features will be unavailable
     }
 }
 

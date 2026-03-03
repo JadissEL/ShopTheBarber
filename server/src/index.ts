@@ -120,8 +120,12 @@ fastify.register(jobsRoutes);
 import { applicantsRoutes } from './applicants/routes';
 fastify.register(applicantsRoutes);
 
-// 1. Validate Booking Availability (Migrated from functions/validateBookingAvailability.ts)
+// 1. Validate Booking Availability (rate-limited: 30 per minute per IP)
 fastify.post('/api/functions/validate-availability', async (request, reply) => {
+    const ip = request.ip || 'unknown';
+    if (!checkIpRateLimit(`avail:${ip}`, 30, 60_000)) {
+        return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
+    }
     const params = request.body as any;
 
     // Parse start_datetime to Date object if it's a string
@@ -799,13 +803,14 @@ entities.forEach(entity => {
         });
     }
 
-    // UPDATE
+    // UPDATE — ownership check for both AUTH_REQUIRED and AUTH_WRITE entities
     const writeRouteOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
+    const needsOwnershipCheck = requireAuth || AUTH_WRITE_ENTITIES.has(entity);
     fastify.patch(`/api/${plural}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
         const data = validateEntityBody(request.body, reply);
         if (!data) return;
-        if (requireAuth) {
+        if (needsOwnershipCheck) {
             const [existing] = await db.select().from(table).where(eq(table.id, id));
             if (!existing || !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any)))
                 return reply.status(404).send({ error: 'Not found' });
@@ -813,10 +818,10 @@ entities.forEach(entity => {
         return await db.update(table).set(data).where(eq(table.id, id)).returning().get();
     });
 
-    // DELETE
+    // DELETE — ownership check for both AUTH_REQUIRED and AUTH_WRITE entities
     fastify.delete(`/api/${plural}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
-        if (requireAuth) {
+        if (needsOwnershipCheck) {
             const [existing] = await db.select().from(table).where(eq(table.id, id));
             if (!existing || !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any)))
                 return reply.status(404).send({ error: 'Not found' });

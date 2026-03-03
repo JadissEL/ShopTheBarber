@@ -72,6 +72,47 @@ export async function getEntityScopeCondition(
             if (barberIds.length === 0) return eq(table.client_id, userId);
             return or(eq(table.client_id, userId), inArray(table.barber_id, barberIds))!;
         }
+        case 'barber':
+            return eq(table.user_id, userId);
+        case 'shop':
+            return eq(table.owner_id, userId);
+        case 'service': {
+            const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, userId));
+            const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, userId));
+            const parts: SQL[] = [];
+            const barberIds = barberRows.map(r => r.id).filter(Boolean) as string[];
+            const shopIds = shopRows.map(r => r.id).filter(Boolean) as string[];
+            if (barberIds.length > 0) parts.push(inArray(table.barber_id, barberIds));
+            if (shopIds.length > 0) parts.push(inArray(table.shop_id, shopIds));
+            if (parts.length === 0) return eq(table.shop_id, '__none__');
+            return or(...parts)!;
+        }
+        case 'shift':
+        case 'time_block': {
+            const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, userId));
+            const barberIds = barberRows.map(r => r.id).filter(Boolean) as string[];
+            if (barberIds.length === 0) return eq(table.barber_id, '__none__');
+            return inArray(table.barber_id, barberIds);
+        }
+        case 'shop_member': {
+            const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, userId));
+            const shopIds = shopRows.map(r => r.id).filter(Boolean) as string[];
+            if (shopIds.length === 0) return eq(table.user_id, userId);
+            return or(eq(table.user_id, userId), inArray(table.shop_id, shopIds))!;
+        }
+        case 'review':
+            return eq(table.reviewer_id, userId);
+        case 'product': {
+            const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, userId));
+            const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, userId));
+            const parts: SQL[] = [];
+            const barberIds = barberRows.map(r => r.id).filter(Boolean) as string[];
+            const shopIds = shopRows.map(r => r.id).filter(Boolean) as string[];
+            if (barberIds.length > 0) parts.push(inArray(table.barber_id, barberIds));
+            if (shopIds.length > 0) parts.push(inArray(table.shop_id, shopIds));
+            if (parts.length === 0) return eq(table.shop_id, '__none__');
+            return or(...parts)!;
+        }
         default:
             return null;
     }
@@ -123,6 +164,32 @@ export async function rowInScope(entity: string, table: any, row: Record<string,
             if (row.client_id === user.id) return true;
             const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, user.id));
             return barberRows.some(b => b.id === row.barber_id);
+        }
+        case 'barber':
+            return row.user_id === user.id;
+        case 'shop':
+            return row.owner_id === user.id;
+        case 'service': {
+            const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, user.id));
+            const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, user.id));
+            return barberRows.some(b => b.id === row.barber_id) || shopRows.some(s => s.id === row.shop_id);
+        }
+        case 'shift':
+        case 'time_block': {
+            const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, user.id));
+            return barberRows.some(b => b.id === row.barber_id);
+        }
+        case 'shop_member': {
+            if (row.user_id === user.id) return true;
+            const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, user.id));
+            return shopRows.some(s => s.id === row.shop_id);
+        }
+        case 'review':
+            return row.reviewer_id === user.id;
+        case 'product': {
+            const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, user.id));
+            const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, user.id));
+            return barberRows.some(b => b.id === row.barber_id) || shopRows.some(s => s.id === row.shop_id);
         }
         default:
             return false;
