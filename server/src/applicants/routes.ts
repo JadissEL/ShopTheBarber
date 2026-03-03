@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../db';
 import * as schema from '../db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 
 export async function applicantsRoutes(fastify: FastifyInstance) {
     const getUserId = async (request: any): Promise<string | null> => {
@@ -91,26 +91,38 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         }
     });
 
-    /** GET /api/applicant/applications — my applications */
+    /** GET /api/applicant/applications — my applications (batch-enriched) */
     fastify.get('/api/applicant/applications', async (request, reply) => {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
             const list = await db.select().from(schema.job_applications).where(eq(schema.job_applications.user_id, userId)).orderBy(desc(schema.job_applications.created_at));
-            const withJob = await Promise.all(list.map(async (app) => {
-                const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, app.job_id));
+            if (list.length === 0) return [];
+
+            const jobIds = [...new Set(list.map(a => a.job_id))];
+            const jobs = await db.select().from(schema.jobs).where(sql`${schema.jobs.id} IN (${sql.join(jobIds.map(id => sql`${id}`), sql`, `)})`);
+            const jobMap = new Map(jobs.map(j => [j.id, j]));
+
+            const shopIds = [...new Set(jobs.filter(j => j.employer_type === 'shop' && j.shop_id).map(j => j.shop_id!))];
+            const companyIds = [...new Set(jobs.filter(j => j.employer_type === 'company' && j.company_id).map(j => j.company_id!))];
+            const shopMap = new Map<string, string>();
+            const companyMap = new Map<string, string>();
+            if (shopIds.length > 0) {
+                const shops = await db.select({ id: schema.shops.id, name: schema.shops.name }).from(schema.shops).where(sql`${schema.shops.id} IN (${sql.join(shopIds.map(id => sql`${id}`), sql`, `)})`);
+                for (const s of shops) shopMap.set(s.id, s.name);
+            }
+            if (companyIds.length > 0) {
+                const cos = await db.select({ id: schema.companies.id, name: schema.companies.name }).from(schema.companies).where(sql`${schema.companies.id} IN (${sql.join(companyIds.map(id => sql`${id}`), sql`, `)})`);
+                for (const c of cos) companyMap.set(c.id, c.name);
+            }
+
+            return list.map(app => {
+                const job = jobMap.get(app.job_id);
                 let employer_name: string | null = null;
-                if (job?.employer_type === 'shop' && job.shop_id) {
-                    const [shop] = await db.select({ name: schema.shops.name }).from(schema.shops).where(eq(schema.shops.id, job.shop_id));
-                    if (shop) employer_name = shop.name;
-                }
-                if (job?.employer_type === 'company' && job.company_id) {
-                    const [co] = await db.select({ name: schema.companies.name }).from(schema.companies).where(eq(schema.companies.id, job.company_id));
-                    if (co) employer_name = co.name;
-                }
+                if (job?.employer_type === 'shop' && job.shop_id) employer_name = shopMap.get(job.shop_id) ?? null;
+                if (job?.employer_type === 'company' && job.company_id) employer_name = companyMap.get(job.company_id) ?? null;
                 return { ...app, job_title: job?.title, employer_name };
-            }));
-            return withJob;
+            });
         } catch (e: any) {
             fastify.log.error(e);
             return reply.status(500).send({ error: e.message });
@@ -200,7 +212,7 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
     /** GET /api/applicant/saved — my saved jobs */
     fastify.get('/api/applicant/saved', async (request, reply) => {
         const userId = await getUserId(request);
-        if (!userId) return reply.status(401).send({ error: [] });
+        if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
             const rows = await db.select().from(schema.saved_jobs).where(eq(schema.saved_jobs.user_id, userId)).orderBy(desc(schema.saved_jobs.created_at));
             const withJob = await Promise.all(rows.map(async (s) => {

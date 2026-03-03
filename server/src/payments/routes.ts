@@ -162,22 +162,33 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // Create Checkout Session (booking)
+    // Create Checkout Session (booking) — requires auth + booking ownership
     fastify.post('/api/functions/create-checkout-session', async (request, reply) => {
         try {
+            let userId: string;
+            try {
+                await (request as any).jwtVerify();
+                userId = ((request as any).user as { id: string }).id;
+            } catch {
+                return reply.status(401).send({ error: 'Sign in to pay for a booking' });
+            }
+
             const { bookingId } = request.body as { bookingId: string };
 
             if (!bookingId) {
                 return reply.status(400).send({ error: 'bookingId is required' });
             }
 
-            // Fetch booking
             const booking = await db.query.bookings.findFirst({
                 where: eq(schema.bookings.id, bookingId)
             });
 
             if (!booking) {
                 return reply.status(404).send({ error: 'Booking not found' });
+            }
+
+            if (booking.client_id !== userId) {
+                return reply.status(403).send({ error: 'You can only pay for your own bookings' });
             }
 
             if (!stripe) {
@@ -232,8 +243,17 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // Manual Payout Status Check (Example for Admin)
+    // Stripe balance — admin only
     fastify.get('/api/payments/balance', async (request, reply) => {
+        try {
+            await (request as any).jwtVerify();
+        } catch {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+        const user = (request as any).user as { id: string; role?: string };
+        if (user?.role !== 'admin') {
+            return reply.status(403).send({ error: 'Admin access required' });
+        }
         if (!stripe) {
             return reply.status(503).send({ error: STRIPE_KEY_ERROR });
         }
