@@ -12,11 +12,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { PageLoading } from '@/components/ui/page-loading';
+import { PageError } from '@/components/ui/page-error';
 
 export default function GlobalFinancials() {
   const [userSearchTerm, setUserSearchTerm] = useState('');
 
-  const { data: financialData } = useQuery({
+  const { data: financialData, isLoading: isFinLoading, isError: isFinError, refetch: refetchFin } = useQuery({
     queryKey: ['admin-financials'],
     queryFn: () => sovereign.functions.invoke('financial-analytics', {})
   });
@@ -78,6 +81,9 @@ export default function GlobalFinancials() {
 
   const overview = financialData?.overview || {};
   const chartData = financialData?.chartData || [];
+
+  if (isFinLoading) return <PageLoading message="Loading financial data..." />;
+  if (isFinError) return <PageError title="Failed to load financials" onRetry={refetchFin} />;
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">

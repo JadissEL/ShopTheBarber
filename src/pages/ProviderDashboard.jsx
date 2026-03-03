@@ -13,9 +13,10 @@ import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { downloadCSV, prepareBookingsForExport } from '@/components/analytics/ExportUtils';
 import ReviewCard from '@/components/ui/review-card';
+import { PageLoading } from '@/components/ui/page-loading';
 
 export default function ProviderDashboard() {
-    const { data: user } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
+    const { data: user, isLoading: isUserLoading } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
     const [reviewPage, _setReviewPage] = useState(1);
     const [ratingFilter, _setRatingFilter] = useState(null);
     const pageSize = 5;
@@ -82,6 +83,8 @@ export default function ProviderDashboard() {
         downloadCSV(dataToExport, `shop_report_${format(new Date(), 'yyyy-MM-dd')}.csv`);
         toast.success("Analytics report exported");
     };
+
+    if (isUserLoading) return <PageLoading message="Loading dashboard..." />;
 
     return (
         <div className="min-h-screen bg-background pb-20 font-sans">

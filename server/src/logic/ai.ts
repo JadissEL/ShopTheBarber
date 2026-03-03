@@ -29,15 +29,12 @@ export async function askLocalAI(prompt: string, context: string = "") {
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Local AI Error Response:', errorText);
             throw new Error(`Local AI request failed: ${response.statusText}`);
         }
 
         const data = await response.json();
         return data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
-    } catch (error) {
-        console.error('Local AI Connection Error:', error);
+    } catch {
         return "I'm currently offline. Please check if your local AI server (LM Studio/Grok) is running on port 1234.";
     }
 }

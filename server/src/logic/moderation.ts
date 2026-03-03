@@ -1,6 +1,7 @@
 import { db } from '../db';
 import * as schema from '../db/schema';
 import { sendEmail } from './email';
+import { logger } from '../lib/logger';
 
 /**
  * User Moderation Notification Logic
@@ -123,7 +124,7 @@ export async function notifyUserOfModerationAction(
         });
         emailSent = emailResult.success;
     } catch (emailErr) {
-        console.warn(`Email notification failed for user ${user_id}:`, emailErr);
+        logger.warn(`Email notification failed for user ${user_id}`);
     }
 
     // 2. CREATE IN-APP NOTIFICATION
@@ -138,7 +139,7 @@ export async function notifyUserOfModerationAction(
             is_read: false
         });
     } catch (notifError) {
-        console.warn(`In-app notification failed for user ${user_id}:`, notifError);
+        logger.warn(`In-app notification failed for user ${user_id}`);
     }
 
     // 3. CREATE AUDIT LOG
@@ -162,10 +163,10 @@ export async function notifyUserOfModerationAction(
             })
         });
     } catch (auditError) {
-        console.warn(`Audit log failed for moderation action on user ${user_id}:`, auditError);
+        logger.warn(`Audit log failed for moderation action on user ${user_id}`);
     }
 
-    console.log(`[MODERATION] ${action.toUpperCase()} notification sent to ${user_email}`);
+    logger.info(`Moderation ${action.toUpperCase()} notification sent to ${user_email}`);
 
     return {
         status: 'NOTIFIED',

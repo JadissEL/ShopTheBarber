@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import { logger } from '../lib/logger';
 
 dotenv.config();
 
@@ -16,11 +17,11 @@ export async function sendEmail({
     template: 'confirmation' | 'cancellation' | 'welcome' | 'order_confirmation',
     data: any
 }) {
-    console.log(`[EMAIL] Preparing ${template} email for: ${to}`);
+    logger.info(`Preparing ${template} email for: ${to}`);
 
     if (!resend) {
-        console.warn('[EMAIL-WARN] RESEND_API_KEY not configured. Logging email data instead:');
-        console.log(JSON.stringify({ to, subject, template, data }, null, 2));
+        logger.warn('RESEND_API_KEY not configured. Email not sent.');
+        logger.info('Email data', { to, subject, template, data });
         return { success: true, mocked: true };
     }
 
@@ -110,15 +111,15 @@ export async function sendEmail({
         });
 
         if (error) {
-            console.error('[EMAIL-ERROR]', error);
+            logger.error('Email send failed', error);
             return { success: false, error: error.message };
         }
 
-        console.log('[EMAIL-SUCCESS]', resendData?.id);
+        logger.info(`Email sent: ${resendData?.id}`);
         return { success: true, id: resendData?.id };
 
     } catch (err: any) {
-        console.error('[EMAIL-EXCEPTION]', err);
+        logger.error('Email exception', err);
         return { success: false, error: err.message };
     }
 }

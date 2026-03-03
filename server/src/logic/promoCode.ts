@@ -179,7 +179,7 @@ export async function validatePromoCode(
             })
         });
     } catch (auditError) {
-        console.warn(`Audit log failed for promo code ${normalizedCode}:`, auditError);
+        // audit log failure is non-blocking
     }
 
     // RETURN VALID DISCOUNT

@@ -53,16 +53,20 @@ export default function SignIn() {
                 toast.success("Account created successfully!");
             }
 
-            // Redirect back to the page the user came from (e.g. booking flow) or Dashboard
             const urlParams = new URLSearchParams(window.location.search);
-            const returnPath = urlParams.get('return'); // from redirectToLogin (e.g. /BookingFlow?barberId=...)
-            const next = urlParams.get('next');        // legacy: page name only
+            const returnPath = urlParams.get('return');
+            const next = urlParams.get('next');
             if (returnPath && returnPath.startsWith('/')) {
                 window.location.href = returnPath;
             } else if (next) {
                 window.location.href = createPageUrl(next);
             } else {
-                window.location.href = createPageUrl('Dashboard');
+                const me = await sovereign.auth.me();
+                const userRole = me?.role || formData.role || 'client';
+                const dashTarget = userRole === 'admin' ? 'GlobalFinancials'
+                    : ['barber', 'shop_owner'].includes(userRole) ? 'ProviderDashboard'
+                    : 'Dashboard';
+                window.location.href = createPageUrl(dashTarget);
             }
 
         } catch (err) {
