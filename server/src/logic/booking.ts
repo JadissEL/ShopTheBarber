@@ -111,8 +111,6 @@ export async function createBookingLogic(payload: any) {
         end_time = addMinutes(start_time, duration);
 
     } catch (e) {
-        console.error("Date parsing failed:", e);
-        // Fallback: If payload has ISO start_time/end_time? NO, it doesn't.
         throw new Error(`Invalid date/time format: ${payload.date_text} ${payload.time_text}`);
     }
 
@@ -168,11 +166,8 @@ export async function createBookingLogic(payload: any) {
                 location: payload.location || 'At the Shop',
                 price: `${payload.price_at_booking} EUR`
             }
-        }).catch(err => console.error('Failed to send booking email:', err));
+        }).catch(() => { /* email failure is non-blocking */ });
     }
-
-    // 7. Audit Log
-    console.log(`[AUDIT] Booking ${booking.id} created.`);
 
     return booking;
 }

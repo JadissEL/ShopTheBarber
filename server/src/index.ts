@@ -27,19 +27,24 @@ fastify.register(cors, {
     origin: process.env.FRONTEND_URL || true,
     credentials: true
 });
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret && process.env.NODE_ENV === 'production') {
+    console.error('FATAL: JWT_SECRET is not set. Refusing to start in production without a secure secret.');
+    process.exit(1);
+}
 fastify.register(jwt, {
-    secret: process.env.JWT_SECRET || 'supersecret-shopthebarber'
+    secret: jwtSecret || 'dev-only-insecure-secret-do-not-use-in-production',
+    sign: { expiresIn: '7d' }
 });
 
-// --- HELPER FUNCTIONS ---
-function parseTimeString(timeStr: string) {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
-}
-
-/** Entities that require JWT for all access (list/get/create/update/delete). Prevents unauthenticated access to user-specific data. */
+/** Entities that require JWT for all access (list/get/create/update/delete). */
 const AUTH_REQUIRED_ENTITIES = new Set([
     'booking', 'loyalty_profile', 'loyalty_transaction', 'message', 'notification', 'payout', 'favorite', 'dispute', 'audit_log', 'waiting_list_entry'
+]);
+
+/** Entities that allow public READ but require auth for write operations (create/update/delete). */
+const AUTH_WRITE_ENTITIES = new Set([
+    'barber', 'shop', 'service', 'shift', 'time_block', 'shop_member', 'pricing_rule', 'product', 'staff_service_config', 'review'
 ]);
 
 async function requireAuthPreHandler(request: any, reply: any) {
@@ -635,7 +640,7 @@ entities.forEach(entity => {
     if (entity === 'brand_collection') table = schema.brand_collections;
 
     if (!table) {
-        console.warn(`Could not find table for entity: ${entity}`);
+        fastify.log.warn(`Could not find table for entity: ${entity}`);
         return;
     }
 
@@ -732,14 +737,16 @@ entities.forEach(entity => {
 
     // CREATE (Custom logic for bookings and reviews, otherwise generic)
     if (entity !== 'booking' && entity !== 'review') {
-        fastify.post(`/api/${plural}`, routeOpts, async (request) => {
+        const writeOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
+        fastify.post(`/api/${plural}`, writeOpts, async (request) => {
             const data = request.body as any;
             return await db.insert(table).values(data).returning().get();
         });
     }
 
     // UPDATE
-    fastify.patch(`/api/${plural}/:id`, routeOpts, async (request, reply) => {
+    const writeRouteOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
+    fastify.patch(`/api/${plural}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
         const data = request.body as any;
         if (requireAuth) {
@@ -751,7 +758,7 @@ entities.forEach(entity => {
     });
 
     // DELETE
-    fastify.delete(`/api/${plural}/:id`, routeOpts, async (request, reply) => {
+    fastify.delete(`/api/${plural}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
         if (requireAuth) {
             const [existing] = await db.select().from(table).where(eq(table.id, id));
@@ -778,7 +785,7 @@ const start = async () => {
     try {
         const port = Number(process.env.PORT) || 3001;
         await fastify.listen({ port, host: '0.0.0.0' });
-        console.log(`Sovereign Backend running on port ${port}`);
+        fastify.log.info(`Sovereign Backend running on port ${port}`);
     } catch (err) {
         fastify.log.error(err);
         process.exit(1);

@@ -21,16 +21,11 @@ export default function RealTimeNotifications() {
   useEffect(() => {
     if (!userId) return;
 
-    console.log("Subscribing to notifications for user:", userId);
-
     const unsubscribe = sovereign.entities.Notification.subscribe((event) => {
-      // We only care about CREATE events for NEW notifications
       if (event.type === 'create') {
         const notification = event.data;
 
-        // Filter for current user
         if (notification.user_id === userId) {
-          console.log("New notification received:", notification);
 
           // 1. Invalidate Query to update UI counts
           queryClient.invalidateQueries(['user-notifications']);

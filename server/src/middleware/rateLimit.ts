@@ -81,7 +81,7 @@ export async function enforceBookingRateLimit(
     if (ip_address) {
         // This would ideally use Redis or a proper rate limiter
         // For MVP, we skip the sub-second IP check
-        console.log(`[Rate Limit] IP check skipped for ${ip_address} - implement Redis for production`);
+        // IP-based rapid-fire check requires Redis; skipped for SQLite-only deployments
     }
 
     // SUCCESS - Rate limit check passed

@@ -30,7 +30,7 @@ export default function RouteGuard() {
     queryKey: ['isManager', user?.id],
     queryFn: async () => {
         if (!user) return false;
-        const members = await sovereign.entities.ShopMember.filter({ barber_id: user.id });
+        const members = await sovereign.entities.ShopMember.filter({ user_id: user.id });
         return members.some(m => ['owner', 'manager'].includes(m.role));
     },
     enabled: !!user
