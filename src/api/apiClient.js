@@ -207,11 +207,29 @@ export const sovereign = {
             }
             return data;
         },
+        refresh: async () => {
+            const headers = getAuthHeaders();
+            if (!headers.Authorization) return null;
+            try {
+                const res = await fetch(`${BASE_URL}/auth/refresh`, {
+                    method: 'POST',
+                    headers
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.token) localStorage.setItem('sovereign_token', data.token);
+                    return data;
+                }
+                return null;
+            } catch {
+                return null;
+            }
+        },
         logout: async () => {
             localStorage.removeItem('sovereign_token');
             try {
                 await fetch(`${BASE_URL}/auth/logout`, { method: 'POST' });
-            } catch (e) { }
+            } catch { }
             return { success: true };
         },
         redirectToLogin: (returnPath) => {

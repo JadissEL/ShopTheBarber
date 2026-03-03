@@ -222,9 +222,31 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
     });
 
+    // REFRESH — exchange a valid (or recently-expired) token for a fresh one
+    fastify.post('/api/auth/refresh', async (request, reply) => {
+        try {
+            await request.jwtVerify();
+            const payload = request.user as { id: string; email?: string; role?: string };
+
+            const user = await db.query.users.findFirst({
+                where: eq(schema.users.id, payload.id)
+            });
+            if (!user) return reply.status(401).send({ error: 'User not found' });
+
+            const newToken = fastify.jwt.sign({
+                id: user.id,
+                email: String(user.email ?? ''),
+                role: user.role ?? 'client'
+            });
+
+            return { token: newToken, user: sanitizeUser(user as Record<string, unknown>) };
+        } catch {
+            return reply.status(401).send({ error: 'Token expired or invalid. Please sign in again.' });
+        }
+    });
+
     // LOGOUT
     fastify.post('/api/auth/logout', async (request, reply) => {
-        // Client-side token removal is sufficient for JWT, but we return success
         return { success: true };
     });
 }

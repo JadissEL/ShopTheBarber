@@ -5,7 +5,8 @@ import jwt from '@fastify/jwt';
 import dotenv from 'dotenv';
 import { db } from './db';
 import * as schema from './db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, count } from 'drizzle-orm';
+import { z } from 'zod';
 
 import { validateBooking, createBookingLogic } from './logic/booking';
 import { handleStripeWebhook } from './webhooks/stripe';
@@ -142,8 +143,26 @@ fastify.post('/api/functions/validate-availability', async (request, reply) => {
     };
 });
 
-// 1.1 AI Style Advisor
+// Simple in-memory rate limiter for public function endpoints
+const ipRateLimits = new Map<string, { count: number; resetAt: number }>();
+function checkIpRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
+    const now = Date.now();
+    const entry = ipRateLimits.get(ip);
+    if (!entry || now > entry.resetAt) {
+        ipRateLimits.set(ip, { count: 1, resetAt: now + windowMs });
+        return true;
+    }
+    if (entry.count >= maxRequests) return false;
+    entry.count++;
+    return true;
+}
+
+// 1.1 AI Style Advisor (rate-limited: 10 requests per minute per IP)
 fastify.post('/api/functions/ai-advisor', async (request, reply) => {
+    const ip = request.ip || 'unknown';
+    if (!checkIpRateLimit(`ai:${ip}`, 10, 60_000)) {
+        return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
+    }
     const { prompt, context } = request.body as { prompt: string, context?: string };
     if (!prompt) return reply.status(400).send({ error: 'Prompt is required' });
 
@@ -482,8 +501,12 @@ fastify.post('/api/webhooks/stripe', async (request, reply) => {
     }
 });
 
-// 8. Promo Code Validation (Migrated)
+// 8. Promo Code Validation (rate-limited: 20 per minute per IP)
 fastify.post('/api/functions/validate-promo-code', async (request, reply) => {
+    const ip = request.ip || 'unknown';
+    if (!checkIpRateLimit(`promo:${ip}`, 20, 60_000)) {
+        return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
+    }
     try {
         const result = await validatePromoCode(request.body as any);
         return result;
@@ -644,17 +667,21 @@ entities.forEach(entity => {
         return;
     }
 
-    // LIST
+    // LIST (with optional server-side pagination via ?limit=&offset=)
     fastify.get(`/api/${plural}`, routeOpts, async (request, reply) => {
         try {
             if (!table) throw new Error(`Table not found for entity: ${entity}`);
+            const qs = request.query as { limit?: string; offset?: string };
+            const limit = Math.min(Math.max(parseInt(qs.limit || '200', 10) || 200, 1), 1000);
+            const offset = Math.max(parseInt(qs.offset || '0', 10) || 0, 0);
+
             let query = db.select().from(table);
             if (requireAuth) {
                 const user = request.user as { id: string; role?: string };
                 const scopeCond = await getEntityScopeCondition(entity, table, user);
                 if (scopeCond) query = query.where(scopeCond) as any;
             }
-            const rows = await query;
+            const rows = await (query as any).limit(limit).offset(offset);
             return Array.isArray(rows) ? rows : [];
         } catch (e: any) {
             fastify.log.error(`Error listing ${entity}: ${e.message}`);
@@ -735,12 +762,40 @@ entities.forEach(entity => {
         return await dbQuery.limit(limit).offset(offset);
     });
 
+    // Validate body: strip unknown keys, reject non-object bodies
+    const validateEntityBody = (body: unknown, reply: any): Record<string, unknown> | null => {
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+            reply.status(400).send({ error: 'Request body must be a JSON object' });
+            return null;
+        }
+        const tableColumns = Object.keys(table);
+        const cleaned: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+            if (tableColumns.includes(key) && key !== 'id') {
+                cleaned[key] = value;
+            }
+        }
+        if (Object.keys(cleaned).length === 0) {
+            reply.status(400).send({ error: 'No valid fields provided' });
+            return null;
+        }
+        return cleaned;
+    };
+
     // CREATE (Custom logic for bookings and reviews, otherwise generic)
     if (entity !== 'booking' && entity !== 'review') {
         const writeOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
-        fastify.post(`/api/${plural}`, writeOpts, async (request) => {
-            const data = request.body as any;
-            return await db.insert(table).values(data).returning().get();
+        fastify.post(`/api/${plural}`, writeOpts, async (request, reply) => {
+            const data = validateEntityBody(request.body, reply);
+            if (!data) return;
+            try {
+                return await db.insert(table).values(data).returning().get();
+            } catch (e: any) {
+                if (e?.message?.includes('UNIQUE') || e?.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+                    return reply.status(409).send({ error: 'Duplicate entry' });
+                }
+                throw e;
+            }
         });
     }
 
@@ -748,7 +803,8 @@ entities.forEach(entity => {
     const writeRouteOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
     fastify.patch(`/api/${plural}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
-        const data = request.body as any;
+        const data = validateEntityBody(request.body, reply);
+        if (!data) return;
         if (requireAuth) {
             const [existing] = await db.select().from(table).where(eq(table.id, id));
             if (!existing || !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any)))
