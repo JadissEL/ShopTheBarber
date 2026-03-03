@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
@@ -23,6 +23,7 @@ export const shops = sqliteTable("shops", {
     description: text("description"),
     owner_id: text("owner_id").references(() => users.id),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const barbers = sqliteTable("barbers", {
@@ -38,7 +39,11 @@ export const barbers = sqliteTable("barbers", {
     location: text("location"),
     status: text("status", { enum: ["active", "inactive"] }).default("active"),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    userIdx: index("barbers_user_id_idx").on(table.user_id),
+    shopIdx: index("barbers_shop_id_idx").on(table.shop_id),
+}));
 
 export const services = sqliteTable("services", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -51,7 +56,11 @@ export const services = sqliteTable("services", {
     duration_minutes: integer("duration_minutes").notNull(),
     image_url: text("image_url"),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    shopIdx: index("services_shop_id_idx").on(table.shop_id),
+    barberIdx: index("services_barber_id_idx").on(table.barber_id),
+}));
 
 export const bookings = sqliteTable("bookings", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -72,7 +81,11 @@ export const bookings = sqliteTable("bookings", {
     notes: text("notes"),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    clientIdx: index("bookings_client_id_idx").on(table.client_id),
+    barberTimeIdx: index("bookings_barber_time_idx").on(table.barber_id, table.start_time),
+    statusIdx: index("bookings_status_idx").on(table.status),
+}));
 
 export const booking_services = sqliteTable("booking_services", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -87,7 +100,10 @@ export const shifts = sqliteTable("shifts", {
     day: text("day", { enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] }).notNull(),
     start_time: text("start_time").notNull(), // "HH:MM"
     end_time: text("end_time").notNull(), // "HH:MM"
-});
+}, (table) => ({
+    barberDayIdx: index("shifts_barber_day_idx").on(table.barber_id, table.day),
+    shopDayIdx: index("shifts_shop_day_idx").on(table.shop_id, table.day),
+}));
 
 export const time_blocks = sqliteTable("time_blocks", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -125,7 +141,10 @@ export const messages = sqliteTable("messages", {
     content: text("content").notNull(),
     is_read: integer("is_read", { mode: "boolean" }).default(false),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    senderIdx: index("messages_sender_idx").on(table.sender_id),
+    receiverReadIdx: index("messages_receiver_read_idx").on(table.receiver_id, table.is_read),
+}));
 
 export const notifications = sqliteTable("notifications", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -135,7 +154,9 @@ export const notifications = sqliteTable("notifications", {
     type: text("type"),
     is_read: integer("is_read", { mode: "boolean" }).default(false),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    userReadIdx: index("notifications_user_read_idx").on(table.user_id, table.is_read),
+}));
 
 export const disputes = sqliteTable("disputes", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -230,7 +251,9 @@ export const favorites = sqliteTable("favorites", {
     target_id: text("target_id").notNull(), // ID of barber or shop
     target_type: text("target_type", { enum: ["barber", "shop"] }).notNull(),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    userTargetUniq: uniqueIndex("favorites_user_target_uniq").on(table.user_id, table.target_id, table.target_type),
+}));
 
 // Elite brands (Michelin-style vendor profiles for marketplace)
 export const brands = sqliteTable("brands", {
@@ -290,7 +313,9 @@ export const cart_items = sqliteTable("cart_items", {
     quantity: integer("quantity").notNull().default(1),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    userProductUniq: uniqueIndex("cart_items_user_product_uniq").on(table.user_id, table.product_id),
+}));
 
 // Product orders (marketplace checkout)
 export const orders = sqliteTable("orders", {
@@ -323,7 +348,9 @@ export const order_items = sqliteTable("order_items", {
     price: real("price").notNull(),
     quantity: integer("quantity").notNull(),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    orderIdx: index("order_items_order_id_idx").on(table.order_id),
+}));
 
 // --- Employment / Jobs Ecosystem ---
 
@@ -435,4 +462,6 @@ export const saved_jobs = sqliteTable("saved_jobs", {
     user_id: text("user_id").references(() => users.id).notNull(),
     job_id: text("job_id").references(() => jobs.id).notNull(),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    userJobUniq: uniqueIndex("saved_jobs_user_job_uniq").on(table.user_id, table.job_id),
+}));
