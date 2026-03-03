@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, Filter } from 'lucide-react';
+import { PageLoading } from '@/components/ui/page-loading';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -98,9 +99,7 @@ export default function GroomingVault() {
 
       <main className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-6">
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
-          </div>
+          <PageLoading message="Loading your vault..." />
         ) : !summary ? (
           <div className="text-center py-12">
             <p className="text-slate-600 mb-4">Unable to load your vault.</p>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Heart, Search, Loader2, Sparkles } from 'lucide-react';
+import { Heart, Search, Sparkles } from 'lucide-react';
+import { PageLoading } from '@/components/ui/page-loading';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -119,21 +121,15 @@ export default function Favorites() {
                     </TabsList>
 
                     {isFavoritesLoading ? (
-                        <div className="py-20 flex flex-col items-center justify-center text-muted-foreground space-y-4">
-                            <Loader2 className="w-10 h-10 animate-spin" />
-                            <p className="text-sm font-medium">Crunching your favorites...</p>
-                        </div>
+                        <PageLoading message="Crunching your favorites..." />
                     ) : favorites.length === 0 ? (
-                        <div className="py-32 text-center">
-                            <div className="w-24 h-24 bg-card rounded-3xl shadow-sm border border-border flex items-center justify-center mx-auto mb-6 text-muted-foreground">
-                                <Heart className="w-12 h-12" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-foreground mb-2">Your favorites list is empty</h3>
-                            <p className="text-muted-foreground max-w-sm mx-auto mb-8 text-lg">Heart your favorite professionals to see them here for quick access.</p>
-                            <Button variant="outline" className="rounded-xl px-8 h-12 border-border hover:bg-muted hover:border-primary/30" onClick={() => window.location.href = '/Explore'}>
-                                Explore Professionals
-                            </Button>
-                        </div>
+                        <EmptyState
+                            icon={Heart}
+                            title="Your favorites list is empty"
+                            description="Heart your favorite professionals to see them here for quick access."
+                            actionLabel="Explore Professionals"
+                            actionHref="/Explore"
+                        />
                     ) : (
                         <div className="space-y-12">
                             <TabsContent value="all" className="mt-0">

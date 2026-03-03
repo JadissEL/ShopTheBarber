@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import BookingCard from '@/components/ui/booking-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Clock, AlertCircle, Star } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { isPast, isFuture } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { createPageUrl } from '@/utils';
 import { Link } from 'react-router-dom';
@@ -131,18 +132,13 @@ export default function UserBookings() {
                                     ))}
                                 </div>
                             ) : (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-center py-20 bg-muted/50 rounded-3xl border border-border border-dashed"
-                                >
-                                    <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                                    <h3 className="text-xl font-bold mb-2">No upcoming appointments</h3>
-                                    <p className="text-muted-foreground mb-6">Looks like you haven't booked anything yet.</p>
-                                    <Link to={createPageUrl('Explore')}>
-                                        <Button className="bg-primary text-primary-foreground hover:opacity-95">Find a Barber</Button>
-                                    </Link>
-                                </motion.div>
+                                <EmptyState
+                                    icon={Calendar}
+                                    title="No upcoming appointments"
+                                    description="Looks like you haven't booked anything yet."
+                                    actionLabel="Find a Barber"
+                                    actionHref={createPageUrl('Explore')}
+                                />
                             )}
                         </TabsContent>
 
@@ -178,11 +174,11 @@ export default function UserBookings() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-20 bg-muted/50 rounded-3xl border border-border border-dashed">
-                                    <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                                    <h3 className="text-xl font-bold mb-2">No past appointments</h3>
-                                    <p className="text-muted-foreground">Your appointment history will appear here once you complete a visit.</p>
-                                </div>
+                                <EmptyState
+                                    icon={Clock}
+                                    title="No past appointments"
+                                    description="Your appointment history will appear here once you complete a visit."
+                                />
                             )}
                         </TabsContent>
                     </AnimatePresence>

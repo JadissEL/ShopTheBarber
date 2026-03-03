@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { Package, ChevronRight } from 'lucide-react';
+import { PageLoading } from '@/components/ui/page-loading';
+import { EmptyState } from '@/components/ui/empty-state';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { Button } from '@/components/ui/button';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
@@ -49,20 +50,15 @@ export default function MyOrders() {
 
       <main className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-6">
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" />
-          </div>
+          <PageLoading message="Loading orders..." />
         ) : orders.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Package className="w-8 h-8 text-slate-400" />
-            </div>
-            <p className="text-muted-foreground font-medium mb-2">No orders yet</p>
-            <p className="text-muted-foreground text-sm mb-6">Orders from the Marketplace will appear here.</p>
-            <Link to={createPageUrl('Marketplace')}>
-              <Button className="rounded-xl bg-primary text-primary-foreground hover:opacity-95">Browse Marketplace</Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={Package}
+            title="No orders yet"
+            description="Orders from the Marketplace will appear here."
+            actionLabel="Browse Marketplace"
+            actionHref={createPageUrl('Marketplace')}
+          />
         ) : (
           <ul className="space-y-4">
             {orders.map((order) => {

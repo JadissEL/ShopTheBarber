@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import { User, Bell, MapPin, Briefcase, Bookmark, Send, Compass } from 'lucide-react';
+import { PageLoading } from '@/components/ui/page-loading';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -132,9 +133,7 @@ export default function CareerHub() {
         {tab === 'explore' && (
           <>
             {isExploreLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" />
-              </div>
+              <PageLoading message="Loading opportunities..." />
             ) : (
             <>
             {/* Category tabs */}
