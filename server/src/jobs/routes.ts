@@ -13,51 +13,56 @@ export async function jobsRoutes(fastify: FastifyInstance) {
         }
     };
 
+    /** Batch-enrich jobs with employer name/image (eliminates N+1) */
+    async function enrichJobsWithEmployer(jobs: (typeof schema.jobs.$inferSelect)[]) {
+        if (jobs.length === 0) return [];
+
+        const shopIds = [...new Set(jobs.filter(j => j.employer_type === 'shop' && j.shop_id).map(j => j.shop_id!))];
+        const companyIds = [...new Set(jobs.filter(j => j.employer_type === 'company' && j.company_id).map(j => j.company_id!))];
+
+        const shopMap = new Map<string, { name: string; image_url: string | null }>();
+        const companyMap = new Map<string, { name: string; logo_url: string | null }>();
+
+        if (shopIds.length > 0) {
+            const shops = await db.select({ id: schema.shops.id, name: schema.shops.name, image_url: schema.shops.image_url }).from(schema.shops).where(sql`${schema.shops.id} IN (${sql.join(shopIds.map(id => sql`${id}`), sql`, `)})`);
+            for (const s of shops) shopMap.set(s.id, s);
+        }
+        if (companyIds.length > 0) {
+            const companies = await db.select({ id: schema.companies.id, name: schema.companies.name, logo_url: schema.companies.logo_url }).from(schema.companies).where(sql`${schema.companies.id} IN (${sql.join(companyIds.map(id => sql`${id}`), sql`, `)})`);
+            for (const c of companies) companyMap.set(c.id, c);
+        }
+
+        return jobs.map(job => {
+            let employer_name: string | null = null;
+            let employer_image: string | null = null;
+            if (job.employer_type === 'shop' && job.shop_id) {
+                const s = shopMap.get(job.shop_id);
+                if (s) { employer_name = s.name; employer_image = s.image_url; }
+            } else if (job.employer_type === 'company' && job.company_id) {
+                const c = companyMap.get(job.company_id);
+                if (c) { employer_name = c.name; employer_image = c.logo_url; }
+            }
+            return { ...job, employer_name, employer_image };
+        });
+    }
+
     /** GET /api/jobs — list published jobs (optional filters) */
     fastify.get<{ Querystring: { category?: string; employment_type?: string; location_type?: string; featured?: string } }>(
         '/api/jobs',
         async (request, reply) => {
             const q = request.query || {};
             try {
-                let query = db
-                    .select()
-                    .from(schema.jobs)
+                const rows = await db.select().from(schema.jobs)
                     .where(eq(schema.jobs.status, 'published'))
                     .orderBy(desc(schema.jobs.created_at));
 
-                const rows = await query;
                 let list = rows;
-
                 if (q.category) list = list.filter((j) => j.category === q.category);
                 if (q.employment_type) list = list.filter((j) => j.employment_type === q.employment_type);
                 if (q.location_type) list = list.filter((j) => j.location_type === q.location_type);
                 if (q.featured === 'true') list = list.filter((j) => j.featured === true);
 
-                const jobIds = list.map((j) => j.id);
-                if (jobIds.length === 0) return list.map((j) => ({ ...j, employer_name: null, employer_image: null }));
-
-                const withEmployer = await Promise.all(
-                    list.map(async (job) => {
-                        let employer_name: string | null = null;
-                        let employer_image: string | null = null;
-                        if (job.employer_type === 'shop' && job.shop_id) {
-                            const [shop] = await db.select({ name: schema.shops.name, image_url: schema.shops.image_url }).from(schema.shops).where(eq(schema.shops.id, job.shop_id));
-                            if (shop) {
-                                employer_name = shop.name;
-                                employer_image = shop.image_url ?? null;
-                            }
-                        }
-                        if (job.employer_type === 'company' && job.company_id) {
-                            const [co] = await db.select({ name: schema.companies.name, logo_url: schema.companies.logo_url }).from(schema.companies).where(eq(schema.companies.id, job.company_id));
-                            if (co) {
-                                employer_name = co.name;
-                                employer_image = co.logo_url ?? null;
-                            }
-                        }
-                        return { ...job, employer_name, employer_image };
-                    })
-                );
-                return withEmployer;
+                return enrichJobsWithEmployer(list);
             } catch (e: any) {
                 fastify.log.error(e);
                 return reply.status(500).send({ error: e.message });
@@ -68,28 +73,11 @@ export async function jobsRoutes(fastify: FastifyInstance) {
     /** GET /api/jobs/featured — featured published jobs */
     fastify.get('/api/jobs/featured', async (request, reply) => {
         try {
-            const rows = await db
-                .select()
-                .from(schema.jobs)
+            const rows = await db.select().from(schema.jobs)
                 .where(and(eq(schema.jobs.status, 'published'), eq(schema.jobs.featured, true)))
                 .orderBy(desc(schema.jobs.created_at))
                 .limit(10);
-            const withEmployer = await Promise.all(
-                rows.map(async (job) => {
-                    let employer_name: string | null = null;
-                    let employer_image: string | null = null;
-                    if (job.employer_type === 'shop' && job.shop_id) {
-                        const [shop] = await db.select().from(schema.shops).where(eq(schema.shops.id, job.shop_id));
-                        if (shop) { employer_name = shop.name; employer_image = shop.image_url ?? null; }
-                    }
-                    if (job.employer_type === 'company' && job.company_id) {
-                        const [co] = await db.select().from(schema.companies).where(eq(schema.companies.id, job.company_id));
-                        if (co) { employer_name = co.name; employer_image = co.logo_url ?? null; }
-                    }
-                    return { ...job, employer_name, employer_image };
-                })
-            );
-            return withEmployer;
+            return enrichJobsWithEmployer(rows);
         } catch (e: any) {
             fastify.log.error(e);
             return reply.status(500).send({ error: e.message });
@@ -102,44 +90,21 @@ export async function jobsRoutes(fastify: FastifyInstance) {
         try {
             const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, id));
             if (!job) return reply.status(404).send({ error: 'Job not found' });
-            let employer_name: string | null = null;
-            let employer_image: string | null = null;
-            if (job.employer_type === 'shop' && job.shop_id) {
-                const [shop] = await db.select().from(schema.shops).where(eq(schema.shops.id, job.shop_id));
-                if (shop) { employer_name = shop.name; employer_image = shop.image_url ?? null; }
-            }
-            if (job.employer_type === 'company' && job.company_id) {
-                const [co] = await db.select().from(schema.companies).where(eq(schema.companies.id, job.company_id));
-                if (co) { employer_name = co.name; employer_image = co.logo_url ?? null; }
-            }
-            return { ...job, employer_name, employer_image };
+            const [enriched] = await enrichJobsWithEmployer([job]);
+            return enriched;
         } catch (e: any) {
             fastify.log.error(e);
             return reply.status(500).send({ error: e.message });
         }
     });
 
-    /** GET /api/jobs/my — my jobs as employer (created_by or shop owner) */
+    /** GET /api/jobs/my — my jobs as employer */
     fastify.get('/api/jobs/my', async (request, reply) => {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
             const rows = await db.select().from(schema.jobs).where(eq(schema.jobs.created_by, userId)).orderBy(desc(schema.jobs.created_at));
-            const withEmployer = await Promise.all(
-                rows.map(async (job) => {
-                    let employer_name: string | null = null;
-                    if (job.employer_type === 'shop' && job.shop_id) {
-                        const [shop] = await db.select({ name: schema.shops.name }).from(schema.shops).where(eq(schema.shops.id, job.shop_id));
-                        if (shop) employer_name = shop.name;
-                    }
-                    if (job.employer_type === 'company' && job.company_id) {
-                        const [co] = await db.select({ name: schema.companies.name }).from(schema.companies).where(eq(schema.companies.id, job.company_id));
-                        if (co) employer_name = co.name;
-                    }
-                    return { ...job, employer_name };
-                })
-            );
-            return withEmployer;
+            return enrichJobsWithEmployer(rows);
         } catch (e: any) {
             fastify.log.error(e);
             return reply.status(500).send({ error: e.message });
