@@ -75,7 +75,8 @@ export default function SignUp() {
                                 formFieldLabel: "text-muted-foreground font-medium",
                                 footerActionLink: "text-primary hover:text-primary/90 font-semibold",
                                 footerActionText: "text-muted-foreground",
-                                footer: "hidden", // Hide the "Secured by Clerk" footer
+                                footerAction: "mb-4", // Show sign-in link
+                                footerPages: "hidden", // Hide other footer links but keep sign-in
                                 dividerLine: "bg-border",
                                 dividerText: "text-muted-foreground text-xs",
                                 identityPreviewText: "text-foreground",
