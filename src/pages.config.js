@@ -81,6 +81,7 @@ import Loyalty from './pages/Loyalty';
 import Marketplace from './pages/Marketplace';
 import ProductDetail from './pages/ProductDetail';
 import NotificationSettings from './pages/NotificationSettings';
+import OAuthCallback from './pages/OAuthCallback';
 import Privacy from './pages/Privacy';
 import ProviderMessages from './pages/ProviderMessages';
 import ProviderBookings from './pages/ProviderBookings';
@@ -140,6 +141,7 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "ProductDetail": ProductDetail,
     "NotificationSettings": NotificationSettings,
+    "OAuthCallback": OAuthCallback,
     "Privacy": Privacy,
     "ProviderBookings": ProviderBookings,
     "ProviderMessages": ProviderMessages,

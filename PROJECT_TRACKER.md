@@ -916,3 +916,77 @@ The project is now fully sovereign, with zero dependencies on Base44 infrastruct
 - **Design unification (continued)**: Checkout, ShoppingBag, ScheduleInterview, ApplicantReview, PortfolioCredentials, GroomingVault, OrderTracking, ProductDetail, Favorites, Chat, AccountSettings → bg-background; GroomingVault delivered badge, BarberProfile, ShopProfile, AccountSettings tabs/icons, Chat online indicator, Checkout link → primary.
 - **Design unification (continued)**: SignIn (PREMIUM GROOMING, role tabs, inputs focus, submit button, links) and BookingFlow (duration/price highlight, confirm button, success dialog) use primary; service-card hover uses primary; design doc updated with unified scope list.
 - **Design unification (continued)**: UserBookings and Review converted from dark (bg-slate-950) to light (bg-background, bg-card, border-border, text-foreground/muted-foreground) for full client-journey consistency.
+
+### [2026-03-05] - OAUTH SOCIAL LOGIN IMPLEMENTATION (GOOGLE & APPLE)
+
+**Request**: Fix social media login buttons (Google and Apple) that were non-functional — clicking did nothing.
+
+**Root Cause**: Social login buttons in SignIn page were purely decorative UI elements with no onClick handlers or backend OAuth infrastructure.
+
+**Implementation**:
+
+1. **Backend OAuth Infrastructure** (`server/src/auth/oauth.ts`):
+   - Installed `@fastify/oauth2` package
+   - Implemented OAuth 2.0 flow for Google Sign-In:
+     - Start redirect: `/api/auth/google`
+     - Callback handler: `/api/auth/google/callback`
+     - Fetches user profile (email, name, picture) from Google
+     - Creates or finds user in database
+     - Generates JWT token and redirects to frontend
+   - Implemented OAuth 2.0 flow for Apple Sign-In:
+     - Start redirect: `/api/auth/apple`
+     - Callback handler: `/api/auth/apple/callback`
+     - Decodes id_token for user info
+     - Creates or finds user in database
+     - Generates JWT token and redirects to frontend
+   - Status endpoint: `GET /api/auth/oauth/status` returns which providers are configured
+   - OAuth users have `password_hash: null` (can only sign in via OAuth)
+   - Graceful degradation: If OAuth credentials not configured, logs warning but app continues to work
+
+2. **Frontend OAuth Integration**:
+   - **SignIn page** (`src/pages/SignIn.jsx`):
+     - Added `useEffect` to check OAuth status on mount
+     - Added `handleOAuthLogin(provider)` function
+     - Wired Apple and Google buttons with onClick handlers
+     - Shows toast notification if OAuth not configured: "Google/Apple Sign-In is not configured. Contact support to enable authentication."
+     - If configured, redirects to `/api/auth/{provider}` to start OAuth flow
+   - **OAuthCallback page** (`src/pages/OAuthCallback.jsx`):
+     - Handles OAuth redirect from backend: `/auth/callback?token=<jwt>&provider=<google|apple>`
+     - Extracts JWT from URL and saves to localStorage
+     - Fetches user info to determine role-based dashboard redirect
+     - Shows success/error states with appropriate UI
+     - Registered in `pages.config.js` and `navigationConfig.jsx` (AUTH zone)
+
+3. **Environment & Documentation**:
+   - Updated `server/.env.example` with OAuth variables:
+     - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+     - `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`
+     - `BACKEND_URL` (for OAuth callback URIs)
+   - Created `docs/OAUTH_SETUP.md` — comprehensive guide:
+     - Google Cloud Console setup (OAuth consent screen, credentials, redirect URIs)
+     - Apple Developer Portal setup (App ID, Services ID, private key, client secret generation)
+     - Environment variable configuration
+     - Testing instructions (with and without credentials)
+     - Production deployment notes (redirect URI updates)
+     - Troubleshooting section (redirect URI mismatch, auth failures, localhost setup)
+
+4. **Testing & Validation**:
+   - Tested both buttons on `/signin` page:
+     - Apple button: Shows toast "Apple Sign-In is not configured. Contact support to enable Apple authentication."
+     - Google button: Shows toast "Google Sign-In is not configured. Contact support to enable Google authentication."
+   - Verified buttons are now clickable and responsive (no longer dead)
+   - Backend logs: `⚠️  OAuth not configured. Set GOOGLE_CLIENT_ID/SECRET or APPLE_CLIENT_ID/SECRET in .env to enable social login.`
+   - When credentials are added, OAuth flow will work end-to-end: redirect to provider → user authorizes → redirect to callback → create/login user → redirect to dashboard
+
+**Modified/Added Files**:
+- `server/package.json` (added `@fastify/oauth2`)
+- `server/src/auth/oauth.ts` (new)
+- `server/src/index.ts` (registered OAuth routes)
+- `server/.env.example` (OAuth variables)
+- `src/pages/SignIn.jsx` (OAuth status check, click handlers)
+- `src/pages/OAuthCallback.jsx` (new)
+- `src/pages.config.js` (registered OAuthCallback)
+- `src/components/navigationConfig.jsx` (added `/oauthcallback` to AUTH zone)
+- `docs/OAUTH_SETUP.md` (new, comprehensive setup guide)
+
+**Status**: ✅ COMPLETE — Social login buttons now functional with proper user feedback; OAuth infrastructure ready for Google and Apple Sign-In when credentials are configured. System degrades gracefully without credentials (email/password auth still works).

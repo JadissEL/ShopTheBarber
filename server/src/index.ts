@@ -92,9 +92,11 @@ fastify.get('/api/health', async (_request, reply) => {
 
 // 0. Auth Routes (Mock for MVP)
 import { authRoutes } from './auth/routes';
+import { oauthRoutes } from './auth/oauth';
 
 // 0. Auth Routes (Real JWT Implementation)
 fastify.register(authRoutes);
+fastify.register(oauthRoutes);
 
 // 0.1 Payment Routes (Stripe Integration)
 import { paymentRoutes } from './payments/routes';

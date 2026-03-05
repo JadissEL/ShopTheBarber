@@ -78,7 +78,7 @@ export const getZoneFromPath = (pathname) => {
   }
 
   // AUTH ZONE: Authentication flows
-  if (path === '/signin' || path === '/signup' || path === '/auth') return APP_ZONES.AUTH;
+  if (path === '/signin' || path === '/signup' || path === '/auth' || path === '/oauthcallback' || path === '/auth/callback') return APP_ZONES.AUTH;
 
   // ADMIN ZONE: Platform management
   if (path === '/globalfinancials' || path.startsWith('/admin')) return APP_ZONES.ADMIN;

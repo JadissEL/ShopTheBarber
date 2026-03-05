@@ -20,6 +20,7 @@
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.0.0",
+    "@fastify/oauth2": "^8.2.0",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",
@@ -32,12 +33,12 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "vitest": "^2.1.6",
     "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.1.0",
     "drizzle-kit": "^0.31.8",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "vitest": "^2.1.6"
   }
 }
