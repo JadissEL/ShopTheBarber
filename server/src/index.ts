@@ -841,9 +841,25 @@ fastify.setErrorHandler((err: any, request, reply) => {
     return reply.status(status).type('application/json').send(body);
 });
 
+// Auto-seed on first boot: if users table is empty, populate with sample data
+async function autoSeedIfEmpty() {
+    try {
+        const users = await db.select({ id: schema.users.id }).from(schema.users).limit(1);
+        if (users.length === 0) {
+            fastify.log.info('Empty database detected — seeding sample data...');
+            const { execSync } = await import('child_process');
+            execSync('npx tsx src/db/seed.ts', { cwd: process.cwd(), stdio: 'inherit' });
+            fastify.log.info('Database seeded successfully.');
+        }
+    } catch (e: any) {
+        fastify.log.warn(`Auto-seed check skipped: ${e.message}`);
+    }
+}
+
 // START SERVER
 const start = async () => {
     try {
+        await autoSeedIfEmpty();
         const port = Number(process.env.PORT) || 3001;
         await fastify.listen({ port, host: '0.0.0.0' });
         fastify.log.info(`Sovereign Backend running on port ${port}`);
