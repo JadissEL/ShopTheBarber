@@ -65,22 +65,29 @@ export default function SignUp() {
                         appearance={{
                             elements: {
                                 rootBox: "mx-auto",
-                                card: "bg-card border-border shadow-lg",
+                                card: "bg-card border-border shadow-lg rounded-2xl",
                                 headerTitle: "text-foreground text-2xl font-bold",
                                 headerSubtitle: "text-muted-foreground",
-                                socialButtonsBlockButton: "border-border hover:bg-muted text-foreground",
-                                formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-                                formFieldInput: "bg-card border-border text-foreground",
-                                formFieldLabel: "text-muted-foreground",
-                                footerActionLink: "text-primary hover:text-primary/90",
+                                socialButtonsBlockButton: "border-border hover:bg-muted text-foreground rounded-xl h-12",
+                                socialButtonsBlockButtonText: "font-medium",
+                                formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-12 font-bold",
+                                formFieldInput: "bg-card border-border text-foreground rounded-xl",
+                                formFieldLabel: "text-muted-foreground font-medium",
+                                footerActionLink: "text-primary hover:text-primary/90 font-semibold",
+                                footerActionText: "text-muted-foreground",
+                                footer: "hidden", // Hide the "Secured by Clerk" footer
                                 dividerLine: "bg-border",
-                                dividerText: "text-muted-foreground",
+                                dividerText: "text-muted-foreground text-xs",
                                 identityPreviewText: "text-foreground",
                                 identityPreviewEditButton: "text-primary",
                                 formFieldInputShowPasswordButton: "text-muted-foreground hover:text-foreground",
-                                otpCodeFieldInput: "border-border text-foreground",
+                                otpCodeFieldInput: "border-border text-foreground rounded-xl",
                                 formResendCodeLink: "text-primary hover:text-primary/90",
                                 alertText: "text-foreground",
+                                badge: "hidden", // Hide "Development mode" badge
+                            },
+                            layout: {
+                                logoPlacement: "none", // Hide Clerk logo
                             },
                         }}
                         routing="path"
