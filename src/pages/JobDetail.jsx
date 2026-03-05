@@ -9,6 +9,7 @@ import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
+import { PageError } from '@/components/ui/page-error';
 
 function formatSalary(job) {
   if (job.salary_min != null || job.salary_max != null) {
@@ -29,7 +30,7 @@ export default function JobDetail() {
   const { isAuthenticated } = useAuth();
   const [saving, setSaving] = useState(false);
 
-  const { data: job, isLoading } = useQuery({
+  const { data: job, isLoading, isError, refetch } = useQuery({
     queryKey: ['job', jobId],
     queryFn: () => sovereign.jobs.get(jobId),
     enabled: !!jobId,
@@ -92,6 +93,8 @@ export default function JobDetail() {
       </div>
     );
   }
+
+  if (isError) return <PageError onRetry={refetch} />;
 
   if (!job) {
     return (

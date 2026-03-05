@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import DisputeCard from '@/components/dispute/DisputeCard';
+import { PageLoading } from '@/components/ui/page-loading';
+import { PageError } from '@/components/ui/page-error';
 
 export default function AdminDisputes() {
   const { data: user } = useQuery({
@@ -18,7 +20,7 @@ export default function AdminDisputes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const { data: disputes = [], isLoading } = useQuery({
+  const { data: disputes = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['all-disputes'],
     queryFn: () => sovereign.entities.Dispute.list('-created_date', 100),
     initialData: []
@@ -50,6 +52,9 @@ export default function AdminDisputes() {
   const reviewCount = disputes.filter(d => d.status === 'In Review').length;
   const resolvedCount = disputes.filter(d => d.status === 'Resolved').length;
   const totalAmount = disputes.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+
+  if (isLoading) return <PageLoading message="Loading disputes..." />;
+  if (isError) return <PageError onRetry={refetch} />;
 
   // Role check
   if (user?.role !== 'admin') {

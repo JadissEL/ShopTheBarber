@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import UserModerationCard from '@/components/moderation/UserModerationCard';
+import { PageLoading } from '@/components/ui/page-loading';
+import { PageError } from '@/components/ui/page-error';
 
 export default function AdminUserModeration() {
   const { data: user } = useQuery({
@@ -19,7 +21,7 @@ export default function AdminUserModeration() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterRole, setFilterRole] = useState('all');
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['all-users'],
     queryFn: () => sovereign.entities.User.list('-created_date', 200),
     initialData: []
@@ -41,6 +43,9 @@ export default function AdminUserModeration() {
     
     return matchesSearch && matchesStatus && matchesRole;
   });
+
+  if (isLoading) return <PageLoading message="Loading users..." />;
+  if (isError) return <PageError onRetry={refetch} />;
 
   // Role check
   if (user?.role !== 'admin') {

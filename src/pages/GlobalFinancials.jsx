@@ -24,12 +24,6 @@ export default function GlobalFinancials() {
     queryFn: () => sovereign.functions.invoke('financial-analytics', {})
   });
 
-  const { data: _bookings = [] } = useQuery({
-    queryKey: ['global-bookings'],
-    queryFn: () => sovereign.entities.Booking.list('-created_date', 100),
-    initialData: []
-  });
-
   const { data: payouts = [] } = useQuery({
     queryKey: ['global-payouts'],
     queryFn: () => sovereign.entities.Payout.list(),
