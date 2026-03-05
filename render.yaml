@@ -6,7 +6,7 @@ services:
     name: shopthebarber-api
     runtime: node
     rootDir: server
-    buildCommand: npm install --include=dev && npx drizzle-kit push
+    buildCommand: npm install --include=dev && rm -f sovereign.sqlite && npx drizzle-kit push
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
