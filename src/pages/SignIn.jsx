@@ -95,6 +95,8 @@ export default function SignIn() {
                         signUpUrl="/signup"
                         redirectUrl="/dashboard"
                         afterSignInUrl="/dashboard"
+                        signUpForceRedirectUrl="/dashboard"
+                        forceRedirectUrl="/dashboard"
                     />
 
                     <p className="text-[10px] text-center text-muted-foreground mt-10 max-w-xs mx-auto leading-relaxed uppercase tracking-widest opacity-70">
