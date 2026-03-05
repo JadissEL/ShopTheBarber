@@ -90,8 +90,7 @@ export default function SignUp() {
                                 logoPlacement: "none", // Hide Clerk logo
                             },
                         }}
-                        routing="path"
-                        path="/signup"
+                        routing="virtual"
                         signInUrl="/signin"
                         redirectUrl="/dashboard"
                         afterSignUpUrl="/dashboard"
