@@ -1,0 +1,37 @@
+/* Hide Clerk branding in sign-in/sign-up components */
+/* Hide the entire bottom footer row that contains "Secured by Clerk" */
+.cl-footer > div:not(.cl-footerAction):not([class*="footerAction"]) {
+  display: none !important;
+}
+
+/* More specific: hide any div in footer that's not the action link */
+.cl-footer > div > div:not(.cl-footerAction) {
+  display: none !important  ;
+}
+
+/* Hide "Secured by" text specifically */
+[class*="cl-internal-1sco"],
+[class*="cl-internal-1d4jp"],
+[class*="cl-internal-1lxjha"],
+.cl-footer__logoBox,
+.cl-footer__logo,
+.cl-footer__logoImage {
+  display: none !important;
+}
+
+/* Hide "Development mode" badge */
+.cl-badge,
+[class*="cl-internal-1fpglat"],
+[data-variant="body"],
+[class*="badge"] {
+  display: none !important;
+}
+
+/* Keep the sign-up/sign-in link visible and properly spaced */
+.cl-footerAction,
+[class*="cl-footerAction"],
+[class*="footerAction"] {
+  display: block !important;
+  padding-top: 1.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
