@@ -104,10 +104,12 @@ shop-the-barber/
 - **Auth**: JWT (Fastify JWT)
 - **Validation**: Zod
 
-### Auth & session (current behavior)
-- **Token storage**: JWT is stored in `localStorage` under the key `sovereign_token` after login or signup.
-- **Persistence**: The session lasts until the token expires or the user logs out; there is no automatic token refresh.
-- **Logout**: Clearing the token (e.g. via Sign out) removes the session; the client also calls `/api/auth/logout` for consistency.
+### Auth & session
+- **Authentication**: Powered by [Clerk](https://clerk.com) - complete auth solution with social login (Google, Apple), email/password, MFA, password reset
+- **Social Login**: Google and Apple Sign-In work out-of-the-box (no OAuth app setup required in development)
+- **Token storage**: Clerk JWT stored in `localStorage` under `clerk_token`
+- **Persistence**: Automatic session management and token refresh handled by Clerk
+- **Setup**: See `CLERK_QUICKSTART.md` (5 minutes) or `docs/CLERK_SETUP.md` (comprehensive guide)
 
 ---
 
