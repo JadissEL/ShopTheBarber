@@ -172,7 +172,7 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
             details: JSON.stringify(backupStatus)
         });
     } catch (e) {
-        console.warn('Could not log backup verification');
+        // audit log failure is non-blocking
     }
 
     return backupStatus;

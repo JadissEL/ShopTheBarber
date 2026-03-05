@@ -4,15 +4,14 @@ import * as schema from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { sendEmail } from '../logic/email';
 import { getStripeApiKey, getStripeWebhookSecret } from '../config/stripeKeys';
+import { logger } from '../lib/logger';
 
-// Lazy Stripe initialization - only when webhook is called
 let stripe: Stripe | null = null;
 function getStripe(): Stripe {
     if (!stripe) {
-        let apiKey = getStripeApiKey();
+        const apiKey = getStripeApiKey();
         if (!apiKey) {
-            console.warn('STRIPE_API_KEY not configured. Using mock key for server stability.');
-            apiKey = 'sk_test_mock_fallback_key';
+            throw new Error('STRIPE_API_KEY is not configured. Webhook cannot process without a valid Stripe key.');
         }
         stripe = new Stripe(apiKey, {
             apiVersion: '2025-01-27.acacia',
@@ -37,7 +36,7 @@ async function handleChargeSucceeded(event: Stripe.Event) {
     const { booking_id } = charge.metadata || {};
 
     if (!booking_id) {
-        console.warn('Charge succeeded but no booking_id in metadata:', charge.id);
+        logger.warn(`Charge succeeded but no booking_id in metadata: ${charge.id}`);
         return { processed: false, reason: 'no_booking_id' };
     }
 
@@ -63,7 +62,7 @@ async function handleChargeSucceeded(event: Stripe.Event) {
 
         return { processed: true, charge_id: charge.id };
     } catch (error: any) {
-        console.error('Error processing charge.succeeded:', error.message);
+        logger.error('Error processing charge.succeeded', error);
         throw error;
     }
 }
@@ -73,7 +72,7 @@ async function handleChargeFailed(event: Stripe.Event) {
     const { booking_id } = charge.metadata || {};
 
     if (!booking_id) {
-        console.warn('Charge failed but no booking_id in metadata:', charge.id);
+        logger.warn(`Charge failed but no booking_id in metadata: ${charge.id}`);
         return { processed: false, reason: 'no_booking_id' };
     }
 
@@ -99,7 +98,7 @@ async function handleChargeFailed(event: Stripe.Event) {
 
         return { processed: true, charge_id: charge.id };
     } catch (error: any) {
-        console.error('Error processing charge.failed:', error.message);
+        logger.error('Error processing charge.failed', error);
         throw error;
     }
 }
@@ -109,7 +108,7 @@ async function handleChargeRefunded(event: Stripe.Event) {
     const { booking_id } = charge.metadata || {};
 
     if (!booking_id) {
-        console.warn('Charge refunded but no booking_id in metadata:', charge.id);
+        logger.warn(`Charge refunded but no booking_id in metadata: ${charge.id}`);
         return { processed: false, reason: 'no_booking_id' };
     }
 
@@ -134,7 +133,7 @@ async function handleChargeRefunded(event: Stripe.Event) {
 
         return { processed: true, charge_id: charge.id, refund_amount: refundAmount };
     } catch (error: any) {
-        console.error('Error processing charge.refunded:', error.message);
+        logger.error('Error processing charge.refunded', error);
         throw error;
     }
 }
@@ -144,7 +143,7 @@ async function handlePayoutPaid(event: Stripe.Event) {
     const { payout_id } = payout.metadata || {};
 
     if (!payout_id) {
-        console.warn('Payout paid but no payout_id in metadata:', payout.id);
+        logger.warn(`Payout paid but no payout_id in metadata: ${payout.id}`);
         return { processed: false, reason: 'no_payout_id' };
     }
 
@@ -171,7 +170,7 @@ async function handlePayoutPaid(event: Stripe.Event) {
 
         return { processed: true, payout_id, stripe_payout_id: payout.id };
     } catch (error: any) {
-        console.error('Error processing payout.paid:', error.message);
+        logger.error('Error processing payout.paid', error);
         throw error;
     }
 }
@@ -181,7 +180,7 @@ async function handlePayoutFailed(event: Stripe.Event) {
     const { payout_id } = payout.metadata || {};
 
     if (!payout_id) {
-        console.warn('Payout failed but no payout_id in metadata:', payout.id);
+        logger.warn(`Payout failed but no payout_id in metadata: ${payout.id}`);
         return { processed: false, reason: 'no_payout_id' };
     }
 
@@ -206,7 +205,7 @@ async function handlePayoutFailed(event: Stripe.Event) {
 
         return { processed: false, payout_id, error: payout.failure_message };
     } catch (error: any) {
-        console.error('Error processing payout.failed:', error.message);
+        logger.error('Error processing payout.failed', error);
         throw error;
     }
 }
@@ -219,13 +218,13 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     if (type === 'product') {
         const order_id = session.metadata?.order_id || session.client_reference_id;
         if (!order_id) {
-            console.warn('Checkout session completed but no order_id for product:', session.id);
+            logger.warn(`Checkout session completed but no order_id for product: ${session.id}`);
             return { processed: false, reason: 'no_order_id' };
         }
         try {
             const [order] = await db.select().from(schema.orders).where(eq(schema.orders.id, order_id));
             if (!order) {
-                console.warn('Order not found:', order_id);
+                logger.warn(`Order not found: ${order_id}`);
                 return { processed: false, reason: 'order_not_found' };
             }
             const orderNumber = 'EMG-' + order_id.slice(-6).toUpperCase();
@@ -265,7 +264,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
                         total: `$${Number(order.total).toFixed(2)}`,
                         items: orderItems.map((oi) => ({ name: oi.product_name, quantity: oi.quantity, price: Number(oi.price) })),
                     },
-                }).catch((err) => console.error('Failed to send order confirmation email:', err));
+                }).catch(() => { /* email failure is non-blocking */ });
             }
             const orderTotal = Number(order.total);
             const pointsToAdd = Math.max(10, Math.floor(orderTotal));
@@ -291,7 +290,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
             });
             return { processed: true, session_id: session.id, order_id };
         } catch (error: any) {
-            console.error('Error processing product checkout.session.completed:', error.message);
+            logger.error('Error processing product checkout.session.completed', error);
             throw error;
         }
     }
@@ -299,7 +298,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     // Booking payment
     const booking_id = session.metadata?.booking_id || session.client_reference_id;
     if (!booking_id) {
-        console.warn('Checkout session completed but no booking_id found:', session.id);
+        logger.warn(`Checkout session completed but no booking_id found: ${session.id}`);
         return { processed: false, reason: 'no_booking_id' };
     }
 
@@ -351,13 +350,13 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
                         location: 'At the shop',
                         price: `${booking.price_at_booking ?? 0} EUR`,
                     },
-                }).catch((err) => console.error('Failed to send post-payment confirmation email:', err));
+                }).catch(() => { /* email failure is non-blocking */ });
             }
         }
 
         return { processed: true, session_id: session.id };
     } catch (error: any) {
-        console.error('Error processing checkout.session.completed:', error.message);
+        logger.error('Error processing checkout.session.completed', error);
         throw error;
     }
 }
@@ -369,7 +368,7 @@ export async function handleStripeWebhook(
     const webhookSecret = getStripeWebhookSecret();
 
     if (!signature || !webhookSecret) {
-        console.error('Missing webhook signature or secret');
+        logger.error('Missing webhook signature or secret');
         throw new Error('Unauthorized');
     }
 
@@ -397,7 +396,7 @@ export async function handleStripeWebhook(
                 result = await handlePayoutFailed(event);
                 break;
             default:
-                console.log(`Unhandled event type: ${event.type}`);
+                logger.info(`Unhandled Stripe event type: ${event.type}`);
                 result = { processed: false, reason: 'unhandled_event_type' };
         }
 
@@ -408,7 +407,7 @@ export async function handleStripeWebhook(
             result
         };
     } catch (error: any) {
-        console.error('Webhook handler error:', error.message);
+        logger.error('Webhook handler error', error);
         return {
             error: error.message,
             received: true
