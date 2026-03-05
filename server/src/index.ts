@@ -841,15 +841,19 @@ fastify.setErrorHandler((err: any, request, reply) => {
     return reply.status(status).type('application/json').send(body);
 });
 
-// Auto-seed on first boot: if users table is empty, populate with sample data
+// Auto-seed on first boot: if no barbers exist, populate with sample data
 async function autoSeedIfEmpty() {
     try {
-        const users = await db.select({ id: schema.users.id }).from(schema.users).limit(1);
-        if (users.length === 0) {
-            fastify.log.info('Empty database detected — seeding sample data...');
+        const barbers = await db.select({ id: schema.barbers.id }).from(schema.barbers).limit(1);
+        if (barbers.length === 0) {
+            fastify.log.info('No barbers found — seeding sample data...');
             const { execSync } = await import('child_process');
-            execSync('npx tsx src/db/seed.ts', { cwd: process.cwd(), stdio: 'inherit' });
-            fastify.log.info('Database seeded successfully.');
+            try {
+                execSync('node --import tsx src/db/seed.ts', { cwd: process.cwd(), stdio: 'inherit', timeout: 30000 });
+                fastify.log.info('Database seeded successfully.');
+            } catch (seedErr: any) {
+                fastify.log.warn(`Seed script failed: ${seedErr.message}. App will start with empty data.`);
+            }
         }
     } catch (e: any) {
         fastify.log.warn(`Auto-seed check skipped: ${e.message}`);
