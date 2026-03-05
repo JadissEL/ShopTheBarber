@@ -5,10 +5,12 @@
  * It redirects all entity and function calls to the new Fastify + SQLite backend.
  */
 
-// In dev: relative /api so Vite proxy forwards to backend. In production: set VITE_API_URL (e.g. https://your-api.onrender.com)
-const BASE_URL = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
+// In dev: relative /api so Vite proxy forwards to backend.
+// In production: set VITE_API_URL to the backend origin (e.g. https://your-api.onrender.com)
+const rawApiUrl = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
   ? import.meta.env.VITE_API_URL.replace(/\/$/, '')
-  : '/api';
+  : '';
+const BASE_URL = rawApiUrl ? `${rawApiUrl}/api` : '/api';
 
 class EntityClient {
     constructor(entityName) {
