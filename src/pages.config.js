@@ -81,7 +81,6 @@ import Loyalty from './pages/Loyalty';
 import Marketplace from './pages/Marketplace';
 import ProductDetail from './pages/ProductDetail';
 import NotificationSettings from './pages/NotificationSettings';
-import OAuthCallback from './pages/OAuthCallback';
 import Privacy from './pages/Privacy';
 import ProviderMessages from './pages/ProviderMessages';
 import ProviderBookings from './pages/ProviderBookings';
@@ -95,6 +94,7 @@ import SelectTime from './pages/SelectTime';
 import ServicesPricing from './pages/ServicesPricing';
 import ShopProfile from './pages/ShopProfile';
 import ShoppingBag from './pages/ShoppingBag';
+import SignUp from './pages/SignUp';
 import Checkout from './pages/Checkout';
 import OrderTracking from './pages/OrderTracking';
 import MyOrders from './pages/MyOrders';
@@ -141,7 +141,6 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "ProductDetail": ProductDetail,
     "NotificationSettings": NotificationSettings,
-    "OAuthCallback": OAuthCallback,
     "Privacy": Privacy,
     "ProviderBookings": ProviderBookings,
     "ProviderMessages": ProviderMessages,
@@ -155,6 +154,7 @@ export const PAGES = {
     "ServicesPricing": ServicesPricing,
     "ShopProfile": ShopProfile,
     "ShoppingBag": ShoppingBag,
+    "SignUp": SignUp,
     "Checkout": Checkout,
     "OrderTracking": OrderTracking,
     "MyOrders": MyOrders,

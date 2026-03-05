@@ -1,113 +1,144 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/react';
 import { sovereign } from '@/api/apiClient';
-import { appParams } from '@/lib/app-params';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const { signOut, getToken } = useClerkAuth();
+  const { signIn } = useSignIn();
+  const { signUp } = useSignUp();
+  
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
+  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [appPublicSettings, setAppPublicSettings] = useState({ public_settings: {} });
 
+  // Sync Clerk user to backend and local state
   useEffect(() => {
-    checkAppState();
-  }, []);
+    const syncUser = async () => {
+      if (clerkLoaded && isSignedIn && clerkUser) {
+        try {
+          // Get Clerk JWT token
+          const token = await getToken();
+          
+          // Store token for API calls
+          if (token) {
+            localStorage.setItem('clerk_token', token);
+          }
 
-  const checkAppState = async () => {
-    try {
-      setIsLoadingPublicSettings(true);
-      setAuthError(null);
+          // Map Clerk user to our user format
+          const mappedUser = {
+            uid: clerkUser.id,
+            email: clerkUser.primaryEmailAddress?.emailAddress,
+            full_name: clerkUser.fullName || clerkUser.firstName || 'User',
+            avatar_url: clerkUser.imageUrl,
+            role: clerkUser.publicMetadata?.role || 'client',
+            created_at: clerkUser.createdAt,
+          };
 
-      // Sovereign Mode: Skip sovereign public settings check
-      // Directly check for user authentication via our sovereign backend
-      await checkUserAuth();
-
-      // Mock public settings to keep downstream components happy
-      setAppPublicSettings({ public_settings: {} });
-      setIsLoadingPublicSettings(false);
-
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
-      setIsLoadingPublicSettings(false);
-      setIsLoadingAuth(false);
-    }
-  };
-
-  const checkUserAuth = async () => {
-    try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
-      const currentUser = await sovereign.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-    } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+          setUser(mappedUser);
+          setAuthError(null);
+        } catch (error) {
+          console.error('Error syncing Clerk user:', error);
+          setAuthError({
+            type: 'sync_error',
+            message: 'Failed to sync user data'
+          });
+        }
+      } else if (clerkLoaded && !isSignedIn) {
+        setUser(null);
       }
-    }
-  };
+    };
 
-  const logout = (shouldRedirect = true) => {
+    syncUser();
+  }, [clerkLoaded, isSignedIn, clerkUser, getToken]);
+
+  const logout = async (shouldRedirect = true) => {
+    await signOut();
     setUser(null);
-    setIsAuthenticated(false);
-
+    localStorage.removeItem('clerk_token');
+    
     if (shouldRedirect) {
-      sovereign.auth.logout(window.location.href);
-    } else {
-      sovereign.auth.logout();
+      window.location.href = '/';
     }
   };
 
   const navigateToLogin = () => {
-    sovereign.auth.redirectToLogin(window.location.href);
+    window.location.href = '/signin';
   };
 
+  // Email/password login via Clerk
   const login = async (email, password) => {
     try {
-      setIsLoadingAuth(true);
-      const data = await sovereign.auth.login(email, password);
-      const userProfile = await sovereign.auth.me();
-      setUser(userProfile);
-      setIsAuthenticated(true);
-      setAuthError(null);
-      return data;
-    } finally {
-      setIsLoadingAuth(false);
+      if (!signIn) throw new Error('SignIn not ready');
+      
+      const result = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      if (result.status === 'complete') {
+        await signIn.setActive({ session: result.createdSessionId });
+        return { success: true };
+      }
+      
+      throw new Error('Login incomplete');
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
+  // Email/password registration via Clerk
   const register = async (email, password, userData) => {
     try {
-      setIsLoadingAuth(true);
-      const data = await sovereign.auth.signup(email, password, userData);
-      const userProfile = await sovereign.auth.me();
-      setUser(userProfile);
-      setIsAuthenticated(true);
-      setAuthError(null);
-      return data;
-    } finally {
-      setIsLoadingAuth(false);
+      if (!signUp) throw new Error('SignUp not ready');
+      
+      const result = await signUp.create({
+        emailAddress: email,
+        password,
+        firstName: userData?.full_name?.split(' ')[0] || 'User',
+        lastName: userData?.full_name?.split(' ').slice(1).join(' ') || '',
+      });
+
+      // Set role in public metadata
+      if (userData?.role) {
+        await signUp.update({
+          unsafeMetadata: { role: userData.role }
+        });
+      }
+
+      // Send email verification
+      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+
+      if (result.status === 'complete') {
+        await signUp.setActive({ session: result.createdSessionId });
+        return { success: true };
+      }
+      
+      // If verification needed, return pending status
+      return { success: true, verificationRequired: true };
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
+  };
+
+  const checkUserAuth = async () => {
+    // Clerk handles auth checking automatically
+    return user;
+  };
+
+  const checkAppState = async () => {
+    // No-op for Clerk - it handles state automatically
   };
 
   const role = user?.role ?? 'client';
-  const isLoading = isLoadingAuth;
+  const isLoading = !clerkLoaded;
+  const isAuthenticated = isSignedIn && !!user;
+  const isLoadingAuth = !clerkLoaded;
 
   return (
     <AuthContext.Provider value={{

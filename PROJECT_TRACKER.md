@@ -990,3 +990,75 @@ The project is now fully sovereign, with zero dependencies on Base44 infrastruct
 - `docs/OAUTH_SETUP.md` (new, comprehensive setup guide)
 
 **Status**: ✅ COMPLETE — Social login buttons now functional with proper user feedback; OAuth infrastructure ready for Google and Apple Sign-In when credentials are configured. System degrades gracefully without credentials (email/password auth still works).
+
+### [2026-03-05] - CLERK AUTHENTICATION INTEGRATION (FULL REPLACEMENT)
+
+**Request**: "Yes implement clerk fully in my project" - Replace custom OAuth with Clerk authentication service.
+
+**Root Cause**: User has Clerk integrated in the project (clarification after custom OAuth was implemented).
+
+**Implementation**:
+
+1. **Frontend Clerk Integration**:
+   - Installed `@clerk/react` package
+   - Wrapped App with `ClerkProvider` in `src/App.jsx`
+   - Updated `AuthContext` to use Clerk hooks (`useUser`, `useAuth`, `useSignIn`, `useSignUp`)
+   - Created `SignIn.jsx` using Clerk's `<SignIn />` component with custom styling
+   - Created `SignUp.jsx` using Clerk's `<SignUp />` component
+   - Social login buttons (Google, Apple) automatically provided by Clerk - **no manual OAuth setup required**
+   - Clerk handles: OAuth flows, session management, token refresh, email verification, password reset
+   - Environment: `VITE_CLERK_PUBLISHABLE_KEY` in `.env.local`
+
+2. **Backend Clerk Integration**:
+   - Installed `@clerk/backend` package
+   - Created `server/src/auth/clerk.ts` - Clerk JWT verification middleware
+   - Updated auth middleware to support **both Clerk and legacy JWT** during migration
+   - `requireAuthPreHandler`: Tries Clerk first, falls back to legacy JWT
+   - `requireAdminPreHandler`: Tries Clerk admin first, falls back to legacy JWT
+   - Environment: `CLERK_SECRET_KEY` in `server/.env`
+   - Clerk tokens verified server-side via Clerk SDK
+
+3. **API Client Updates**:
+   - `src/api/apiClient.js`: Updated `getAuthHeaders()` to check for `clerk_token` first, fallback to `sovereign_token`
+   - Backward compatibility maintained during migration
+
+4. **Custom OAuth Cleanup**:
+   - Removed `server/src/auth/oauth.ts` (custom OAuth implementation)
+   - Removed `src/pages/OAuthCallback.jsx` (custom OAuth callback)
+   - Removed `docs/OAUTH_SETUP.md` (custom OAuth docs)
+   - Uninstalled `@fastify/oauth2` package
+   - Removed OAuthCallback from `pages.config.js`
+
+5. **Documentation**:
+   - Created `docs/CLERK_SETUP.md` - Comprehensive Clerk setup guide
+   - Created `CLERK_QUICKSTART.md` - 5-minute quickstart for social login
+   - Updated `server/.env.example` with Clerk variables
+   - Updated `.env.example` with `VITE_CLERK_PUBLISHABLE_KEY`
+
+**Why Clerk?**:
+- ✅ **Zero OAuth Setup**: Google and Apple work immediately in development
+- ✅ **Beautiful UI**: Pre-built, customizable sign-in components
+- ✅ **Full Auth Suite**: Email/password, social, MFA, session management, password reset
+- ✅ **User Dashboard**: Manage users, roles, metadata from Clerk Dashboard
+- ✅ **Secure by Default**: Industry-standard security, automatic token refresh
+- ✅ **Free Tier**: Up to 10,000 monthly active users
+
+**User Experience**:
+- **Sign In page** (`/signin`): Clerk component with Google + Apple buttons, email/password, "Forgot password?" link
+- **Sign Up page** (`/signup`): Clerk component with social sign-up, email verification
+- **Social Login**: Click Google/Apple → OAuth flow → Automatic account creation → Redirects to dashboard
+- **No Config Required**: Social login works out-of-the-box in development (Clerk provides OAuth apps)
+
+**Migration Strategy**:
+- **Dual Auth Support**: Backend accepts both Clerk tokens and legacy JWT tokens
+- **Gradual Transition**: Existing users can still use email/password (legacy), new users use Clerk
+- **User Sync**: Clerk user data mapped to backend format (`uid`, `email`, `role`, etc.)
+- **Future**: Once all users migrated to Clerk, remove legacy JWT auth
+
+**Modified/Added Files**:
+- Frontend: `src/App.jsx`, `src/lib/AuthContext.jsx`, `src/pages/SignIn.jsx` (replaced), `src/pages/SignUp.jsx` (new), `src/api/apiClient.js`, `src/pages.config.js`, `.env.local` (new), `.env.example`
+- Backend: `server/src/index.ts`, `server/src/auth/clerk.ts` (new), `server/.env.example`, `server/package.json`
+- Docs: `docs/CLERK_SETUP.md` (new), `CLERK_QUICKSTART.md` (new)
+- Removed: `server/src/auth/oauth.ts`, `src/pages/OAuthCallback.jsx`, `docs/OAUTH_SETUP.md`
+
+**Status**: ✅ COMPLETE — Clerk fully integrated; Google and Apple social login work immediately; email/password auth with verification; backward compatible with legacy auth during migration. Social login buttons now powered by Clerk (no manual OAuth configuration required).

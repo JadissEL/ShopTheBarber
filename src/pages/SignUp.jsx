@@ -1,4 +1,4 @@
-import { SignIn as ClerkSignIn } from '@clerk/react';
+import { SignUp as ClerkSignUp } from '@clerk/react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { motion } from 'framer-motion';
@@ -7,21 +7,20 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/components/utils';
 
 /**
- * Sign In Page with Clerk
+ * Sign Up Page with Clerk
  * 
  * Clerk handles:
- * - Email/password login
- * - Social login (Google, Apple, etc.)
+ * - Email/password registration
+ * - Social sign up (Google, Apple, etc.)
  * - Email verification
- * - Password reset
- * - Session management
+ * - User profile creation
  */
-export default function SignIn() {
+export default function SignUp() {
     return (
         <div className="min-h-screen bg-background text-foreground flex">
             <MetaTags
-                title="Sign In"
-                description="Access your account to book appointments and manage your style."
+                title="Join the Platform"
+                description="Create an account to book appointments and manage your style."
             />
 
             {/* Left Side - Brand (Rich Visuals) */}
@@ -49,7 +48,7 @@ export default function SignIn() {
                 </div>
             </div>
 
-            {/* Right Side - Clerk Sign In Component */}
+            {/* Right Side - Clerk Sign Up Component */}
             <div className="w-full lg:w-7/12 flex items-center justify-center p-8 bg-background relative overflow-y-auto">
                 <div className="absolute top-8 right-8">
                     <Button variant="ghost" onClick={() => window.location.href = createPageUrl('Home')} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -62,7 +61,7 @@ export default function SignIn() {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-md py-12"
                 >
-                    <ClerkSignIn
+                    <ClerkSignUp
                         appearance={{
                             elements: {
                                 rootBox: "mx-auto",
@@ -85,10 +84,10 @@ export default function SignIn() {
                             },
                         }}
                         routing="path"
-                        path="/signin"
-                        signUpUrl="/signup"
+                        path="/signup"
+                        signInUrl="/signin"
                         redirectUrl="/dashboard"
-                        afterSignInUrl="/dashboard"
+                        afterSignUpUrl="/dashboard"
                     />
 
                     <p className="text-[10px] text-center text-muted-foreground mt-10 max-w-xs mx-auto leading-relaxed uppercase tracking-widest opacity-70">

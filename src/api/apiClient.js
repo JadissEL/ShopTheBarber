@@ -127,7 +127,10 @@ class EntityClient {
 }
 
 function getAuthHeaders() {
-    const token = localStorage.getItem('sovereign_token');
+    // Check for Clerk token first, fallback to legacy sovereign token
+    const clerkToken = localStorage.getItem('clerk_token');
+    const sovereignToken = localStorage.getItem('sovereign_token');
+    const token = clerkToken || sovereignToken;
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 

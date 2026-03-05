@@ -48,23 +48,38 @@ const AUTH_WRITE_ENTITIES = new Set([
     'barber', 'shop', 'service', 'shift', 'time_block', 'shop_member', 'pricing_rule', 'product', 'staff_service_config', 'review'
 ]);
 
+// Auth middleware - supports both Clerk and legacy JWT during migration
 async function requireAuthPreHandler(request: any, reply: any) {
+    // Try Clerk auth first
     try {
-        await request.jwtVerify();
-    } catch {
-        return reply.status(401).send({ error: 'Unauthorized' });
+        await requireClerkAuth(request, reply);
+        return; // Clerk auth succeeded
+    } catch (clerkError) {
+        // Fallback to legacy JWT for backward compatibility
+        try {
+            await request.jwtVerify();
+        } catch (jwtError) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
     }
 }
 
 /** Requires valid JWT and role === 'admin'. Use for admin-only routes. */
 async function requireAdminPreHandler(request: any, reply: any) {
+    // Try Clerk admin auth first
     try {
-        await request.jwtVerify();
-    } catch {
-        return reply.status(401).send({ error: 'Unauthorized' });
+        await requireAdminClerkAuth(request, reply);
+        return; // Clerk admin auth succeeded
+    } catch (clerkError) {
+        // Fallback to legacy JWT for backward compatibility
+        try {
+            await request.jwtVerify();
+        } catch (jwtError) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+        const user = request.user as { id: string; role?: string };
+        if (user?.role !== 'admin') return reply.status(403).send({ error: 'Forbidden' });
     }
-    const user = request.user as { id: string; role?: string };
-    if (user?.role !== 'admin') return reply.status(403).send({ error: 'Forbidden' });
 }
 
 /** If error looks like missing table/schema, return 503 with hint. */
@@ -90,13 +105,13 @@ fastify.get('/api/health', async (_request, reply) => {
     }
 });
 
-// 0. Auth Routes (Mock for MVP)
+// 0. Auth Routes
 import { authRoutes } from './auth/routes';
-import { oauthRoutes } from './auth/oauth';
+import { requireClerkAuth, requireAdminClerkAuth } from './auth/clerk';
 
-// 0. Auth Routes (Real JWT Implementation)
+// 0. Auth Routes (Legacy - for backward compatibility during migration)
+// Once all users are on Clerk, these can be removed
 fastify.register(authRoutes);
-fastify.register(oauthRoutes);
 
 // 0.1 Payment Routes (Stripe Integration)
 import { paymentRoutes } from './payments/routes';
