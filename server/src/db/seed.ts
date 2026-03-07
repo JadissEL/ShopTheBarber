@@ -1,3 +1,4 @@
+import '../loadEnv';
 import { eq } from 'drizzle-orm';
 import { db } from './index';
 import * as schema from './schema';
@@ -55,32 +56,32 @@ async function seed() {
     });
 
     // Create Barbers
-    const user1 = await db.insert(schema.users).values({
+    const [user1] = await db.insert(schema.users).values({
         id: 'u1',
         email: 'james@example.com',
         full_name: 'James St. Patrick',
         password_hash: passwordHash,
         role: 'barber',
         avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
-    }).returning().get();
+    }).returning();
 
-    const user2 = await db.insert(schema.users).values({
+    const [user2] = await db.insert(schema.users).values({
         id: 'u2',
         email: 'tasha@example.com',
         full_name: 'Tasha Green',
         password_hash: passwordHash,
         role: 'barber',
         avatar_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop'
-    }).returning().get();
+    }).returning();
 
     // Create Clients
-    const client1 = await db.insert(schema.users).values({
+    const [client1] = await db.insert(schema.users).values({
         id: 'c1',
         email: 'ghost@example.com',
         full_name: 'Ghost St. Patrick',
         password_hash: passwordHash,
         role: 'client'
-    }).returning().get();
+    }).returning();
 
     // Distinct barbershop/salon photos (Unsplash – interiors, chairs, mirrors)
     const shopPhotos = [
@@ -98,12 +99,12 @@ async function seed() {
     ];
 
     // Create Shops (s1 = Athens Syntagma, with distinct photo)
-    const shop1 = await db.insert(schema.shops).values({
+    const [shop1] = await db.insert(schema.shops).values({
         id: 's1',
         name: 'Downtown Cuts',
         location: 'Downtown',
         image_url: shopPhotos[0]!
-    }).returning().get();
+    }).returning();
 
     // Create Barbers Profiles (existing + location + distinct photos)
     await db.insert(schema.barbers).values({

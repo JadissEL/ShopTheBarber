@@ -1,7 +1,7 @@
-import { pgTable, text, integer, real, serial, boolean, timestamp, varchar, uniqueIndex, index, numeric } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-export const users = pgTable("users", {
+export const users = sqliteTable("users", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     email: text("email").notNull().unique(),
     password_hash: text("password_hash"), // Nullable for OAuth/Legacy compatibility
@@ -15,7 +15,7 @@ export const users = pgTable("users", {
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const shops = pgTable("shops", {
+export const shops = sqliteTable("shops", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     location: text("location"),
@@ -26,7 +26,7 @@ export const shops = pgTable("shops", {
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const barbers = pgTable("barbers", {
+export const barbers = sqliteTable("barbers", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id),
     shop_id: text("shop_id").references(() => shops.id),
@@ -45,7 +45,7 @@ export const barbers = pgTable("barbers", {
     shopIdx: index("barbers_shop_id_idx").on(table.shop_id),
 }));
 
-export const services = pgTable("services", {
+export const services = sqliteTable("services", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     shop_id: text("shop_id").references(() => shops.id),
     barber_id: text("barber_id").references(() => barbers.id),
@@ -62,7 +62,7 @@ export const services = pgTable("services", {
     barberIdx: index("services_barber_id_idx").on(table.barber_id),
 }));
 
-export const bookings = pgTable("bookings", {
+export const bookings = sqliteTable("bookings", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     client_id: text("client_id").references(() => users.id),
     barber_id: text("barber_id").references(() => barbers.id).notNull(),
@@ -87,13 +87,13 @@ export const bookings = pgTable("bookings", {
     statusIdx: index("bookings_status_idx").on(table.status),
 }));
 
-export const booking_services = pgTable("booking_services", {
-    id: serial("id").primaryKey(),
+export const booking_services = sqliteTable("booking_services", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
     booking_id: text("booking_id").references(() => bookings.id).notNull(),
     service_id: text("service_id").references(() => services.id).notNull(),
 });
 
-export const shifts = pgTable("shifts", {
+export const shifts = sqliteTable("shifts", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     barber_id: text("barber_id").references(() => barbers.id).notNull(),
     shop_id: text("shop_id").references(() => shops.id),
@@ -105,7 +105,7 @@ export const shifts = pgTable("shifts", {
     shopDayIdx: index("shifts_shop_day_idx").on(table.shop_id, table.day),
 }));
 
-export const time_blocks = pgTable("time_blocks", {
+export const time_blocks = sqliteTable("time_blocks", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     barber_id: text("barber_id").references(() => barbers.id).notNull(),
     shop_id: text("shop_id").references(() => shops.id),
@@ -115,7 +115,7 @@ export const time_blocks = pgTable("time_blocks", {
     note: text("note"),
 });
 
-export const loyalty_profiles = pgTable("loyalty_profiles", {
+export const loyalty_profiles = sqliteTable("loyalty_profiles", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull().unique(),
     current_points: integer("current_points").default(0),
@@ -124,7 +124,7 @@ export const loyalty_profiles = pgTable("loyalty_profiles", {
     joined_date: text("joined_date").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const loyalty_transactions = pgTable("loyalty_transactions", {
+export const loyalty_transactions = sqliteTable("loyalty_transactions", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     points: integer("points").notNull(),
@@ -132,33 +132,33 @@ export const loyalty_transactions = pgTable("loyalty_transactions", {
     date_text: text("date_text").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const messages = pgTable("messages", {
+export const messages = sqliteTable("messages", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     sender_id: text("sender_id").references(() => users.id).notNull(),
     sender_email: text("sender_email"),
     receiver_id: text("receiver_id").references(() => users.id).notNull(),
     receiver_email: text("receiver_email"),
     content: text("content").notNull(),
-    is_read: boolean("is_read").default(false),
+    is_read: integer("is_read", { mode: "boolean" }).default(false),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 }, (table) => ({
     senderIdx: index("messages_sender_idx").on(table.sender_id),
     receiverReadIdx: index("messages_receiver_read_idx").on(table.receiver_id, table.is_read),
 }));
 
-export const notifications = pgTable("notifications", {
+export const notifications = sqliteTable("notifications", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     title: text("title").notNull(),
     content: text("content").notNull(),
     type: text("type"),
-    is_read: boolean("is_read").default(false),
+    is_read: integer("is_read", { mode: "boolean" }).default(false),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 }, (table) => ({
     userReadIdx: index("notifications_user_read_idx").on(table.user_id, table.is_read),
 }));
 
-export const disputes = pgTable("disputes", {
+export const disputes = sqliteTable("disputes", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     booking_id: text("booking_id").references(() => bookings.id).notNull(),
     reason: text("reason").notNull(),
@@ -167,7 +167,7 @@ export const disputes = pgTable("disputes", {
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const audit_logs = pgTable("audit_logs", {
+export const audit_logs = sqliteTable("audit_logs", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     action: text("action").notNull(),
     resource_type: text("resource_type"),
@@ -178,16 +178,16 @@ export const audit_logs = pgTable("audit_logs", {
     timestamp: text("timestamp").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const promo_codes = pgTable("promo_codes", {
+export const promo_codes = sqliteTable("promo_codes", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     code: text("code").notNull().unique(),
     discount_type: text("discount_type", { enum: ["percentage", "fixed"] }).notNull(),
     discount_value: real("discount_value").notNull(),
     expiry_date: text("expiry_date"),
-    is_active: boolean("is_active").default(true),
+    is_active: integer("is_active", { mode: "boolean" }).default(true),
 });
 
-export const shop_members = pgTable("shop_members", {
+export const shop_members = sqliteTable("shop_members", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     shop_id: text("shop_id").references(() => shops.id).notNull(),
     user_id: text("user_id").references(() => users.id).notNull(),
@@ -196,15 +196,15 @@ export const shop_members = pgTable("shop_members", {
     barber_id: text("barber_id").references(() => barbers.id), // Link to barber profile if exists
 });
 
-export const pricing_rules = pgTable("pricing_rules", {
+export const pricing_rules = sqliteTable("pricing_rules", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     name: text("name"),
     commission_freelancer: real("commission_freelancer").default(0.10),
     commission_shop: real("commission_shop").default(0.05),
-    is_active: boolean("is_active").default(true),
+    is_active: integer("is_active", { mode: "boolean" }).default(true),
 });
 
-export const waiting_list_entries = pgTable("waiting_list_entries", {
+export const waiting_list_entries = sqliteTable("waiting_list_entries", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     client_id: text("client_id").references(() => users.id),
     barber_id: text("barber_id").references(() => barbers.id),
@@ -213,16 +213,16 @@ export const waiting_list_entries = pgTable("waiting_list_entries", {
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const staff_service_configs = pgTable("staff_service_configs", {
+export const staff_service_configs = sqliteTable("staff_service_configs", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     shop_member_id: text("shop_member_id").references(() => shop_members.id),
     service_id: text("service_id").references(() => services.id),
     custom_price: real("custom_price"),
     custom_duration: integer("custom_duration"),
-    is_enabled: boolean("is_enabled").default(true),
+    is_enabled: integer("is_enabled", { mode: "boolean" }).default(true),
 });
 
-export const reviews = pgTable("reviews", {
+export const reviews = sqliteTable("reviews", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     booking_id: text("booking_id").references(() => bookings.id),
     reviewer_id: text("reviewer_id").references(() => users.id),
@@ -232,7 +232,7 @@ export const reviews = pgTable("reviews", {
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const payouts = pgTable("payouts", {
+export const payouts = sqliteTable("payouts", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     provider_id: text("provider_id").references(() => barbers.id),
     amount: real("amount"),
@@ -245,7 +245,7 @@ export const payouts = pgTable("payouts", {
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const favorites = pgTable("favorites", {
+export const favorites = sqliteTable("favorites", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     target_id: text("target_id").notNull(), // ID of barber or shop
@@ -256,7 +256,7 @@ export const favorites = pgTable("favorites", {
 }));
 
 // Elite brands (Michelin-style vendor profiles for marketplace)
-export const brands = pgTable("brands", {
+export const brands = sqliteTable("brands", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     slug: text("slug"), // optional URL-friendly id
@@ -264,12 +264,12 @@ export const brands = pgTable("brands", {
     hero_image_url: text("hero_image_url"),
     description: text("description"),
     locations: text("locations"), // e.g. "New York • London • Paris"
-    verified_elite: boolean("verified_elite").default(true),
+    verified_elite: integer("verified_elite", { mode: "boolean" }).default(true),
     price_range: text("price_range"), // e.g. "$$$"
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const brand_accolades = pgTable("brand_accolades", {
+export const brand_accolades = sqliteTable("brand_accolades", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     brand_id: text("brand_id").references(() => brands.id).notNull(),
     icon_key: text("icon_key").notNull(), // trophy, star, leaf, art
@@ -278,7 +278,7 @@ export const brand_accolades = pgTable("brand_accolades", {
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const brand_collections = pgTable("brand_collections", {
+export const brand_collections = sqliteTable("brand_collections", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     brand_id: text("brand_id").references(() => brands.id).notNull(),
     name: text("name").notNull(),
@@ -290,7 +290,7 @@ export const brand_collections = pgTable("brand_collections", {
 });
 
 // Marketplace: elite/luxury products from barbers, platform, and external vendors
-export const products = pgTable("products", {
+export const products = sqliteTable("products", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     description: text("description"),
@@ -306,7 +306,7 @@ export const products = pgTable("products", {
 });
 
 // Cart: per-user cart items (product_id + quantity)
-export const cart_items = pgTable("cart_items", {
+export const cart_items = sqliteTable("cart_items", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     product_id: text("product_id").references(() => products.id).notNull(),
@@ -318,7 +318,7 @@ export const cart_items = pgTable("cart_items", {
 }));
 
 // Product orders (marketplace checkout)
-export const orders = pgTable("orders", {
+export const orders = sqliteTable("orders", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     status: text("status", { enum: ["pending", "paid", "shipped", "cancelled"] }).default("pending"),
@@ -339,7 +339,7 @@ export const orders = pgTable("orders", {
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const order_items = pgTable("order_items", {
+export const order_items = sqliteTable("order_items", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     order_id: text("order_id").references(() => orders.id).notNull(),
     product_id: text("product_id").references(() => products.id).notNull(),
@@ -355,7 +355,7 @@ export const order_items = pgTable("order_items", {
 // --- Employment / Jobs Ecosystem ---
 
 /** External employers (non-shop companies) for job postings */
-export const companies = pgTable("companies", {
+export const companies = sqliteTable("companies", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     logo_url: text("logo_url"),
@@ -366,7 +366,7 @@ export const companies = pgTable("companies", {
 });
 
 /** Job postings: employer is either a shop (shop_id) or company (company_id) */
-export const jobs = pgTable("jobs", {
+export const jobs = sqliteTable("jobs", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     title: text("title").notNull(),
     category: text("category").notNull(), // grooming, stylisme, management, logistics, branding, accounting, etc.
@@ -384,7 +384,7 @@ export const jobs = pgTable("jobs", {
     salary_currency: text("salary_currency").default("USD"),
     application_deadline: text("application_deadline"), // ISO date
     status: text("status", { enum: ["draft", "published", "closed"] }).default("draft"),
-    featured: boolean("featured").default(false),
+    featured: integer("featured", { mode: "boolean" }).default(false),
     image_url: text("image_url"),
     created_by: text("created_by").references(() => users.id),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
@@ -392,7 +392,7 @@ export const jobs = pgTable("jobs", {
 });
 
 /** Extended applicant profile (one per user) for employment */
-export const applicant_profiles = pgTable("applicant_profiles", {
+export const applicant_profiles = sqliteTable("applicant_profiles", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull().unique(),
     professional_summary: text("professional_summary"),
@@ -408,7 +408,7 @@ export const applicant_profiles = pgTable("applicant_profiles", {
 });
 
 /** Applicant credentials: CV, certificates, portfolio files */
-export const applicant_credentials = pgTable("applicant_credentials", {
+export const applicant_credentials = sqliteTable("applicant_credentials", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     type: text("type", { enum: ["cv", "certificate", "portfolio"] }).notNull(),
@@ -416,12 +416,12 @@ export const applicant_credentials = pgTable("applicant_credentials", {
     file_path: text("file_path").notNull(), // relative path under uploads/
     file_size: integer("file_size"),
     mime_type: text("mime_type"),
-    verified: boolean("verified").default(false),
+    verified: integer("verified", { mode: "boolean" }).default(false),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
 /** Job applications */
-export const job_applications = pgTable("job_applications", {
+export const job_applications = sqliteTable("job_applications", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     job_id: text("job_id").references(() => jobs.id).notNull(),
     user_id: text("user_id").references(() => users.id).notNull(),
@@ -434,7 +434,7 @@ export const job_applications = pgTable("job_applications", {
 });
 
 /** Documents attached to an application (CV, certs, etc.) */
-export const application_documents = pgTable("application_documents", {
+export const application_documents = sqliteTable("application_documents", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     application_id: text("application_id").references(() => job_applications.id).notNull(),
     type: text("type", { enum: ["cv", "certificate", "portfolio", "other"] }).notNull(),
@@ -446,7 +446,7 @@ export const application_documents = pgTable("application_documents", {
 });
 
 /** Interview scheduling (employer → applicant) */
-export const interview_schedules = pgTable("interview_schedules", {
+export const interview_schedules = sqliteTable("interview_schedules", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     application_id: text("application_id").references(() => job_applications.id).notNull(),
     scheduled_at: text("scheduled_at").notNull(), // ISO datetime
@@ -457,7 +457,7 @@ export const interview_schedules = pgTable("interview_schedules", {
 });
 
 /** Saved jobs (bookmarks) for applicants */
-export const saved_jobs = pgTable("saved_jobs", {
+export const saved_jobs = sqliteTable("saved_jobs", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     user_id: text("user_id").references(() => users.id).notNull(),
     job_id: text("job_id").references(() => jobs.id).notNull(),
