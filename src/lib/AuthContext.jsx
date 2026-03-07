@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }) => {
 
   const role = user?.role ?? 'client';
   const isLoading = !clerkLoaded;
-  const isAuthenticated = isSignedIn && !!user;
+  const isAuthenticated = isSignedIn; // Use Clerk's auth state directly
   const isLoadingAuth = !clerkLoaded;
 
   return (
