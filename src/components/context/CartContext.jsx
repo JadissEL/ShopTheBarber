@@ -24,9 +24,10 @@ function saveGuestCart(items) {
 }
 
 export function CartProvider({ children }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [items, setItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isHydrating, setIsHydrating] = useState(false);
 
     const hydrateFromApi = useCallback(async () => {
         if (!isAuthenticated) return;
@@ -42,17 +43,24 @@ export function CartProvider({ children }) {
     }, [isAuthenticated]);
 
     useEffect(() => {
+        // Don't sync while auth is loading
+        if (isAuthLoading) return;
+        
+        // Prevent concurrent hydrations
+        if (isHydrating) return;
+        
         if (isAuthenticated) {
             const guest = loadGuestCart();
+            setIsHydrating(true);
             if (guest.length > 0) {
-                mergeGuestCartIntoApi();
+                mergeGuestCartIntoApi().finally(() => setIsHydrating(false));
             } else {
-                hydrateFromApi();
+                hydrateFromApi().finally(() => setIsHydrating(false));
             }
         } else {
             setItems(loadGuestCart());
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, isAuthLoading]);
 
     const addItem = useCallback(async (productId, quantity = 1, productSnapshot = null) => {
         const q = Math.max(1, Math.min(99, quantity));

@@ -26,7 +26,7 @@ export default function RouteGuard() {
   const zone = getZoneFromPath(path);
 
   // Check if user is a shop owner/manager (for guarded Ops pages)
-  const { data: isManager } = useQuery({
+  const { data: isManager, isLoading: isManagerLoading } = useQuery({
     queryKey: ['isManager', user?.id],
     queryFn: async () => {
         if (!user) return false;
@@ -37,7 +37,7 @@ export default function RouteGuard() {
   });
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isManagerLoading) return; // Wait for both auth and manager check
 
     // 1. Booking Flow Protection
     if (path.includes('/payment') || path.includes('/bookingconfirm')) {
@@ -94,7 +94,7 @@ export default function RouteGuard() {
     if (path === '/dashboard' && isProviderRole && role !== 'admin') {
         navigate(createPageUrl('ProviderDashboard'), { replace: true });
     }
-  }, [location, user, role, isLoading, bookingState, navigate, path, zone]);
+  }, [location, user, role, isLoading, isManagerLoading, isManager, bookingState, navigate, path, zone]);
 
   return null;
 }

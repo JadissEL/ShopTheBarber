@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, Filter } from 'lucide-react';
@@ -41,7 +41,7 @@ const VAULT_FILTERS = [
 
 export default function GroomingVault() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { addItem } = useCart();
   const [historyFilter, setHistoryFilter] = useState('all');
 
@@ -73,9 +73,20 @@ export default function GroomingVault() {
     }).catch((e) => toast.error(e.message || 'Could not add to bag'));
   };
 
+  // Redirect if not authenticated (useEffect to avoid render-phase side effects)
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/GroomingVault'), { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate]);
+
+  // Show loading while checking auth
+  if (isAuthLoading) {
+    return <PageLoading message="Checking authentication..." />;
+  }
+
   if (!isAuthenticated) {
-    navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/GroomingVault'));
-    return null;
+    return null; // Will redirect in useEffect
   }
 
   return (

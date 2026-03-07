@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Package, ChevronRight } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -20,7 +21,7 @@ const STATUS_LABELS = {
 
 export default function MyOrders() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders'],
@@ -29,9 +30,20 @@ export default function MyOrders() {
     staleTime: 60 * 1000,
   });
 
+  // Redirect if not authenticated (useEffect to avoid render-phase side effects)
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/MyOrders'), { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate]);
+
+  // Show loading while checking auth
+  if (isAuthLoading) {
+    return <PageLoading message="Checking authentication..." />;
+  }
+
   if (!isAuthenticated) {
-    navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/MyOrders'));
-    return null;
+    return null; // Will redirect in useEffect
   }
 
   return (

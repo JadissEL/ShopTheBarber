@@ -21,7 +21,7 @@ export default function Checkout() {
     const status = searchParams.get('status');
     const orderId = searchParams.get('orderId');
     const { items, itemCount } = useCart();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     const [step, setStep] = useState(0);
     const [shipping, setShipping] = useState({
@@ -38,18 +38,26 @@ export default function Checkout() {
     const total = Math.round((subtotal + tax) * 100) / 100;
 
     useEffect(() => {
+        // Handle success state first (no auth needed)
         if (status === 'success' && orderId) {
             setStep(2);
             return;
         }
+        
+        // Don't redirect while auth is loading
+        if (isAuthLoading) return;
+        
+        // Auth check
         if (!isAuthenticated) {
-            navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/Checkout'));
+            navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/Checkout'), { replace: true });
             return;
         }
+        
+        // Cart check (only if authenticated and not on success page)
         if (itemCount === 0 && step < 2) {
-            navigate(createPageUrl('ShoppingBag'));
+            navigate(createPageUrl('ShoppingBag'), { replace: true });
         }
-    }, [status, orderId, isAuthenticated, itemCount, navigate, step]);
+    }, [status, orderId, isAuthenticated, isAuthLoading, itemCount, navigate, step]);
 
     const handleContinueToPayment = async () => {
         if (!shipping.fullName?.trim() || !shipping.street?.trim() || !shipping.city?.trim() || !shipping.zip?.trim()) {

@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     syncUser();
-  }, [clerkLoaded, isSignedIn, clerkUser, getToken]);
+  }, [clerkLoaded, isSignedIn, clerkUser]); // Removed getToken to prevent loop
 
   const logout = async (shouldRedirect = true) => {
     await signOut();
