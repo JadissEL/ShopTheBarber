@@ -1,0 +1,807 @@
+// ShopTheBarber — Neon PostgreSQL schema (Prisma migrations)
+// Column names match Drizzle `schema.ts` for zero-drift coexistence.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model users {
+  id                    String   @id @default(uuid())
+  clerk_user_id         String?  @unique
+  email                 String   @unique
+  password_hash         String?
+  full_name             String?
+  role                  String?  @default("client")
+  avatar_url            String?
+  phone                 String?
+  stripe_account_id     String?
+  stripe_connect_status String?  @default("unconnected")
+  created_at            String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at            String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shops_owned           shops[]  @relation("shop_owner")
+  barbers               barbers[]
+  bookings_as_client    bookings[] @relation("booking_client")
+  loyalty_profiles      loyalty_profiles?
+  messages_sent         messages[] @relation("msg_sender")
+  messages_received     messages[] @relation("msg_receiver")
+  notifications         notifications[]
+  favorites             favorites[]
+  cart_items            cart_items[]
+  orders                orders[]
+  applicant_profiles    applicant_profiles?
+  applicant_credentials applicant_credentials[]
+  job_applications      job_applications[]
+  saved_jobs            saved_jobs[]
+  wishlist_items        wishlist_items[]
+  wallet_accounts       wallet_accounts?
+  wallet_transactions   wallet_transactions[]
+  referrals_made        referrals[] @relation("referrer")
+  referrals_received    referrals[] @relation("referred")
+  gift_cards_purchased  gift_cards[]
+  articles_authored     articles[]
+  inspiration_posts     inspiration_posts[]
+  shop_members          shop_members[]
+  shop_expenses_created shop_expenses[]
+  jobs_created          jobs[]
+  interviews_created    interview_schedules[]
+  privacy_audits        privacy_audits[]
+}
+
+model shops {
+  id          String   @id @default(uuid())
+  name        String
+  location    String?
+  image_url   String?
+  description String?
+  owner_id    String?
+  created_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  owner       users?   @relation("shop_owner", fields: [owner_id], references: [id])
+  barbers     barbers[]
+  services    services[]
+  bookings    bookings[]
+  shop_members shop_members[]
+  products    products[]
+  promo_codes promo_codes[]
+  jobs        jobs[]
+  inventory   shop_inventory_items[]
+  expenses    shop_expenses[]
+}
+
+model barbers {
+  id          String   @id @default(uuid())
+  user_id     String?
+  shop_id     String?
+  name        String
+  title       String?  @default("Professional Barber")
+  bio         String?
+  image_url   String?
+  rating      Float?   @default(0)
+  review_count Int?    @default(0)
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  city        String?
+  status      String?  @default("active")
+  created_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user        users?   @relation(fields: [user_id], references: [id])
+  shop        shops?   @relation(fields: [shop_id], references: [id])
+  services    services[]
+  bookings    bookings[]
+  shifts      shifts[]
+  time_blocks time_blocks[]
+  reviews     reviews[]
+  payouts     payouts[]
+  products    products[]
+  videos      barber_videos[]
+  waiting_list waiting_list_entries[]
+  shop_members shop_members[]
+
+  @@index([user_id])
+  @@index([shop_id])
+}
+
+model services {
+  id               String  @id @default(uuid())
+  shop_id          String?
+  barber_id        String?
+  name             String
+  category         String?
+  description      String?
+  price            Float
+  duration_minutes Int
+  image_url        String?
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shop             shops?  @relation(fields: [shop_id], references: [id])
+  barber           barbers? @relation(fields: [barber_id], references: [id])
+  booking_services booking_services[]
+  staff_configs    staff_service_configs[]
+
+  @@index([shop_id])
+  @@index([barber_id])
+}
+
+model bookings {
+  id                 String  @id @default(uuid())
+  client_id          String?
+  barber_id          String
+  shop_id            String?
+  client_name        String?
+  barber_name        String?
+  service_name       String?
+  service_snapshot   String?
+  created_by         String?
+  start_time         String
+  end_time           String
+  status             String? @default("pending")
+  payment_status     String? @default("unpaid")
+  financial_breakdown String?
+  price_at_booking   Float?
+  notes              String?
+  discount_code      String?
+  created_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  client             users?  @relation("booking_client", fields: [client_id], references: [id])
+  barber             barbers @relation(fields: [barber_id], references: [id])
+  shop               shops?  @relation(fields: [shop_id], references: [id])
+  booking_services   booking_services[]
+  disputes           disputes[]
+  reviews            reviews[]
+
+  @@index([client_id])
+  @@index([barber_id, start_time])
+  @@index([status])
+  @@index([discount_code])
+}
+
+model booking_services {
+  id         Int    @id @default(autoincrement())
+  booking_id String
+  service_id String
+
+  booking    bookings @relation(fields: [booking_id], references: [id])
+  service    services @relation(fields: [service_id], references: [id])
+}
+
+model products {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  image_url   String?
+  category    String?
+  seller_type String
+  barber_id   String?
+  shop_id     String?
+  vendor_name String?
+  brand_id    String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber      barbers? @relation(fields: [barber_id], references: [id])
+  shop        shops?   @relation(fields: [shop_id], references: [id])
+  brand       brands?  @relation(fields: [brand_id], references: [id])
+  cart_items  cart_items[]
+  order_items order_items[]
+  wishlist_items wishlist_items[]
+}
+
+model orders {
+  id                       String  @id @default(uuid())
+  user_id                  String
+  status                   String? @default("pending")
+  subtotal                 Float
+  shipping_amount          Float?  @default(0)
+  tax_amount               Float?  @default(0)
+  total                    Float
+  shipping_full_name       String?
+  shipping_street          String?
+  shipping_city            String?
+  shipping_zip             String?
+  shipping_phone           String?
+  payment_status           String? @default("unpaid")
+  stripe_checkout_session_id String?
+  order_number             String?
+  fulfillment_status       String? @default("confirmed")
+  estimated_delivery_at    String?
+  created_at               String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user                     users   @relation(fields: [user_id], references: [id])
+  order_items              order_items[]
+}
+
+model order_items {
+  id                String  @id @default(uuid())
+  order_id          String
+  product_id        String
+  product_name      String
+  product_image_url String?
+  price             Float
+  quantity          Int
+  created_at        String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  order             orders  @relation(fields: [order_id], references: [id])
+  product           products @relation(fields: [product_id], references: [id])
+
+  @@index([order_id])
+}
+
+model brands {
+  id              String  @id @default(uuid())
+  name            String
+  slug            String?
+  logo_url        String?
+  hero_image_url  String?
+  description     String?
+  locations       String?
+  verified_elite  Boolean? @default(true)
+  price_range     String?
+  created_at      String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  accolades       brand_accolades[]
+  collections     brand_collections[]
+  products        products[]
+}
+
+model brand_accolades {
+  id         String  @id @default(uuid())
+  brand_id   String
+  icon_key   String
+  label      String
+  sort_order Int?    @default(0)
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  brand      brands  @relation(fields: [brand_id], references: [id])
+}
+
+model brand_collections {
+  id         String  @id @default(uuid())
+  brand_id   String
+  name       String
+  subtitle   String?
+  image_url  String?
+  tag        String?
+  sort_order Int?    @default(0)
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  brand      brands  @relation(fields: [brand_id], references: [id])
+}
+
+model promo_codes {
+  id             String  @id @default(uuid())
+  code           String  @unique
+  discount_type  String
+  discount_value Float
+  shop_id        String?
+  expiry_date    String?
+  is_active      Boolean? @default(true)
+
+  shop           shops?  @relation(fields: [shop_id], references: [id])
+
+  @@index([shop_id])
+}
+
+model loyalty_profiles {
+  id              String  @id @default(uuid())
+  user_id         String  @unique
+  current_points  Int?    @default(0)
+  lifetime_points Int?    @default(0)
+  tier            String? @default("Bronze")
+  joined_date     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user            users   @relation(fields: [user_id], references: [id])
+}
+
+model loyalty_transactions {
+  id          String  @id @default(uuid())
+  user_id     String
+  points      Int
+  description String?
+  date_text   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+}
+
+model messages {
+  id             String  @id @default(uuid())
+  sender_id      String
+  sender_email   String?
+  receiver_id    String
+  receiver_email String?
+  content        String
+  is_read        Boolean? @default(false)
+  created_at     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  sender         users   @relation("msg_sender", fields: [sender_id], references: [id])
+  receiver       users   @relation("msg_receiver", fields: [receiver_id], references: [id])
+
+  @@index([sender_id])
+  @@index([receiver_id, is_read])
+}
+
+model notifications {
+  id         String  @id @default(uuid())
+  user_id    String
+  title      String
+  content    String
+  type       String?
+  is_read    Boolean? @default(false)
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users   @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, is_read])
+}
+
+model favorites {
+  id          String  @id @default(uuid())
+  user_id     String
+  target_id   String
+  target_type String
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user        users   @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, target_id, target_type])
+}
+
+model cart_items {
+  id         String  @id @default(uuid())
+  user_id    String
+  product_id String
+  quantity   Int     @default(1)
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users   @relation(fields: [user_id], references: [id])
+  product    products @relation(fields: [product_id], references: [id])
+
+  @@unique([user_id, product_id])
+}
+
+model shifts {
+  id         String  @id @default(uuid())
+  barber_id  String
+  shop_id    String?
+  day        String
+  start_time String
+  end_time   String
+
+  barber     barbers @relation(fields: [barber_id], references: [id])
+
+  @@index([barber_id, day])
+}
+
+model time_blocks {
+  id             String  @id @default(uuid())
+  barber_id      String
+  shop_id        String?
+  start_datetime String
+  end_datetime   String
+  reason         String?
+  note           String?
+
+  barber         barbers @relation(fields: [barber_id], references: [id])
+}
+
+model disputes {
+  id         String  @id @default(uuid())
+  booking_id String
+  reason     String
+  status     String? @default("open")
+  evidence   String?
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  booking    bookings @relation(fields: [booking_id], references: [id])
+}
+
+model audit_logs {
+  id            String  @id @default(uuid())
+  action        String
+  resource_type String?
+  resource_id   String?
+  actor_id      String?
+  changes       String?
+  details       String?
+  timestamp     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+}
+
+model shop_members {
+  id          String  @id @default(uuid())
+  shop_id     String
+  user_id     String
+  role        String? @default("barber")
+  joined_date String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  barber_id   String?
+
+  shop        shops   @relation(fields: [shop_id], references: [id])
+  user        users   @relation(fields: [user_id], references: [id])
+  barber      barbers? @relation(fields: [barber_id], references: [id])
+  staff_configs staff_service_configs[]
+}
+
+model pricing_rules {
+  id                    String  @id @default(uuid())
+  name                  String?
+  commission_freelancer Float?  @default(0.10)
+  commission_shop       Float?  @default(0.05)
+  is_active             Boolean? @default(true)
+}
+
+model waiting_list_entries {
+  id           String  @id @default(uuid())
+  client_id    String?
+  barber_id    String?
+  request_date String?
+  status       String? @default("pending")
+  created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber       barbers? @relation(fields: [barber_id], references: [id])
+}
+
+model staff_service_configs {
+  id              String  @id @default(uuid())
+  shop_member_id  String?
+  service_id      String?
+  custom_price    Float?
+  custom_duration Int?
+  is_enabled      Boolean? @default(true)
+
+  shop_member     shop_members? @relation(fields: [shop_member_id], references: [id])
+  service         services?     @relation(fields: [service_id], references: [id])
+}
+
+model reviews {
+  id          String  @id @default(uuid())
+  booking_id  String?
+  reviewer_id String?
+  target_id   String?
+  rating      Int?
+  content     String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  booking     bookings? @relation(fields: [booking_id], references: [id])
+  barber      barbers?  @relation(fields: [target_id], references: [id])
+}
+
+model payouts {
+  id               String  @id @default(uuid())
+  provider_id      String?
+  amount           Float?
+  status           String? @default("Pending")
+  stripe_payout_id String?
+  failure_reason   String?
+  paid_date        String?
+  period_start     String?
+  period_end       String?
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber           barbers? @relation(fields: [provider_id], references: [id])
+}
+
+model companies {
+  id          String  @id @default(uuid())
+  name        String
+  logo_url    String?
+  description String?
+  website     String?
+  location    String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  jobs        jobs[]
+}
+
+model jobs {
+  id                       String  @id @default(uuid())
+  title                    String
+  category                 String
+  employer_type            String
+  shop_id                  String?
+  company_id               String?
+  employment_type          String
+  location_type            String
+  location_text            String?
+  description              String?
+  responsibilities         String?
+  required_experience_skills String?
+  salary_min               Float?
+  salary_max               Float?
+  salary_currency          String? @default("USD")
+  application_deadline     String?
+  status                   String? @default("draft")
+  featured                 Boolean? @default(false)
+  image_url                String?
+  created_by               String?
+  created_at               String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at               String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shop                     shops?    @relation(fields: [shop_id], references: [id])
+  company                  companies? @relation(fields: [company_id], references: [id])
+  creator                  users?    @relation(fields: [created_by], references: [id])
+  applications             job_applications[]
+  saved_by                 saved_jobs[]
+}
+
+model applicant_profiles {
+  id                  String  @id @default(uuid())
+  user_id             String  @unique
+  professional_summary String?
+  work_experience     String?
+  skills              String?
+  certifications      String?
+  portfolio_links     String?
+  availability        String?
+  preferred_job_types String?
+  years_experience    Int?
+  created_at          String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at          String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user                users   @relation(fields: [user_id], references: [id])
+}
+
+model applicant_credentials {
+  id         String  @id @default(uuid())
+  user_id    String
+  type       String
+  file_name  String
+  file_path  String
+  file_size  Int?
+  mime_type  String?
+  verified   Boolean? @default(false)
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users   @relation(fields: [user_id], references: [id])
+}
+
+model job_applications {
+  id           String  @id @default(uuid())
+  job_id       String
+  user_id      String
+  status       String? @default("received")
+  cover_letter String?
+  custom_data  String?
+  match_score  Int?
+  created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  job          jobs    @relation(fields: [job_id], references: [id])
+  user         users   @relation(fields: [user_id], references: [id])
+  documents    application_documents[]
+  interviews   interview_schedules[]
+}
+
+model application_documents {
+  id             String  @id @default(uuid())
+  application_id String
+  type           String
+  file_name      String
+  file_path      String
+  file_size      Int?
+  mime_type      String?
+  created_at     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  application    job_applications @relation(fields: [application_id], references: [id])
+}
+
+model interview_schedules {
+  id             String  @id @default(uuid())
+  application_id String
+  scheduled_at   String
+  format         String
+  notes          String?
+  created_by     String?
+  created_at     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  application    job_applications @relation(fields: [application_id], references: [id])
+  creator        users? @relation(fields: [created_by], references: [id])
+}
+
+model saved_jobs {
+  id         String  @id @default(uuid())
+  user_id    String
+  job_id     String
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users   @relation(fields: [user_id], references: [id])
+  job        jobs    @relation(fields: [job_id], references: [id])
+
+  @@unique([user_id, job_id])
+}
+
+model inspiration_posts {
+  id          String  @id @default(uuid())
+  title       String
+  author_name String?
+  author_id   String?
+  image_url   String?
+  video_url   String?
+  post_type   String? @default("image")
+  category    String?
+  likes       Int?    @default(0)
+  published   Boolean? @default(true)
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  author      users?  @relation(fields: [author_id], references: [id])
+}
+
+model articles {
+  id          String  @id @default(uuid())
+  title       String
+  slug        String? @unique
+  excerpt     String?
+  content     String?
+  category    String?
+  image_url   String?
+  author_id   String?
+  author_name String?
+  published   Boolean? @default(false)
+  featured    Boolean? @default(false)
+  views       Int?    @default(0)
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  author      users?  @relation(fields: [author_id], references: [id])
+
+  @@index([published])
+}
+
+model gift_cards {
+  id              String  @id @default(uuid())
+  code            String  @unique
+  purchaser_id    String?
+  recipient_email String?
+  original_amount Float
+  balance         Float
+  currency        String? @default("EUR")
+  expiry_date     String?
+  status          String? @default("active")
+  created_at      String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  purchaser       users?  @relation(fields: [purchaser_id], references: [id])
+}
+
+model referrals {
+  id               String  @id @default(uuid())
+  referrer_id      String
+  referral_code    String
+  referred_user_id String?
+  reward_amount    Float?  @default(10)
+  status           String? @default("pending")
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  referrer         users   @relation("referrer", fields: [referrer_id], references: [id])
+  referred         users?  @relation("referred", fields: [referred_user_id], references: [id])
+
+  @@index([referral_code])
+  @@index([referrer_id])
+}
+
+model wallet_accounts {
+  id         String  @id @default(uuid())
+  user_id    String  @unique
+  balance    Float?  @default(0)
+  currency   String? @default("EUR")
+  updated_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users   @relation(fields: [user_id], references: [id])
+  transactions wallet_transactions[]
+}
+
+model wallet_transactions {
+  id          String  @id @default(uuid())
+  wallet_id   String
+  user_id     String
+  amount      Float
+  type        String
+  description String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  wallet      wallet_accounts @relation(fields: [wallet_id], references: [id])
+  user        users           @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+}
+
+model wishlist_items {
+  id         String  @id @default(uuid())
+  user_id    String
+  product_id String
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users    @relation(fields: [user_id], references: [id])
+  product    products @relation(fields: [product_id], references: [id])
+
+  @@unique([user_id, product_id])
+}
+
+model barber_videos {
+  id            String  @id @default(uuid())
+  barber_id     String
+  title         String
+  video_url     String
+  thumbnail_url String?
+  status        String? @default("pending")
+  views         Int?    @default(0)
+  created_at    String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber        barbers @relation(fields: [barber_id], references: [id])
+
+  @@index([barber_id])
+}
+
+model feature_flags {
+  id          String  @id @default(uuid())
+  key         String  @unique
+  label       String?
+  description String?
+  enabled     Boolean? @default(true)
+  updated_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+}
+
+model shop_inventory_items {
+  id            String  @id @default(uuid())
+  shop_id       String
+  name          String
+  sku           String?
+  quantity      Int?    @default(0)
+  unit_cost     Float?
+  reorder_level Int?    @default(5)
+  created_at    String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shop          shops   @relation(fields: [shop_id], references: [id])
+
+  @@index([shop_id])
+}
+
+model shop_expenses {
+  id           String  @id @default(uuid())
+  shop_id      String
+  category     String?
+  amount       Float
+  description  String?
+  expense_date String?
+  created_by   String?
+  created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shop         shops   @relation(fields: [shop_id], references: [id])
+  creator      users?  @relation(fields: [created_by], references: [id])
+
+  @@index([shop_id])
+}
+
+model legal_documents {
+  id         String  @id @default(uuid())
+  slug       String  @unique
+  title      String
+  content    String?
+  version    String?
+  published  Boolean? @default(true)
+  updated_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+}
+
+/// GDPR / privacy audit trail (Neon production)
+model privacy_audits {
+  id           String   @id @default(uuid())
+  user_id      String
+  action_type  String
+  status       String   @default("initiated")
+  request_ip   String?
+  user_agent   String?
+  metadata     String?
+  error_message String?
+  initiated_at String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  completed_at String?
+
+  user         users    @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, action_type])
+}

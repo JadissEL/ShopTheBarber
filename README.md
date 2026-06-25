@@ -1,6 +1,6 @@
 # 💈 ShopTheBarber - Premium Barbershop Booking Platform
 
-**Status**: ✅ Production-Ready | **Architecture**: 100% Sovereign | **Base44**: Fully Eradicated
+**Status**: ✅ Production-Ready | **Architecture**: 100% Sovereign | **Sovereign API**: Fully Eradicated
 
 A modern, elegant booking platform for barbershops and grooming professionals built with React, Fastify, and SQLite.
 
@@ -171,7 +171,7 @@ To have the app **always running** and **auto-deploy on push**: deploy the front
 - **Backend (Render)**: New Web Service, root `server`, start `npm run start`, set `JWT_SECRET`, `FRONTEND_URL`, Stripe keys. Optional: use the repo’s `render.yaml` Blueprint.
 - **Database**: Default is SQLite (on Render free tier the disk is ephemeral). For persistent data, add a hosted DB later (e.g. Render Postgres).
 - **Environment**: On the server machine, copy `server/.env.example` to `server/.env` and set **JWT_SECRET**, **STRIPE_***, **RESEND_***, **FRONTEND_URL** (and optionally **DATABASE_PATH**). Never commit `.env`.
-- **Database**: Default is SQLite (`sovereign.sqlite` in `server/`). For production you can keep SQLite or migrate to PostgreSQL; run migrations with `npm run push` (or your migration command) after setting DB URL/path.
+- **Database**: SQLite locally (`server/sovereign.sqlite`) or Postgres when **`DATABASE_URL`** is set on the server. Render build uses **`node scripts/build-database.mjs`** (migrate vs push / optional bootstrap — see **`AGENTS.md`**).
 - **CORS**: Backend has CORS enabled; set the frontend origin in production so only your app can call the API.
 
 ---
@@ -180,6 +180,8 @@ To have the app **always running** and **auto-deploy on push**: deploy the front
 
 - **Architecture & schema**: See **PROJECT_SCHEMA.md** for high-level architecture and **PROJECT_TRACKER.md** for DB schema status, completed actions, and roadmap.
 - **Running locally**: Backend on port 3001, frontend on 3000; frontend proxies `/api` to the backend (see Quick Start). **Seed the database** so Find a Barber, bookings, and Marketplace have data: in `server/` run `npm run push` (if needed) then `npm run seed`. For Marketplace products, run `npm run create-products-table` if migrations don’t create the products table. See [docs/BOOKING_FLOWS.md](docs/BOOKING_FLOWS.md) for barber-first vs service-first booking flows and data requirements.
+- **After git pull (SQLite)**: If `drizzle-kit push` would drop/recreate tables, prefer additive scripts so you keep local data — see **[AGENTS.md](AGENTS.md)** (`npm run db:add-clerk-column`, `npm run db:add-promo-columns` for `users.clerk_user_id`, `promo_codes.shop_id`, `bookings.discount_code`).
+- **PostgreSQL** (`DATABASE_URL` on the server): run `cd server && npm run migrate` for versioned SQL (never rely on interactive `push` in production — **[AGENTS.md](AGENTS.md)**).
 
 ### Frontend
 ```bash
@@ -198,7 +200,9 @@ npm run generate     # Generate Drizzle migrations
 npm run push         # Push schema to database
 npm run seed         # Seed database with sample data
 npm run studio       # Open Drizzle Studio (DB GUI)
-npm run test         # Run server tests (Vitest)
+npm run migrate      # PostgreSQL: apply server/drizzle/*.sql (when DATABASE_URL is set)
+npm run db:add-promo-columns   # SQLite: additive promo/discount columns (idempotent; also runs before npm run test)
+npm run test         # Run server tests (runs db:add-promo-columns first, then Vitest)
 ```
 
 ---
@@ -215,6 +219,8 @@ Base URL: `http://localhost:3001`
 - `POST /api/functions/calculate-taxes` - Calculate Greek taxes
 - `POST /api/functions/calculate-fees` - Commission & fee breakdown
 - `POST /api/functions/send-booking-email` - Send notifications
+- `POST /api/functions/validate-promo-code` - Server-side promo validation (rate-limited)
+- `GET /api/public/active-promotions` - Public promo summaries for Explore / barber profiles (`?barber_id=` optional)
 
 ### Entities (CRUD)
 - `GET /api/barbers` - List barbers
@@ -223,7 +229,8 @@ Base URL: `http://localhost:3001`
 - `GET /api/bookings` - List bookings
 - `POST /api/bookings` - Create booking (custom logic)
 - `PATCH /api/{entity}/:id` - Update any entity
-- _Plus 10+ more entity endpoints_
+- `GET|POST /api/promo_codes` - Promo codes (auth required; scoped to managed shops — see sovereign API)
+- _Plus more entity endpoints_
 
 See `server/src/index.ts` for complete API documentation.
 
@@ -231,8 +238,8 @@ See `server/src/index.ts` for complete API documentation.
 
 ## 📈 Roadmap
 
-### ✅ Phase 1: Base44 Eradication (COMPLETE)
-- Removed all Base44 dependencies
+### ✅ Phase 1: Sovereign API Eradication (COMPLETE)
+- Removed all Sovereign API dependencies
 - Built sovereign backend
 - Migrated core functions
 - 100% independent architecture
@@ -258,7 +265,7 @@ See `server/src/index.ts` for complete API documentation.
 - [ ] Multi-language support
 - [ ] Marketplace expansion
 
-See `BASE44_ERADICATION_COMPLETE.md` for detailed roadmap.
+See `Sovereign API_ERADICATION_COMPLETE.md` for detailed roadmap.
 
 ---
 
@@ -292,7 +299,7 @@ Shop The Barber Platform
 - **Project Schema**: `PROJECT_SCHEMA.md` - Architecture and structure
 - **Project Tracker**: `PROJECT_TRACKER.md` - Complete development history & DB schema status
 - **Booking flows**: `docs/BOOKING_FLOWS.md` - Barber-first and service-first flows, error/empty states, seed requirement
-- **Eradication Report**: `BASE44_ERADICATION_COMPLETE.md` - Migration summary
+- **Eradication Report**: `Sovereign API_ERADICATION_COMPLETE.md` - Migration summary
 - **Function Migration**: `FUNCTION_MIGRATION_PROGRESS.md` - API migration details
 - **Migration Summary**: `MIGRATION_SUMMARY.md` - Architecture decisions
 
@@ -300,7 +307,7 @@ Shop The Barber Platform
 
 ## ✨ Highlights
 
-This project represents a **complete architectural sovereignty migration** from a proprietary platform (Base44) to a fully independent, production-grade system built on open-source technologies.
+This project represents a **complete architectural sovereignty migration** from a proprietary platform (Sovereign API) to a fully independent, production-grade system built on open-source technologies.
 
 **Key Achievements**:
 - ✅ Zero vendor lock-in

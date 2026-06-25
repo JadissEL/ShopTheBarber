@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function ProfessionalPortfolio() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -183,7 +181,6 @@ export default function ProfessionalPortfolio() {
           <Send className="w-5 h-5" /> Apply with Profile
         </Button>
       </main>
-      <ClientBottomNav />
     </div>
   );
 }

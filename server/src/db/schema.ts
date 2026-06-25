@@ -3,6 +3,8 @@ import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    /** Clerk subject (`user_*`) linked for API scope alignment with JWT `users.id` */
+    clerk_user_id: text("clerk_user_id").unique(),
     email: text("email").notNull().unique(),
     password_hash: text("password_hash"), // Nullable for OAuth/Legacy compatibility
     full_name: text("full_name"),
@@ -37,6 +39,9 @@ export const barbers = pgTable("barbers", {
     rating: real("rating").default(0),
     review_count: integer("review_count").default(0),
     location: text("location"),
+    latitude: real("latitude"),
+    longitude: real("longitude"),
+    city: text("city"),
     status: text("status", { enum: ["active", "inactive"] }).default("active"),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
@@ -79,12 +84,15 @@ export const bookings = pgTable("bookings", {
     financial_breakdown: text("financial_breakdown"), // JSON string
     price_at_booking: real("price_at_booking"),
     notes: text("notes"),
+    /** Normalized promo code applied at booking time (matches promo_codes.code); used for usage limits. */
+    discount_code: text("discount_code"),
     created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
     updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 }, (table) => ({
     clientIdx: index("bookings_client_id_idx").on(table.client_id),
     barberTimeIdx: index("bookings_barber_time_idx").on(table.barber_id, table.start_time),
     statusIdx: index("bookings_status_idx").on(table.status),
+    discountCodeIdx: index("bookings_discount_code_idx").on(table.discount_code),
 }));
 
 export const booking_services = pgTable("booking_services", {
@@ -183,9 +191,13 @@ export const promo_codes = pgTable("promo_codes", {
     code: text("code").notNull().unique(),
     discount_type: text("discount_type", { enum: ["percentage", "fixed"] }).notNull(),
     discount_value: real("discount_value").notNull(),
+    /** When set, code applies to that shop only; when null, platform-wide. */
+    shop_id: text("shop_id").references(() => shops.id),
     expiry_date: text("expiry_date"),
     is_active: boolean("is_active").default(true),
-});
+}, (table) => ({
+    shopIdx: index("promo_codes_shop_id_idx").on(table.shop_id),
+}));
 
 export const shop_members = pgTable("shop_members", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -465,3 +477,150 @@ export const saved_jobs = pgTable("saved_jobs", {
 }, (table) => ({
     userJobUniq: uniqueIndex("saved_jobs_user_job_uniq").on(table.user_id, table.job_id),
 }));
+
+export const inspiration_posts = pgTable("inspiration_posts", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    title: text("title").notNull(),
+    author_name: text("author_name"),
+    author_id: text("author_id").references(() => users.id),
+    image_url: text("image_url"),
+    video_url: text("video_url"),
+    post_type: text("post_type", { enum: ["image", "video"] }).default("image"),
+    category: text("category"),
+    likes: integer("likes").default(0),
+    published: boolean("published").default(true),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const articles = pgTable("articles", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    title: text("title").notNull(),
+    slug: text("slug"),
+    excerpt: text("excerpt"),
+    content: text("content"),
+    category: text("category"),
+    image_url: text("image_url"),
+    author_id: text("author_id").references(() => users.id),
+    author_name: text("author_name"),
+    published: boolean("published").default(false),
+    featured: boolean("featured").default(false),
+    views: integer("views").default(0),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    slugIdx: uniqueIndex("articles_slug_uniq").on(table.slug),
+    publishedIdx: index("articles_published_idx").on(table.published),
+}));
+
+export const gift_cards = pgTable("gift_cards", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    code: text("code").notNull().unique(),
+    purchaser_id: text("purchaser_id").references(() => users.id),
+    recipient_email: text("recipient_email"),
+    original_amount: real("original_amount").notNull(),
+    balance: real("balance").notNull(),
+    currency: text("currency").default("EUR"),
+    expiry_date: text("expiry_date"),
+    status: text("status", { enum: ["active", "redeemed", "expired", "cancelled"] }).default("active"),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const referrals = pgTable("referrals", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    referrer_id: text("referrer_id").references(() => users.id).notNull(),
+    referral_code: text("referral_code").notNull(),
+    referred_user_id: text("referred_user_id").references(() => users.id),
+    reward_amount: real("reward_amount").default(10),
+    status: text("status", { enum: ["pending", "completed", "paid"] }).default("pending"),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    codeIdx: index("referrals_code_idx").on(table.referral_code),
+    referrerIdx: index("referrals_referrer_idx").on(table.referrer_id),
+}));
+
+export const wallet_accounts = pgTable("wallet_accounts", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    user_id: text("user_id").references(() => users.id).notNull().unique(),
+    balance: real("balance").default(0),
+    currency: text("currency").default("EUR"),
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const wallet_transactions = pgTable("wallet_transactions", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    wallet_id: text("wallet_id").references(() => wallet_accounts.id).notNull(),
+    user_id: text("user_id").references(() => users.id).notNull(),
+    amount: real("amount").notNull(),
+    type: text("type", { enum: ["credit", "debit", "refund", "top_up", "referral"] }).notNull(),
+    description: text("description"),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    userIdx: index("wallet_tx_user_idx").on(table.user_id),
+}));
+
+export const wishlist_items = pgTable("wishlist_items", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    user_id: text("user_id").references(() => users.id).notNull(),
+    product_id: text("product_id").references(() => products.id).notNull(),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    userProductUniq: uniqueIndex("wishlist_user_product_uniq").on(table.user_id, table.product_id),
+}));
+
+export const barber_videos = pgTable("barber_videos", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    barber_id: text("barber_id").references(() => barbers.id).notNull(),
+    title: text("title").notNull(),
+    video_url: text("video_url").notNull(),
+    thumbnail_url: text("thumbnail_url"),
+    status: text("status", { enum: ["pending", "approved", "rejected"] }).default("pending"),
+    views: integer("views").default(0),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    barberIdx: index("barber_videos_barber_idx").on(table.barber_id),
+}));
+
+export const feature_flags = pgTable("feature_flags", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    key: text("key").notNull().unique(),
+    label: text("label"),
+    description: text("description"),
+    enabled: boolean("enabled").default(true),
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const shop_inventory_items = pgTable("shop_inventory_items", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    shop_id: text("shop_id").references(() => shops.id).notNull(),
+    name: text("name").notNull(),
+    sku: text("sku"),
+    quantity: integer("quantity").default(0),
+    unit_cost: real("unit_cost"),
+    reorder_level: integer("reorder_level").default(5),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    shopIdx: index("shop_inventory_shop_idx").on(table.shop_id),
+}));
+
+export const shop_expenses = pgTable("shop_expenses", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    shop_id: text("shop_id").references(() => shops.id).notNull(),
+    category: text("category"),
+    amount: real("amount").notNull(),
+    description: text("description"),
+    expense_date: text("expense_date"),
+    created_by: text("created_by").references(() => users.id),
+    created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    shopIdx: index("shop_expenses_shop_idx").on(table.shop_id),
+}));
+
+export const legal_documents = pgTable("legal_documents", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    content: text("content"),
+    version: text("version"),
+    published: boolean("published").default(true),
+    updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});

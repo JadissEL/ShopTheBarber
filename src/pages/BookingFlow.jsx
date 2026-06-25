@@ -17,7 +17,7 @@ import {
 import React from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import BookingServicesStep from '@/components/booking/BookingServicesStep';
@@ -414,6 +414,12 @@ export default function BookingFlow() {
 
   const calculateDiscount = () => {
     if (!appliedPromotion) return 0;
+    const fromServer =
+      typeof appliedPromotion.discount_amount === 'number' && Number.isFinite(appliedPromotion.discount_amount)
+        ? appliedPromotion.discount_amount
+        : null;
+    if (fromServer != null) return fromServer;
+
     const discountText = appliedPromotion.discount_text || '';
     const amount = parseFloat(discountText.replace(/[^0-9.]/g, '') || 0);
 
@@ -456,20 +462,35 @@ export default function BookingFlow() {
     setPromoError('');
 
     try {
-      // Fetch promotions to find matching code
-      // Note: In a real app, backend should validate this securely
-      const promotions = await sovereign.entities.Promotion.list();
-      const promo = promotions.find(p => p.code?.toUpperCase() === promoCode.toUpperCase());
-
-      if (promo) {
-        setAppliedPromotion(promo);
+      if (!currentUser?.id) {
+        setPromoError('Log in to apply a promo code');
+        setAppliedPromotion(null);
+        return;
+      }
+      if (!activeBarberId) {
+        setPromoError('Select a barber first');
+        setAppliedPromotion(null);
+        return;
+      }
+      const shopId = bookingState?.shopId || urlShopId;
+      const res = await sovereign.functions.invoke('validate-promo-code', {
+        code: promoCode,
+        barber_id: activeBarberId,
+        shop_id: shopId || null,
+        base_price: basePrice,
+        user_id: currentUser.id,
+        context_type: shopId ? 'shop' : 'independent',
+      });
+      if (res.status === 'VALID') {
+        setAppliedPromotion(res);
         setPromoError('');
       } else {
-        setPromoError('Invalid promo code');
+        setPromoError(res.message || 'Invalid promo code');
         setAppliedPromotion(null);
       }
-    } catch {
-      setPromoError('Failed to validate code');
+    } catch (e) {
+      setPromoError(e.message || 'Failed to validate code');
+      setAppliedPromotion(null);
     }
   };
 
@@ -773,7 +794,7 @@ export default function BookingFlow() {
       applied_promotion: appliedPromotion ? {
         code: appliedPromotion.code,
         discount: appliedPromotion.discount_text,
-        id: appliedPromotion.id
+        id: appliedPromotion.promotion_id || appliedPromotion.id
       } : null
     };
 
@@ -811,6 +832,7 @@ export default function BookingFlow() {
       duration_at_booking: totalDuration,
       service_snapshot: snapshot,
       financial_breakdown: financialBreakdown, // Persist calculated commissions
+      discount_code: appliedPromotion?.code || undefined,
 
       // Metadata
       image_url: selectedBarber?.image_url,

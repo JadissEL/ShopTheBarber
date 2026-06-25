@@ -98,6 +98,7 @@ export default function AIAdvisor() {
                             <button
                                 onClick={() => setIsOpen(false)}
                                 className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white"
+                                aria-label="Close AI advisor"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -152,6 +153,7 @@ export default function AIAdvisor() {
                                     onClick={handleSend}
                                     disabled={isLoading || !input.trim()}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary text-white rounded-xl disabled:opacity-50 disabled:grayscale hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                    aria-label="Send message"
                                 >
                                     <Send className="w-4 h-4" />
                                 </button>

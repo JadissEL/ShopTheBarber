@@ -11,7 +11,7 @@ import {
   AlertTriangle,
   LogOut,
 } from 'lucide-react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 const adminNavItems = [
   { label: 'Financials', icon: BarChart3, path: 'GlobalFinancials' },

@@ -12,7 +12,11 @@
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:health": "playwright test e2e/health-public.spec.ts",
+    "test:e2e:clerk-browser": "playwright test --project=clerk-browser",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@clerk/react": "^6.0.1",
@@ -80,7 +84,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.0.24",
     "@eslint/js": "^9.19.0",
+    "@playwright/test": "^1.50.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@types/node": "^22.13.5",

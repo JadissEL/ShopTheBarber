@@ -3,7 +3,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, MapPin, Calendar, Clock, Scissors } from 'lucide-react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 export default function BookingCard({ booking, actions, variant: _variant = 'default', className }) {
     if (!booking) return null;

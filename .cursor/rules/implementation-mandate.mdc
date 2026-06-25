@@ -6,5 +6,6 @@ alwaysApply: true
 # Implementation mandate
 
 - **Autonomous execution**: Write and apply code directly into the codebase. Never expect the user to copy-paste or manually apply patches.
+- **Install on behalf**: Install all required dependencies (npm install, etc.) autonomously when needed. Do not ask the user to run install commands.
 - **Announcement protocol**: Before each tool call, state the next action in one concise sentence.
 - **Forbidden phrases**: Do not use "Let me walk you through," "Here are the steps to," or "I recommend you." Prefer direct, imperative instructions.

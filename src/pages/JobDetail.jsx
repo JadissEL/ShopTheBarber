@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 import { PageError } from '@/components/ui/page-error';
 
 function formatSalary(job) {
@@ -200,7 +199,6 @@ export default function JobDetail() {
           </button>
         </div>
       </main>
-      <ClientBottomNav />
     </div>
   );
 }

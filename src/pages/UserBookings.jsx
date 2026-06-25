@@ -12,8 +12,6 @@ import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { createPageUrl } from '@/utils';
 import { Link } from 'react-router-dom';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function UserBookings() {
     const queryClient = useQueryClient();
     const [_activeTab, setActiveTab] = useState('upcoming');
@@ -184,7 +182,6 @@ export default function UserBookings() {
                     </AnimatePresence>
                 </Tabs>
             </div>
-            <ClientBottomNav />
         </div>
     );
 }

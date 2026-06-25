@@ -6,13 +6,14 @@ import ClientLayout from '@/components/layout/ClientLayout';
 import ProviderDesktopSidebar from '@/components/layout/ProviderDesktopSidebar';
 import ProviderBottomNav from '@/components/layout/ProviderBottomNav';
 import AdminDesktopSidebar from '@/components/layout/AdminDesktopSidebar';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryOptimizer } from '@/components/QueryOptimizer';
 import { HelmetProvider } from 'react-helmet-async';
 import GlobalNavigation from '@/components/ui/GlobalNavigation';
 import { BookingProvider } from '@/components/context/BookingContext';
 import { CartProvider } from '@/components/context/CartContext';
+import { WishlistProvider } from '@/components/wishlist/WishlistContext';
 import RouteGuard from '@/components/routing/RouteGuard';
 import { SkipLink } from '@/components/ui/SkipLink';
 import ErrorBoundary from '@/components/ui/error-boundary';
@@ -30,6 +31,7 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
   return (
     <HelmetProvider>
         <CartProvider>
+        <WishlistProvider>
         <BookingProvider>
           <RouteGuard />
           <ThemeProvider
@@ -38,6 +40,7 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
             enableSystem={false}
           >
             <SkipLink />
+            <Toaster />
             <RealTimeNotifications />
             <ErrorBoundary>
               <QueryOptimizer />
@@ -47,12 +50,10 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
                   <main id="main-content" className="flex-1">
                     {children}
                   </main>
-                  <Toaster />
                 </div>
               ) : zone === APP_ZONES.PUBLIC ? (
                 <PublicLayout>
                   {children}
-                  <Toaster />
                 </PublicLayout>
               ) : (
                 <AppLayout zone={zone} branding={branding} menuItems={menuItems}>
@@ -79,12 +80,12 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
                       {children}
                     </main>
                   )}
-                  <Toaster />
                 </AppLayout>
               )}
             </ErrorBoundary>
           </ThemeProvider>
         </BookingProvider>
+        </WishlistProvider>
         </CartProvider>
     </HelmetProvider>
   );

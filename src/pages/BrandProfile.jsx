@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { MetaTags } from '@/components/seo/MetaTags';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 import { toast } from 'sonner';
 
 const ACCOLADE_ICONS = {
@@ -369,8 +368,6 @@ export default function BrandProfile() {
           </Link>
         </Button>
       </div>
-
-      <ClientBottomNav />
     </div>
   );
 }

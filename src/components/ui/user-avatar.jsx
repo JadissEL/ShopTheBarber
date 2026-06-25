@@ -1,5 +1,5 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 import { getOptimizedUnsplashUrl } from '@/components/ui/optimized-image';
 
 export function UserAvatar({ src, name, fallback, className, ...props }) {

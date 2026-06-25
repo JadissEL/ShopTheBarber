@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, HelpCircle, Mail, MessageCircle, BookOpen } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function HelpCenter() {
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
@@ -54,7 +52,6 @@ export default function HelpCenter() {
           </Card>
         </div>
       </div>
-      <ClientBottomNav />
     </div>
   );
 }

@@ -7,13 +7,18 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { ClerkProvider } from '@clerk/react';
 import { AuthProvider } from '@/lib/AuthContext';
 import { CartProvider } from '@/components/context/CartContext';
 import Explore from '@/pages/Explore';
 
+/** Valid-form publishable key shape for ClerkProvider in tests (does not need a real backend for mount). */
+const CLERK_PUBLISHABLE_TEST = 'pk_test_dGVzdGFibGVfY2xlcmsuZGV2JA';
+
 const mockBarbers = [
   {
     id: 'barber-1',
+    shop_id: 'shop-1',
     name: 'Alex Barber',
     data: {
       name: 'Alex Barber',
@@ -33,6 +38,11 @@ const mockShops = [
 vi.mock('@/api/apiClient', () => ({
   sovereign: {
     auth: { me: vi.fn(() => Promise.resolve(null)) },
+    public: {
+      getActivePromotions: vi.fn(() =>
+        Promise.resolve({ shop_ids: [], has_platform_promos: false })
+      ),
+    },
     entities: {
       Barber: {
         list: vi.fn(() => Promise.resolve(mockBarbers)),
@@ -40,7 +50,6 @@ vi.mock('@/api/apiClient', () => ({
       },
       Shop: { list: vi.fn(() => Promise.resolve(mockShops)) },
       Favorite: { filter: vi.fn(() => Promise.resolve([])) },
-      Promotion: { list: vi.fn(() => Promise.resolve([])) },
       InspirationPost: { list: vi.fn(() => Promise.resolve([])) },
     },
   },
@@ -55,12 +64,14 @@ function renderExplore() {
   return render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <CartProvider>
-              <Explore />
-            </CartProvider>
-          </AuthProvider>
+        <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+          <ClerkProvider publishableKey={CLERK_PUBLISHABLE_TEST}>
+            <AuthProvider>
+              <CartProvider>
+                <Explore />
+              </CartProvider>
+            </AuthProvider>
+          </ClerkProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>

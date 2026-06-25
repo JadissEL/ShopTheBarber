@@ -39,16 +39,20 @@ Connect the repo in step 2 and 3 and set **production** to deploy from **`main`*
    - **Region**: Choose one close to you.
    - **Root Directory**: `server`
    - **Runtime**: Node.
-   - **Build Command**: `npm install`
+   - **Build Command**: match the repo (**Blueprint** pulls this automatically):  
+     `npm install --include=dev && node scripts/build-database.mjs`  
+     — with **SQLite** (no `DATABASE_URL`) this wipes ephemeral `sovereign.sqlite` and runs `drizzle-kit push`. With **`DATABASE_URL`** (Render Postgres) it runs **`drizzle-kit migrate`** (additive SQL under `server/drizzle/`). For an **empty** Postgres on first boot, either run `npx drizzle-kit push` once from your machine against that URL or set **`DRIZZLE_BOOTSTRAP=push`** for a **single** deploy, then remove it (see [AGENTS.md](../AGENTS.md)).
    - **Start Command**: `npm run start`
-5. **Environment** (required):
+5. **Environment** (required / common):
    - `JWT_SECRET`: Generate a long random string (e.g. `openssl rand -hex 32`).
    - `FRONTEND_URL`: Your Vercel URL **after** step 3, e.g. `https://shop-the-barber.vercel.app` (no trailing slash).
+   - `CLERK_SECRET_KEY`: Same Clerk instance as the frontend `VITE_CLERK_PUBLISHABLE_KEY` (see [AGENTS.md](../AGENTS.md)).
    - `STRIPE_API_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`: From [Stripe Dashboard](https://dashboard.stripe.com/apikeys) (use test keys for staging).
+   - Optional: `DATABASE_URL` when using Render Postgres; optional one-time `DRIZZLE_BOOTSTRAP` as above.
 6. Click **Create Web Service**. Wait for the first deploy to finish.
 7. Copy the service URL (e.g. `https://shopthebarber-api.onrender.com`). You need it for the frontend.
 
-**Database:** The app uses SQLite by default. On Render’s free tier the disk is **ephemeral** (data can be lost on redeploy). After the first deploy you can run the seed once (Render Dashboard → your service → **Shell** → `npm run push` then `npm run seed`) so the API has sample barbers/shops. For a persistent DB later you can add [Render Postgres](https://render.com/docs/databases) or another hosted DB and set `DATABASE_URL` (backend would need to support Postgres; currently it uses SQLite).
+**Database:** Without `DATABASE_URL`, the service uses **SQLite** on Render’s ephemeral disk — data may reset on redeploy; the boot path can seed if barbers are empty. With **`DATABASE_URL`**, the app uses **PostgreSQL** (`server/src/db/index.ts`). Operational detail: **`[AGENTS.md](../AGENTS.md)`** (`build-database`, `migrate`, Clerk + `users.clerk_user_id`, optional Playwright checks).
 
 ---
 
@@ -91,7 +95,9 @@ The repo includes a `render.yaml` that describes the backend service. In Render 
 
 - **New** → **Blueprint** → connect the repo; Render will create the web service from the YAML.
 
-You still must set **secret** env vars (e.g. `JWT_SECRET`, `STRIPE_*`, `FRONTEND_URL`) in the Render Dashboard; the YAML marks them as `sync: false` so you add them by hand.
+You still must set **secret** env vars (e.g. `JWT_SECRET`, `STRIPE_*`, `FRONTEND_URL`, `CLERK_SECRET_KEY`) in the Render Dashboard; the YAML marks several as `sync: false` so you add them by hand.
+
+**Manual QA after deploy:** GitHub → **Actions** → workflow **Playwright API checks** (`workflow_dispatch`): smoke `/api/health` against your API URL; optional Clerk Bearer and optional **browser** sign-in specs (secrets documented in **AGENTS.md**).
 
 ---
 
@@ -100,7 +106,7 @@ You still must set **secret** env vars (e.g. `JWT_SECRET`, `STRIPE_*`, `FRONTEND
 | Step | Where | What |
 |------|--------|------|
 | 1 | GitHub | Repo with `master` (development/CI) and `main` (production). Deploy from `main` only. |
-| 2 | Render | New Web Service, branch **main**, root `server`, start `npm run start`, set `JWT_SECRET`, `FRONTEND_URL`, Stripe keys |
+| 2 | Render | Web Service from Blueprint or manually: branch **main**, root `server`, build `npm install --include=dev && node scripts/build-database.mjs`, start `npm run start`, env `JWT_SECRET`, `FRONTEND_URL`, Clerk, Stripe, optional `DATABASE_URL` |
 | 3 | Vercel | New Project from repo, production branch **main**, set `VITE_API_URL` = Render backend URL |
 | 4 | Both | `FRONTEND_URL` = Vercel URL; `VITE_API_URL` = Render URL |
 

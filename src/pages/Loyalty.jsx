@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MetaTags } from '@/components/seo/MetaTags';
 import LoyaltyCard from '@/components/loyalty/LoyaltyCard';
 import WalletSummary from '@/components/dashboard/WalletSummary';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 import { toast } from 'sonner';
 
 // Predefined rewards catalog
@@ -288,7 +287,6 @@ export default function Loyalty() {
           </Card>
         </div>
       )}
-      <ClientBottomNav />
     </div>
   );
 }

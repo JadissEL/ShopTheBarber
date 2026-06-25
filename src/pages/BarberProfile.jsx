@@ -22,8 +22,6 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function BarberProfile() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -538,7 +536,6 @@ export default function BarberProfile() {
                     </div>
                 </DialogContent>
             </Dialog>
-            <ClientBottomNav />
         </div>
     );
 }

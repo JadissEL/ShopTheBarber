@@ -12,8 +12,6 @@ import BarberCard from '@/components/ui/barber-card';
 import ShopCard from '@/components/ui/shop-card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function Favorites() {
     const [searchTerm, setSearchTerm] = useState('');
     const queryClient = useQueryClient();
@@ -186,7 +184,6 @@ export default function Favorites() {
                     )}
                 </Tabs>
             </div>
-            <ClientBottomNav />
         </div>
     );
 }

@@ -7,7 +7,7 @@ import path from 'path';
  * SQLite Backup Verification
  * 
  * ADMIN ONLY - Tests database backup health and recoverability
- * Redesigned for SQLite instead of Base44 cloud backups
+ * Designed for on-disk SQLite backups (admin verification of file health)
  * 
  * Checks:
  * - Database file exists and is accessible

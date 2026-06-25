@@ -29,13 +29,24 @@ export const AuthProvider = ({ children }) => {
           }
 
           // Map Clerk user to our user format
+          let serverUser = null;
+          try {
+            serverUser = await sovereign.auth.me();
+          } catch {
+            serverUser = null;
+          }
+
+          const email =
+            serverUser?.email ?? clerkUser.primaryEmailAddress?.emailAddress;
           const mappedUser = {
+            id: serverUser?.id,
             uid: clerkUser.id,
-            email: clerkUser.primaryEmailAddress?.emailAddress,
-            full_name: clerkUser.fullName || clerkUser.firstName || 'User',
-            avatar_url: clerkUser.imageUrl,
-            role: clerkUser.publicMetadata?.role || 'client',
-            created_at: clerkUser.createdAt,
+            email,
+            full_name: serverUser?.full_name || clerkUser.fullName || clerkUser.firstName || 'User',
+            avatar_url: serverUser?.avatar_url || clerkUser.imageUrl,
+            role: serverUser?.role || clerkUser.publicMetadata?.role || 'client',
+            created_at: serverUser?.created_at || clerkUser.createdAt,
+            phone: serverUser?.phone,
           };
 
           setUser(mappedUser);

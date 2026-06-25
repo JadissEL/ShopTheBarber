@@ -24,22 +24,23 @@ export default function PromotionSetup({ shopId, onComplete, onBack }) {
   });
 
   const createOfferMutation = useMutation({
-    mutationFn: (data) => sovereign.entities.Promotion.create(data),
+    mutationFn: (payload) => sovereign.entities.PromoCode.create(payload),
     onSuccess: () => {
         onComplete();
     }
   });
 
   const onSubmit = (data) => {
+    if (!shopId) return;
+    const pct = Number(data.discountAmount);
+    if (!Number.isFinite(pct) || pct <= 0) return;
     createOfferMutation.mutate({
-      title: data.title,
-      description: 'Exclusive offer for new clients.',
-      code: data.code.toUpperCase(),
-      discount_text: `${data.discountAmount}% OFF`,
-      image_url: "https://images.unsplash.com/photo-1585747861443-e20c4f323e6a?w=600&auto=format&fit=crop",
-      type: 'shop',
+      code: data.code.trim().toUpperCase(),
+      discount_type: 'percentage',
+      discount_value: pct,
       shop_id: shopId,
-      expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0] // 1 month from now
+      is_active: true,
+      expiry_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
     });
   };
 

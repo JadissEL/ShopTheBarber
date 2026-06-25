@@ -29,4 +29,7 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+.playwright*
+
+playwright-report
+test-results

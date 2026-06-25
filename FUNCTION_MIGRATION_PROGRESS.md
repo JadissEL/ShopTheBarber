@@ -260,7 +260,7 @@ Each migrated function has:
 4. **Modular approach** - Easy to test individually
 
 ### Challenges Faced
-1. **Base44 SDK compatibility** - Fixed with proxy pattern
+1. **Sovereign API SDK compatibility** - Fixed with proxy pattern
 2. **Database locking** - Resolved by renaming to sovereign.sqlite
 3. **Complex refund logic** - Required careful time calculations
 

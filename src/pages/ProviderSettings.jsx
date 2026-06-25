@@ -61,7 +61,7 @@ export default function ProviderSettings() {
 
     const { data: _promotions = [] } = useQuery({
         queryKey: ['my-shop-promotions', shopId],
-        queryFn: () => shopId ? sovereign.entities.PromoCode.filter({ is_active: true }) : [], // Filter logic simplified for demo
+        queryFn: () => shopId ? sovereign.entities.PromoCode.filter({ shop_id: shopId, is_active: true }) : [],
         enabled: !!shopId
     });
 

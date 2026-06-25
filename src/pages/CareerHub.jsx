@@ -328,19 +328,19 @@ export default function CareerHub() {
       {/* Career Hub bottom nav (mobile only) */}
       {!isDesktop && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex justify-around py-2 safe-area-pb lg:hidden">
-          <button type="button" onClick={() => setSearchParams({ tab: 'explore' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'explore' ? 'text-primary' : 'text-muted-foreground'}`}>
+          <button type="button" onClick={() => setSearchParams({ tab: 'explore' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'explore' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Explore opportunities">
             <Compass className="w-5 h-5" />
             <span className="text-[10px] font-medium">Explore</span>
           </button>
-          <button type="button" onClick={() => setSearchParams({ tab: 'saved' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'saved' ? 'text-primary' : 'text-muted-foreground'}`}>
+          <button type="button" onClick={() => setSearchParams({ tab: 'saved' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'saved' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Saved jobs">
             <Bookmark className="w-5 h-5" />
             <span className="text-[10px] font-medium">Saved</span>
           </button>
-          <button type="button" onClick={() => setSearchParams({ tab: 'applied' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'applied' ? 'text-primary' : 'text-muted-foreground'}`}>
+          <button type="button" onClick={() => setSearchParams({ tab: 'applied' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'applied' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Applied jobs">
             <Send className="w-5 h-5" />
             <span className="text-[10px] font-medium">Applied</span>
           </button>
-          <button type="button" onClick={() => setSearchParams({ tab: 'profile' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'profile' ? 'text-primary' : 'text-muted-foreground'}`}>
+          <button type="button" onClick={() => setSearchParams({ tab: 'profile' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'profile' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Profile">
             <User className="w-5 h-5" />
             <span className="text-[10px] font-medium">Profile</span>
           </button>

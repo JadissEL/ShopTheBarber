@@ -1,7 +1,7 @@
 import React from "react";
 import { Controller } from "react-hook-form";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/components/utils";
+import { cn } from "@/lib/utils";
 
 const FormError = ({ message, id }) => {
   if (!message) return null;

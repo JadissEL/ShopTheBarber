@@ -90,7 +90,6 @@ import ProviderSettings from './pages/ProviderSettings';
 import ProviderTermsOfService from './pages/ProviderTermsOfService';
 import Review from './pages/Review';
 import SelectProviderType from './pages/SelectProviderType';
-import SelectTime from './pages/SelectTime';
 import ServicesPricing from './pages/ServicesPricing';
 import ShopProfile from './pages/ShopProfile';
 import ShoppingBag from './pages/ShoppingBag';
@@ -103,6 +102,29 @@ import SignIn from './pages/SignIn';
 import TermsOfService from './pages/TermsOfService';
 import UserBookings from './pages/UserBookings';
 import UserModerationDetail from './pages/UserModerationDetail';
+import Blog from './pages/Blog';
+import ArticleDetail from './pages/ArticleDetail';
+import Barbers from './pages/Barbers';
+import GiftCards from './pages/GiftCards';
+import Referral from './pages/Referral';
+import Wishlist from './pages/Wishlist';
+import InspirationFeed from './pages/InspirationFeed';
+import Offline from './pages/Offline';
+import LegalDocuments from './pages/LegalDocuments';
+import ClientWallet from './pages/ClientWallet';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentError from './pages/PaymentError';
+import Onboarding from './pages/Onboarding';
+import SelectServices from './pages/SelectServices';
+import ShopInventoryManagement from './pages/ShopInventoryManagement';
+import ShopExpenseTracking from './pages/ShopExpenseTracking';
+import ShopBrandingManagement from './pages/ShopBrandingManagement';
+import ShopEmployeeManagement from './pages/ShopEmployeeManagement';
+import ShopAnalytics from './pages/ShopAnalytics';
+import AdminAuditLogs from './pages/AdminAuditLogs';
+import AdminContentManagement from './pages/AdminContentManagement';
+import AdminFeatureToggles from './pages/AdminFeatureToggles';
+import AdminPlatformHealth from './pages/AdminPlatformHealth';
 import __Layout from './Layout.jsx';
 
 
@@ -150,7 +172,6 @@ export const PAGES = {
     "ProviderTermsOfService": ProviderTermsOfService,
     "Review": Review,
     "SelectProviderType": SelectProviderType,
-    "SelectTime": SelectTime,
     "ServicesPricing": ServicesPricing,
     "ShopProfile": ShopProfile,
     "ShoppingBag": ShoppingBag,
@@ -163,6 +184,29 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "UserBookings": UserBookings,
     "UserModerationDetail": UserModerationDetail,
+    "Blog": Blog,
+    "ArticleDetail": ArticleDetail,
+    "Barbers": Barbers,
+    "GiftCards": GiftCards,
+    "Referral": Referral,
+    "Wishlist": Wishlist,
+    "InspirationFeed": InspirationFeed,
+    "Offline": Offline,
+    "LegalDocuments": LegalDocuments,
+    "ClientWallet": ClientWallet,
+    "PaymentSuccess": PaymentSuccess,
+    "PaymentError": PaymentError,
+    "Onboarding": Onboarding,
+    "SelectServices": SelectServices,
+    "ShopInventoryManagement": ShopInventoryManagement,
+    "ShopExpenseTracking": ShopExpenseTracking,
+    "ShopBrandingManagement": ShopBrandingManagement,
+    "ShopEmployeeManagement": ShopEmployeeManagement,
+    "ShopAnalytics": ShopAnalytics,
+    "AdminAuditLogs": AdminAuditLogs,
+    "AdminContentManagement": AdminContentManagement,
+    "AdminFeatureToggles": AdminFeatureToggles,
+    "AdminPlatformHealth": AdminPlatformHealth,
 }
 
 export const pagesConfig = {

@@ -1,6 +1,6 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 export function PageError({
   title = 'Something went wrong',

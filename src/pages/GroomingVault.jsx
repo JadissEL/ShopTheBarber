@@ -17,8 +17,6 @@ import { useAuth } from '@/lib/AuthContext';
 import { useCart } from '@/components/context/CartContext';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 function statusBadge(fulfillment_status) {
   const s = (fulfillment_status || '').toLowerCase();
   if (s === 'delivered') return { label: 'DELIVERED', className: 'text-primary bg-primary/10', icon: '✔' };
@@ -214,8 +212,6 @@ export default function GroomingVault() {
           </>
         )}
       </main>
-
-      <ClientBottomNav />
     </div>
   );
 }

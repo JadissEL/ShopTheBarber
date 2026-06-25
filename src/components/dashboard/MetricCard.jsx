@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 export default function MetricCard({ title, value, subValue, trend, trendValue, icon: Icon, className, delay = 0, children }) {
     const isPositive = trend === 'up';

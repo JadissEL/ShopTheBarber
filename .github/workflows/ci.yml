@@ -1,6 +1,7 @@
 # CI runs on master (validation) and main (re-verify after promotion).
 # Development and PRs target master. Only promote master → main after CI passes on master.
 # Production deploys use main only.
+# Optional staging E2E: Actions → Playwright API checks (workflow_dispatch; see AGENTS.md).
 name: CI
 
 on:
@@ -52,6 +53,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Integration tests import Fastify + Drizzle; sovereign.sqlite is empty on a clean runner.
+      # Push applies src/db/schema.ts (no DATABASE_URL → SQLite per drizzle.config.ts).
+      - name: Apply SQLite schema for tests
+        run: npx drizzle-kit push --force
 
       - name: Test
         run: npm run test

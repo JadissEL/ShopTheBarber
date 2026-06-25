@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Scissors, Clock, Check, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 const categoryImages = {
   'Hair': 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&fit=crop',

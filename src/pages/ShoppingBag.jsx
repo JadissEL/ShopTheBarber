@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, MoreHorizontal, Tag, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, MoreHorizontal, Tag, Lock, ShoppingBag as ShoppingBagIcon } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { PageLoading } from '@/components/ui/page-loading';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useCart } from '@/components/context/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 const SHIPPING_FREE_THRESHOLD = 50;
 const TAX_RATE = 0.085;
 
@@ -78,17 +78,15 @@ export default function ShoppingBag() {
 
             <main className="w-full max-w-3xl mx-auto px-4 lg:px-8 py-6">
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-16">
-                        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
-                    </div>
+                    <PageLoading message="Loading your bag..." />
                 ) : items.length === 0 ? (
-                    <div className="text-center py-16">
-                        <p className="text-slate-600 font-medium mb-2">Your bag is empty</p>
-                        <p className="text-slate-500 text-sm mb-6">Add premium products from the marketplace.</p>
-                        <Link to={createPageUrl('Marketplace')}>
-                            <Button className="rounded-xl bg-primary text-primary-foreground hover:opacity-95">Continue Shopping</Button>
-                        </Link>
-                    </div>
+                    <EmptyState
+                        icon={ShoppingBagIcon}
+                        title="Your bag is empty"
+                        description="Add premium products from the marketplace."
+                        actionLabel="Continue Shopping"
+                        actionHref={createPageUrl('Marketplace')}
+                    />
                 ) : (
                     <>
                         <ul className="space-y-4 mb-8">
@@ -185,8 +183,6 @@ export default function ShoppingBag() {
                     </>
                 )}
             </main>
-
-            <ClientBottomNav />
         </div>
     );
 }

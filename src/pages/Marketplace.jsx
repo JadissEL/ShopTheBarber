@@ -5,7 +5,6 @@ import { sovereign } from '@/api/apiClient';
 import {
   Search,
   ShoppingCart,
-  Star,
   Grid3x3,
   TrendingUp,
   Sparkles,
@@ -15,7 +14,6 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { createPageUrl } from '@/utils';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 import { useCart } from '@/components/context/CartContext';
 
 const CATEGORIES = [
@@ -238,8 +236,6 @@ export default function Marketplace() {
           </div>
         )}
       </main>
-
-      <ClientBottomNav />
     </div>
   );
 }

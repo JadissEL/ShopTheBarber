@@ -35,7 +35,7 @@ This file provides:
 
 Both functions now call the sovereign backend via:
 ```javascript
-base44.functions.invoke('send-booking-email', { ... })
+Sovereign API.functions.invoke('send-booking-email', { ... })
 ```
 
 ---

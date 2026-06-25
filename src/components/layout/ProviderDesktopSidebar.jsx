@@ -13,7 +13,7 @@ import {
   BarChart3,
   LogOut,
 } from 'lucide-react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 const providerNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: 'ProviderDashboard' },

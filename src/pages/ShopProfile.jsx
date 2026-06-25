@@ -11,8 +11,6 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { LocalBusinessSchema } from '@/components/seo/SchemaMarkup';
 import LocationMap from '@/components/ui/location-map';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function ShopProfile() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -310,7 +308,6 @@ export default function ShopProfile() {
                 </div>
             </div>
         </div>
-            <ClientBottomNav />
         </div>
     );
 }

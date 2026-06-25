@@ -8,8 +8,6 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 const STATUS_LABELS = {
   confirmed: 'Preparing',
   preparing: 'Preparing',
@@ -102,8 +100,6 @@ export default function MyOrders() {
           </ul>
         )}
       </main>
-
-      <ClientBottomNav />
     </div>
   );
 }

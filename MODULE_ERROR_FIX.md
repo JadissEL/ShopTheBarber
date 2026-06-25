@@ -44,7 +44,7 @@ After hard refresh, you should see:
 1. ✅ **Vite cache cleared** - Fresh build
 2. ✅ **Dev server restarted** - Clean state
 3. ✅ **Missing functions created** - Email stubs in place
-4. ✅ **API client fixed** - Base44 compatibility
+4. ✅ **API client fixed** - Sovereign API compatibility
 
 ---
 

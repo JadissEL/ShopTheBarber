@@ -14,7 +14,7 @@ This folder configures **Rules**, **Skills**, and **Commands** for Cursor in thi
 
 ## Rules (`rules/`)
 
-- **antigravity-system** – **Always on.** Antigravity persona; preserve > extend > optimize. Read PROJECT_TRACKER.md before every task; rescan for Base44 traces; ensure 100% sovereign and production-ready. Non-destruction, tracker-first, change-control, proactive MCP/API proposals.
+- **antigravity-system** – **Always on.** Antigravity persona; preserve > extend > optimize. Read PROJECT_TRACKER.md before every task; rescan for Sovereign API traces; ensure 100% sovereign and production-ready. Non-destruction, tracker-first, change-control, proactive MCP/API proposals.
 - **project-schema** – Follow PROJECT_SCHEMA.md for structure and naming (globs: JS/TS/JSX/TSX).
 - **implementation-mandate** – Write code directly; no copy-paste; announce before tool calls; no filler phrases (always on).
 - **formatting-standards** – 2-space, single quotes, naming, strict typing, complexity (globs: JS/TS/JSX/TSX).

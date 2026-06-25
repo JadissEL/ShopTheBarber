@@ -25,6 +25,13 @@ export function useMediaQuery(query) {
 /** Desktop: ≥1024px (Tailwind lg) */
 export const DESKTOP_QUERY = '(min-width: 1024px)';
 
+/** Mobile: <768px (Tailwind md) */
+export const MOBILE_QUERY = '(max-width: 767px)';
+
 export function useIsDesktop() {
   return useMediaQuery(DESKTOP_QUERY);
+}
+
+export function useIsMobile() {
+  return useMediaQuery(MOBILE_QUERY);
 }

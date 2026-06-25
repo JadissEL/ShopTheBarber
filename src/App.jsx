@@ -1,5 +1,4 @@
 import './App.css'
-import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import VisualEditAgent from '@/lib/VisualEditAgent'
@@ -78,13 +77,23 @@ function App() {
   if (!clerkPubKey) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="text-center p-8 max-w-md">
-          <h1 className="text-2xl font-bold text-destructive mb-4">Clerk Not Configured</h1>
-          <p className="text-muted-foreground mb-4">
-            Please add your Clerk Publishable Key to <code className="bg-muted px-2 py-1 rounded">.env.local</code>
+        <div className="text-center p-8 max-w-md space-y-3">
+          <h1 className="text-2xl font-bold text-destructive">Clerk not configured</h1>
+          <p className="text-muted-foreground">
+            Add <code className="bg-muted px-2 py-1 rounded text-foreground">VITE_CLERK_PUBLISHABLE_KEY</code> to{' '}
+            <code className="bg-muted px-2 py-1 rounded text-foreground">.env.local</code> at the repo root (see{' '}
+            <code className="bg-muted px-2 py-1 rounded text-foreground">.env.example</code>).
           </p>
           <p className="text-sm text-muted-foreground">
-            Get your key from: <a href="https://dashboard.clerk.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">dashboard.clerk.com</a>
+            Get your publishable key from{' '}
+            <a href="https://dashboard.clerk.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+              dashboard.clerk.com
+            </a>
+            . Use the same Clerk application as{' '}
+            <code className="bg-muted px-1 rounded text-xs">CLERK_SECRET_KEY</code> on the server (<code className="bg-muted px-1 rounded text-xs">server/.env.example</code>).
+          </p>
+          <p className="text-xs text-muted-foreground border-t border-border pt-3">
+            The API still uses <strong className="text-foreground font-medium">JWT_SECRET</strong> in production for Fastify JWT and legacy email/password auth — independent from Clerk.
           </p>
         </div>
       </div>
@@ -100,7 +109,6 @@ function App() {
               <NavigationTracker />
               <AuthenticatedApp />
             </Router>
-            <Toaster />
             <VisualEditAgent />
           </QueryClientProvider>
         </AuthProvider>

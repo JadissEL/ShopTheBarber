@@ -6,8 +6,6 @@ import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function PortfolioCredentials() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -49,7 +47,6 @@ export default function PortfolioCredentials() {
           </div>
         </div>
       </div>
-      <ClientBottomNav />
     </div>
   );
 }

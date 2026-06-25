@@ -26,49 +26,35 @@ class EntityClient {
 
     async list(order, limit, offset) {
         const headers = getAuthHeaders();
-        const res = await fetch(`${BASE_URL}/${this.resource}`, { headers });
+        const params = new URLSearchParams();
+        params.set('limit', String(limit != null ? limit : 200));
+        params.set('offset', String(offset != null ? offset : 0));
+        if (order) params.set('order', order);
+        const res = await fetch(`${BASE_URL}/${this.resource}?${params}`, { headers });
         if (!res.ok) throw new Error(`Failed to fetch ${this.entityName} (${this.resource})`);
-        let data = await res.json();
-
-        if (order) {
-            const isDesc = order.startsWith('-');
-            const field = isDesc ? order.substring(1) : order;
-            data.sort((a, b) => {
-                const aVal = a[field];
-                const bVal = b[field];
-                return isDesc ? (aVal > bVal ? -1 : 1) : (aVal > bVal ? 1 : -1);
-            });
-        }
-        if (offset) data = data.slice(offset);
-        if (limit) data = data.slice(0, limit);
-
-        return data;
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
     }
 
     async filter(criteria, order, limit, offset) {
-        const headers = getAuthHeaders();
-        const res = await fetch(`${BASE_URL}/${this.resource}`, { headers });
-        if (!res.ok) throw new Error(`Failed to fetch ${this.entityName}`);
-        let data = await res.json();
-
-        if (criteria) {
-            data = data.filter(item => {
-                return Object.entries(criteria).every(([key, value]) => {
-                    if (typeof value === 'object' && value !== null) {
-                        if (value.$nin) return !value.$nin.includes(item[key]);
-                        if (value.$in) return value.$in.includes(item[key]);
-                        if (value.$gt) return item[key] > value.$gt;
-                        if (value.$lt) return item[key] < value.$lt;
-                        if (value.$gte) return item[key] >= value.$gte;
-                        if (value.$lte) return item[key] <= value.$lte;
-                        if (value.$ne) return item[key] !== value.$ne;
-                    }
-                    return item[key] === value;
-                });
-            });
+        const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+        const payload = {
+            query: criteria && typeof criteria === 'object' ? criteria : {},
+            order: order || undefined,
+            limit: limit != null ? limit : 200,
+            offset: offset != null ? offset : 0,
+        };
+        const res = await fetch(`${BASE_URL}/${this.resource}/filter`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Failed to filter ${this.entityName} (${res.status}): ${text || res.statusText}`);
         }
-        // Client-side sorting/limiting... same as list
-        return data;
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
     }
 
     async get(id) {
@@ -242,6 +228,22 @@ export const sovereign = {
             const query = returnPath ? `?return=${encodeURIComponent(returnPath)}` : '';
             window.location.href = signInPath + query;
         }
+    },
+
+    /** Anonymous endpoints; use BASE_URL so production calls VITE_API_URL (same as entities/functions). */
+    public: {
+        getActivePromotions: async (barberId) => {
+            const qs =
+                barberId != null && barberId !== ''
+                    ? `?barber_id=${encodeURIComponent(String(barberId))}`
+                    : '';
+            const res = await fetch(`${BASE_URL}/public/active-promotions${qs}`);
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Promotions unavailable (${res.status})`);
+            }
+            return res.json();
+        },
     },
 
     functions: {
@@ -497,6 +499,23 @@ export const sovereign = {
         track: (event) => {
             // console.log('[Analytics]', event);
         }
+    },
+    privacy: {
+        exportData: async () => {
+            const headers = getAuthHeaders();
+            const res = await fetch(`${BASE_URL}/privacy/export`, { headers });
+            if (!res.ok) throw new Error('Failed to export data');
+            return res.json();
+        },
+        deleteAccount: async () => {
+            const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+            const res = await fetch(`${BASE_URL}/privacy/delete-account`, { method: 'POST', headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to delete account');
+            }
+            return res.json();
+        },
     },
     appLogs: {
         logUserInApp: async (pageName) => {

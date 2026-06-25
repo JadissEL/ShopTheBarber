@@ -6,8 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function NotificationSettings() {
   const [emailReminders, setEmailReminders] = useState(true);
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -44,7 +42,6 @@ export default function NotificationSettings() {
           </CardContent>
         </Card>
       </div>
-      <ClientBottomNav />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**

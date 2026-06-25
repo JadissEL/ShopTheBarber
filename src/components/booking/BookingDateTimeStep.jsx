@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Clock, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 export default function BookingDateTimeStep({

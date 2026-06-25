@@ -10,8 +10,6 @@ import { Star, Loader, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function Review() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -156,7 +154,6 @@ export default function Review() {
                     </CardContent>
                 </Card>
             </div>
-            <ClientBottomNav />
         </div>
     );
 }

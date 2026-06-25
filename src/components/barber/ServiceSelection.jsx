@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Scissors, Plus, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 

@@ -4,6 +4,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { parse, addMinutes, format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { sendEmail } from './email';
+import { validatePromoCode } from './promoCode';
 
 function parseTimeString(timeStr: string) {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -127,6 +128,48 @@ export async function createBookingLogic(payload: any) {
         throw new Error(validation.message);
     }
 
+    const rawPromo =
+        (typeof payload.discount_code === 'string' && payload.discount_code.trim() && payload.discount_code) ||
+        (typeof payload.promo_code === 'string' && payload.promo_code.trim() && payload.promo_code) ||
+        '';
+    const discount_code_norm = rawPromo ? rawPromo.trim().toUpperCase() : null;
+
+    let fb: unknown = payload.financial_breakdown;
+    if (typeof fb === 'string') {
+        try {
+            fb = JSON.parse(fb);
+        } catch {
+            fb = null;
+        }
+    }
+    const baseForPromo =
+        fb && typeof fb === 'object' && typeof (fb as { base_price?: unknown }).base_price === 'number'
+            ? (fb as { base_price: number }).base_price
+            : typeof payload.service_snapshot?.base_price === 'number'
+              ? payload.service_snapshot.base_price
+              : null;
+
+    if (discount_code_norm) {
+        if (baseForPromo == null || !Number.isFinite(baseForPromo)) {
+            throw new Error('Cannot apply promo: missing booking subtotal');
+        }
+        const v = await validatePromoCode({
+            code: discount_code_norm,
+            barber_id: payload.barber_id,
+            shop_id: payload.shop_id ?? null,
+            base_price: baseForPromo,
+            user_id: payload.client_id,
+            context_type: payload.shop_id ? 'shop' : 'independent',
+            skip_audit: false,
+        });
+        if (v.status !== 'VALID') throw new Error(v.message);
+        const expectedFinal = v.final_price ?? Math.max(0, baseForPromo - (v.discount_amount ?? 0));
+        const got = payload.price_at_booking;
+        if (typeof got !== 'number' || Number.isNaN(got) || Math.abs(got - expectedFinal) > 0.02) {
+            throw new Error('Price mismatch for applied promo; please refresh and try again');
+        }
+    }
+
     // 3. Insert Booking
     const [booking] = await db.insert(schema.bookings).values({
         id: crypto.randomUUID(),
@@ -138,7 +181,8 @@ export async function createBookingLogic(payload: any) {
         status: payload.status || 'pending',
         financial_breakdown: JSON.stringify(payload.financial_breakdown),
         price_at_booking: payload.price_at_booking,
-        notes: payload.customer_notes
+        notes: payload.customer_notes,
+        discount_code: discount_code_norm,
     }).returning();
 
     // 4. Create Service Links (Optional for Phase 2 but good for completeness)

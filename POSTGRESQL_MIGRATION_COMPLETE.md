@@ -173,7 +173,7 @@ PGPASSWORD=yVUVe26Pvzyp0H70KKjHxSX60SwSJbCI psql -h dpg-d6ln22rh46gs73b751qg-a.o
 
 ## 🛡️ What About the API Key I Used?
 
-**Your Render API Key:** `rnd_mBLYtHkhOevqKagAY7GQhbfs9r7A`
+**Your Render API Key:** store in Windows User env `RENDER_API_KEY` (Render Dashboard → Account Settings → API Keys). Never commit keys to the repo.
 
 **What I did with it:**
 - ✅ Listed your services

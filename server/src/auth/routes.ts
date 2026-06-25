@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { hashPassword, comparePassword } from './password';
 import { z } from 'zod';
 import { sendEmail } from '../logic/email';
+import { authenticateRequest } from './requestUser';
 
 // VALIDATION SCHEMAS
 const registerSchema = z.object({
@@ -206,45 +207,40 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     // ME (Profile)
     fastify.get('/api/auth/me', async (request, reply) => {
-        try {
-            await request.jwtVerify();
-            const payload = request.user as { id: string };
+        const ok = await authenticateRequest(request, reply);
+        if (!ok) return;
 
-            const user = await db.query.users.findFirst({
-                where: eq(schema.users.id, payload.id)
-            });
+        const { id } = request.user as { id: string };
+        const user = await db.query.users.findFirst({
+            where: eq(schema.users.id, id)
+        });
 
-            if (!user) {
-                return reply.status(401).send({ error: 'User not found' });
-            }
-
-            return sanitizeUser(user as Record<string, unknown>);
-        } catch (err) {
-            return reply.status(401).send({ error: 'Unauthorized' });
+        if (!user) {
+            return reply.status(401).send({ error: 'User not found' });
         }
+
+        return sanitizeUser(user as Record<string, unknown>);
     });
 
     // REFRESH — exchange a valid (or recently-expired) token for a fresh one
     fastify.post('/api/auth/refresh', async (request, reply) => {
-        try {
-            await request.jwtVerify();
-            const payload = request.user as { id: string; email?: string; role?: string };
+        const ok = await authenticateRequest(request, reply);
+        if (!ok) return;
 
-            const user = await db.query.users.findFirst({
-                where: eq(schema.users.id, payload.id)
-            });
-            if (!user) return reply.status(401).send({ error: 'User not found' });
+        const { id } = request.user as { id: string };
 
-            const newToken = fastify.jwt.sign({
-                id: user.id,
-                email: String(user.email ?? ''),
-                role: user.role ?? 'client'
-            });
+        const user = await db.query.users.findFirst({
+            where: eq(schema.users.id, id)
+        });
+        if (!user) return reply.status(401).send({ error: 'User not found' });
 
-            return { token: newToken, user: sanitizeUser(user as Record<string, unknown>) };
-        } catch {
-            return reply.status(401).send({ error: 'Token expired or invalid. Please sign in again.' });
-        }
+        const newToken = fastify.jwt.sign({
+            id: user.id,
+            email: String(user.email ?? ''),
+            role: user.role ?? 'client'
+        });
+
+        return { token: newToken, user: sanitizeUser(user as Record<string, unknown>) };
     });
 
     // LOGOUT

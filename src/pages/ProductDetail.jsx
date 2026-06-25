@@ -20,7 +20,6 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 import { useCart } from '@/components/context/CartContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 
@@ -131,7 +130,6 @@ export default function ProductDetail() {
         <Link to={createPageUrl('Marketplace')}>
           <Button variant="outline" className="rounded-xl">Back to Marketplace</Button>
         </Link>
-        <ClientBottomNav />
       </div>
     );
   }
@@ -250,9 +248,9 @@ export default function ProductDetail() {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Qty</span>
                 <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden">
-                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100">−</button>
+                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100" aria-label="Decrease quantity">−</button>
                   <span className="w-12 text-center font-semibold text-foreground">{quantity}</span>
-                  <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100">+</button>
+                  <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100" aria-label="Increase quantity">+</button>
                 </div>
               </div>
               <Button
@@ -285,9 +283,9 @@ export default function ProductDetail() {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 p-4 lg:hidden safe-area-pb">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-12 h-12 flex items-center justify-center text-slate-600">−</button>
+            <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-12 h-12 flex items-center justify-center text-slate-600" aria-label="Decrease quantity">−</button>
             <span className="w-10 text-center font-semibold text-foreground">{quantity}</span>
-            <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-12 h-12 flex items-center justify-center text-slate-600">+</button>
+            <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-12 h-12 flex items-center justify-center text-slate-600" aria-label="Increase quantity">+</button>
           </div>
           <Button
             className="flex-1 rounded-xl bg-primary text-primary-foreground hover:opacity-95 font-semibold h-12 gap-2"
@@ -305,8 +303,6 @@ export default function ProductDetail() {
           </Button>
         </div>
       </div>
-
-      <ClientBottomNav />
     </div>
   );
 }

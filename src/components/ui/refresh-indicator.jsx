@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 export function RefreshIndicator({ isRefreshing, className }) {
   if (!isRefreshing) return null;

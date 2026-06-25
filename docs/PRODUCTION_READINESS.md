@@ -70,7 +70,7 @@
 | # | Item | Status | Notes |
 |---|------|--------|-------|
 | 5.1 | PROJECT_TRACKER: DB schema table shows ✅ for implemented entities | Done | All 13 entities + extra tables marked ✅ in PROJECT_TRACKER.md. |
-| 5.2 | Remove or reword last Base44 mention in apiClient | Done | Comment reworded to "legacy in-app page logging". |
+| 5.2 | Remove or reword last Sovereign API mention in apiClient | Done | Comment reworded to "legacy in-app page logging". |
 | 5.3 | Lint and typecheck pass (frontend + server) | Done | ESLint 0 errors, 0 warnings. Typecheck not configured. |
 | 5.4 | Minimal tests: at least one frontend test, one server route or logic test | Done | Frontend: Vitest + Explore critical-path test. Server: Vitest + auth/password test. |
 | 5.5 | README: Deployment section (frontend host, backend host, env, DB) | Done | README Deployment section added. |

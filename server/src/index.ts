@@ -5,7 +5,7 @@ import jwt from '@fastify/jwt';
 import dotenv from 'dotenv';
 import { db } from './db';
 import * as schema from './db/schema';
-import { eq, and, sql, count } from 'drizzle-orm';
+import { eq, and, or, sql, count, asc, desc, gt, lt, gte, lte, ne, inArray, notInArray, isNull, isNotNull } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { validateBooking, createBookingLogic } from './logic/booking';
@@ -16,7 +16,8 @@ import { notifyUserOfModerationAction } from './logic/moderation';
 import { verifyBackupIntegrity } from './admin/backup';
 import { sendEmail } from './logic/email';
 import { askLocalAI } from './logic/ai';
-import { getEntityScopeCondition, rowInScope } from './entityScope';
+import { createEntityScopeCache, getEntityScopeCondition, getManagedShopIdsForUser, rowInScope } from './entityScope';
+import { authenticateRequest } from './auth/requestUser';
 
 dotenv.config();
 
@@ -28,9 +29,12 @@ fastify.register(cors, {
     origin: process.env.FRONTEND_URL || true,
     credentials: true
 });
+/** Required in production: signs legacy /api/auth tokens and configures @fastify/jwt fallback when Bearer is not a Clerk JWT. Clerk auth still needs CLERK_SECRET_KEY. See server/.env.example. */
 const jwtSecret = process.env.JWT_SECRET;
 if (!jwtSecret && process.env.NODE_ENV === 'production') {
-    console.error('FATAL: JWT_SECRET is not set. Refusing to start in production without a secure secret.');
+    console.error(
+        'FATAL: JWT_SECRET is not set. Refusing to start in production. Set a strong JWT_SECRET even when using Clerk-only browser auth (Fastify JWT + legacy routes). See server/.env.example.'
+    );
     process.exit(1);
 }
 fastify.register(jwt, {
@@ -40,46 +44,52 @@ fastify.register(jwt, {
 
 /** Entities that require JWT for all access (list/get/create/update/delete). */
 const AUTH_REQUIRED_ENTITIES = new Set([
-    'booking', 'loyalty_profile', 'loyalty_transaction', 'message', 'notification', 'payout', 'favorite', 'dispute', 'audit_log', 'waiting_list_entry'
+    'booking',
+    'loyalty_profile',
+    'loyalty_transaction',
+    'message',
+    'notification',
+    'payout',
+    'favorite',
+    'dispute',
+    'audit_log',
+    'waiting_list_entry',
+    'promo_code',
+    'wishlist_item',
+    'wallet_account',
+    'wallet_transaction',
+    'referral',
+    'gift_card',
 ]);
 
 /** Entities that allow public READ but require auth for write operations (create/update/delete). */
 const AUTH_WRITE_ENTITIES = new Set([
-    'barber', 'shop', 'service', 'shift', 'time_block', 'shop_member', 'pricing_rule', 'product', 'staff_service_config', 'review'
+    'barber', 'shop', 'service', 'shift', 'time_block', 'shop_member', 'pricing_rule', 'product', 'staff_service_config', 'review',
+    'shop_inventory_item', 'shop_expense', 'barber_video', 'article', 'inspiration_post', 'legal_document', 'feature_flag',
 ]);
 
-// Auth middleware - supports both Clerk and legacy JWT during migration
+// Sovereign JWT first, then Clerk session JWT — both attach DB `users.id` for FK scope.
 async function requireAuthPreHandler(request: any, reply: any) {
-    // Try Clerk auth first
-    try {
-        await requireClerkAuth(request, reply);
-        return; // Clerk auth succeeded
-    } catch (clerkError) {
-        // Fallback to legacy JWT for backward compatibility
-        try {
-            await request.jwtVerify();
-        } catch (jwtError) {
-            return reply.status(401).send({ error: 'Unauthorized' });
-        }
-    }
+    const ok = await authenticateRequest(request, reply);
+    if (!ok) return;
+    /** One-barber-query + one-shop-query per authenticated request (deduped across entity routes). */
+    request.entityScopeCache = createEntityScopeCache();
 }
 
-/** Requires valid JWT and role === 'admin'. Use for admin-only routes. */
+/** Requires DB role === 'admin' after unified auth resolution. */
 async function requireAdminPreHandler(request: any, reply: any) {
-    // Try Clerk admin auth first
-    try {
-        await requireAdminClerkAuth(request, reply);
-        return; // Clerk admin auth succeeded
-    } catch (clerkError) {
-        // Fallback to legacy JWT for backward compatibility
-        try {
-            await request.jwtVerify();
-        } catch (jwtError) {
-            return reply.status(401).send({ error: 'Unauthorized' });
-        }
-        const user = request.user as { id: string; role?: string };
-        if (user?.role !== 'admin') return reply.status(403).send({ error: 'Forbidden' });
-    }
+    const ok = await authenticateRequest(request, reply);
+    if (!ok) return;
+    request.entityScopeCache = createEntityScopeCache();
+    const user = request.user as { id?: string; role?: string };
+    if (user?.role !== 'admin') return reply.status(403).send({ error: 'Forbidden' });
+}
+
+/** SQLite better-sqlite3 cannot bind JS `true` for some pgTable boolean columns; Postgres accepts it. */
+function promoCodesIsActiveClause() {
+    return process.env.DATABASE_URL
+        ? eq(schema.promo_codes.is_active, true)
+        : sql`${schema.promo_codes.is_active} = 1`;
 }
 
 /** If error looks like missing table/schema, return 503 with hint. */
@@ -107,7 +117,6 @@ fastify.get('/api/health', async (_request, reply) => {
 
 // 0. Auth Routes
 import { authRoutes } from './auth/routes';
-import { requireClerkAuth, requireAdminClerkAuth } from './auth/clerk';
 
 // 0. Auth Routes (Legacy - for backward compatibility during migration)
 // Once all users are on Clerk, these can be removed
@@ -136,6 +145,9 @@ fastify.register(jobsRoutes);
 // 0.6 Applicants (profiles, applications, saved jobs, interviews)
 import { applicantsRoutes } from './applicants/routes';
 fastify.register(applicantsRoutes);
+
+import { privacyRoutes } from './privacy/routes';
+fastify.register(privacyRoutes);
 
 // 1. Validate Booking Availability (rate-limited: 30 per minute per IP)
 fastify.post('/api/functions/validate-availability', async (request, reply) => {
@@ -273,7 +285,7 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
 
     const ensureBookingScope = async (bid: string) => {
         const [booking] = await db.select().from(schema.bookings).where(eq(schema.bookings.id, bid));
-        if (!booking || !(await rowInScope('booking', schema.bookings, booking as Record<string, unknown>, currentUser)))
+        if (!booking || !(await rowInScope('booking', schema.bookings, booking as Record<string, unknown>, currentUser, request.entityScopeCache)))
             return reply.status(403).send({ error: 'Forbidden' });
     };
 
@@ -523,13 +535,66 @@ fastify.post('/api/webhooks/stripe', async (request, reply) => {
 });
 
 // 8. Promo Code Validation (rate-limited: 20 per minute per IP)
+/**
+ * Anonymous-friendly: active promo coverage for Explore / BarberProfile (no leaked auth-only list).
+ * ?barber_id= — promos for that barber's shop + platform-wide.
+ * Omit barber_id — { shop_ids, has_platform_promos } for filters.
+ */
+fastify.get('/api/public/active-promotions', async (request, reply) => {
+    try {
+        const barberId = (request.query as { barber_id?: string }).barber_id;
+
+        if (barberId) {
+            const barber = await db.query.barbers.findFirst({
+                where: eq(schema.barbers.id, barberId),
+                columns: { shop_id: true },
+            });
+            const shopId = barber?.shop_id ?? null;
+            const scope = shopId
+                ? or(eq(schema.promo_codes.shop_id, shopId), isNull(schema.promo_codes.shop_id))
+                : isNull(schema.promo_codes.shop_id);
+            const rows = await db
+                .select()
+                .from(schema.promo_codes)
+                .where(and(promoCodesIsActiveClause(), scope!));
+            return rows.map((r) => ({
+                id: r.id,
+                code: r.code,
+                shop_id: r.shop_id,
+                discount_type: r.discount_type,
+                discount_value: r.discount_value,
+                type: r.shop_id ? 'shop' : 'general',
+                discount_text: r.discount_type === 'percentage' ? `${r.discount_value}% off` : `$${r.discount_value} off`,
+                title: r.shop_id ? 'Shop offer' : 'Platform offer',
+                description: 'Limited time offer',
+            }));
+        }
+
+        const platform = await db
+            .select({ id: schema.promo_codes.id })
+            .from(schema.promo_codes)
+            .where(and(promoCodesIsActiveClause(), isNull(schema.promo_codes.shop_id)));
+        const shopRows = await db
+            .selectDistinct({ shop_id: schema.promo_codes.shop_id })
+            .from(schema.promo_codes)
+            .where(and(promoCodesIsActiveClause(), isNotNull(schema.promo_codes.shop_id)));
+        return {
+            shop_ids: shopRows.map((r) => r.shop_id).filter(Boolean) as string[],
+            has_platform_promos: platform.length > 0,
+        };
+    } catch (e: any) {
+        fastify.log.error({ err: e }, 'GET /api/public/active-promotions');
+        return reply.status(500).send({ error: e.message || 'Failed to load promotions' });
+    }
+});
+
 fastify.post('/api/functions/validate-promo-code', async (request, reply) => {
     const ip = request.ip || 'unknown';
     if (!checkIpRateLimit(`promo:${ip}`, 20, 60_000)) {
         return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
     }
     try {
-        const result = await validatePromoCode(request.body as any);
+        const result = await validatePromoCode({ ...(request.body as any), skip_audit: true });
         return result;
     } catch (e: any) {
         return reply.status(400).send({ error: e.message });
@@ -654,7 +719,7 @@ fastify.post('/api/reviews', { preHandler: [requireAuthPreHandler] }, async (req
 });
 
 // Generic entity routes
-const entities = ['barber', 'shop', 'service', 'booking', 'loyalty_profile', 'loyalty_transaction', 'message', 'notification', 'dispute', 'audit_log', 'shop_member', 'pricing_rule', 'waiting_list_entry', 'staff_service_config', 'review', 'payout', 'shift', 'time_block', 'favorite', 'product', 'brand', 'brand_accolade', 'brand_collection'];
+const entities = ['barber', 'shop', 'service', 'booking', 'loyalty_profile', 'loyalty_transaction', 'message', 'notification', 'dispute', 'audit_log', 'shop_member', 'pricing_rule', 'waiting_list_entry', 'staff_service_config', 'review', 'payout', 'shift', 'time_block', 'favorite', 'product', 'brand', 'brand_accolade', 'brand_collection', 'promo_code', 'inspiration_post', 'article', 'gift_card', 'referral', 'wallet_account', 'wallet_transaction', 'wishlist_item', 'barber_video', 'feature_flag', 'shop_inventory_item', 'shop_expense', 'legal_document'];
 
 entities.forEach(entity => {
     const plural = `${entity}s`.replace(/ys$/, 'ies');
@@ -682,6 +747,18 @@ entities.forEach(entity => {
     if (entity === 'brand') table = schema.brands;
     if (entity === 'brand_accolade') table = schema.brand_accolades;
     if (entity === 'brand_collection') table = schema.brand_collections;
+    if (entity === 'inspiration_post') table = schema.inspiration_posts;
+    if (entity === 'article') table = schema.articles;
+    if (entity === 'gift_card') table = schema.gift_cards;
+    if (entity === 'referral') table = schema.referrals;
+    if (entity === 'wallet_account') table = schema.wallet_accounts;
+    if (entity === 'wallet_transaction') table = schema.wallet_transactions;
+    if (entity === 'wishlist_item') table = schema.wishlist_items;
+    if (entity === 'barber_video') table = schema.barber_videos;
+    if (entity === 'feature_flag') table = schema.feature_flags;
+    if (entity === 'shop_inventory_item') table = schema.shop_inventory_items;
+    if (entity === 'shop_expense') table = schema.shop_expenses;
+    if (entity === 'legal_document') table = schema.legal_documents;
 
     if (!table) {
         fastify.log.warn(`Could not find table for entity: ${entity}`);
@@ -692,15 +769,23 @@ entities.forEach(entity => {
     fastify.get(`/api/${plural}`, routeOpts, async (request, reply) => {
         try {
             if (!table) throw new Error(`Table not found for entity: ${entity}`);
-            const qs = request.query as { limit?: string; offset?: string };
+            const qs = request.query as { limit?: string; offset?: string; order?: string };
             const limit = Math.min(Math.max(parseInt(qs.limit || '200', 10) || 200, 1), 1000);
             const offset = Math.max(parseInt(qs.offset || '0', 10) || 0, 0);
 
             let query = db.select().from(table);
             if (requireAuth) {
                 const user = request.user as { id: string; role?: string };
-                const scopeCond = await getEntityScopeCondition(entity, table, user);
+                const scopeCond = await getEntityScopeCondition(entity, table, user, request.entityScopeCache);
                 if (scopeCond) query = query.where(scopeCond) as any;
+            }
+            if (qs.order && typeof qs.order === 'string') {
+                const isDesc = qs.order.startsWith('-');
+                const field = isDesc ? qs.order.substring(1) : qs.order;
+                const col = (table as Record<string, unknown>)[field];
+                if (col) {
+                    query = query.orderBy(isDesc ? desc(col as any) : asc(col as any)) as any;
+                }
             }
             const rows = await (query as any).limit(limit).offset(offset);
             return Array.isArray(rows) ? rows : [];
@@ -724,7 +809,8 @@ entities.forEach(entity => {
             const result = await db.select().from(table).where(eq(table.id, id));
             if (result.length === 0) return reply.status(404).send({ error: 'Not found' });
             const row = result[0] as Record<string, unknown>;
-            if (requireAuth && !(await rowInScope(entity, table, row, request.user as any))) return reply.status(404).send({ error: 'Not found' });
+            if (requireAuth && !(await rowInScope(entity, table, row, request.user as any, request.entityScopeCache)))
+                return reply.status(404).send({ error: 'Not found' });
             return result[0];
         } catch (e: any) {
             fastify.log.error(`Error getting ${entity}: ${e.message}`);
@@ -739,31 +825,51 @@ entities.forEach(entity => {
     });
 
     // FILTER (Advanced Query)
-    fastify.post(`/api/${plural}/filter`, routeOpts, async (request) => {
-        const { query = {}, order, limit = 100, offset = 0 } = request.body as any;
+    fastify.post(`/api/${plural}/filter`, routeOpts, async (request, reply) => {
+        const body = (request.body || {}) as {
+            query?: Record<string, unknown>;
+            order?: string;
+            limit?: number;
+            offset?: number;
+        };
+        const rowQuery = body.query && typeof body.query === 'object' ? body.query : {};
+        const order = body.order;
+        const limit = Math.min(Math.max(Number(body.limit ?? 200) || 200, 1), 1000);
+        const offset = Math.max(Number(body.offset ?? 0) || 0, 0);
 
         let dbQuery = db.select().from(table);
         const conditions: any[] = [];
 
         if (requireAuth) {
-            const scopeCond = await getEntityScopeCondition(entity, table, request.user as any);
+            const scopeCond = await getEntityScopeCondition(entity, table, request.user as any, request.entityScopeCache);
             if (scopeCond) conditions.push(scopeCond);
         }
 
-        // Build conditions from query object
-        Object.entries(query).forEach(([field, value]) => {
-            if (table[field]) {
-                if (typeof value === 'object' && value !== null) {
-                    // Handle operators like $in, $gt, etc.
-                    Object.entries(value).forEach(([op, val]) => {
-                        // Very basic implementation of operators for SQLite/Drizzle
-                        if (op === '$in' && Array.isArray(val)) {
-                            conditions.push(sql`${table[field]} IN (${sql.join(val.map((v: any) => sql`${v}`), sql`, `)})`);
-                        }
-                    });
-                } else {
-                    conditions.push(eq(table[field], value));
-                }
+        const col = (f: string) => (table as Record<string, unknown>)[f] as any;
+
+        Object.entries(rowQuery).forEach(([field, value]) => {
+            const column = col(field);
+            if (!column) return;
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                Object.entries(value as Record<string, unknown>).forEach(([op, val]) => {
+                    if (op === '$in' && Array.isArray(val) && val.length > 0) {
+                        conditions.push(inArray(column, val as any[]));
+                    } else if (op === '$nin' && Array.isArray(val) && val.length > 0) {
+                        conditions.push(notInArray(column, val as any[]));
+                    } else if (op === '$gt') {
+                        conditions.push(gt(column, val as any));
+                    } else if (op === '$lt') {
+                        conditions.push(lt(column, val as any));
+                    } else if (op === '$gte') {
+                        conditions.push(gte(column, val as any));
+                    } else if (op === '$lte') {
+                        conditions.push(lte(column, val as any));
+                    } else if (op === '$ne') {
+                        conditions.push(ne(column, val as any));
+                    }
+                });
+            } else {
+                conditions.push(eq(column, value));
             }
         });
 
@@ -771,16 +877,27 @@ entities.forEach(entity => {
             dbQuery = dbQuery.where(and(...conditions)) as any;
         }
 
-        // Handle ordering (simple implementation)
         if (order && typeof order === 'string') {
             const isDesc = order.startsWith('-');
             const field = isDesc ? order.substring(1) : order;
-            if (table[field]) {
-                dbQuery = dbQuery.orderBy(isDesc ? sql`${table[field]} DESC` : sql`${table[field]} ASC`) as any;
+            const orderCol = col(field);
+            if (orderCol) {
+                dbQuery = dbQuery.orderBy(isDesc ? desc(orderCol) : asc(orderCol)) as any;
             }
         }
 
-        return await dbQuery.limit(limit).offset(offset);
+        try {
+            return await dbQuery.limit(limit).offset(offset);
+        } catch (e: any) {
+            fastify.log.error(`Error filtering ${entity}: ${e.message}`);
+            if (isDbSchemaError(e)) {
+                return reply.status(503).send({
+                    error: 'Database schema not ready',
+                    hint: "Run 'npm run push' and optionally 'npm run seed' in the server folder."
+                });
+            }
+            return reply.status(500).send({ error: e.message });
+        }
     });
 
     // Validate body: strip unknown keys, reject non-object bodies
@@ -803,14 +920,62 @@ entities.forEach(entity => {
         return cleaned;
     };
 
-    // CREATE (Custom logic for bookings and reviews, otherwise generic)
-    if (entity !== 'booking' && entity !== 'review') {
+    // CREATE (Custom logic for bookings and reviews; promo codes enforce managed shop scope)
+    if (entity !== 'booking' && entity !== 'review' && entity !== 'promo_code') {
         const writeOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
         fastify.post(`/api/${plural}`, writeOpts, async (request, reply) => {
             const data = validateEntityBody(request.body, reply);
             if (!data) return;
             try {
                 return await db.insert(table).values(data).returning().get();
+            } catch (e: any) {
+                if (e?.message?.includes('UNIQUE') || e?.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+                    return reply.status(409).send({ error: 'Duplicate entry' });
+                }
+                throw e;
+            }
+        });
+    }
+
+    if (entity === 'promo_code') {
+        fastify.post(`/api/${plural}`, { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+            const body = request.body;
+            if (!body || typeof body !== 'object' || Array.isArray(body)) {
+                return reply.status(400).send({ error: 'Request body must be a JSON object' });
+            }
+            const tableColumns = Object.keys(table);
+            const cleaned: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+                if (tableColumns.includes(key) && key !== 'id') cleaned[key] = value;
+            }
+            if (!cleaned.code || typeof cleaned.code !== 'string' || !cleaned.code.trim()) {
+                return reply.status(400).send({ error: 'code is required' });
+            }
+            cleaned.code = (cleaned.code as string).trim().toUpperCase();
+            if (cleaned.discount_type !== 'percentage' && cleaned.discount_type !== 'fixed') {
+                return reply.status(400).send({ error: 'discount_type must be percentage or fixed' });
+            }
+            const dv = Number(cleaned.discount_value);
+            if (!Number.isFinite(dv) || dv <= 0) {
+                return reply.status(400).send({ error: 'discount_value must be a positive number' });
+            }
+            cleaned.discount_value = dv;
+
+            const user = request.user as { id: string; role?: string };
+            const shopReq = cleaned.shop_id;
+            if (user?.role !== 'admin') {
+                if (shopReq == null || shopReq === '') {
+                    return reply.status(400).send({ error: 'shop_id is required unless you are an admin' });
+                }
+                const ids = await getManagedShopIdsForUser(user!.id, request.entityScopeCache);
+                if (!ids.includes(String(shopReq))) return reply.status(403).send({ error: 'Forbidden' });
+            }
+
+            if (Object.keys(cleaned).length === 0) {
+                return reply.status(400).send({ error: 'No valid fields provided' });
+            }
+            try {
+                return await db.insert(table).values(cleaned as any).returning().get();
             } catch (e: any) {
                 if (e?.message?.includes('UNIQUE') || e?.code === 'SQLITE_CONSTRAINT_UNIQUE') {
                     return reply.status(409).send({ error: 'Duplicate entry' });
@@ -827,9 +992,23 @@ entities.forEach(entity => {
         const { id } = request.params as any;
         const data = validateEntityBody(request.body, reply);
         if (!data) return;
+        if (entity === 'promo_code' && data.shop_id !== undefined && needsOwnershipCheck) {
+            const u = request.user as { id: string; role?: string };
+            if (u?.role !== 'admin') {
+                const sid = data.shop_id as string | null;
+                if (sid == null || sid === '') {
+                    return reply.status(403).send({ error: 'Only admins may set platform-wide shop_id' });
+                }
+                const ids = await getManagedShopIdsForUser(u.id, request.entityScopeCache);
+                if (!ids.includes(String(sid))) return reply.status(403).send({ error: 'Invalid shop scope' });
+            }
+        }
         if (needsOwnershipCheck) {
             const [existing] = await db.select().from(table).where(eq(table.id, id));
-            if (!existing || !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any)))
+            if (
+                !existing ||
+                !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any, request.entityScopeCache))
+            )
                 return reply.status(404).send({ error: 'Not found' });
         }
         return await db.update(table).set(data).where(eq(table.id, id)).returning().get();
@@ -840,7 +1019,10 @@ entities.forEach(entity => {
         const { id } = request.params as any;
         if (needsOwnershipCheck) {
             const [existing] = await db.select().from(table).where(eq(table.id, id));
-            if (!existing || !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any)))
+            if (
+                !existing ||
+                !(await rowInScope(entity, table, existing as Record<string, unknown>, request.user as any, request.entityScopeCache))
+            )
                 return reply.status(404).send({ error: 'Not found' });
         }
         return await db.delete(table).where(eq(table.id, id)).returning().get();
@@ -890,4 +1072,9 @@ const start = async () => {
     }
 };
 
-start();
+/** For Vitest `fastify.inject` integration tests (`import { fastify } from '../index'`); avoids binding a port. */
+export { fastify };
+
+if (process.env.VITEST !== 'true') {
+    void start();
+}

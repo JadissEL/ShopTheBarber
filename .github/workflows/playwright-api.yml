@@ -1,0 +1,60 @@
+# Manual smoke against a deployed (or reachable) backend. Does not run on PRs by default.
+name: Playwright API checks
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: 'Backend URL (no trailing slash), e.g. https://shopthebarber.onrender.com'
+        required: true
+        default: https://shopthebarber.onrender.com
+      run_clerk_specs:
+        description: 'Also run Clerk Bearer specs (needs repo Actions secret E2E_CLERK_JWT)'
+        type: boolean
+        default: false
+      frontend_base_url:
+        description: 'Frontend URL for Clerk browser test (no trailing slash)'
+        required: false
+        default: https://shop-the-barber.vercel.app
+      run_browser_clerk:
+        description: 'Run Playwright clerk-browser project (needs CLERK_SECRET_KEY + E2E_CLERK_USER_EMAIL secrets)'
+        type: boolean
+        default: false
+
+jobs:
+  playwright:
+    name: Playwright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Install Playwright chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Smoke /api/health
+        env:
+          E2E_API_BASE_URL: ${{ github.event.inputs.api_base_url }}
+        run: npm run test:e2e -- e2e/health-public.spec.ts
+
+      - name: Clerk Bearer API (optional)
+        if: github.event.inputs.run_clerk_specs == true
+        env:
+          E2E_API_BASE_URL: ${{ github.event.inputs.api_base_url }}
+          E2E_CLERK_JWT: ${{ secrets.E2E_CLERK_JWT }}
+        run: npm run test:e2e -- e2e/clerk-bearer-api.spec.ts
+
+      - name: Clerk browser sign-in (optional)
+        if: github.event.inputs.run_browser_clerk == true
+        env:
+          E2E_FRONTEND_URL: ${{ github.event.inputs.frontend_base_url }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL }}
+        run: npm run test:e2e:clerk-browser

@@ -10,8 +10,6 @@ import { useAuth } from '@/lib/AuthContext';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 const STEPS = ['SHIPPING', 'PAYMENT', 'REVIEW'];
 const TAX_RATE = 0.085;
 
@@ -252,8 +250,6 @@ export default function Checkout() {
                     </div>
                 </footer>
             )}
-
-            <ClientBottomNav />
         </div>
     );
 }

@@ -13,8 +13,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function Chat() {
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [messageText, setMessageText] = useState('');
@@ -302,7 +300,6 @@ export default function Chat() {
                 )}
             </div>
             </div>
-            <ClientBottomNav />
         </div>
     );
 }

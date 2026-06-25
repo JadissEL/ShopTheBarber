@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function MyJobs() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -83,7 +81,6 @@ export default function MyJobs() {
           </ul>
         )}
       </div>
-      <ClientBottomNav />
     </div>
   );
 }

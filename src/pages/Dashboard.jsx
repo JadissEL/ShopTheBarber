@@ -13,7 +13,6 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import SmartSuggestions from '@/components/dashboard/SmartSuggestions';
 import LoyaltyGoalCard from '@/components/dashboard/LoyaltyGoalCard';
 import MonthlySpendingCard from '@/components/dashboard/MonthlySpendingCard';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 import BarberCard from '@/components/ui/barber-card';
 import SidebarMenu from '@/components/dashboard/SidebarMenu';
 import InsightBanner from '@/components/dashboard/InsightBanner';
@@ -460,8 +459,6 @@ export default function Dashboard() {
           </section>
         </div>
       </main>
-
-      <ClientBottomNav />
     </div>
   );
 }

@@ -12,11 +12,10 @@ import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { User, Shield, Bell, MapPin, Key, LogOut, Loader, CheckCircle, ExternalLink } from 'lucide-react';
+import { PageLoading } from '@/components/ui/page-loading';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { clientProfileSchema } from '@/lib/validations';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function AccountSettings() {
     const queryClient = useQueryClient();
     const { data: user, isLoading } = useQuery({
@@ -65,11 +64,7 @@ export default function AccountSettings() {
         window.location.href = '/';
     };
 
-    if (isLoading) return (
-        <div className="min-h-[60vh] flex items-center justify-center">
-            <Loader className="w-8 h-8 animate-spin text-primary" />
-        </div>
-    );
+    if (isLoading) return <PageLoading message="Loading account..." />;
 
     if (!user) {
         return (
@@ -238,7 +233,6 @@ export default function AccountSettings() {
             </div>
             </Tabs>
             </div>
-            <ClientBottomNav />
         </div>
     );
 }

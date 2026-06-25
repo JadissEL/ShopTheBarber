@@ -12,10 +12,10 @@ import { AnimatePresence } from 'framer-motion';
 import BarberCard from '@/components/ui/barber-card';
 import ShopCard from '@/components/ui/shop-card';
 import { Button } from '@/components/ui/button';
-import { Store, User } from 'lucide-react';
+import { Store, User, Map } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import AIAdvisor from '@/components/ai/AIAdvisor';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function Explore() {
   const urlParams = new URLSearchParams(window.location.search);
   const [searchTerm, setSearchTerm] = useState(urlParams.get('q') || '');
@@ -128,16 +128,15 @@ export default function Explore() {
     return map;
   }, [servicesList]);
 
-  const { data: promotions } = useQuery({
+  const { data: promotions = { shop_ids: [], has_platform_promos: false } } = useQuery({
     queryKey: ['active-promotions'],
     queryFn: async () => {
       try {
-        return await sovereign.entities.Promotion?.list?.() ?? [];
+        return await sovereign.public.getActivePromotions();
       } catch {
-        return [];
+        return { shop_ids: [], has_platform_promos: false };
       }
     },
-    initialData: [],
     retry: false
   });
 
@@ -179,12 +178,11 @@ export default function Explore() {
         ))
       );
 
-      const promoList = Array.isArray(promotions) ? promotions : [];
-      const hasPromotion = promoList.some(p =>
-        (p.barber_id === barber.id && p.type === 'barber') ||
-        p.type === 'general' ||
-        p.type === 'platform_targeted'
-      );
+      const shopDealIds = Array.isArray(promotions?.shop_ids) ? promotions.shop_ids : [];
+      const dealSet = new Set(shopDealIds);
+      const hasPlatform = !!promotions?.has_platform_promos;
+      const hasPromotion =
+        hasPlatform || (!!barber.shop_id && dealSet.has(barber.shop_id));
 
       let matchesTag = true;
       if (activeFilter === 'Deals') {
@@ -246,7 +244,7 @@ export default function Explore() {
                 className="pl-12 pr-10 h-14 bg-card border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary rounded-full text-sm font-light tracking-wide transition-all shadow-sm"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors">
+                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors" aria-label="Clear search">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
@@ -336,6 +334,13 @@ export default function Explore() {
             </p>
           </div>
           <RefreshIndicator isRefreshing={barbersFetching} />
+          {viewType === 'professionals' && (
+            <Link to={createPageUrl('Barbers')}>
+              <Button variant="outline" className="rounded-full gap-2">
+                <Map className="w-4 h-4" /> Map view
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -365,7 +370,11 @@ export default function Explore() {
                 )}
 
                 {!barbersError && !barbersFetching && filteredBarbers.map((barber) => {
-                  const barberPromo = Array.isArray(promotions) ? promotions.find(p => p.barber_id === barber.id) : null;
+                  const shopDealIds = Array.isArray(promotions?.shop_ids) ? promotions.shop_ids : [];
+                  const dealSet = new Set(shopDealIds);
+                  const showDeal =
+                    !!promotions?.has_platform_promos || (!!barber.shop_id && dealSet.has(barber.shop_id));
+                  const barberPromo = showDeal ? { discount_text: 'Promo available' } : null;
                   return (
                     <div key={barber.id} onMouseEnter={() => prefetchBarber(barber.id)}>
                       <BarberCard barber={barber} variant="vertical" badge={barberPromo ? { text: barberPromo.discount_text, color: 'bg-red-500' } : null} />
@@ -440,7 +449,6 @@ export default function Explore() {
         </div>
       </div>
       <AIAdvisor />
-      <ClientBottomNav />
     </div>
   );
 }

@@ -7,8 +7,6 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function ApplicantReview() {
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get('jobId');
@@ -55,7 +53,7 @@ export default function ApplicantReview() {
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <MetaTags title={`Applicant review – ${job?.title} | Shop The Barber`} />
       <header className="sticky top-0 z-40 bg-white border-b px-4 py-3 flex items-center justify-between">
-        <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-slate-100"><ArrowLeft className="w-5 h-5" /></button>
+        <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-slate-100" aria-label="Back"><ArrowLeft className="w-5 h-5" /></button>
         <h1 className="font-bold text-foreground">Applicant Review</h1>
         <button type="button" className="p-2 rounded-full hover:bg-slate-100" aria-label="Filter">⋮</button>
       </header>
@@ -100,7 +98,7 @@ export default function ApplicantReview() {
               </div>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" onClick={() => setScheduleAppId(app.id)} className="gap-1 rounded-lg"><Calendar className="w-4 h-4" /> Schedule</Button>
-                <Button size="sm" variant="outline" className="rounded-lg" onClick={() => navigate(createPageUrl('Chat') + '?contactId=' + encodeURIComponent(app.user_id))}><MessageCircle className="w-4 h-4" /></Button>
+                <Button size="sm" variant="outline" className="rounded-lg" onClick={() => navigate(createPageUrl('Chat') + '?contactId=' + encodeURIComponent(app.user_id))} aria-label="Open chat"><MessageCircle className="w-4 h-4" /></Button>
               </div>
             </li>
           ))}
@@ -110,7 +108,6 @@ export default function ApplicantReview() {
       {scheduleAppId && (
         <ScheduleInterviewModal applicationId={scheduleAppId} onClose={() => setScheduleAppId(null)} onDone={() => { queryClient.invalidateQueries({ queryKey: ['job-applicants', jobId] }); setScheduleAppId(null); }} />
       )}
-      <ClientBottomNav />
     </div>
   );
 }

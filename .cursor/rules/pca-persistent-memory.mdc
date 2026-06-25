@@ -1,0 +1,75 @@
+---
+alwaysApply: true
+description: PCA persistent memory — load and update .cursor_memory markdown; bootstrap if missing.
+---
+
+## Role
+
+You are **not** a stateless assistant. For every workspace, continuity comes from **`/.cursor_memory/*.md` on disk**, not from chat alone.
+
+You **do not** manually maintain a different playbook per repository: the **same protocol** applies in every project. Only the **contents** of `.cursor_memory/` differ per project.
+
+**Full detail** (file map, write triggers, templates, git notes): `GLOBAL_USER_RULES.md` in **`%USERPROFILE%\tools\pca-cursor-kit`** or the same text under Cursor **User Rules**.
+
+## Quick reference
+
+| File | Use for |
+|------|---------|
+| `system_rules.md` | Repo-specific rules, git policy for `.cursor_memory/`, canonical root. |
+| `decisions.md` | What was chosen and **why** (dated). |
+| `active_tasks.md` | Live work; keep status/priority accurate. |
+| `project_context.md` | Purpose, stack, layout, constraints. |
+| `knowledge_base.md` | Reusable patterns and commands. |
+| `conversation_log.md` / `mistakes_and_learnings.md` | Append-only logs. |
+| `session_state.md` | Current focus, blockers, next steps (refresh often). |
+
+After **non-trivial** work, update the relevant files **without** waiting for the user to ask.
+
+## Session pre-flight (before substantive work)
+
+1. Resolve the **workspace root** (the folder opened in Cursor). For **multi-root workspaces**, use the **single canonical root** defined in `system_rules.md`; if missing or ambiguous, pick the primary repo folder the user is editing and **record that path** in `session_state.md`.
+2. Check for **`<workspace>/.cursor_memory/`** containing at least `system_rules.md`.
+3. **If memory is missing or incomplete** (any of the standard files below is absent): **bootstrap** by creating `/.cursor_memory/` and every missing file with the concise starter structure from the kit template (same filenames). Default template on this PC: `%USERPROFILE%\tools\pca-cursor-kit\.cursor_memory\` — copy missing files from there when it exists. Otherwise create minimal starter sections. Do not skip files.
+4. **If memory exists**: read in this **priority order**:
+   - `system_rules.md`
+   - `decisions.md`
+   - `active_tasks.md`
+   - `project_context.md`
+   - `knowledge_base.md`
+   - Skim **recent entries** in `conversation_log.md` (raw narrative; do not treat it as authoritative over written decisions).
+   **Then** read `session_state.md` for the latest “where we left off” snapshot.
+5. **Continue from the last recorded point** using `session_state.md`, open tasks, and latest decisions. Do not re-derive project history from chat alone.
+
+**Standard filenames (must exist after bootstrap):**  
+`system_rules.md`, `decisions.md`, `active_tasks.md`, `project_context.md`, `knowledge_base.md`, `conversation_log.md`, `mistakes_and_learnings.md`, `session_state.md`.
+
+## Write discipline
+
+- **Append** to `conversation_log.md` and `mistakes_and_learnings.md` (timestamped entries). Never delete historical log lines without explicit user instruction.
+- **Decisions:** append dated records to `decisions.md` when choices are made or revised; note **why** and **alternatives considered** briefly.
+- **Tasks:** keep `active_tasks.md` current (status: pending / in progress / done; priority; dependencies when relevant).
+- **Knowledge:** add durable patterns and how-tos to `knowledge_base.md` (append or add titled sections).
+- **Session narrative:** update `session_state.md` with what you believe is happening, current focus, blockers, and **obvious knowledge gaps**.
+- **Project context:** update `project_context.md` when scope, stack, architecture, or constraints change.
+- Prefer **intelligent append** over blind overwrite. When replacing a stance, note the change in `decisions.md` rather than silently erasing history.
+
+## Memory hierarchy (conflict resolution)
+
+When sources disagree, **higher authority wins**:
+
+1. `system_rules.md`  
+2. `decisions.md`  
+3. `active_tasks.md`  
+4. `project_context.md`  
+5. `knowledge_base.md`  
+6. `conversation_log.md` (raw log only — not a substitute for decisions)
+
+If two sources at the **same** level conflict, **stop**, state the contradiction, propose a resolution, and after user alignment record the outcome in `decisions.md` and snapshot in `session_state.md`.
+
+## Failure mode
+
+If the objective is unclear, memory is inconsistent, or instructions conflict with `system_rules.md`: **stop**, explain briefly, and ask or propose a fix; then record the resolution path in `decisions.md` / `mistakes_and_learnings.md` as appropriate.
+
+## Privacy
+
+Never store secrets (passwords, API keys, tokens, private URLs) in `.cursor_memory/`. Redact or reference env vars / secret stores instead.

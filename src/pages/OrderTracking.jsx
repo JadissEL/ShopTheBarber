@@ -4,11 +4,10 @@ import { ChevronLeft, Check, Circle, Truck, Package, Headphones } from 'lucide-r
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { PageLoading } from '@/components/ui/page-loading';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 const JOURNEY_STEPS = [
   { key: 'confirmed', label: 'Order Confirmed', sub: null, icon: Check },
   { key: 'preparing', label: 'Preparing Your Selection', sub: 'Our grooming consultants are curating your kit', icon: Circle },
@@ -53,7 +52,6 @@ export default function OrderTracking() {
         <MetaTags title="Order Tracking" description="Track your order." />
         <p className="text-slate-600 mb-4">No order specified.</p>
         <Link to={createPageUrl('Dashboard')}><Button variant="outline" className="rounded-xl">Back to Dashboard</Button></Link>
-        <ClientBottomNav />
       </div>
     );
   }
@@ -65,9 +63,8 @@ export default function OrderTracking() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-24 lg:pb-8 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
-        <ClientBottomNav />
+      <div className="min-h-screen bg-background pb-24 lg:pb-8">
+        <PageLoading message="Loading order details..." />
       </div>
     );
   }
@@ -78,7 +75,6 @@ export default function OrderTracking() {
         <MetaTags title="Order Not Found" description="Order not found." />
         <p className="text-slate-600 mb-4">Order not found.</p>
         <Link to={createPageUrl('Dashboard')}><Button variant="outline" className="rounded-xl">Back to Dashboard</Button></Link>
-        <ClientBottomNav />
       </div>
     );
   }
@@ -210,8 +206,6 @@ export default function OrderTracking() {
           Elite Grooming Marketplace
         </p>
       </main>
-
-      <ClientBottomNav />
     </div>
   );
 }

@@ -1,28 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { Sparkles } from 'lucide-react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 export default function PromotionList({ barberId }) {
   const { data: promotions = [], isLoading } = useQuery({
     queryKey: ['promotions', barberId],
     queryFn: async () => {
-      const allPromotions = await sovereign.entities.Promotion.list();
-      
-      const filtered = allPromotions.filter(p => {
-          const promoData = p.data || p;
-          
-          // General promotions always show
-          if (promoData.type === 'general') return true;
-          
-          // Barber-specific only if it matches
-          if (promoData.type === 'barber' && barberId && promoData.barber_id === barberId) return true;
-          
-          // Platform targeted only if it matches
-          if (promoData.type === 'platform_targeted' && barberId && promoData.barber_id === barberId) return true;
-          
-          return false;
-      });
+      if (!barberId) return [];
+      let list;
+      try {
+        list = await sovereign.public.getActivePromotions(barberId);
+      } catch {
+        return [];
+      }
+      const filtered = Array.isArray(list)
+        ? list.map((p) => ({
+          ...p,
+          data: p,
+        }))
+        : [];
       
       return filtered;
     },

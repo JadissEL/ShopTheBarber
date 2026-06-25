@@ -1,13 +1,13 @@
-# Marketplace & Base44 Product Code Scan Report
+# Marketplace & Sovereign API Product Code Scan Report
 
 **Date:** 2026-02-07  
-**Scope:** Full project scan for marketplace/product-related code from Base44 or existing implementation.
+**Scope:** Full project scan for marketplace/product-related code from Sovereign API or existing implementation.
 
 ---
 
 ## 1. Summary
 
-- **Base44 marketplace implementation:** Not present in the codebase. The project was migrated from Base44 with a focus on **services (bookings, barbers, shops)**. Product/marketplace features were either never migrated or existed only as Base44 cloud entities with no SQLite equivalent.
+- **Sovereign API marketplace implementation:** Not present in the codebase. The project was migrated from Sovereign API with a focus on **services (bookings, barbers, shops)**. Product/marketplace features were either never migrated or existed only as Sovereign API cloud entities with no SQLite equivalent.
 - **Current marketplace:** A new **Marketplace** page (`src/pages/Marketplace.jsx`) was added for elite/luxury **products** (barbers, platform, external vendors). It uses **placeholder product data** and no backend `products` entity yet.
 - **Existing product-related snippets:** Found in **copy**, **schemas** (inventory), and **navigation comments** only—no full product catalog or ProductRecommendations page.
 
@@ -15,13 +15,13 @@
 
 ## 2. What Was Found
 
-### 2.1 Navigation / routing (Base44-era names)
+### 2.1 Navigation / routing (Sovereign API-era names)
 
 | Location | Finding |
 |----------|--------|
 | `src/components/navigationConfig.jsx` (line 93) | Comment lists client-zone pages: **"InspirationFeed, ProductRecommendations, Referral"**. These are **names only**—no corresponding page files or routes in the sovereign app. |
 
-So **ProductRecommendations** and **InspirationFeed** were Base44/design-time page names; they were never implemented as sovereign pages or backend entities.
+So **ProductRecommendations** and **InspirationFeed** were Sovereign API/design-time page names; they were never implemented as sovereign pages or backend entities.
 
 ### 2.2 Schemas (product-related)
 
@@ -66,13 +66,13 @@ Explore is for **barbers/shops (professionals)**, not products. Marketplace is n
 ### 2.7 Other
 
 - **Stripe:** Payments and webhooks are for **bookings/services**, not product purchases.
-- **No `/functions` folder** in the repo; old Base44 serverless logic was migrated into `server/src/` and has no product/marketplace code.
+- **No `/functions` folder** in the repo; old Sovereign API serverless logic was migrated into `server/src/` and has no product/marketplace code.
 
 ---
 
 ## 3. Conclusions
 
-1. **No Base44 marketplace code** remains in the repo—no ProductRecommendations page, no product entities, no product API.
+1. **No Sovereign API marketplace code** remains in the repo—no ProductRecommendations page, no product entities, no product API.
 2. **Product-related content** is limited to: navigation comment, inventory schema, and home “products”/“Shop Products” copy.
 3. **Current marketplace:** Implemented as a new **Marketplace** page with static placeholder products; ready to be wired to a future `products` (and optionally vendors/merchants) backend when you add them.
 

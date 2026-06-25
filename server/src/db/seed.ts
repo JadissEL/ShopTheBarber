@@ -18,6 +18,7 @@ async function seed() {
     await db.delete(schema.companies);
     await db.delete(schema.disputes);
     await db.delete(schema.reviews);
+    await db.delete(schema.promo_codes);
     await db.delete(schema.booking_services);
     await db.delete(schema.payouts);
     await db.delete(schema.bookings);
@@ -44,9 +45,11 @@ async function seed() {
     await db.delete(schema.users);
     await db.delete(schema.pricing_rules);
 
+    console.log('Cleared existing data.');
     const passwordHash = await hashPassword('password123');
 
     // Create Admin
+    console.log('Creating Admin...');
     await db.insert(schema.users).values({
         id: 'admin',
         email: 'admin@shopthebarber.com',
@@ -56,6 +59,7 @@ async function seed() {
     });
 
     // Create Barbers
+    console.log('Creating Barbers...');
     const [user1] = await db.insert(schema.users).values({
         id: 'u1',
         email: 'james@example.com',
@@ -75,6 +79,7 @@ async function seed() {
     }).returning();
 
     // Create Clients
+    console.log('Creating Clients...');
     const [client1] = await db.insert(schema.users).values({
         id: 'c1',
         email: 'ghost@example.com',
@@ -98,7 +103,8 @@ async function seed() {
         'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop',   // salon
     ];
 
-    // Create Shops (s1 = Athens Syntagma, with distinct photo)
+    // Create Shops
+    console.log('Creating Shops...');
     const [shop1] = await db.insert(schema.shops).values({
         id: 's1',
         name: 'Downtown Cuts',
@@ -106,7 +112,8 @@ async function seed() {
         image_url: shopPhotos[0]!
     }).returning();
 
-    // Create Barbers Profiles (existing + location + distinct photos)
+    // Create Barbers Profiles
+    console.log('Creating Barbers Profiles...');
     await db.insert(schema.barbers).values({
         id: 'b1',
         user_id: user1.id,
@@ -132,6 +139,7 @@ async function seed() {
     });
 
     // --- Greece: shops, barbers, services (real-world style) ---
+    console.log('Creating Greece shops...');
     const shop1Loc = 'Athens, Syntagma';
     const shop1Desc = 'Premium men\'s grooming in the heart of Athens.';
     await db.update(schema.shops).set({ location: shop1Loc, description: shop1Desc }).where(eq(schema.shops.id, 's1'));
@@ -158,7 +166,8 @@ async function seed() {
         });
     }
 
-    // Greece barber users (role barber or shop_owner)
+    // Greece barber users
+    console.log('Creating Greece barber users...');
     const barberUserIds: string[] = [];
     for (let i = 1; i <= 24; i++) {
         const uid = `gu${i}`;
@@ -231,6 +240,7 @@ async function seed() {
         { id: 'gb24', user_id: 'gu24', shop_id: 's9', name: 'Katerina Volos', title: 'Stylist', location: 'Volos, Pagasitikos', rating: 4.6, review_count: 44, image_url: barberPhotos[23]! },
     ];
 
+    console.log('Creating Greece barber profiles...');
     for (const b of greeceBarbers) {
         await db.insert(schema.barbers).values({
             id: b.id,
@@ -247,7 +257,8 @@ async function seed() {
         });
     }
 
-    // Shop members (barber linked to shop)
+    // Shop members
+    console.log('Creating Shop members...');
     for (const b of greeceBarbers) {
         await db.insert(schema.shop_members).values({
             id: `sm-${b.id}`,
@@ -260,7 +271,8 @@ async function seed() {
     await db.insert(schema.shop_members).values({ id: 'sm-b1', shop_id: 's1', user_id: user1.id, role: 'barber', barber_id: 'b1' });
     await db.insert(schema.shop_members).values({ id: 'sm-b2', shop_id: 's1', user_id: user2.id, role: 'barber', barber_id: 'b2' });
 
-    // Shifts: so barbers can accept bookings (Mon–Sat 09:00–17:00). Use only barbers/shops that exist in DB to avoid FK errors.
+    // Shifts
+    console.log('Creating Shifts...');
     const barbersWithShops = await db.select({ id: schema.barbers.id, shop_id: schema.barbers.shop_id }).from(schema.barbers);
     const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     for (const barber of barbersWithShops) {
@@ -276,7 +288,8 @@ async function seed() {
         }
     }
 
-    // Services per shop — different prices per location (real-world)
+    // Services per shop
+    console.log('Creating Services per shop...');
     type ServiceRow = { id: string; shop_id: string; barber_id: string | null; name: string; category: string; description: string | null; price: number; duration_minutes: number };
     const baseServices: Array<Omit<ServiceRow, 'shop_id' | 'price'>> = [
         { id: 'svc-hair', barber_id: null, name: 'Haircut', category: 'Hair', description: 'Classic or modern cut', duration_minutes: 30 },
@@ -328,14 +341,34 @@ async function seed() {
     });
 
     // Create Pricing Rules
+    console.log('Creating Pricing Rules and Promo Codes...');
     await db.insert(schema.pricing_rules).values({
         id: 'rule1',
         name: 'Default Platform Rules',
         commission_freelancer: 0.15,
-        commission_shop: 0.05
+        commission_shop: 0.05,
+        is_active: 1 as unknown as boolean
+    });
+
+    await db.insert(schema.promo_codes).values({
+        id: 'pc-s1-demo',
+        code: 'DOWNTOWN10',
+        discount_type: 'percentage',
+        discount_value: 10,
+        shop_id: 's1',
+        is_active: 1 as unknown as boolean,
+    });
+    await db.insert(schema.promo_codes).values({
+        id: 'pc-platform-demo',
+        code: 'WELCOME5',
+        discount_type: 'fixed',
+        discount_value: 5,
+        shop_id: null,
+        is_active: 1 as unknown as boolean,
     });
 
     // Create Services
+    console.log('Creating Services...');
     await db.insert(schema.services).values({
         id: 'ser1',
         shop_id: shop1.id,
@@ -346,6 +379,7 @@ async function seed() {
     });
 
     // Create Bookings
+    console.log('Creating Bookings...');
     const now = new Date();
     const subHours = (h: number) => new Date(now.getTime() - h * 60 * 60 * 1000);
     const addHours = (h: number) => new Date(now.getTime() + h * 60 * 60 * 1000);
@@ -391,6 +425,7 @@ async function seed() {
     }
 
     // Create Payouts
+    console.log('Creating Payouts...');
     await db.insert(schema.payouts).values({
         id: 'pay1',
         provider_id: 'b1',
@@ -401,6 +436,7 @@ async function seed() {
     });
 
     // Create Disputes
+    console.log('Creating Disputes...');
     await db.insert(schema.disputes).values({
         id: 'dis1',
         booking_id: 'bk1',
@@ -408,7 +444,8 @@ async function seed() {
         status: 'open'
     });
 
-    // Elite brand (Michelin-style profile)
+    // Elite brand
+    console.log('Creating Brands and Accolades...');
     const brandId = 'brand-aurelius';
     await db.insert(schema.brands).values({
         id: brandId,
@@ -418,7 +455,7 @@ async function seed() {
         hero_image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1200&fit=crop',
         description: 'Crafting the standard of modern masculinity through rare ingredients and centuries-old artisanal techniques. Designed for the discerning gentleman who demands excellence in every ritual.',
         locations: 'New York • London • Paris',
-        verified_elite: true,
+        verified_elite: 1 as unknown as boolean,
         price_range: '$$$',
     });
     await db.insert(schema.brand_accolades).values([
@@ -432,7 +469,8 @@ async function seed() {
         { id: 'coll2', brand_id: brandId, name: 'Artisan Kit', subtitle: 'Daily performance.', image_url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&fit=crop', sort_order: 2 },
     ]);
 
-    // Marketplace: elite/luxury products (barbers, platform, vendors); some linked to brand
+    // Marketplace
+    console.log('Creating Marketplace Products...');
     const productData = [
         { id: 'prod1', name: 'Signature Beard Oil', price: 42, category: 'Beard', seller_type: 'barber' as const, barber_id: 'b1', image_url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&fit=crop' },
         { id: 'prod2', name: 'Luxury Hair Pomade', price: 38, category: 'Hair', seller_type: 'platform' as const, image_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=400&fit=crop' },
@@ -449,17 +487,18 @@ async function seed() {
         await db.insert(schema.products).values(p);
     }
 
-    // Employment: companies and sample jobs
+    // Employment
+    console.log('Creating Companies and Jobs...');
     await db.insert(schema.companies).values([
         { id: 'co1', name: 'Murdock London', description: 'Premium grooming and lifestyle brand.', location: 'London, UK', website: 'https://murdocklondon.com' },
         { id: 'co2', name: 'Aesop', description: 'Design-led skincare and fragrance.', location: 'Paris', website: 'https://www.aesop.com' },
         { id: 'co3', name: 'Royal Barber Co', description: 'High-end barbershop network.', location: 'London, UK' },
     ]);
     await db.insert(schema.jobs).values([
-        { id: 'job1', title: 'Regional Operations Director', category: 'management', employer_type: 'company', company_id: 'co1', employment_type: 'full_time', location_type: 'hybrid', location_text: 'London, UK', description: 'Architect of scale for our high-end barbershop network.', responsibilities: 'P&L Management; Talent Logistics; Quality Assurance.', salary_min: 85000, salary_max: 110000, salary_currency: 'GBP', status: 'published', featured: true, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop' },
-        { id: 'job2', title: 'Logistics Manager', category: 'logistics', employer_type: 'company', company_id: 'co2', employment_type: 'full_time', location_type: 'on_site', location_text: 'Paris', description: 'Supply chain and operations for premium retail.', status: 'published', featured: true, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800&auto=format&fit=crop' },
-        { id: 'job3', title: 'Senior Barber', category: 'grooming', employer_type: 'shop', shop_id: 's1', employment_type: 'full_time', location_type: 'on_site', location_text: 'Athens, Syntagma', description: 'Master barber for our flagship location.', status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop' },
-        { id: 'job4', title: 'Brand Partnership Manager', category: 'branding', employer_type: 'company', company_id: 'co3', employment_type: 'full_time', location_type: 'hybrid', location_text: 'Los Angeles', salary_min: 120000, salary_max: 140000, status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop' },
+        { id: 'job1', title: 'Regional Operations Director', category: 'management', employer_type: 'company', company_id: 'co1', employment_type: 'full_time', location_type: 'hybrid', location_text: 'London, UK', description: 'Architect of scale for our high-end barbershop network.', responsibilities: 'P&L Management; Talent Logistics; Quality Assurance.', salary_min: 85000, salary_max: 110000, salary_currency: 'GBP', status: 'published', featured: 1 as unknown as boolean, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop' },
+        { id: 'job2', title: 'Logistics Manager', category: 'logistics', employer_type: 'company', company_id: 'co2', employment_type: 'full_time', location_type: 'on_site', location_text: 'Paris', description: 'Supply chain and operations for premium retail.', status: 'published', featured: 1 as unknown as boolean, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800&auto=format&fit=crop' },
+        { id: 'job3', title: 'Senior Barber', category: 'grooming', employer_type: 'shop', shop_id: 's1', employment_type: 'full_time', location_type: 'on_site', location_text: 'Athens, Syntagma', description: 'Master barber for our flagship location.', status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop', featured: 0 as unknown as boolean },
+        { id: 'job4', title: 'Brand Partnership Manager', category: 'branding', employer_type: 'company', company_id: 'co3', employment_type: 'full_time', location_type: 'hybrid', location_text: 'Los Angeles', salary_min: 120000, salary_max: 140000, status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop', featured: 0 as unknown as boolean },
     ]);
 
     console.log('Seeding completed!');

@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { LayoutDashboard, Calendar, MessageSquare, Settings, DollarSign } from 'lucide-react';
-import { cn } from '@/components/utils';
+import { cn } from '@/lib/utils';
 
 const items = [
   { label: 'Home', icon: LayoutDashboard, path: 'ProviderDashboard' },

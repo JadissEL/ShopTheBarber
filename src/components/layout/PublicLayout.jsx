@@ -1,5 +1,6 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
 
 export default function PublicLayout({ children }) {
   const navLinks = [
@@ -16,10 +17,11 @@ export default function PublicLayout({ children }) {
       <Navbar navLinks={navLinks} />
 
       {/* Main Content */}
-      <main id="main-content" className="flex-1 focus:outline-none" tabIndex="-1">
+      <main id="main-content" className="flex-1 focus:outline-none pb-20 lg:pb-0" tabIndex="-1">
         {children}
       </main>
 
+      <ClientBottomNav />
       <Footer />
     </div>
   );

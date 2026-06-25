@@ -115,7 +115,7 @@ export async function jobsRoutes(fastify: FastifyInstance) {
         if (job.created_by === userId) return true;
         if (job.employer_type === 'shop' && job.shop_id) {
             const [shop] = await db.select({ owner_id: schema.shops.owner_id }).from(schema.shops).where(eq(schema.shops.id, job.shop_id));
-            return shop?.owner_id === userId ?? false;
+            return !!shop && shop.owner_id === userId;
         }
         return false;
     };

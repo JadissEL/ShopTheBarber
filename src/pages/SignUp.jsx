@@ -4,7 +4,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createPageUrl } from '@/components/utils';
+import { createPageUrl } from '@/utils';
 
 /**
  * Sign Up Page with Clerk

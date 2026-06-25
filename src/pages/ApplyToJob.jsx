@@ -6,8 +6,6 @@ import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 export default function ApplyToJob() {
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get('id');
@@ -93,7 +91,6 @@ export default function ApplyToJob() {
           </div>
         </div>
       </div>
-      <ClientBottomNav />
     </div>
   );
 }

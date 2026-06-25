@@ -4,8 +4,6 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
-
 /**
  * Standalone booking confirmation entry — e.g. from email link.
  * If no booking id, redirects to UserBookings. Otherwise shows confirmation and link to bookings.
@@ -32,7 +30,6 @@ export default function ConfirmBooking() {
           </Link>
         </CardContent>
       </Card>
-      <ClientBottomNav />
     </div>
   );
 }
