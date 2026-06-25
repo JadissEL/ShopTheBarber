@@ -1,11 +1,10 @@
 /**
- * Ownership/scope conditions for auth-required entity routes.
+ * Ownership/scope conditions for auth-required entity routes (Prisma + Neon).
  * Ensures users only list, get, update, and delete their own (or their shop/barber) data.
+ * `getEntityScopeCondition` returns a Prisma `where` object (or null = no restriction).
  */
 
-import { eq, or, and, inArray, SQL } from 'drizzle-orm';
-import { db } from './db';
-import * as schema from './db/schema';
+import { prisma } from './db/prisma';
 
 export type JwtUser = { id: string; email?: string; role?: string };
 
@@ -22,8 +21,8 @@ export function createEntityScopeCache(): EntityScopeCache {
             if (!p) {
                 p = (async () => {
                     const [barberRows, shopRows] = await Promise.all([
-                        db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, userId)),
-                        db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, userId)),
+                        prisma.barbers.findMany({ where: { user_id: userId }, select: { id: true } }),
+                        prisma.shops.findMany({ where: { owner_id: userId }, select: { id: true } }),
                     ]);
                     return {
                         barberIds: barberRows.map(r => r.id).filter(Boolean) as string[],
@@ -42,139 +41,141 @@ export function createEntityScopeCache(): EntityScopeCache {
  */
 export async function getManagedShopIdsForUser(userId: string, cache?: EntityScopeCache): Promise<string[]> {
     const { shopIds: owned } = await barberShopIdsForUser(userId, cache);
-    const memberRows = await db
-        .select({ shop_id: schema.shop_members.shop_id })
-        .from(schema.shop_members)
-        .where(and(eq(schema.shop_members.user_id, userId), inArray(schema.shop_members.role, ['owner', 'manager'])));
+    const memberRows = await prisma.shop_members.findMany({
+        where: { user_id: userId, role: { in: ['owner', 'manager'] } },
+        select: { shop_id: true },
+    });
     const fromMember = memberRows.map(r => r.shop_id).filter(Boolean) as string[];
     return [...new Set([...owned, ...fromMember])];
 }
 
 async function barberShopIdsForUser(userId: string, cache?: EntityScopeCache): Promise<{ barberIds: string[]; shopIds: string[] }> {
     if (cache) return cache.getBarberShopIdsForUser(userId);
-    const barberRows = await db.select({ id: schema.barbers.id }).from(schema.barbers).where(eq(schema.barbers.user_id, userId));
-    const shopRows = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.owner_id, userId));
+    const [barberRows, shopRows] = await Promise.all([
+        prisma.barbers.findMany({ where: { user_id: userId }, select: { id: true } }),
+        prisma.shops.findMany({ where: { owner_id: userId }, select: { id: true } }),
+    ]);
     return {
         barberIds: barberRows.map(r => r.id).filter(Boolean) as string[],
         shopIds: shopRows.map(r => r.id).filter(Boolean) as string[],
     };
 }
 
+type Where = Record<string, any>;
+
 /**
- * Returns a Drizzle condition to restrict rows to the current user's scope for the given entity.
+ * Returns a Prisma `where` filter to restrict rows to the current user's scope for the given entity.
  * Admin role: no scope (can see all). Otherwise: entity-specific ownership rules.
  * Returns null if no scope should be applied (e.g. admin or entity not in scope map).
  */
 export async function getEntityScopeCondition(
     entity: string,
-    table: any,
     user: JwtUser,
     cache?: EntityScopeCache
-): Promise<SQL | null> {
+): Promise<Where | null> {
     const userId = user?.id;
     const role = user?.role;
     if (!userId) return null;
-
     if (role === 'admin') return null;
 
     switch (entity) {
         case 'booking': {
             const { barberIds, shopIds } = await barberShopIdsForUser(userId, cache);
-            const parts: SQL[] = [eq(table.client_id, userId)];
-            if (barberIds.length > 0) parts.push(inArray(table.barber_id, barberIds));
-            if (shopIds.length > 0) parts.push(inArray(table.shop_id, shopIds));
-            return or(...parts)!;
+            const or: Where[] = [{ client_id: userId }];
+            if (barberIds.length > 0) or.push({ barber_id: { in: barberIds } });
+            if (shopIds.length > 0) or.push({ shop_id: { in: shopIds } });
+            return { OR: or };
         }
         case 'loyalty_profile':
         case 'loyalty_transaction':
-            return eq(table.user_id, userId);
+            return { user_id: userId };
         case 'message':
-            return or(eq(table.sender_id, userId), eq(table.receiver_id, userId))!;
+            return { OR: [{ sender_id: userId }, { receiver_id: userId }] };
         case 'notification':
-            return eq(table.user_id, userId);
+            return { user_id: userId };
         case 'payout': {
             const { barberIds } = await barberShopIdsForUser(userId, cache);
-            if (barberIds.length === 0) return eq(table.provider_id, '__none__'); // no barber profile → no payouts
-            return inArray(table.provider_id, barberIds);
+            if (barberIds.length === 0) return { provider_id: '__none__' };
+            return { provider_id: { in: barberIds } };
         }
         case 'favorite':
-            return eq(table.user_id, userId);
+            return { user_id: userId };
         case 'dispute': {
             const { barberIds, shopIds } = await barberShopIdsForUser(userId, cache);
-            const orParts: SQL[] = [eq(schema.bookings.client_id, userId)];
-            if (barberIds.length > 0) orParts.push(inArray(schema.bookings.barber_id, barberIds));
-            if (shopIds.length > 0) orParts.push(inArray(schema.bookings.shop_id, shopIds));
-            const bookingRows = await db.select({ id: schema.bookings.id }).from(schema.bookings).where(or(...orParts)!);
+            const or: Where[] = [{ client_id: userId }];
+            if (barberIds.length > 0) or.push({ barber_id: { in: barberIds } });
+            if (shopIds.length > 0) or.push({ shop_id: { in: shopIds } });
+            const bookingRows = await prisma.bookings.findMany({ where: { OR: or }, select: { id: true } });
             const bookingIds = bookingRows.map(r => r.id).filter(Boolean) as string[];
-            if (bookingIds.length === 0) return eq(table.booking_id, '__none__');
-            return inArray(table.booking_id, bookingIds);
+            if (bookingIds.length === 0) return { booking_id: '__none__' };
+            return { booking_id: { in: bookingIds } };
         }
         case 'audit_log':
-            return eq(table.actor_id, userId);
+            return { actor_id: userId };
         case 'waiting_list_entry': {
             const { barberIds } = await barberShopIdsForUser(userId, cache);
-            if (barberIds.length === 0) return eq(table.client_id, userId);
-            return or(eq(table.client_id, userId), inArray(table.barber_id, barberIds))!;
+            if (barberIds.length === 0) return { client_id: userId };
+            return { OR: [{ client_id: userId }, { barber_id: { in: barberIds } }] };
         }
         case 'barber':
-            return eq(table.user_id, userId);
+            return { user_id: userId };
         case 'shop':
-            return eq(table.owner_id, userId);
+            return { owner_id: userId };
         case 'service': {
             const { barberIds, shopIds } = await barberShopIdsForUser(userId, cache);
-            const parts: SQL[] = [];
-            if (barberIds.length > 0) parts.push(inArray(table.barber_id, barberIds));
-            if (shopIds.length > 0) parts.push(inArray(table.shop_id, shopIds));
-            if (parts.length === 0) return eq(table.shop_id, '__none__');
-            return or(...parts)!;
+            const or: Where[] = [];
+            if (barberIds.length > 0) or.push({ barber_id: { in: barberIds } });
+            if (shopIds.length > 0) or.push({ shop_id: { in: shopIds } });
+            if (or.length === 0) return { shop_id: '__none__' };
+            return { OR: or };
         }
         case 'shift':
         case 'time_block': {
             const { barberIds } = await barberShopIdsForUser(userId, cache);
-            if (barberIds.length === 0) return eq(table.barber_id, '__none__');
-            return inArray(table.barber_id, barberIds);
+            if (barberIds.length === 0) return { barber_id: '__none__' };
+            return { barber_id: { in: barberIds } };
         }
         case 'shop_member': {
             const { shopIds } = await barberShopIdsForUser(userId, cache);
-            if (shopIds.length === 0) return eq(table.user_id, userId);
-            return or(eq(table.user_id, userId), inArray(table.shop_id, shopIds))!;
+            if (shopIds.length === 0) return { user_id: userId };
+            return { OR: [{ user_id: userId }, { shop_id: { in: shopIds } }] };
         }
         case 'review':
-            return eq(table.reviewer_id, userId);
+            return { reviewer_id: userId };
         case 'product': {
             const { barberIds, shopIds } = await barberShopIdsForUser(userId, cache);
-            const parts: SQL[] = [];
-            if (barberIds.length > 0) parts.push(inArray(table.barber_id, barberIds));
-            if (shopIds.length > 0) parts.push(inArray(table.shop_id, shopIds));
-            if (parts.length === 0) return eq(table.shop_id, '__none__');
-            return or(...parts)!;
+            const or: Where[] = [];
+            if (barberIds.length > 0) or.push({ barber_id: { in: barberIds } });
+            if (shopIds.length > 0) or.push({ shop_id: { in: shopIds } });
+            if (or.length === 0) return { shop_id: '__none__' };
+            return { OR: or };
         }
         case 'promo_code': {
             const ids = await getManagedShopIdsForUser(userId, cache);
-            if (ids.length === 0) return eq(table.shop_id, '__none__');
-            return inArray(table.shop_id, ids);
+            if (ids.length === 0) return { shop_id: '__none__' };
+            return { shop_id: { in: ids } };
         }
         case 'wishlist_item':
-            return eq(table.user_id, userId);
+            return { user_id: userId };
         case 'wallet_account':
         case 'wallet_transaction':
-            return eq(table.user_id, userId);
+            return { user_id: userId };
         case 'referral':
-            return eq(table.referrer_id, userId);
+            return { referrer_id: userId };
         case 'gift_card':
-            return eq(table.purchaser_id, userId);
+            return { purchaser_id: userId };
         case 'shop_inventory_item':
         case 'shop_expense': {
             const { shopIds } = await barberShopIdsForUser(userId, cache);
             const ids = await getManagedShopIdsForUser(userId, cache);
             const allShopIds = [...new Set([...shopIds, ...ids])];
-            if (allShopIds.length === 0) return eq(table.shop_id, '__none__');
-            return inArray(table.shop_id, allShopIds);
+            if (allShopIds.length === 0) return { shop_id: '__none__' };
+            return { shop_id: { in: allShopIds } };
         }
         case 'barber_video': {
             const { barberIds } = await barberShopIdsForUser(userId, cache);
-            if (barberIds.length === 0) return eq(table.barber_id, '__none__');
-            return inArray(table.barber_id, barberIds);
+            if (barberIds.length === 0) return { barber_id: '__none__' };
+            return { barber_id: { in: barberIds } };
         }
         default:
             return null;
@@ -186,7 +187,6 @@ export async function getEntityScopeCondition(
  */
 export async function rowInScope(
     entity: string,
-    table: any,
     row: Record<string, unknown> | null,
     user: JwtUser,
     cache?: EntityScopeCache
@@ -214,10 +214,10 @@ export async function rowInScope(
         case 'favorite':
             return row.user_id === user.id;
         case 'dispute': {
-            const [booking] = await db
-                .select({ client_id: schema.bookings.client_id, barber_id: schema.bookings.barber_id, shop_id: schema.bookings.shop_id })
-                .from(schema.bookings)
-                .where(eq(schema.bookings.id, row.booking_id as string));
+            const booking = await prisma.bookings.findUnique({
+                where: { id: row.booking_id as string },
+                select: { client_id: true, barber_id: true, shop_id: true },
+            });
             if (!booking) return false;
             if (booking.client_id === user.id) return true;
             const { barberIds, shopIds } = await barberShopIdsForUser(user.id, cache);

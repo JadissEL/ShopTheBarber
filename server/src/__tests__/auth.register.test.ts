@@ -1,36 +1,34 @@
 /**
- * Integration test: register flow (insert user and fetch).
- * Uses the same DB and schema as the real API.
+ * DB smoke test (Prisma + Neon): create a user and read it back.
+ * Registration is now handled by Clerk; the backend only provisions/links DB rows.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq } from 'drizzle-orm';
-import { hashPassword } from '../auth/password';
+import { describe, it, expect, afterAll } from 'vitest';
+import { prisma } from '../db/prisma';
 
-describe('auth/register (DB)', () => {
+describe('users (Prisma DB)', () => {
     const testEmail = `register-test-${Date.now()}@example.com`;
-    const testId = crypto.randomUUID();
+    let testId: string;
 
     afterAll(async () => {
-        await db.delete(schema.users).where(eq(schema.users.id, testId));
+        if (testId) {
+            await prisma.users.deleteMany({ where: { id: testId } });
+        }
     });
 
-    it('inserts user with explicit id and can select by id', async () => {
-        const hashedPassword = await hashPassword('password123');
-        await db.insert(schema.users).values({
-            id: testId,
-            email: testEmail,
-            password_hash: hashedPassword,
-            full_name: 'Test User',
-            role: 'client',
-            phone: null,
-            avatar_url: 'https://example.com/avatar.png'
+    it('creates a user and can read it back by id', async () => {
+        const created = await prisma.users.create({
+            data: {
+                email: testEmail,
+                full_name: 'Test User',
+                role: 'client',
+                avatar_url: 'https://example.com/avatar.png',
+            },
         });
+        testId = created.id;
+        expect(created.id).toBeTruthy();
 
-        const [user] = await db.select().from(schema.users).where(eq(schema.users.id, testId));
-        expect(user).toBeDefined();
-        expect(user!.id).toBe(testId);
+        const user = await prisma.users.findUnique({ where: { id: testId } });
+        expect(user).toBeTruthy();
         expect(user!.email).toBe(testEmail);
         expect(user!.full_name).toBe('Test User');
     });

@@ -1,14 +1,12 @@
 # Render Blueprint: deploy backend (API) from this repo.
 # Frontend: deploy separately on Vercel (see docs/DEPLOYMENT.md).
+# Database: Prisma + Neon PostgreSQL only. Build runs `prisma generate` + `prisma migrate deploy`.
 
 services:
   - type: web
     name: shopthebarber-api
     runtime: node
     rootDir: server
-    # Postgres: `DATABASE_URL` + build-database → `drizzle-kit migrate`.
-    # One-time empty DB on Postgres: set env `DRIZZLE_BOOTSTRAP=push`, deploy once, then remove (runs `push` — review diff).
-    # SQLite (no DATABASE_URL): wipes local sqlite + push — server/scripts/build-database.mjs.
     buildCommand: npm install --include=dev && node scripts/build-database.mjs
     startCommand: npm run start
     envVars:
@@ -16,15 +14,13 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
-        # Omit for SQLite build (current default). Link Render Postgres or paste external URL → build runs `drizzle-kit migrate`.
-      - key: DRIZZLE_BOOTSTRAP
+        # Required. Neon PostgreSQL connection string (used by Prisma at build + runtime).
+      - key: CLERK_SECRET_KEY
         sync: false
-        # Optional: set to `push` for **one** Postgres cold-start deploy only, then delete (see AGENTS.md).
-      - key: JWT_SECRET
-        generateValue: true
+        # Required. Clerk backend secret (server-side token verification).
       - key: FRONTEND_URL
         sync: false
-        # Set in Render Dashboard to your Vercel URL, e.g. https://your-app.vercel.app
+        # Set to your Vercel URL, e.g. https://your-app.vercel.app
       - key: STRIPE_API_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY

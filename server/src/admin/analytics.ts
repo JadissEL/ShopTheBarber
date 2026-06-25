@@ -1,11 +1,9 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { sql, eq, and, gte, lte } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 
 export async function getPlatformFinancials() {
-    const bookings = await db.select().from(schema.bookings);
-    const payoutsList = await db.select().from(schema.payouts);
+    const bookings = await prisma.bookings.findMany();
+    const payoutsList = await prisma.payouts.findMany();
 
     const paidBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed'); // In our logic, paid bookings are confirmed
 
@@ -59,8 +57,8 @@ export async function getPlatformFinancials() {
 
     // Recent Bookings Enrichment
     const enrichedBookings = await Promise.all(bookings.slice(-10).map(async (b) => {
-        const client = b.client_id ? await db.query.users.findFirst({ where: eq(schema.users.id, b.client_id) }) : null;
-        const barber = b.barber_id ? await db.query.barbers.findFirst({ where: eq(schema.barbers.id, b.barber_id) }) : null;
+        const client = b.client_id ? await prisma.users.findUnique({ where: { id: b.client_id } }) : null;
+        const barber = b.barber_id ? await prisma.barbers.findUnique({ where: { id: b.barber_id } }) : null;
         return {
             ...b,
             client_name: client?.full_name || 'Guest',

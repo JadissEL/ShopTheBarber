@@ -1,13 +1,11 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { sql, eq, and, gte, lte } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, startOfWeek, endOfWeek, subDays, isSameDay } from 'date-fns';
 
 export async function getProviderAnalytics(shopId: string, barberId?: string) {
     // 1. Fetch all relevant bookings
-    const bookings = await db.select().from(schema.bookings).where(
-        shopId ? eq(schema.bookings.shop_id, shopId) : eq(schema.bookings.barber_id, barberId!)
-    );
+    const bookings = await prisma.bookings.findMany({
+        where: shopId ? { shop_id: shopId } : { barber_id: barberId! }
+    });
 
     const now = new Date();
     const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
@@ -36,7 +34,7 @@ export async function getProviderAnalytics(shopId: string, barberId?: string) {
             const bid = b.barber_id;
             if (!bid) continue;
             if (!staffMap[bid]) {
-                const barber = await db.query.barbers.findFirst({ where: eq(schema.barbers.id, bid) });
+                const barber = await prisma.barbers.findUnique({ where: { id: bid } });
                 staffMap[bid] = { bookings: 0, revenue: 0, name: barber?.name || 'Unknown' };
             }
             staffMap[bid].bookings++;

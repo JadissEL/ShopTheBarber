@@ -1,73 +1,59 @@
 /**
- * API integration: sovereign JWT registration → GET /api/auth/me → scoped POST /api/favorites.
- * Mirrors the audit “auth + favorite mutation” checklist without needing a live Clerk browser session.
+ * API integration (Clerk-only): a mocked Clerk Bearer provisions a DB user →
+ * GET /api/auth/me → scoped POST /api/favorites. Verifies Clerk→DB user mapping
+ * and that entity writes are scoped to the resolved user id.
  *
- * Clerk Bearer E2E: set staging `Bearer` manually or wire Playwright with `process.env.E2E_CLERK_JWT`.
- *
- * Imports the full Fastify app with `start()` gated off when `VITEST=true` (see [`index.ts`](../index.ts)).
+ * verifyClerkToken is mocked so no live Clerk session is needed. Runs against the
+ * isolated Neon test branch (NODE_ENV=test → TEST_DATABASE_URL).
  */
-import { describe, it, expect, afterAll } from 'vitest';
-
+import { describe, it, expect, afterAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
-import * as schema from '../db/schema';
-import { db } from '../db';
-import { eq } from 'drizzle-orm';
+const CLERK_ID = `clerk_test_${Date.now()}`;
+const EMAIL = `api-int-${Date.now()}@example.com`;
+
+vi.mock('../auth/clerk', () => ({
+    verifyClerkToken: vi.fn(async () => ({
+        id: CLERK_ID,
+        email: EMAIL,
+        role: 'client',
+        full_name: 'API Integration User',
+        avatar_url: null,
+    })),
+}));
+
+import { prisma } from '../db/prisma';
 import { fastify as app } from '../index';
 
-describe('integration: POST /register → GET /auth/me → POST /favorites', () => {
-    const email = `api-int-${Date.now()}@example.com`;
+describe('integration: Clerk Bearer → GET /auth/me → POST /favorites', () => {
     let userId: string;
     let favoriteId: string | undefined;
 
     afterAll(async () => {
-        if (favoriteId) {
-            await db.delete(schema.favorites).where(eq(schema.favorites.id, favoriteId));
-        }
-        if (userId) {
-            await db.delete(schema.users).where(eq(schema.users.id, userId));
-        }
+        if (favoriteId) await prisma.favorites.deleteMany({ where: { id: favoriteId } });
+        if (userId) await prisma.users.deleteMany({ where: { id: userId } });
         await (app as FastifyInstance).close();
     });
 
-    it('returns consistent user id and creates a scoped favorite row', async () => {
-        const reg = await (app as FastifyInstance).inject({
-            method: 'POST',
-            url: '/api/auth/register',
-            headers: { 'content-type': 'application/json' },
-            payload: {
-                email,
-                password: 'password123',
-                full_name: 'API Integration User',
-            },
-        });
-
-        expect(reg.statusCode).toBe(200);
-        const regBody = JSON.parse(reg.body as string);
-        expect(regBody.token).toBeTruthy();
-        expect(regBody.user?.id).toBeTruthy();
-        userId = String(regBody.user.id);
-
+    it('resolves a consistent user id and creates a scoped favorite row', async () => {
         const me = await (app as FastifyInstance).inject({
             method: 'GET',
             url: '/api/auth/me',
-            headers: { authorization: `Bearer ${regBody.token}` },
+            headers: { authorization: 'Bearer clerk.test.token' },
         });
         expect(me.statusCode).toBe(200);
         const meBody = JSON.parse(me.body as string);
-        expect(meBody.id).toBe(userId);
+        expect(meBody.id).toBeTruthy();
+        expect(meBody.email).toBe(EMAIL);
+        userId = String(meBody.id);
 
-        const barberIdPlaceholder = crypto.randomUUID();
         const fav = await (app as FastifyInstance).inject({
             method: 'POST',
             url: '/api/favorites',
-            headers: {
-                authorization: `Bearer ${regBody.token}`,
-                'content-type': 'application/json',
-            },
+            headers: { authorization: 'Bearer clerk.test.token', 'content-type': 'application/json' },
             payload: {
                 user_id: userId,
-                target_id: barberIdPlaceholder,
+                target_id: crypto.randomUUID(),
                 target_type: 'barber',
             },
         });

@@ -1,5 +1,4 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
+import { prisma } from '../db/prisma';
 import fs from 'fs';
 import path from 'path';
 
@@ -64,12 +63,12 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
     }
 
     // CHECK 2: Critical entity integrity
-    const criticalEntities = [
-        { name: 'users', table: schema.users },
-        { name: 'bookings', table: schema.bookings },
-        { name: 'barbers', table: schema.barbers },
-        { name: 'shops', table: schema.shops },
-        { name: 'services', table: schema.services }
+    const criticalEntities: Array<{ name: string; model: { findMany: (args: { take: number }) => Promise<unknown[]> } }> = [
+        { name: 'users', model: prisma.users },
+        { name: 'bookings', model: prisma.bookings },
+        { name: 'barbers', model: prisma.barbers },
+        { name: 'shops', model: prisma.shops },
+        { name: 'services', model: prisma.services }
     ];
 
     const entityCheck = {
@@ -81,7 +80,7 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
 
     for (const entity of criticalEntities) {
         try {
-            const count = await db.select().from(entity.table).limit(1);
+            const count = await entity.model.findMany({ take: 1 });
             entityCheck.entities_verified++;
             entityCheck.details.push({
                 entity: entity.name,
@@ -106,7 +105,7 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
 
     // CHECK 3: Data consistency (referential integrity)
     try {
-        const bookings = await db.query.bookings.findMany({ limit: 10 });
+        const bookings = await prisma.bookings.findMany({ take: 10 });
         const consistencyCheck = {
             name: 'DATA_CONSISTENCY',
             status: 'PASS' as 'PASS' | 'WARNING',
@@ -116,8 +115,8 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
 
         for (const booking of bookings) {
             const barberExists = booking.barber_id
-                ? await db.query.barbers.findFirst({
-                    where: (barbers, { eq }) => eq(barbers.id, booking.barber_id)
+                ? await prisma.barbers.findUnique({
+                    where: { id: booking.barber_id }
                 })
                 : null;
 
@@ -164,12 +163,14 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
 
     // LOG VERIFICATION
     try {
-        await db.insert(schema.audit_logs).values({
-            action: 'BACKUP_VERIFICATION',
-            resource_type: 'System',
-            resource_id: 'database',
-            actor_id: adminUserId,
-            details: JSON.stringify(backupStatus)
+        await prisma.audit_logs.create({
+            data: {
+                action: 'BACKUP_VERIFICATION',
+                resource_type: 'System',
+                resource_id: 'database',
+                actor_id: adminUserId,
+                details: JSON.stringify(backupStatus)
+            }
         });
     } catch (e) {
         // audit log failure is non-blocking

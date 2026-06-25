@@ -1,6 +1,4 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 import { parse, addMinutes, format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { sendEmail } from './email';
@@ -32,12 +30,12 @@ export async function validateBooking(params: {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = days[startTime.getDay()] as any;
 
-    const relevantShifts = await db.query.shifts.findMany({
-        where: and(
-            eq(schema.shifts.barber_id, barber_id),
-            eq(schema.shifts.day, dayOfWeek),
-            context_type === 'shop' && shop_id ? eq(schema.shifts.shop_id, shop_id) : sql`1=1`
-        )
+    const relevantShifts = await prisma.shifts.findMany({
+        where: {
+            barber_id,
+            day: dayOfWeek,
+            ...(context_type === 'shop' && shop_id ? { shop_id } : {})
+        }
     });
 
     // If generic fallback logic needed (e.g. 9-5 if no shifts), handle it here.
@@ -68,13 +66,13 @@ export async function validateBooking(params: {
     }
 
     // Check Existing Bookings (Overlap)
-    const conflictingBookings = await db.query.bookings.findMany({
-        where: and(
-            eq(schema.bookings.barber_id, barber_id),
-            sql`${schema.bookings.status} NOT IN ('cancelled', 'no_show')`,
-            sql`${schema.bookings.start_time} < ${endTime.toISOString()}`,
-            sql`${schema.bookings.end_time} > ${startTime.toISOString()}`
-        )
+    const conflictingBookings = await prisma.bookings.findMany({
+        where: {
+            barber_id,
+            status: { notIn: ['cancelled', 'no_show'] },
+            start_time: { lt: endTime.toISOString() },
+            end_time: { gt: startTime.toISOString() }
+        }
     });
 
     if (conflictingBookings.length > 0) {
@@ -171,19 +169,21 @@ export async function createBookingLogic(payload: any) {
     }
 
     // 3. Insert Booking
-    const [booking] = await db.insert(schema.bookings).values({
-        id: crypto.randomUUID(),
-        client_id: payload.client_id,
-        barber_id: payload.barber_id,
-        shop_id: payload.shop_id,
-        start_time: start_time.toISOString(),
-        end_time: end_time.toISOString(),
-        status: payload.status || 'pending',
-        financial_breakdown: JSON.stringify(payload.financial_breakdown),
-        price_at_booking: payload.price_at_booking,
-        notes: payload.customer_notes,
-        discount_code: discount_code_norm,
-    }).returning();
+    const booking = await prisma.bookings.create({
+        data: {
+            id: crypto.randomUUID(),
+            client_id: payload.client_id,
+            barber_id: payload.barber_id,
+            shop_id: payload.shop_id,
+            start_time: start_time.toISOString(),
+            end_time: end_time.toISOString(),
+            status: payload.status || 'pending',
+            financial_breakdown: JSON.stringify(payload.financial_breakdown),
+            price_at_booking: payload.price_at_booking,
+            notes: payload.customer_notes,
+            discount_code: discount_code_norm,
+        }
+    });
 
     // 4. Create Service Links (Optional for Phase 2 but good for completeness)
     // payload.service_snapshot.services is array
@@ -192,8 +192,8 @@ export async function createBookingLogic(payload: any) {
     }
 
     // 5. Fetch Client & Barber Details for Email
-    const client = await db.query.users.findFirst({ where: eq(schema.users.id, payload.client_id) });
-    const barber = await db.query.barbers.findFirst({ where: eq(schema.barbers.id, payload.barber_id) });
+    const client = await prisma.users.findUnique({ where: { id: payload.client_id } });
+    const barber = await prisma.barbers.findUnique({ where: { id: payload.barber_id } });
 
     // 6. Send Confirmation Email
     if (client?.email) {

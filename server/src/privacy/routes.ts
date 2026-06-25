@@ -1,7 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import * as schema from '../db/schema';
+import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
 
 async function requireUser(request: any, reply: any) {
@@ -18,14 +16,14 @@ export async function privacyRoutes(fastify: FastifyInstance) {
         const userId = user.id;
 
         const [userRow, bookings, favorites, messages, notifications, loyaltyProfiles, wishlist, wallet] = await Promise.all([
-            db.select().from(schema.users).where(eq(schema.users.id, userId)),
-            db.select().from(schema.bookings).where(eq(schema.bookings.client_id, userId)),
-            db.select().from(schema.favorites).where(eq(schema.favorites.user_id, userId)),
-            db.select().from(schema.messages).where(eq(schema.messages.sender_id, userId)),
-            db.select().from(schema.notifications).where(eq(schema.notifications.user_id, userId)),
-            db.select().from(schema.loyalty_profiles).where(eq(schema.loyalty_profiles.user_id, userId)),
-            db.select().from(schema.wishlist_items).where(eq(schema.wishlist_items.user_id, userId)),
-            db.select().from(schema.wallet_accounts).where(eq(schema.wallet_accounts.user_id, userId)),
+            prisma.users.findMany({ where: { id: userId } }),
+            prisma.bookings.findMany({ where: { client_id: userId } }),
+            prisma.favorites.findMany({ where: { user_id: userId } }),
+            prisma.messages.findMany({ where: { sender_id: userId } }),
+            prisma.notifications.findMany({ where: { user_id: userId } }),
+            prisma.loyalty_profiles.findMany({ where: { user_id: userId } }),
+            prisma.wishlist_items.findMany({ where: { user_id: userId } }),
+            prisma.wallet_accounts.findMany({ where: { user_id: userId } }),
         ]);
 
         const exportData = {
@@ -54,21 +52,22 @@ export async function privacyRoutes(fastify: FastifyInstance) {
         if (!user) return;
         const userId = user.id;
 
-        await db.delete(schema.wishlist_items).where(eq(schema.wishlist_items.user_id, userId));
-        await db.delete(schema.favorites).where(eq(schema.favorites.user_id, userId));
-        await db.delete(schema.notifications).where(eq(schema.notifications.user_id, userId));
-        await db.delete(schema.wallet_transactions).where(eq(schema.wallet_transactions.user_id, userId));
-        await db.delete(schema.wallet_accounts).where(eq(schema.wallet_accounts.user_id, userId));
-        await db.delete(schema.referrals).where(eq(schema.referrals.referrer_id, userId));
+        await prisma.wishlist_items.deleteMany({ where: { user_id: userId } });
+        await prisma.favorites.deleteMany({ where: { user_id: userId } });
+        await prisma.notifications.deleteMany({ where: { user_id: userId } });
+        await prisma.wallet_transactions.deleteMany({ where: { user_id: userId } });
+        await prisma.wallet_accounts.deleteMany({ where: { user_id: userId } });
+        await prisma.referrals.deleteMany({ where: { referrer_id: userId } });
 
-        await db.update(schema.users)
-            .set({
+        await prisma.users.update({
+            where: { id: userId },
+            data: {
                 email: `deleted-${userId}@anonymous.local`,
                 full_name: 'Deleted User',
                 phone: null,
                 avatar_url: null,
-            })
-            .where(eq(schema.users.id, userId));
+            },
+        });
 
         return { success: true, message: 'Account scheduled for deletion. Contact support to complete Clerk account removal.' };
     });

@@ -1,92 +1,89 @@
 import '../loadEnv';
-import { eq } from 'drizzle-orm';
-import { db } from './index';
-import * as schema from './schema';
-import { hashPassword } from '../auth/password';
+import { prisma } from './prisma';
 
 async function seed() {
     console.log('Seeding database...');
 
     // Clear existing data (order must respect FKs: delete dependents before parents)
-    await db.delete(schema.application_documents);
-    await db.delete(schema.interview_schedules);
-    await db.delete(schema.job_applications);
-    await db.delete(schema.saved_jobs);
-    await db.delete(schema.applicant_credentials);
-    await db.delete(schema.applicant_profiles);
-    await db.delete(schema.jobs);
-    await db.delete(schema.companies);
-    await db.delete(schema.disputes);
-    await db.delete(schema.reviews);
-    await db.delete(schema.promo_codes);
-    await db.delete(schema.booking_services);
-    await db.delete(schema.payouts);
-    await db.delete(schema.bookings);
-    await db.delete(schema.staff_service_configs);
-    await db.delete(schema.shop_members);
-    await db.delete(schema.waiting_list_entries);
-    await db.delete(schema.time_blocks);
-    await db.delete(schema.shifts);
-    await db.delete(schema.services);
-    await db.delete(schema.order_items);
-    await db.delete(schema.orders);
-    await db.delete(schema.cart_items);
-    await db.delete(schema.products);
-    await db.delete(schema.barbers);
-    await db.delete(schema.shops);
-    await db.delete(schema.loyalty_transactions);
-    await db.delete(schema.loyalty_profiles);
-    await db.delete(schema.messages);
-    await db.delete(schema.notifications);
-    await db.delete(schema.favorites);
-    await db.delete(schema.brand_collections);
-    await db.delete(schema.brand_accolades);
-    await db.delete(schema.brands);
-    await db.delete(schema.users);
-    await db.delete(schema.pricing_rules);
+    await prisma.application_documents.deleteMany({});
+    await prisma.interview_schedules.deleteMany({});
+    await prisma.job_applications.deleteMany({});
+    await prisma.saved_jobs.deleteMany({});
+    await prisma.applicant_credentials.deleteMany({});
+    await prisma.applicant_profiles.deleteMany({});
+    await prisma.jobs.deleteMany({});
+    await prisma.companies.deleteMany({});
+    await prisma.disputes.deleteMany({});
+    await prisma.reviews.deleteMany({});
+    await prisma.promo_codes.deleteMany({});
+    await prisma.booking_services.deleteMany({});
+    await prisma.payouts.deleteMany({});
+    await prisma.bookings.deleteMany({});
+    await prisma.staff_service_configs.deleteMany({});
+    await prisma.shop_members.deleteMany({});
+    await prisma.waiting_list_entries.deleteMany({});
+    await prisma.time_blocks.deleteMany({});
+    await prisma.shifts.deleteMany({});
+    await prisma.services.deleteMany({});
+    await prisma.order_items.deleteMany({});
+    await prisma.orders.deleteMany({});
+    await prisma.cart_items.deleteMany({});
+    await prisma.products.deleteMany({});
+    await prisma.barbers.deleteMany({});
+    await prisma.shops.deleteMany({});
+    await prisma.loyalty_transactions.deleteMany({});
+    await prisma.loyalty_profiles.deleteMany({});
+    await prisma.messages.deleteMany({});
+    await prisma.notifications.deleteMany({});
+    await prisma.favorites.deleteMany({});
+    await prisma.brand_collections.deleteMany({});
+    await prisma.brand_accolades.deleteMany({});
+    await prisma.brands.deleteMany({});
+    await prisma.users.deleteMany({});
+    await prisma.pricing_rules.deleteMany({});
 
     console.log('Cleared existing data.');
-    const passwordHash = await hashPassword('password123');
 
     // Create Admin
     console.log('Creating Admin...');
-    await db.insert(schema.users).values({
-        id: 'admin',
-        email: 'admin@shopthebarber.com',
-        full_name: 'Platform Admin',
-        password_hash: passwordHash,
-        role: 'admin'
+    await prisma.users.create({
+        data: {
+            id: 'admin',
+            email: 'admin@shopthebarber.com',
+            full_name: 'Platform Admin',
+            role: 'admin'
+        }
     });
 
     // Create Barbers
     console.log('Creating Barbers...');
-    const [user1] = await db.insert(schema.users).values({
-        id: 'u1',
-        email: 'james@example.com',
-        full_name: 'James St. Patrick',
-        password_hash: passwordHash,
-        role: 'barber',
-        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
-    }).returning();
+    const user1 = await prisma.users.create({
+        data: {
+            id: 'u1',
+            email: 'james@example.com',
+            full_name: 'James St. Patrick',            role: 'barber',
+            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
+        }
+    });
 
-    const [user2] = await db.insert(schema.users).values({
-        id: 'u2',
-        email: 'tasha@example.com',
-        full_name: 'Tasha Green',
-        password_hash: passwordHash,
-        role: 'barber',
-        avatar_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop'
-    }).returning();
+    const user2 = await prisma.users.create({
+        data: {
+            id: 'u2',
+            email: 'tasha@example.com',
+            full_name: 'Tasha Green',            role: 'barber',
+            avatar_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop'
+        }
+    });
 
     // Create Clients
     console.log('Creating Clients...');
-    const [client1] = await db.insert(schema.users).values({
-        id: 'c1',
-        email: 'ghost@example.com',
-        full_name: 'Ghost St. Patrick',
-        password_hash: passwordHash,
-        role: 'client'
-    }).returning();
+    const client1 = await prisma.users.create({
+        data: {
+            id: 'c1',
+            email: 'ghost@example.com',
+            full_name: 'Ghost St. Patrick',            role: 'client'
+        }
+    });
 
     // Distinct barbershop/salon photos (Unsplash – interiors, chairs, mirrors)
     const shopPhotos = [
@@ -105,44 +102,50 @@ async function seed() {
 
     // Create Shops
     console.log('Creating Shops...');
-    const [shop1] = await db.insert(schema.shops).values({
-        id: 's1',
-        name: 'Downtown Cuts',
-        location: 'Downtown',
-        image_url: shopPhotos[0]!
-    }).returning();
+    const shop1 = await prisma.shops.create({
+        data: {
+            id: 's1',
+            name: 'Downtown Cuts',
+            location: 'Downtown',
+            image_url: shopPhotos[0]!
+        }
+    });
 
     // Create Barbers Profiles
     console.log('Creating Barbers Profiles...');
-    await db.insert(schema.barbers).values({
-        id: 'b1',
-        user_id: user1.id,
-        shop_id: shop1.id,
-        name: 'James St. Patrick',
-        title: 'Master Barber',
-        location: 'Downtown',
-        rating: 5.0,
-        review_count: 88,
-        image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop'
+    await prisma.barbers.create({
+        data: {
+            id: 'b1',
+            user_id: user1.id,
+            shop_id: shop1.id,
+            name: 'James St. Patrick',
+            title: 'Master Barber',
+            location: 'Downtown',
+            rating: 5.0,
+            review_count: 88,
+            image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop'
+        }
     });
 
-    await db.insert(schema.barbers).values({
-        id: 'b2',
-        user_id: user2.id,
-        shop_id: shop1.id,
-        name: 'Tasha Green',
-        title: 'Senior Stylist',
-        location: 'Downtown',
-        rating: 4.9,
-        review_count: 124,
-        image_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=400&auto=format&fit=crop'
+    await prisma.barbers.create({
+        data: {
+            id: 'b2',
+            user_id: user2.id,
+            shop_id: shop1.id,
+            name: 'Tasha Green',
+            title: 'Senior Stylist',
+            location: 'Downtown',
+            rating: 4.9,
+            review_count: 124,
+            image_url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=400&auto=format&fit=crop'
+        }
     });
 
     // --- Greece: shops, barbers, services (real-world style) ---
     console.log('Creating Greece shops...');
     const shop1Loc = 'Athens, Syntagma';
     const shop1Desc = 'Premium men\'s grooming in the heart of Athens.';
-    await db.update(schema.shops).set({ location: shop1Loc, description: shop1Desc }).where(eq(schema.shops.id, 's1'));
+    await prisma.shops.update({ where: { id: 's1' }, data: { location: shop1Loc, description: shop1Desc } });
 
     const greeceShops: Array<{ id: string; name: string; location: string; description?: string; image_url: string }> = [
         { id: 's2', name: 'Classic Cuts Athens', location: 'Athens, Kolonaki', description: 'Upscale barbershop with traditional and modern cuts.', image_url: shopPhotos[1]! },
@@ -157,12 +160,14 @@ async function seed() {
     ];
 
     for (const s of greeceShops) {
-        await db.insert(schema.shops).values({
-            id: s.id,
-            name: s.name,
-            location: s.location,
-            description: s.description ?? null,
-            image_url: s.image_url
+        await prisma.shops.create({
+            data: {
+                id: s.id,
+                name: s.name,
+                location: s.location,
+                description: s.description ?? null,
+                image_url: s.image_url
+            }
         });
     }
 
@@ -172,15 +177,15 @@ async function seed() {
     for (let i = 1; i <= 24; i++) {
         const uid = `gu${i}`;
         barberUserIds.push(uid);
-        await db.insert(schema.users).values({
-            id: uid,
-            email: `barber${i}@greece.example.com`,
-            full_name: `Barber User ${i}`,
-            password_hash: passwordHash,
-            role: i <= 10 ? 'shop_owner' : 'barber',
-            avatar_url: i % 2 === 0
-                ? 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop'
-                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
+        await prisma.users.create({
+            data: {
+                id: uid,
+                email: `barber${i}@greece.example.com`,
+                full_name: `Barber User ${i}`,                role: i <= 10 ? 'shop_owner' : 'barber',
+                avatar_url: i % 2 === 0
+                    ? 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop'
+                    : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop'
+            }
         });
     }
 
@@ -242,48 +247,54 @@ async function seed() {
 
     console.log('Creating Greece barber profiles...');
     for (const b of greeceBarbers) {
-        await db.insert(schema.barbers).values({
-            id: b.id,
-            user_id: b.user_id,
-            shop_id: b.shop_id,
-            name: b.name,
-            title: b.title,
-            location: b.location,
-            rating: b.rating,
-            review_count: b.review_count,
-            bio: b.bio ?? null,
-            image_url: b.image_url,
-            status: 'active'
+        await prisma.barbers.create({
+            data: {
+                id: b.id,
+                user_id: b.user_id,
+                shop_id: b.shop_id,
+                name: b.name,
+                title: b.title,
+                location: b.location,
+                rating: b.rating,
+                review_count: b.review_count,
+                bio: b.bio ?? null,
+                image_url: b.image_url,
+                status: 'active'
+            }
         });
     }
 
     // Shop members
     console.log('Creating Shop members...');
     for (const b of greeceBarbers) {
-        await db.insert(schema.shop_members).values({
-            id: `sm-${b.id}`,
-            shop_id: b.shop_id,
-            user_id: b.user_id,
-            role: b.title.toLowerCase().includes('owner') ? 'owner' : 'barber',
-            barber_id: b.id
+        await prisma.shop_members.create({
+            data: {
+                id: `sm-${b.id}`,
+                shop_id: b.shop_id,
+                user_id: b.user_id,
+                role: b.title.toLowerCase().includes('owner') ? 'owner' : 'barber',
+                barber_id: b.id
+            }
         });
     }
-    await db.insert(schema.shop_members).values({ id: 'sm-b1', shop_id: 's1', user_id: user1.id, role: 'barber', barber_id: 'b1' });
-    await db.insert(schema.shop_members).values({ id: 'sm-b2', shop_id: 's1', user_id: user2.id, role: 'barber', barber_id: 'b2' });
+    await prisma.shop_members.create({ data: { id: 'sm-b1', shop_id: 's1', user_id: user1.id, role: 'barber', barber_id: 'b1' } });
+    await prisma.shop_members.create({ data: { id: 'sm-b2', shop_id: 's1', user_id: user2.id, role: 'barber', barber_id: 'b2' } });
 
     // Shifts
     console.log('Creating Shifts...');
-    const barbersWithShops = await db.select({ id: schema.barbers.id, shop_id: schema.barbers.shop_id }).from(schema.barbers);
+    const barbersWithShops = await prisma.barbers.findMany({ select: { id: true, shop_id: true } });
     const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     for (const barber of barbersWithShops) {
         const shopId = barber.shop_id ?? 's1';
         for (const day of weekdays) {
-            await db.insert(schema.shifts).values({
-                barber_id: barber.id,
-                shop_id: shopId,
-                day,
-                start_time: '09:00',
-                end_time: '17:00'
+            await prisma.shifts.create({
+                data: {
+                    barber_id: barber.id,
+                    shop_id: shopId,
+                    day,
+                    start_time: '09:00',
+                    end_time: '17:00'
+                }
             });
         }
     }
@@ -309,73 +320,87 @@ async function seed() {
         const mult = shopPriceMultipliers[shopId] ?? 1;
         for (const svc of baseServices) {
             const price = Math.round(basePrices[svc.name] * mult * 100) / 100;
-            await db.insert(schema.services).values({
-                id: `ser-${serviceId}`,
-                shop_id: shopId,
-                barber_id: null,
-                name: svc.name,
-                category: svc.category,
-                description: svc.description,
-                price,
-                duration_minutes: svc.duration_minutes
+            await prisma.services.create({
+                data: {
+                    id: `ser-${serviceId}`,
+                    shop_id: shopId,
+                    barber_id: null,
+                    name: svc.name,
+                    category: svc.category,
+                    description: svc.description,
+                    price,
+                    duration_minutes: svc.duration_minutes
+                }
             });
             serviceId++;
         }
     }
     // Original shop s1 already has ser1 — add more for s1
-    await db.insert(schema.services).values({
-        id: 'ser1-beard',
-        shop_id: 's1',
-        name: 'Beard Trim',
-        category: 'Beard',
-        price: 12,
-        duration_minutes: 20
+    await prisma.services.create({
+        data: {
+            id: 'ser1-beard',
+            shop_id: 's1',
+            name: 'Beard Trim',
+            category: 'Beard',
+            price: 12,
+            duration_minutes: 20
+        }
     });
-    await db.insert(schema.services).values({
-        id: 'ser1-shave',
-        shop_id: 's1',
-        name: 'Shave',
-        category: 'Shave',
-        price: 18,
-        duration_minutes: 25
+    await prisma.services.create({
+        data: {
+            id: 'ser1-shave',
+            shop_id: 's1',
+            name: 'Shave',
+            category: 'Shave',
+            price: 18,
+            duration_minutes: 25
+        }
     });
 
     // Create Pricing Rules
     console.log('Creating Pricing Rules and Promo Codes...');
-    await db.insert(schema.pricing_rules).values({
-        id: 'rule1',
-        name: 'Default Platform Rules',
-        commission_freelancer: 0.15,
-        commission_shop: 0.05,
-        is_active: 1 as unknown as boolean
+    await prisma.pricing_rules.create({
+        data: {
+            id: 'rule1',
+            name: 'Default Platform Rules',
+            commission_freelancer: 0.15,
+            commission_shop: 0.05,
+            is_active: true
+        }
     });
 
-    await db.insert(schema.promo_codes).values({
-        id: 'pc-s1-demo',
-        code: 'DOWNTOWN10',
-        discount_type: 'percentage',
-        discount_value: 10,
-        shop_id: 's1',
-        is_active: 1 as unknown as boolean,
+    await prisma.promo_codes.create({
+        data: {
+            id: 'pc-s1-demo',
+            code: 'DOWNTOWN10',
+            discount_type: 'percentage',
+            discount_value: 10,
+            shop_id: 's1',
+            is_active: true,
+        }
     });
-    await db.insert(schema.promo_codes).values({
-        id: 'pc-platform-demo',
-        code: 'WELCOME5',
-        discount_type: 'fixed',
-        discount_value: 5,
-        shop_id: null,
-        is_active: 1 as unknown as boolean,
+    await prisma.promo_codes.create({
+        data: {
+            id: 'pc-platform-demo',
+            code: 'WELCOME5',
+            discount_type: 'fixed',
+            discount_value: 5,
+            shop_id: null,
+            is_active: true,
+        }
     });
 
     // Create Services
     console.log('Creating Services...');
-    await db.insert(schema.services).values({
-        id: 'ser1',
-        shop_id: shop1.id,
-        name: 'Signature Cut',
-        price: 35.00,
-        duration_minutes: 30,
-        category: 'Hair'
+    await prisma.services.create({
+        data: {
+            id: 'ser1',
+            shop_id: shop1.id,
+            name: 'Signature Cut',
+            price: 35.00,
+            duration_minutes: 30,
+            category: 'Hair'
+        }
     });
 
     // Create Bookings
@@ -421,53 +446,63 @@ async function seed() {
     ];
 
     for (const b of bookingData) {
-        await db.insert(schema.bookings).values(b as any);
+        await prisma.bookings.create({ data: b as any });
     }
 
     // Create Payouts
     console.log('Creating Payouts...');
-    await db.insert(schema.payouts).values({
-        id: 'pay1',
-        provider_id: 'b1',
-        amount: 250.00,
-        status: 'Completed',
-        period_start: '2026-01-01',
-        period_end: '2026-01-07'
+    await prisma.payouts.create({
+        data: {
+            id: 'pay1',
+            provider_id: 'b1',
+            amount: 250.00,
+            status: 'Completed',
+            period_start: '2026-01-01',
+            period_end: '2026-01-07'
+        }
     });
 
     // Create Disputes
     console.log('Creating Disputes...');
-    await db.insert(schema.disputes).values({
-        id: 'dis1',
-        booking_id: 'bk1',
-        reason: 'Service not as described',
-        status: 'open'
+    await prisma.disputes.create({
+        data: {
+            id: 'dis1',
+            booking_id: 'bk1',
+            reason: 'Service not as described',
+            status: 'open'
+        }
     });
 
     // Elite brand
     console.log('Creating Brands and Accolades...');
     const brandId = 'brand-aurelius';
-    await db.insert(schema.brands).values({
-        id: brandId,
-        name: 'Aurelius Grooming',
-        slug: 'aurelius-grooming',
-        logo_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=200&fit=crop',
-        hero_image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1200&fit=crop',
-        description: 'Crafting the standard of modern masculinity through rare ingredients and centuries-old artisanal techniques. Designed for the discerning gentleman who demands excellence in every ritual.',
-        locations: 'New York • London • Paris',
-        verified_elite: 1 as unknown as boolean,
-        price_range: '$$$',
+    await prisma.brands.create({
+        data: {
+            id: brandId,
+            name: 'Aurelius Grooming',
+            slug: 'aurelius-grooming',
+            logo_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=200&fit=crop',
+            hero_image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1200&fit=crop',
+            description: 'Crafting the standard of modern masculinity through rare ingredients and centuries-old artisanal techniques. Designed for the discerning gentleman who demands excellence in every ritual.',
+            locations: 'New York • London • Paris',
+            verified_elite: true,
+            price_range: '$$$',
+        }
     });
-    await db.insert(schema.brand_accolades).values([
-        { id: 'acc1', brand_id: brandId, icon_key: 'trophy', label: 'MASTER BARBER 2024', sort_order: 1 },
-        { id: 'acc2', brand_id: brandId, icon_key: 'star', label: '5.0 ELITE RATING', sort_order: 2 },
-        { id: 'acc3', brand_id: brandId, icon_key: 'leaf', label: 'SUSTAINABLE PIONEER', sort_order: 3 },
-        { id: 'acc4', brand_id: brandId, icon_key: 'art', label: 'ART HANDCRAFTED', sort_order: 4 },
-    ]);
-    await db.insert(schema.brand_collections).values([
-        { id: 'coll1', brand_id: brandId, name: 'The Obsidian Series', subtitle: 'Rare volcanic extracts.', image_url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600&fit=crop', tag: 'LIMITED RELEASE', sort_order: 1 },
-        { id: 'coll2', brand_id: brandId, name: 'Artisan Kit', subtitle: 'Daily performance.', image_url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&fit=crop', sort_order: 2 },
-    ]);
+    await prisma.brand_accolades.createMany({
+        data: [
+            { id: 'acc1', brand_id: brandId, icon_key: 'trophy', label: 'MASTER BARBER 2024', sort_order: 1 },
+            { id: 'acc2', brand_id: brandId, icon_key: 'star', label: '5.0 ELITE RATING', sort_order: 2 },
+            { id: 'acc3', brand_id: brandId, icon_key: 'leaf', label: 'SUSTAINABLE PIONEER', sort_order: 3 },
+            { id: 'acc4', brand_id: brandId, icon_key: 'art', label: 'ART HANDCRAFTED', sort_order: 4 },
+        ]
+    });
+    await prisma.brand_collections.createMany({
+        data: [
+            { id: 'coll1', brand_id: brandId, name: 'The Obsidian Series', subtitle: 'Rare volcanic extracts.', image_url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600&fit=crop', tag: 'LIMITED RELEASE', sort_order: 1 },
+            { id: 'coll2', brand_id: brandId, name: 'Artisan Kit', subtitle: 'Daily performance.', image_url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&fit=crop', sort_order: 2 },
+        ]
+    });
 
     // Marketplace
     console.log('Creating Marketplace Products...');
@@ -484,27 +519,35 @@ async function seed() {
         { id: 'prod10', name: 'Midnight Oud Cologne', price: 185, category: 'SCENT', seller_type: 'vendor' as const, vendor_name: 'Aurelius Grooming', image_url: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&fit=crop', brand_id: brandId },
     ];
     for (const p of productData) {
-        await db.insert(schema.products).values(p);
+        await prisma.products.create({ data: p });
     }
 
     // Employment
     console.log('Creating Companies and Jobs...');
-    await db.insert(schema.companies).values([
-        { id: 'co1', name: 'Murdock London', description: 'Premium grooming and lifestyle brand.', location: 'London, UK', website: 'https://murdocklondon.com' },
-        { id: 'co2', name: 'Aesop', description: 'Design-led skincare and fragrance.', location: 'Paris', website: 'https://www.aesop.com' },
-        { id: 'co3', name: 'Royal Barber Co', description: 'High-end barbershop network.', location: 'London, UK' },
-    ]);
-    await db.insert(schema.jobs).values([
-        { id: 'job1', title: 'Regional Operations Director', category: 'management', employer_type: 'company', company_id: 'co1', employment_type: 'full_time', location_type: 'hybrid', location_text: 'London, UK', description: 'Architect of scale for our high-end barbershop network.', responsibilities: 'P&L Management; Talent Logistics; Quality Assurance.', salary_min: 85000, salary_max: 110000, salary_currency: 'GBP', status: 'published', featured: 1 as unknown as boolean, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop' },
-        { id: 'job2', title: 'Logistics Manager', category: 'logistics', employer_type: 'company', company_id: 'co2', employment_type: 'full_time', location_type: 'on_site', location_text: 'Paris', description: 'Supply chain and operations for premium retail.', status: 'published', featured: 1 as unknown as boolean, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800&auto=format&fit=crop' },
-        { id: 'job3', title: 'Senior Barber', category: 'grooming', employer_type: 'shop', shop_id: 's1', employment_type: 'full_time', location_type: 'on_site', location_text: 'Athens, Syntagma', description: 'Master barber for our flagship location.', status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop', featured: 0 as unknown as boolean },
-        { id: 'job4', title: 'Brand Partnership Manager', category: 'branding', employer_type: 'company', company_id: 'co3', employment_type: 'full_time', location_type: 'hybrid', location_text: 'Los Angeles', salary_min: 120000, salary_max: 140000, status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop', featured: 0 as unknown as boolean },
-    ]);
+    await prisma.companies.createMany({
+        data: [
+            { id: 'co1', name: 'Murdock London', description: 'Premium grooming and lifestyle brand.', location: 'London, UK', website: 'https://murdocklondon.com' },
+            { id: 'co2', name: 'Aesop', description: 'Design-led skincare and fragrance.', location: 'Paris', website: 'https://www.aesop.com' },
+            { id: 'co3', name: 'Royal Barber Co', description: 'High-end barbershop network.', location: 'London, UK' },
+        ]
+    });
+    await prisma.jobs.createMany({
+        data: [
+            { id: 'job1', title: 'Regional Operations Director', category: 'management', employer_type: 'company', company_id: 'co1', employment_type: 'full_time', location_type: 'hybrid', location_text: 'London, UK', description: 'Architect of scale for our high-end barbershop network.', responsibilities: 'P&L Management; Talent Logistics; Quality Assurance.', salary_min: 85000, salary_max: 110000, salary_currency: 'GBP', status: 'published', featured: true, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop' },
+            { id: 'job2', title: 'Logistics Manager', category: 'logistics', employer_type: 'company', company_id: 'co2', employment_type: 'full_time', location_type: 'on_site', location_text: 'Paris', description: 'Supply chain and operations for premium retail.', status: 'published', featured: true, created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800&auto=format&fit=crop' },
+            { id: 'job3', title: 'Senior Barber', category: 'grooming', employer_type: 'shop', shop_id: 's1', employment_type: 'full_time', location_type: 'on_site', location_text: 'Athens, Syntagma', description: 'Master barber for our flagship location.', status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop', featured: false },
+            { id: 'job4', title: 'Brand Partnership Manager', category: 'branding', employer_type: 'company', company_id: 'co3', employment_type: 'full_time', location_type: 'hybrid', location_text: 'Los Angeles', salary_min: 120000, salary_max: 140000, status: 'published', created_by: 'admin', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop', featured: false },
+        ]
+    });
 
     console.log('Seeding completed!');
 }
 
-seed().catch(err => {
-    console.error('Seeding failed:', err);
-    process.exit(1);
-});
+seed()
+    .catch(err => {
+        console.error('Seeding failed:', err);
+        process.exitCode = 1;
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

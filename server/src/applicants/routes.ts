@@ -1,24 +1,16 @@
 import { FastifyInstance } from 'fastify';
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
+import { resolveOptionalUserId } from '../auth/requestUser';
 
 export async function applicantsRoutes(fastify: FastifyInstance) {
-    const getUserId = async (request: any): Promise<string | null> => {
-        try {
-            await request.jwtVerify();
-            return (request.user as { id: string }).id;
-        } catch {
-            return null;
-        }
-    };
+    const getUserId = (request: any): Promise<string | null> => resolveOptionalUserId(request);
 
     /** GET /api/applicant/profile — my applicant profile */
     fastify.get('/api/applicant/profile', async (request, reply) => {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
-            const [profile] = await db.select().from(schema.applicant_profiles).where(eq(schema.applicant_profiles.user_id, userId));
+            const profile = await prisma.applicant_profiles.findUnique({ where: { user_id: userId } });
             return profile || null;
         } catch (e: any) {
             fastify.log.error(e);
@@ -32,7 +24,7 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         const body = request.body as any;
         try {
-            const [existing] = await db.select().from(schema.applicant_profiles).where(eq(schema.applicant_profiles.user_id, userId));
+            const existing = await prisma.applicant_profiles.findUnique({ where: { user_id: userId } });
             const data = {
                 professional_summary: body.professional_summary ?? existing?.professional_summary ?? null,
                 work_experience: typeof body.work_experience === 'string' ? body.work_experience : (body.work_experience ? JSON.stringify(body.work_experience) : existing?.work_experience ?? null),
@@ -45,10 +37,10 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
                 updated_at: new Date().toISOString(),
             };
             if (existing) {
-                const [updated] = await db.update(schema.applicant_profiles).set(data).where(eq(schema.applicant_profiles.id, existing.id)).returning();
+                const updated = await prisma.applicant_profiles.update({ where: { id: existing.id }, data });
                 return updated;
             }
-            const [created] = await db.insert(schema.applicant_profiles).values({ user_id: userId, ...data }).returning();
+            const created = await prisma.applicant_profiles.create({ data: { user_id: userId, ...data } });
             return created;
         } catch (e: any) {
             fastify.log.error(e);
@@ -61,7 +53,7 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
-            return db.select().from(schema.applicant_credentials).where(eq(schema.applicant_credentials.user_id, userId)).orderBy(desc(schema.applicant_credentials.created_at));
+            return prisma.applicant_credentials.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' } });
         } catch (e: any) {
             fastify.log.error(e);
             return reply.status(500).send({ error: e.message });
@@ -76,14 +68,16 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         if (!body.type || !body.file_name || !body.file_path) return reply.status(400).send({ error: 'type, file_name, file_path required' });
         if (!['cv', 'certificate', 'portfolio'].includes(body.type)) return reply.status(400).send({ error: 'Invalid type' });
         try {
-            const [row] = await db.insert(schema.applicant_credentials).values({
-                user_id: userId,
-                type: body.type as 'cv' | 'certificate' | 'portfolio',
-                file_name: body.file_name,
-                file_path: body.file_path,
-                file_size: body.file_size ?? null,
-                mime_type: body.mime_type ?? null,
-            }).returning();
+            const row = await prisma.applicant_credentials.create({
+                data: {
+                    user_id: userId,
+                    type: body.type as 'cv' | 'certificate' | 'portfolio',
+                    file_name: body.file_name,
+                    file_path: body.file_path,
+                    file_size: body.file_size ?? null,
+                    mime_type: body.mime_type ?? null,
+                },
+            });
             return row;
         } catch (e: any) {
             fastify.log.error(e);
@@ -96,11 +90,11 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
-            const list = await db.select().from(schema.job_applications).where(eq(schema.job_applications.user_id, userId)).orderBy(desc(schema.job_applications.created_at));
+            const list = await prisma.job_applications.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' } });
             if (list.length === 0) return [];
 
             const jobIds = [...new Set(list.map(a => a.job_id))];
-            const jobs = await db.select().from(schema.jobs).where(sql`${schema.jobs.id} IN (${sql.join(jobIds.map(id => sql`${id}`), sql`, `)})`);
+            const jobs = await prisma.jobs.findMany({ where: { id: { in: jobIds } } });
             const jobMap = new Map(jobs.map(j => [j.id, j]));
 
             const shopIds = [...new Set(jobs.filter(j => j.employer_type === 'shop' && j.shop_id).map(j => j.shop_id!))];
@@ -108,11 +102,11 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
             const shopMap = new Map<string, string>();
             const companyMap = new Map<string, string>();
             if (shopIds.length > 0) {
-                const shops = await db.select({ id: schema.shops.id, name: schema.shops.name }).from(schema.shops).where(sql`${schema.shops.id} IN (${sql.join(shopIds.map(id => sql`${id}`), sql`, `)})`);
+                const shops = await prisma.shops.findMany({ where: { id: { in: shopIds } }, select: { id: true, name: true } });
                 for (const s of shops) shopMap.set(s.id, s.name);
             }
             if (companyIds.length > 0) {
-                const cos = await db.select({ id: schema.companies.id, name: schema.companies.name }).from(schema.companies).where(sql`${schema.companies.id} IN (${sql.join(companyIds.map(id => sql`${id}`), sql`, `)})`);
+                const cos = await prisma.companies.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true } });
                 for (const c of cos) companyMap.set(c.id, c.name);
             }
 
@@ -136,22 +130,24 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         const body = request.body as { job_id: string; cover_letter?: string; custom_data?: any; credential_ids?: string[] };
         if (!body.job_id) return reply.status(400).send({ error: 'job_id required' });
         try {
-            const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, body.job_id));
+            const job = await prisma.jobs.findUnique({ where: { id: body.job_id } });
             if (!job) return reply.status(404).send({ error: 'Job not found' });
             if (job.status !== 'published') return reply.status(400).send({ error: 'Job is not open for applications' });
-            const existing = await db.select().from(schema.job_applications).where(and(eq(schema.job_applications.job_id, body.job_id), eq(schema.job_applications.user_id, userId)));
+            const existing = await prisma.job_applications.findMany({ where: { job_id: body.job_id, user_id: userId } });
             if (existing.length > 0) return reply.status(400).send({ error: 'Already applied' });
-            const [app] = await db.insert(schema.job_applications).values({
-                job_id: body.job_id,
-                user_id: userId,
-                cover_letter: body.cover_letter ?? null,
-                custom_data: body.custom_data ? JSON.stringify(body.custom_data) : null,
-            }).returning();
+            const app = await prisma.job_applications.create({
+                data: {
+                    job_id: body.job_id,
+                    user_id: userId,
+                    cover_letter: body.cover_letter ?? null,
+                    custom_data: body.custom_data ? JSON.stringify(body.custom_data) : null,
+                },
+            });
             if (body.credential_ids?.length) {
-                const creds = await db.select().from(schema.applicant_credentials).where(eq(schema.applicant_credentials.user_id, userId));
+                const creds = await prisma.applicant_credentials.findMany({ where: { user_id: userId } });
                 for (const cid of body.credential_ids) {
                     const c = creds.find((x) => x.id === cid);
-                    if (c) await db.insert(schema.application_documents).values({ application_id: app!.id, type: c.type, file_name: c.file_name, file_path: c.file_path, file_size: c.file_size, mime_type: c.mime_type });
+                    if (c) await prisma.application_documents.create({ data: { application_id: app.id, type: c.type, file_name: c.file_name, file_path: c.file_path, file_size: c.file_size, mime_type: c.mime_type } });
                 }
             }
             return app;
@@ -167,18 +163,18 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         const { jobId } = request.params;
         try {
-            const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, jobId));
+            const job = await prisma.jobs.findUnique({ where: { id: jobId } });
             if (!job) return reply.status(404).send({ error: 'Job not found' });
             if (job.created_by !== userId) {
-                const [shop] = job.shop_id ? await db.select({ owner_id: schema.shops.owner_id }).from(schema.shops).where(eq(schema.shops.id, job.shop_id)) : [null];
+                const shop = job.shop_id ? await prisma.shops.findUnique({ where: { id: job.shop_id }, select: { owner_id: true } }) : null;
                 if (!shop || shop.owner_id !== userId) return reply.status(403).send({ error: 'Not allowed' });
             }
-            const list = await db.select().from(schema.job_applications).where(eq(schema.job_applications.job_id, jobId)).orderBy(desc(schema.job_applications.created_at));
+            const list = await prisma.job_applications.findMany({ where: { job_id: jobId }, orderBy: { created_at: 'desc' } });
             const withUser = await Promise.all(list.map(async (app) => {
-                const [u] = await db.select({ full_name: schema.users.full_name, email: schema.users.email, avatar_url: schema.users.avatar_url }).from(schema.users).where(eq(schema.users.id, app.user_id));
-                const [profile] = await db.select().from(schema.applicant_profiles).where(eq(schema.applicant_profiles.user_id, app.user_id));
-                const creds = await db.select().from(schema.applicant_credentials).where(eq(schema.applicant_credentials.user_id, app.user_id));
-                const docs = await db.select().from(schema.application_documents).where(eq(schema.application_documents.application_id, app.id));
+                const u = await prisma.users.findUnique({ where: { id: app.user_id }, select: { full_name: true, email: true, avatar_url: true } });
+                const profile = await prisma.applicant_profiles.findUnique({ where: { user_id: app.user_id } });
+                const creds = await prisma.applicant_credentials.findMany({ where: { user_id: app.user_id } });
+                const docs = await prisma.application_documents.findMany({ where: { application_id: app.id } });
                 return { ...app, applicant_name: u?.full_name, applicant_email: u?.email, applicant_avatar: u?.avatar_url, profile, credentials: creds, documents: docs };
             }));
             return withUser;
@@ -197,11 +193,11 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         const valid = ['received', 'under_review', 'shortlisted', 'rejected', 'hired'];
         if (!body.status || !valid.includes(body.status)) return reply.status(400).send({ error: 'Valid status required' });
         try {
-            const [app] = await db.select().from(schema.job_applications).where(eq(schema.job_applications.id, id));
+            const app = await prisma.job_applications.findUnique({ where: { id } });
             if (!app) return reply.status(404).send({ error: 'Application not found' });
-            const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, app.job_id));
+            const job = await prisma.jobs.findUnique({ where: { id: app.job_id } });
             if (!job || job.created_by !== userId) return reply.status(403).send({ error: 'Not allowed' });
-            const [updated] = await db.update(schema.job_applications).set({ status: body.status as any, updated_at: new Date().toISOString() }).where(eq(schema.job_applications.id, id)).returning();
+            const updated = await prisma.job_applications.update({ where: { id }, data: { status: body.status as any, updated_at: new Date().toISOString() } });
             return updated;
         } catch (e: any) {
             fastify.log.error(e);
@@ -214,17 +210,17 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         try {
-            const rows = await db.select().from(schema.saved_jobs).where(eq(schema.saved_jobs.user_id, userId)).orderBy(desc(schema.saved_jobs.created_at));
+            const rows = await prisma.saved_jobs.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' } });
             const withJob = await Promise.all(rows.map(async (s) => {
-                const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, s.job_id));
+                const job = await prisma.jobs.findUnique({ where: { id: s.job_id } });
                 if (!job) return null;
                 let employer_name: string | null = null;
                 if (job.employer_type === 'shop' && job.shop_id) {
-                    const [shop] = await db.select({ name: schema.shops.name }).from(schema.shops).where(eq(schema.shops.id, job.shop_id));
+                    const shop = await prisma.shops.findUnique({ where: { id: job.shop_id }, select: { name: true } });
                     if (shop) employer_name = shop.name;
                 }
                 if (job.employer_type === 'company' && job.company_id) {
-                    const [co] = await db.select({ name: schema.companies.name }).from(schema.companies).where(eq(schema.companies.id, job.company_id));
+                    const co = await prisma.companies.findUnique({ where: { id: job.company_id }, select: { name: true } });
                     if (co) employer_name = co.name;
                 }
                 return { ...job, employer_name, saved_at: s.created_at };
@@ -243,9 +239,9 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         const body = request.body as { job_id: string };
         if (!body.job_id) return reply.status(400).send({ error: 'job_id required' });
         try {
-            const existing = await db.select().from(schema.saved_jobs).where(and(eq(schema.saved_jobs.user_id, userId), eq(schema.saved_jobs.job_id, body.job_id)));
+            const existing = await prisma.saved_jobs.findMany({ where: { user_id: userId, job_id: body.job_id } });
             if (existing.length > 0) return existing[0];
-            const [row] = await db.insert(schema.saved_jobs).values({ user_id: userId, job_id: body.job_id }).returning();
+            const row = await prisma.saved_jobs.create({ data: { user_id: userId, job_id: body.job_id } });
             return row;
         } catch (e: any) {
             fastify.log.error(e);
@@ -259,7 +255,7 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         const { jobId } = request.params;
         try {
-            await db.delete(schema.saved_jobs).where(and(eq(schema.saved_jobs.user_id, userId), eq(schema.saved_jobs.job_id, jobId)));
+            await prisma.saved_jobs.deleteMany({ where: { user_id: userId, job_id: jobId } });
             return { ok: true };
         } catch (e: any) {
             fastify.log.error(e);
@@ -276,17 +272,19 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         if (!body.scheduled_at || !body.format) return reply.status(400).send({ error: 'scheduled_at and format required' });
         if (!['in_person', 'video', 'phone'].includes(body.format)) return reply.status(400).send({ error: 'Invalid format' });
         try {
-            const [app] = await db.select().from(schema.job_applications).where(eq(schema.job_applications.id, id));
+            const app = await prisma.job_applications.findUnique({ where: { id } });
             if (!app) return reply.status(404).send({ error: 'Application not found' });
-            const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, app.job_id));
+            const job = await prisma.jobs.findUnique({ where: { id: app.job_id } });
             if (!job || job.created_by !== userId) return reply.status(403).send({ error: 'Not allowed' });
-            const [row] = await db.insert(schema.interview_schedules).values({
-                application_id: id,
-                scheduled_at: body.scheduled_at,
-                format: body.format as 'in_person' | 'video' | 'phone',
-                notes: body.notes ?? null,
-                created_by: userId,
-            }).returning();
+            const row = await prisma.interview_schedules.create({
+                data: {
+                    application_id: id,
+                    scheduled_at: body.scheduled_at,
+                    format: body.format as 'in_person' | 'video' | 'phone',
+                    notes: body.notes ?? null,
+                    created_by: userId,
+                },
+            });
             return row;
         } catch (e: any) {
             fastify.log.error(e);
@@ -300,12 +298,12 @@ export async function applicantsRoutes(fastify: FastifyInstance) {
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         const { id } = request.params;
         try {
-            const [app] = await db.select().from(schema.job_applications).where(eq(schema.job_applications.id, id));
+            const app = await prisma.job_applications.findUnique({ where: { id } });
             if (!app) return reply.status(404).send({ error: 'Application not found' });
-            const [job] = await db.select().from(schema.jobs).where(eq(schema.jobs.id, app.job_id));
+            const job = await prisma.jobs.findUnique({ where: { id: app.job_id } });
             const allowed = job?.created_by === userId || app.user_id === userId;
             if (!allowed) return reply.status(403).send({ error: 'Not allowed' });
-            return db.select().from(schema.interview_schedules).where(eq(schema.interview_schedules.application_id, id)).orderBy(desc(schema.interview_schedules.scheduled_at));
+            return prisma.interview_schedules.findMany({ where: { application_id: id }, orderBy: { scheduled_at: 'desc' } });
         } catch (e: any) {
             fastify.log.error(e);
             return reply.status(500).send({ error: e.message });

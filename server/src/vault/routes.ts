@@ -1,17 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
+import { resolveOptionalUserId } from '../auth/requestUser';
 
 export async function vaultRoutes(fastify: FastifyInstance) {
     const getUserId = async (request: any): Promise<string | null> => {
-        try {
-            await request.jwtVerify();
-            const payload = request.user as { id: string };
-            return payload.id;
-        } catch {
-            return null;
-        }
+        return await resolveOptionalUserId(request);
     };
 
     // GET /api/vault/summary — total investment, points, quick replenish, vault history
@@ -19,19 +12,20 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Sign in to view your vault' });
         try {
-            const paidOrders = await db.select().from(schema.orders).where(
-                and(eq(schema.orders.user_id, userId), eq(schema.orders.payment_status, 'paid'))
-            ).orderBy(desc(schema.orders.created_at));
+            const paidOrders = await prisma.orders.findMany({
+                where: { user_id: userId, payment_status: 'paid' },
+                orderBy: { created_at: 'desc' },
+            });
 
             const totalInvestment = paidOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
 
-            const loyalty = await db.select().from(schema.loyalty_profiles).where(eq(schema.loyalty_profiles.user_id, userId));
+            const loyalty = await prisma.loyalty_profiles.findMany({ where: { user_id: userId } });
             const pointsEarned = loyalty[0]?.current_points ?? loyalty[0]?.lifetime_points ?? 0;
             const pointsDisplay = Number(pointsEarned);
 
             const allOrderItems: { order_id: string; order_date: string; fulfillment_status: string; product_id: string; product_name: string; product_image_url: string | null; price: number; quantity: number; id: string }[] = [];
             for (const order of paidOrders) {
-                const items = await db.select().from(schema.order_items).where(eq(schema.order_items.order_id, order.id));
+                const items = await prisma.order_items.findMany({ where: { order_id: order.id } });
                 const orderDate = order.created_at || new Date().toISOString();
                 const fulfillment = order.fulfillment_status || 'confirmed';
                 for (const it of items) {

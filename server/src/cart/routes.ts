@@ -1,17 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
+import { resolveOptionalUserId } from '../auth/requestUser';
 
 export async function cartRoutes(fastify: FastifyInstance) {
     const getUserId = async (request: any, reply: any): Promise<string | null> => {
-        try {
-            await request.jwtVerify();
-            const payload = request.user as { id: string };
-            return payload.id;
-        } catch {
-            return null;
-        }
+        return await resolveOptionalUserId(request);
     };
 
     // GET /api/cart — list cart items with product details (requires auth)
@@ -21,12 +14,12 @@ export async function cartRoutes(fastify: FastifyInstance) {
             return reply.status(401).send({ error: 'Sign in to view your cart' });
         }
         try {
-            const items = await db.select().from(schema.cart_items).where(eq(schema.cart_items.user_id, userId));
+            const items = await prisma.cart_items.findMany({ where: { user_id: userId } });
             const productIds = [...new Set(items.map((i) => i.product_id))];
             if (productIds.length === 0) {
                 return items.map((i) => ({ ...i, product: null }));
             }
-            const products = await db.select().from(schema.products).where(inArray(schema.products.id, productIds));
+            const products = await prisma.products.findMany({ where: { id: { in: productIds } } });
             const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
             return items.map((item) => {
                 const product = productMap[item.product_id];
@@ -51,14 +44,6 @@ export async function cartRoutes(fastify: FastifyInstance) {
             });
         } catch (e: any) {
             fastify.log.error(e);
-            const msg = (e?.message || '').toLowerCase();
-            const schemaError = msg.includes('no such table') || msg.includes('sqlite_error') || e?.code === 'SQLITE_ERROR';
-            if (schemaError) {
-                return reply.status(503).send({
-                    error: 'Database schema not ready',
-                    hint: "Run 'npm run push' and optionally 'npm run seed' in the server folder."
-                });
-            }
             return reply.status(500).send({ error: e.message });
         }
     });
@@ -75,24 +60,20 @@ export async function cartRoutes(fastify: FastifyInstance) {
         }
         const quantity = Math.max(1, Math.min(99, body.quantity ?? 1));
         try {
-            const existing = await db.select().from(schema.cart_items).where(
-                and(eq(schema.cart_items.user_id, userId), eq(schema.cart_items.product_id, body.product_id))
-            );
+            const existing = await prisma.cart_items.findMany({
+                where: { user_id: userId, product_id: body.product_id },
+            });
             const now = new Date().toISOString();
             if (existing.length > 0) {
-                const updated = await db
-                    .update(schema.cart_items)
-                    .set({ quantity: existing[0].quantity + quantity, updated_at: now })
-                    .where(eq(schema.cart_items.id, existing[0].id))
-                    .returning()
-                    .get();
+                const updated = await prisma.cart_items.update({
+                    where: { id: existing[0].id },
+                    data: { quantity: existing[0].quantity + quantity, updated_at: now },
+                });
                 return updated;
             }
-            const inserted = await db
-                .insert(schema.cart_items)
-                .values({ user_id: userId, product_id: body.product_id, quantity })
-                .returning()
-                .get();
+            const inserted = await prisma.cart_items.create({
+                data: { user_id: userId, product_id: body.product_id, quantity },
+            });
             return inserted;
         } catch (e: any) {
             fastify.log.error(e);
@@ -108,24 +89,22 @@ export async function cartRoutes(fastify: FastifyInstance) {
         const body = request.body as { quantity?: number };
         const quantity = body.quantity ?? 1;
         if (quantity < 1) {
-            await db.delete(schema.cart_items).where(
-                and(eq(schema.cart_items.user_id, userId), eq(schema.cart_items.product_id, productId))
-            );
+            await prisma.cart_items.deleteMany({
+                where: { user_id: userId, product_id: productId },
+            });
             return { deleted: true };
         }
         try {
-            const existing = await db.select().from(schema.cart_items).where(
-                and(eq(schema.cart_items.user_id, userId), eq(schema.cart_items.product_id, productId))
-            );
+            const existing = await prisma.cart_items.findMany({
+                where: { user_id: userId, product_id: productId },
+            });
             if (existing.length === 0) {
                 return reply.status(404).send({ error: 'Cart item not found' });
             }
-            const updated = await db
-                .update(schema.cart_items)
-                .set({ quantity: Math.min(99, quantity), updated_at: new Date().toISOString() })
-                .where(eq(schema.cart_items.id, existing[0].id))
-                .returning()
-                .get();
+            const updated = await prisma.cart_items.update({
+                where: { id: existing[0].id },
+                data: { quantity: Math.min(99, quantity), updated_at: new Date().toISOString() },
+            });
             return updated;
         } catch (e: any) {
             fastify.log.error(e);
@@ -138,9 +117,9 @@ export async function cartRoutes(fastify: FastifyInstance) {
         const userId = await getUserId(request, reply);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
         const { productId } = request.params;
-        await db.delete(schema.cart_items).where(
-            and(eq(schema.cart_items.user_id, userId), eq(schema.cart_items.product_id, productId))
-        );
+        await prisma.cart_items.deleteMany({
+            where: { user_id: userId, product_id: productId },
+        });
         return { ok: true };
     });
 
@@ -148,7 +127,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
     fastify.delete('/api/cart', async (request, reply) => {
         const userId = await getUserId(request, reply);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
-        await db.delete(schema.cart_items).where(eq(schema.cart_items.user_id, userId));
+        await prisma.cart_items.deleteMany({ where: { user_id: userId } });
         return { ok: true };
     });
 }

@@ -1,8 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import Stripe from 'stripe';
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
+import { resolveOptionalUserId } from '../auth/requestUser';
 import dotenv from 'dotenv';
 import { getStripeApiKey, getStripePublishableKey } from '../config/stripeKeys';
 
@@ -40,9 +39,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     // Create Product Checkout Session (marketplace cart → Stripe)
     fastify.post('/api/functions/create-product-checkout-session', async (request, reply) => {
         try {
-            await (request as any).jwtVerify();
-            const payload = (request as any).user as { id: string };
-            const userId = payload.id;
+            const userId = await resolveOptionalUserId(request);
+            if (!userId) {
+                return reply.status(401).send({ error: 'Sign in to checkout' });
+            }
 
             const body = request.body as {
                 shipping_full_name?: string;
@@ -56,13 +56,13 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 return reply.status(503).send({ error: STRIPE_KEY_ERROR });
             }
 
-            const cartRows = await db.select().from(schema.cart_items).where(eq(schema.cart_items.user_id, userId));
+            const cartRows = await prisma.cart_items.findMany({ where: { user_id: userId } });
             if (cartRows.length === 0) {
                 return reply.status(400).send({ error: 'Cart is empty' });
             }
 
             const productIds = [...new Set(cartRows.map((r) => r.product_id))];
-            const products = await db.select().from(schema.products).where(inArray(schema.products.id, productIds));
+            const products = await prisma.products.findMany({ where: { id: { in: productIds } } });
             const productMap: Record<string, typeof products[0]> = {};
             for (const p of products) productMap[p.id] = p;
 
@@ -104,31 +104,35 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 });
             }
 
-            const order = await db.insert(schema.orders).values({
-                user_id: userId,
-                status: 'pending',
-                subtotal,
-                shipping_amount: shippingAmount,
-                tax_amount: taxAmount,
-                total,
-                shipping_full_name: body.shipping_full_name || null,
-                shipping_street: body.shipping_street || null,
-                shipping_city: body.shipping_city || null,
-                shipping_zip: body.shipping_zip || null,
-                shipping_phone: body.shipping_phone || null,
-                payment_status: 'unpaid',
-            }).returning().get();
+            const order = await prisma.orders.create({
+                data: {
+                    user_id: userId,
+                    status: 'pending',
+                    subtotal,
+                    shipping_amount: shippingAmount,
+                    tax_amount: taxAmount,
+                    total,
+                    shipping_full_name: body.shipping_full_name || null,
+                    shipping_street: body.shipping_street || null,
+                    shipping_city: body.shipping_city || null,
+                    shipping_zip: body.shipping_zip || null,
+                    shipping_phone: body.shipping_phone || null,
+                    payment_status: 'unpaid',
+                },
+            });
 
             for (const row of cartRows) {
                 const product = productMap[row.product_id];
                 if (!product) continue;
-                await db.insert(schema.order_items).values({
-                    order_id: order.id,
-                    product_id: product.id,
-                    product_name: product.name,
-                    product_image_url: product.image_url,
-                    price: Number(product.price),
-                    quantity: row.quantity,
+                await prisma.order_items.create({
+                    data: {
+                        order_id: order.id,
+                        product_id: product.id,
+                        product_name: product.name,
+                        product_image_url: product.image_url,
+                        price: Number(product.price),
+                        quantity: row.quantity,
+                    },
                 });
             }
 
@@ -145,9 +149,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 },
             });
 
-            await db.update(schema.orders).set({
-                stripe_checkout_session_id: session.id,
-            }).where(eq(schema.orders.id, order.id));
+            await prisma.orders.update({
+                where: { id: order.id },
+                data: { stripe_checkout_session_id: session.id },
+            });
 
             return { url: session.url, orderId: order.id };
         } catch (error: any) {
@@ -165,11 +170,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     // Create Checkout Session (booking) — requires auth + booking ownership
     fastify.post('/api/functions/create-checkout-session', async (request, reply) => {
         try {
-            let userId: string;
-            try {
-                await (request as any).jwtVerify();
-                userId = ((request as any).user as { id: string }).id;
-            } catch {
+            const userId = await resolveOptionalUserId(request);
+            if (!userId) {
                 return reply.status(401).send({ error: 'Sign in to pay for a booking' });
             }
 
@@ -179,8 +181,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 return reply.status(400).send({ error: 'bookingId is required' });
             }
 
-            const booking = await db.query.bookings.findFirst({
-                where: eq(schema.bookings.id, bookingId)
+            const booking = await prisma.bookings.findFirst({
+                where: { id: bookingId }
             });
 
             if (!booking) {
@@ -196,8 +198,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
             }
 
             // Get client & barber info
-            const client = await db.query.users.findFirst({ where: eq(schema.users.id, booking.client_id || '') });
-            const barber = await db.query.barbers.findFirst({ where: eq(schema.barbers.id, booking.barber_id) });
+            const client = await prisma.users.findFirst({ where: { id: booking.client_id || '' } });
+            const barber = await prisma.barbers.findFirst({ where: { id: booking.barber_id } });
 
             // Format date and time
             const bookingDate = new Date(booking.start_time);
@@ -245,12 +247,11 @@ export async function paymentRoutes(fastify: FastifyInstance) {
 
     // Stripe balance — admin only
     fastify.get('/api/payments/balance', async (request, reply) => {
-        try {
-            await (request as any).jwtVerify();
-        } catch {
+        const userId = await resolveOptionalUserId(request);
+        if (!userId) {
             return reply.status(401).send({ error: 'Unauthorized' });
         }
-        const user = (request as any).user as { id: string; role?: string };
+        const user = await prisma.users.findUnique({ where: { id: userId } });
         if (user?.role !== 'admin') {
             return reply.status(403).send({ error: 'Admin access required' });
         }

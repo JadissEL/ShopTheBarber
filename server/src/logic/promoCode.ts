@@ -1,6 +1,4 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 
 /**
  * Server-side promo validation against `promo_codes` + booking usage (`bookings.discount_code`).
@@ -56,8 +54,8 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
 
     const normalizedCode = code.trim().toUpperCase();
 
-    const row = await db.query.promo_codes.findFirst({
-        where: eq(schema.promo_codes.code, normalizedCode),
+    const row = await prisma.promo_codes.findUnique({
+        where: { code: normalizedCode },
     });
 
     if (!row) {
@@ -105,9 +103,9 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
                 };
             }
         } else {
-            const barber = await db.query.barbers.findFirst({
-                where: eq(schema.barbers.id, barber_id),
-                columns: { shop_id: true },
+            const barber = await prisma.barbers.findUnique({
+                where: { id: barber_id },
+                select: { shop_id: true },
             });
             if (!barber?.shop_id || barber.shop_id !== promoShopId) {
                 return {
@@ -120,16 +118,16 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
         }
     }
 
-    const allUses = await db
-        .select({ id: schema.bookings.id })
-        .from(schema.bookings)
-        .where(eq(schema.bookings.discount_code, normalizedCode));
+    const allUses = await prisma.bookings.findMany({
+        where: { discount_code: normalizedCode },
+        select: { id: true },
+    });
     const totalUses = allUses.length;
 
-    const usesThisUserRows = await db
-        .select({ id: schema.bookings.id })
-        .from(schema.bookings)
-        .where(and(eq(schema.bookings.discount_code, normalizedCode), eq(schema.bookings.client_id, user_id)));
+    const usesThisUserRows = await prisma.bookings.findMany({
+        where: { discount_code: normalizedCode, client_id: user_id },
+        select: { id: true },
+    });
     const usesThisUser = usesThisUserRows.length;
 
     if (totalUses >= MAX_GLOBAL_USES) {
@@ -172,21 +170,23 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
 
     if (!skip_audit) {
         try {
-            await db.insert(schema.audit_logs).values({
-                action: 'PROMO_CODE_VALIDATED',
-                resource_type: 'promo_code',
-                resource_id: row.id,
-                actor_id: user_id,
-                changes: JSON.stringify({
-                    code: normalizedCode,
-                    discount_amount: discountAmount,
-                    base_price,
-                }),
-                details: JSON.stringify({
-                    barber_id,
-                    shop_id,
-                    total_uses: totalUses + 1,
-                }),
+            await prisma.audit_logs.create({
+                data: {
+                    action: 'PROMO_CODE_VALIDATED',
+                    resource_type: 'promo_code',
+                    resource_id: row.id,
+                    actor_id: user_id,
+                    changes: JSON.stringify({
+                        code: normalizedCode,
+                        discount_amount: discountAmount,
+                        base_price,
+                    }),
+                    details: JSON.stringify({
+                        barber_id,
+                        shop_id,
+                        total_uses: totalUses + 1,
+                    }),
+                },
             });
         } catch {
             /* non-blocking */

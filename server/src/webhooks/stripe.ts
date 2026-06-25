@@ -1,7 +1,5 @@
 import Stripe from 'stripe';
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 import { sendEmail } from '../logic/email';
 import { getStripeApiKey, getStripeWebhookSecret } from '../config/stripeKeys';
 import { logger } from '../lib/logger';
@@ -41,23 +39,26 @@ async function handleChargeSucceeded(event: Stripe.Event) {
     }
 
     try {
-        await db.update(schema.bookings)
-            .set({
+        await prisma.bookings.updateMany({
+            where: { id: booking_id },
+            data: {
                 payment_status: 'paid',
                 status: 'confirmed'
-            })
-            .where(eq(schema.bookings.id, booking_id));
+            }
+        });
 
-        await db.insert(schema.audit_logs).values({
-            action: 'BOOKING_CONFIRMED',
-            resource_type: 'Booking',
-            resource_id: booking_id,
-            actor_id: 'system',
-            details: JSON.stringify({
-                stripe_charge_id: charge.id,
-                amount: charge.amount / 100,
-                currency: charge.currency.toUpperCase()
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'BOOKING_CONFIRMED',
+                resource_type: 'Booking',
+                resource_id: booking_id,
+                actor_id: 'system',
+                details: JSON.stringify({
+                    stripe_charge_id: charge.id,
+                    amount: charge.amount / 100,
+                    currency: charge.currency.toUpperCase()
+                })
+            }
         });
 
         return { processed: true, charge_id: charge.id };
@@ -77,23 +78,26 @@ async function handleChargeFailed(event: Stripe.Event) {
     }
 
     try {
-        await db.update(schema.bookings)
-            .set({
+        await prisma.bookings.updateMany({
+            where: { id: booking_id },
+            data: {
                 payment_status: 'unpaid',
                 status: 'cancelled',
-            })
-            .where(eq(schema.bookings.id, booking_id));
+            }
+        });
 
-        await db.insert(schema.audit_logs).values({
-            action: 'BOOKING_CANCELLED',
-            resource_type: 'Booking',
-            resource_id: booking_id,
-            actor_id: 'system',
-            details: JSON.stringify({
-                reason: 'payment_failed',
-                stripe_charge_id: charge.id,
-                failure_message: charge.failure_message
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'BOOKING_CANCELLED',
+                resource_type: 'Booking',
+                resource_id: booking_id,
+                actor_id: 'system',
+                details: JSON.stringify({
+                    reason: 'payment_failed',
+                    stripe_charge_id: charge.id,
+                    failure_message: charge.failure_message
+                })
+            }
         });
 
         return { processed: true, charge_id: charge.id };
@@ -115,20 +119,23 @@ async function handleChargeRefunded(event: Stripe.Event) {
     try {
         const refundAmount = charge.amount_refunded / 100;
 
-        await db.update(schema.bookings)
-            .set({ payment_status: 'refunded' })
-            .where(eq(schema.bookings.id, booking_id));
+        await prisma.bookings.updateMany({
+            where: { id: booking_id },
+            data: { payment_status: 'refunded' }
+        });
 
-        await db.insert(schema.audit_logs).values({
-            action: 'REFUND_PROCESSED',
-            resource_type: 'Booking',
-            resource_id: booking_id,
-            actor_id: 'system',
-            details: JSON.stringify({
-                stripe_charge_id: charge.id,
-                refund_amount: refundAmount,
-                currency: charge.currency.toUpperCase()
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'REFUND_PROCESSED',
+                resource_type: 'Booking',
+                resource_id: booking_id,
+                actor_id: 'system',
+                details: JSON.stringify({
+                    stripe_charge_id: charge.id,
+                    refund_amount: refundAmount,
+                    currency: charge.currency.toUpperCase()
+                })
+            }
         });
 
         return { processed: true, charge_id: charge.id, refund_amount: refundAmount };
@@ -148,24 +155,27 @@ async function handlePayoutPaid(event: Stripe.Event) {
     }
 
     try {
-        await db.update(schema.payouts)
-            .set({
+        await prisma.payouts.updateMany({
+            where: { id: payout_id },
+            data: {
                 status: 'paid',
                 stripe_payout_id: payout.id,
                 paid_date: new Date(payout.arrival_date * 1000).toISOString()
-            })
-            .where(eq(schema.payouts.id, payout_id));
+            }
+        });
 
-        await db.insert(schema.audit_logs).values({
-            action: 'PAYOUT_ISSUED',
-            resource_type: 'Payout',
-            resource_id: payout_id,
-            actor_id: 'system',
-            details: JSON.stringify({
-                stripe_payout_id: payout.id,
-                amount: payout.amount / 100,
-                currency: payout.currency.toUpperCase()
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'PAYOUT_ISSUED',
+                resource_type: 'Payout',
+                resource_id: payout_id,
+                actor_id: 'system',
+                details: JSON.stringify({
+                    stripe_payout_id: payout.id,
+                    amount: payout.amount / 100,
+                    currency: payout.currency.toUpperCase()
+                })
+            }
         });
 
         return { processed: true, payout_id, stripe_payout_id: payout.id };
@@ -185,22 +195,25 @@ async function handlePayoutFailed(event: Stripe.Event) {
     }
 
     try {
-        await db.update(schema.payouts)
-            .set({
+        await prisma.payouts.updateMany({
+            where: { id: payout_id },
+            data: {
                 status: 'failed',
                 failure_reason: payout.failure_message || 'Unknown error'
-            })
-            .where(eq(schema.payouts.id, payout_id));
+            }
+        });
 
-        await db.insert(schema.audit_logs).values({
-            action: 'PAYOUT_FAILED',
-            resource_type: 'Payout',
-            resource_id: payout_id,
-            actor_id: 'system',
-            details: JSON.stringify({
-                stripe_payout_id: payout.id,
-                failure_reason: payout.failure_message
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'PAYOUT_FAILED',
+                resource_type: 'Payout',
+                resource_id: payout_id,
+                actor_id: 'system',
+                details: JSON.stringify({
+                    stripe_payout_id: payout.id,
+                    failure_reason: payout.failure_message
+                })
+            }
         });
 
         return { processed: false, payout_id, error: payout.failure_message };
@@ -222,7 +235,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
             return { processed: false, reason: 'no_order_id' };
         }
         try {
-            const [order] = await db.select().from(schema.orders).where(eq(schema.orders.id, order_id));
+            const order = await prisma.orders.findUnique({ where: { id: order_id } });
             if (!order) {
                 logger.warn(`Order not found: ${order_id}`);
                 return { processed: false, reason: 'order_not_found' };
@@ -230,29 +243,32 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
             const orderNumber = 'EMG-' + order_id.slice(-6).toUpperCase();
             const estimatedDelivery = new Date();
             estimatedDelivery.setDate(estimatedDelivery.getDate() + 3);
-            await db.update(schema.orders)
-                .set({
+            await prisma.orders.update({
+                where: { id: order_id },
+                data: {
                     payment_status: 'paid',
                     status: 'paid',
                     order_number: orderNumber,
                     fulfillment_status: 'confirmed',
                     estimated_delivery_at: estimatedDelivery.toISOString().slice(0, 10),
-                })
-                .where(eq(schema.orders.id, order_id));
-            await db.delete(schema.cart_items).where(eq(schema.cart_items.user_id, order.user_id));
-            await db.insert(schema.audit_logs).values({
-                action: 'ORDER_PAID',
-                resource_type: 'Order',
-                resource_id: order_id,
-                actor_id: 'system',
-                details: JSON.stringify({
-                    stripe_session_id: session.id,
-                    amount: (session.amount_total || 0) / 100,
-                    currency: (session.currency || 'USD').toUpperCase()
-                })
+                }
             });
-            const user = await db.query.users.findFirst({ where: eq(schema.users.id, order.user_id) });
-            const orderItems = await db.select().from(schema.order_items).where(eq(schema.order_items.order_id, order_id));
+            await prisma.cart_items.deleteMany({ where: { user_id: order.user_id } });
+            await prisma.audit_logs.create({
+                data: {
+                    action: 'ORDER_PAID',
+                    resource_type: 'Order',
+                    resource_id: order_id,
+                    actor_id: 'system',
+                    details: JSON.stringify({
+                        stripe_session_id: session.id,
+                        amount: (session.amount_total || 0) / 100,
+                        currency: (session.currency || 'USD').toUpperCase()
+                    })
+                }
+            });
+            const user = await prisma.users.findFirst({ where: { id: order.user_id } });
+            const orderItems = await prisma.order_items.findMany({ where: { order_id: order_id } });
             if (user?.email) {
                 sendEmail({
                     to: user.email,
@@ -268,25 +284,32 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
             }
             const orderTotal = Number(order.total);
             const pointsToAdd = Math.max(10, Math.floor(orderTotal));
-            const existingProfile = await db.select().from(schema.loyalty_profiles).where(eq(schema.loyalty_profiles.user_id, order.user_id));
+            const existingProfile = await prisma.loyalty_profiles.findMany({ where: { user_id: order.user_id } });
             if (existingProfile.length > 0) {
                 const profile = existingProfile[0];
-                await db.update(schema.loyalty_profiles).set({
-                    current_points: (profile.current_points ?? 0) + pointsToAdd,
-                    lifetime_points: (profile.lifetime_points ?? 0) + pointsToAdd,
-                }).where(eq(schema.loyalty_profiles.id, profile.id));
+                await prisma.loyalty_profiles.update({
+                    where: { id: profile.id },
+                    data: {
+                        current_points: (profile.current_points ?? 0) + pointsToAdd,
+                        lifetime_points: (profile.lifetime_points ?? 0) + pointsToAdd,
+                    }
+                });
             } else {
-                await db.insert(schema.loyalty_profiles).values({
-                    user_id: order.user_id,
-                    current_points: pointsToAdd,
-                    lifetime_points: pointsToAdd,
-                    tier: 'Bronze',
+                await prisma.loyalty_profiles.create({
+                    data: {
+                        user_id: order.user_id,
+                        current_points: pointsToAdd,
+                        lifetime_points: pointsToAdd,
+                        tier: 'Bronze',
+                    }
                 });
             }
-            await db.insert(schema.loyalty_transactions).values({
-                user_id: order.user_id,
-                points: pointsToAdd,
-                description: `Order ${orderNumber} – Marketplace purchase`,
+            await prisma.loyalty_transactions.create({
+                data: {
+                    user_id: order.user_id,
+                    points: pointsToAdd,
+                    description: `Order ${orderNumber} – Marketplace purchase`,
+                }
             });
             return { processed: true, session_id: session.id, order_id };
         } catch (error: any) {
@@ -303,35 +326,38 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     }
 
     try {
-        await db.update(schema.bookings)
-            .set({
+        await prisma.bookings.updateMany({
+            where: { id: booking_id },
+            data: {
                 payment_status: 'paid',
                 status: 'confirmed'
-            })
-            .where(eq(schema.bookings.id, booking_id));
+            }
+        });
 
-        await db.insert(schema.audit_logs).values({
-            action: 'BOOKING_PAID',
-            resource_type: 'Booking',
-            resource_id: booking_id,
-            actor_id: 'system',
-            details: JSON.stringify({
-                stripe_session_id: session.id,
-                amount: (session.amount_total || 0) / 100,
-                currency: (session.currency || 'USD').toUpperCase()
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'BOOKING_PAID',
+                resource_type: 'Booking',
+                resource_id: booking_id,
+                actor_id: 'system',
+                details: JSON.stringify({
+                    stripe_session_id: session.id,
+                    amount: (session.amount_total || 0) / 100,
+                    currency: (session.currency || 'USD').toUpperCase()
+                })
+            }
         });
 
         // Send confirmation email after payment (Resend)
-        const booking = await db.query.bookings.findFirst({
-            where: eq(schema.bookings.id, booking_id),
+        const booking = await prisma.bookings.findFirst({
+            where: { id: booking_id },
         });
         if (booking?.client_id) {
-            const client = await db.query.users.findFirst({
-                where: eq(schema.users.id, booking.client_id),
+            const client = await prisma.users.findFirst({
+                where: { id: booking.client_id },
             });
-            const barber = await db.query.barbers.findFirst({
-                where: eq(schema.barbers.id, booking.barber_id),
+            const barber = await prisma.barbers.findFirst({
+                where: { id: booking.barber_id },
             });
             const bookingDate = new Date(booking.start_time);
             const date_text = bookingDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

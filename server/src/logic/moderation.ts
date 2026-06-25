@@ -1,5 +1,4 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
+import { prisma } from '../db/prisma';
 import { sendEmail } from './email';
 import { logger } from '../lib/logger';
 
@@ -129,14 +128,15 @@ export async function notifyUserOfModerationAction(
 
     // 2. CREATE IN-APP NOTIFICATION
     try {
-        await db.insert(schema.notifications).values({
-            id: crypto.randomUUID(),
-            user_id,
-            type: 'moderation',
-            title: messageData.subject,
-            message: messageData.body(reason, user_id),
-            severity: messageData.severity as any,
-            is_read: false
+        await prisma.notifications.create({
+            data: {
+                id: crypto.randomUUID(),
+                user_id,
+                type: 'moderation',
+                title: messageData.subject,
+                content: messageData.body(reason, user_id),
+                is_read: false
+            }
         });
     } catch (notifError) {
         logger.warn(`In-app notification failed for user ${user_id}`);
@@ -144,23 +144,25 @@ export async function notifyUserOfModerationAction(
 
     // 3. CREATE AUDIT LOG
     try {
-        await db.insert(schema.audit_logs).values({
-            action: 'USER_MODERATION',
-            resource_type: 'User',
-            resource_id: user_id,
-            actor_id: admin_id,
-            changes: JSON.stringify({
-                moderation_status: new_status,
-                action_taken: action
-            }),
-            details: JSON.stringify({
-                reason,
-                user_email,
-                user_name,
-                notified: true,
-                email_sent: emailSent,
-                in_app_notification_created: true
-            })
+        await prisma.audit_logs.create({
+            data: {
+                action: 'USER_MODERATION',
+                resource_type: 'User',
+                resource_id: user_id,
+                actor_id: admin_id,
+                changes: JSON.stringify({
+                    moderation_status: new_status,
+                    action_taken: action
+                }),
+                details: JSON.stringify({
+                    reason,
+                    user_email,
+                    user_name,
+                    notified: true,
+                    email_sent: emailSent,
+                    in_app_notification_created: true
+                })
+            }
         });
     } catch (auditError) {
         logger.warn(`Audit log failed for moderation action on user ${user_id}`);

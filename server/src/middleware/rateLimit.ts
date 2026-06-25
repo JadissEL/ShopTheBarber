@@ -1,6 +1,4 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 
 /**
  * Rate Limiting Middleware
@@ -41,11 +39,11 @@ export async function enforceBookingRateLimit(
     const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
 
     // CHECK 1: User's total bookings in last hour
-    const userBookingsLastHour = await db.query.bookings.findMany({
-        where: and(
-            eq(schema.bookings.client_id, client_id),
-            sql`${schema.bookings.created_at} >= ${oneHourAgo.toISOString()}`
-        )
+    const userBookingsLastHour = await prisma.bookings.findMany({
+        where: {
+            client_id,
+            created_at: { gte: oneHourAgo.toISOString() }
+        }
     });
 
     if (userBookingsLastHour.length >= 5) {
@@ -58,12 +56,12 @@ export async function enforceBookingRateLimit(
     }
 
     // CHECK 2: Same user booking same barber within 30 minutes
-    const recentBarberBookings = await db.query.bookings.findMany({
-        where: and(
-            eq(schema.bookings.client_id, client_id),
-            eq(schema.bookings.barber_id, barber_id),
-            sql`${schema.bookings.created_at} >= ${thirtyMinutesAgo.toISOString()}`
-        )
+    const recentBarberBookings = await prisma.bookings.findMany({
+        where: {
+            client_id,
+            barber_id,
+            created_at: { gte: thirtyMinutesAgo.toISOString() }
+        }
     });
 
     if (recentBarberBookings.length > 0) {

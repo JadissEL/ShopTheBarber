@@ -148,74 +148,7 @@ export const sovereign = {
                 return null;
             }
         },
-        login: async (email, password) => {
-            const res = await fetch(`${BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!res.ok) {
-                const text = await res.text();
-                let err;
-                try { err = JSON.parse(text); } catch { err = { error: text || `Server Error (${res.status})` }; }
-                const msg = err.error || 'Login failed';
-                throw new Error(err.hint ? `${msg} ${err.hint}` : msg);
-            }
-
-            const data = await res.json();
-            if (data.token) {
-                localStorage.setItem('sovereign_token', data.token);
-            }
-            return data;
-        },
-        signup: async (email, password, userData) => {
-            const payload = {
-                email,
-                password,
-                full_name: userData.full_name || 'New User',
-                role: 'client',
-                ...userData
-            };
-
-            const res = await fetch(`${BASE_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const text = await res.text();
-                let err;
-                try { err = JSON.parse(text); } catch { err = { error: text || `Server Error (${res.status})` }; }
-                const message = err.error || (err.details?.[0] ? `${err.details[0].path?.join('.') || 'field'}: ${err.details[0].message}` : null) || `Signup failed (${res.status})`;
-                throw new Error(err.hint ? `${message} ${err.hint}` : message);
-            }
-
-            const data = await res.json();
-            if (data.token) {
-                localStorage.setItem('sovereign_token', data.token);
-            }
-            return data;
-        },
-        refresh: async () => {
-            const headers = getAuthHeaders();
-            if (!headers.Authorization) return null;
-            try {
-                const res = await fetch(`${BASE_URL}/auth/refresh`, {
-                    method: 'POST',
-                    headers
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.token) localStorage.setItem('sovereign_token', data.token);
-                    return data;
-                }
-                return null;
-            } catch {
-                return null;
-            }
-        },
+        // Interactive sign-in/up is handled by Clerk (see lib/AuthContext.jsx).
         logout: async () => {
             localStorage.removeItem('sovereign_token');
             try {

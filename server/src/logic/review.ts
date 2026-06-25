@@ -1,6 +1,4 @@
-import { db } from '../db';
-import * as schema from '../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { prisma } from '../db/prisma';
 
 /**
  * PRODUCTION-GRADE REVIEW SUBMISSION
@@ -15,10 +13,10 @@ export async function submitReview(data: any) {
         throw new Error('Missing required fields for review');
     }
 
-    return await db.transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
         // 1. Check if booking exists and is completed
-        const booking = await tx.query.bookings.findFirst({
-            where: eq(schema.bookings.id, booking_id)
+        const booking = await tx.bookings.findUnique({
+            where: { id: booking_id }
         });
 
         if (!booking) throw new Error('Booking not found');
@@ -27,34 +25,38 @@ export async function submitReview(data: any) {
             // throw new Error('Only completed bookings can be reviewed');
         }
 
-        const [newReview] = await tx.insert(schema.reviews).values({
-            booking_id,
-            reviewer_id,
-            target_id,
-            rating,
-            content,
-            created_at: new Date().toISOString()
-        }).returning();
+        const newReview = await tx.reviews.create({
+            data: {
+                booking_id,
+                reviewer_id,
+                target_id,
+                rating,
+                content,
+                created_at: new Date().toISOString()
+            }
+        });
 
         // 3. Update Barber / Target Rating Atomically
         // We use raw SQL to ensure atomicity even if other reviews are coming in
-        await tx.update(schema.barbers)
-            .set({
-                rating: sql`ROUND(((${schema.barbers.rating} * ${schema.barbers.review_count}) + ${rating}) / (${schema.barbers.review_count} + 1), 1)`,
-                review_count: sql`${schema.barbers.review_count} + 1`
-            })
-            .where(eq(schema.barbers.id, target_id));
+        await tx.$executeRaw`
+            UPDATE barbers
+            SET rating = ROUND(((rating * review_count) + ${rating}) / (review_count + 1)::numeric, 1),
+                review_count = review_count + 1
+            WHERE id = ${target_id}
+        `;
 
         // 4. Update booking to mark it as reviewed (optional but good for tracking)
         // We don't have a 'is_reviewed' column yet, but we could add it.
 
         // 5. Audit Log
-        await tx.insert(schema.audit_logs).values({
-            action: 'REVIEW_SUBMITTED',
-            resource_type: 'Barber',
-            resource_id: target_id,
-            actor_id: reviewer_id,
-            details: JSON.stringify({ review_id: newReview.id, rating })
+        await tx.audit_logs.create({
+            data: {
+                action: 'REVIEW_SUBMITTED',
+                resource_type: 'Barber',
+                resource_id: target_id,
+                actor_id: reviewer_id,
+                details: JSON.stringify({ review_id: newReview.id, rating })
+            }
         });
 
         return newReview;

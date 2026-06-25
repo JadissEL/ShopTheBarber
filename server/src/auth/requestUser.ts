@@ -1,52 +1,63 @@
 /**
- * Unified auth: Bearer can be sovereign JWT OR Clerk session JWT.
- * Attaches `{ id, email, role }` from the **database** row so FK scopes match.
+ * Clerk-only authentication. Verifies the Bearer token with Clerk, then maps it to the
+ * Neon `users` row (provisioning or linking by email) so FK scopes use the internal users.id.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import * as schema from '../db/schema';
+import { prisma } from '../db/prisma';
 import { verifyClerkToken } from './clerk';
 
 export type ResolvedRequestUser = { id: string; email?: string; role?: string };
 
-export async function authenticateRequest(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        void reply.code(401).send({ error: 'Unauthorized' });
-        return false;
-    }
-    const token = authHeader.slice(7);
+async function ensureDbUserFromClerk(profile: {
+    clerk_user_id: string;
+    email: string;
+    role: string;
+    full_name?: string | null;
+    avatar_url?: string | null;
+}) {
+    const existingByClerk = await prisma.users.findUnique({
+        where: { clerk_user_id: profile.clerk_user_id },
+    });
+    if (existingByClerk) return existingByClerk;
 
-    // 1) Sovereign JWT (Fastify JWT, includes internal users.id UUID)
-    try {
-        await request.jwtVerify();
-        const payload = request.user as { id?: string };
-        if (payload?.id) {
-            const row = await db.query.users.findFirst({
-                where: eq(schema.users.id, String(payload.id)),
-            });
-            if (row) {
-                (request as any).user = {
-                    id: row.id,
-                    email: row.email ?? undefined,
-                    role: row.role ?? 'client',
-                } satisfies ResolvedRequestUser;
-                return true;
-            }
-        }
-    } catch {
-        // fall through – try Clerk JWT
+    const existingByEmail = await prisma.users.findUnique({ where: { email: profile.email } });
+    if (existingByEmail) {
+        return prisma.users.update({
+            where: { id: existingByEmail.id },
+            data: {
+                clerk_user_id: profile.clerk_user_id,
+                avatar_url: existingByEmail.avatar_url || profile.avatar_url || undefined,
+                full_name: existingByEmail.full_name || profile.full_name || undefined,
+                updated_at: new Date().toISOString(),
+            },
+        });
     }
 
-    // 2) Clerk bearer – map to SQLite/Postgres user row (provision or link by email)
+    const roleSafe = ['client', 'barber', 'admin', 'shop_owner'].includes(profile.role)
+        ? profile.role
+        : 'client';
+    const avatar =
+        profile.avatar_url ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email.split('@')[0] || 'User')}&background=random`;
+
+    return prisma.users.create({
+        data: {
+            clerk_user_id: profile.clerk_user_id,
+            email: profile.email,
+            password_hash: null,
+            full_name: profile.full_name || profile.email.split('@')[0] || 'User',
+            role: roleSafe,
+            avatar_url: avatar,
+        },
+    });
+}
+
+/** Resolve a Bearer token to a DB-backed user (Clerk only). Returns null if invalid. */
+export async function resolveUserFromBearer(token: string): Promise<ResolvedRequestUser | null> {
     const clerkClaims = await verifyClerkToken(token);
-    if (!clerkClaims?.id || !clerkClaims.email) {
-        void reply.code(401).send({ error: 'Unauthorized', hint: 'Invalid or missing auth token.' });
-        return false;
-    }
+    if (!clerkClaims?.id || !clerkClaims.email) return null;
 
     const resolved = await ensureDbUserFromClerk({
         clerk_user_id: clerkClaims.id,
@@ -55,67 +66,35 @@ export async function authenticateRequest(request: FastifyRequest, reply: Fastif
         full_name: clerkClaims.full_name,
         avatar_url: clerkClaims.avatar_url,
     });
-    if (!resolved) {
-        void reply.code(500).send({ error: 'Failed to resolve profile' });
-        return false;
-    }
+    if (!resolved) return null;
 
-    (request as any).user = {
+    return {
         id: resolved.id,
         email: resolved.email ?? undefined,
         role: resolved.role ?? 'client',
-    } satisfies ResolvedRequestUser;
+    };
+}
+
+/** Strict auth guard for protected routes. Sends 401 and returns false when unauthenticated. */
+export async function authenticateRequest(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        void reply.code(401).send({ error: 'Unauthorized' });
+        return false;
+    }
+    const user = await resolveUserFromBearer(authHeader.slice(7));
+    if (!user) {
+        void reply.code(401).send({ error: 'Unauthorized', hint: 'Invalid or missing auth token.' });
+        return false;
+    }
+    (request as any).user = user;
     return true;
 }
 
-async function ensureDbUserFromClerk(profile: {
-    clerk_user_id: string;
-    email: string;
-    role: string;
-    full_name?: string | null;
-    avatar_url?: string | null;
-}): Promise<(typeof schema.users.$inferSelect) | null> {
-    const existingByClerk = await db.query.users.findFirst({
-        where: eq(schema.users.clerk_user_id, profile.clerk_user_id),
-    });
-    if (existingByClerk) return existingByClerk;
-
-    const existingByEmail = await db.query.users.findFirst({
-        where: eq(schema.users.email, profile.email),
-    });
-    if (existingByEmail?.id) {
-        await db
-            .update(schema.users)
-            .set({
-                clerk_user_id: profile.clerk_user_id,
-                avatar_url: existingByEmail.avatar_url || profile.avatar_url || undefined,
-                full_name: existingByEmail.full_name || profile.full_name || undefined,
-                updated_at: new Date().toISOString(),
-            })
-            .where(eq(schema.users.id, existingByEmail.id));
-
-        const [refreshed] = await db.select().from(schema.users).where(eq(schema.users.id, existingByEmail.id));
-        return refreshed ?? existingByEmail;
-    }
-
-    const id = crypto.randomUUID();
-    const avatar =
-        profile.avatar_url ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email.split('@')[0] || 'User')}&background=random`;
-
-    const roleSafe = ['client', 'barber', 'admin', 'shop_owner'].includes(profile.role)
-        ? profile.role
-        : 'client';
-
-    await db.insert(schema.users).values({
-        id,
-        clerk_user_id: profile.clerk_user_id,
-        email: profile.email,
-        password_hash: null,
-        full_name: profile.full_name || profile.email.split('@')[0] || 'User',
-        role: roleSafe as 'client' | 'barber' | 'admin' | 'shop_owner',
-        avatar_url: avatar,
-    });
-
-    return (await db.query.users.findFirst({ where: eq(schema.users.id, id) })) ?? null;
+/** Optional auth: returns the resolved user id, or null when no/invalid token (no error sent). */
+export async function resolveOptionalUserId(request: FastifyRequest): Promise<string | null> {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const user = await resolveUserFromBearer(authHeader.slice(7));
+    return user?.id ?? null;
 }
