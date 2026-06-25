@@ -197,7 +197,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 
 **Request**: Check project for discrepancies, rescan for Sovereign API traces, and verify 100% independence and production readiness.
 **Action**:
-- Ran deep recursive regex scan for `Sovereign API` and `base 44` across all source files (excluding node_modules/git/etc.). Found zero traces in active source code (only historical mentions in tracker/docs).
+- Ran deep recursive regex scan for `Sovereign API` and the legacy vendor SDK across all source files (excluding node_modules/git/etc.). Found zero traces in active source code (only historical mentions in tracker/docs).
 - Verified production readiness: Ran `npm run build` (Vite) successfully with exit code 0.
 - Verified backend stability: Ran `npm run test` (Vitest) in the server directory successfully (11/11 tests passed).
 - Confirmed full architectural independence.

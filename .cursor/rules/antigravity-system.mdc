@@ -30,7 +30,7 @@ You must **NEVER** do the following unless the user explicitly asks:
 **Every time** you work on this project, treat the codebase as subject to a Sovereign API-eradication standard. Before proposing changes that touch API, auth, entities, or build:
 
 1. **Rescan for traces**
-   - Grep (case-insensitive) for: `Sovereign API`, `base 44`, `Sovereign API`, `Sovereign APIClient`, `Sovereign API.entities`, `Sovereign API.auth`, `@Sovereign API/`, storage keys like `Sovereign API_*` (e.g. `Sovereign API_booking_state`, `Sovereign API_access_token`).
+   - Grep (case-insensitive) for: `Sovereign API`, `Sovereign APIClient`, `Sovereign API.entities`, `Sovereign API.auth`, `@Sovereign API/`, storage keys like `Sovereign API_*` (e.g. `Sovereign API_booking_state`, `Sovereign API_access_token`).
    - Check `package.json` and `server/package.json` for any `@Sovereign API/*` dependencies.
    - Check for comments or strings that reference "Sovereign API" or "Sovereign API" (e.g. "legacy Sovereign API logging") and treat them as candidates for removal or neutral wording ("sovereign" / "legacy" only, no "Sovereign API" in production code).
 
