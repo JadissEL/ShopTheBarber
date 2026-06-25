@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -111,12 +110,15 @@ export default function Barbers() {
       <div>
         <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Évaluation Minimale</h3>
         <div className="space-y-4">
-          <Slider
-            value={[filters.minRating]}
-            onValueChange={([val]) => setFilters({ ...filters, minRating: val })}
+          <Input
+            type="range"
+            min={0}
             max={5}
             step={0.5}
-            className="w-full"
+            value={filters.minRating}
+            onChange={(e) => setFilters({ ...filters, minRating: Number(e.target.value) })}
+            className="w-full accent-primary"
+            aria-label="Évaluation minimale"
           />
           <div className="flex items-center gap-2 text-slate dark:text-matte-silver">
             <Star className="w-4 h-4 text-amber-500 fill-current" />
