@@ -10,8 +10,7 @@ import SpokenLanguagesBadges from '@/components/languages/SpokenLanguagesBadges'
 import ChildrenFriendlyBadge from '@/components/childrenFriendly/ChildrenFriendlyBadge';
 import ProviderAttestationBadges from '@/components/providerAttestation/ProviderAttestationBadges';
 import ServiceLocationBadges from '@/components/serviceLocation/ServiceLocationBadges';
-import VipBarberBadge from '@/components/groupBooking/GroupBookingBadges';
-import { GroupBookingBadge } from '@/components/groupBooking/GroupBookingBadges';
+import { GroupBookingBadge, VipBarberBadge } from '@/components/groupBooking/GroupBookingBadges';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';

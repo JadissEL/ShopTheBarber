@@ -27,7 +27,7 @@ export function buildRebookFlowUrl(booking: HabitBookingRow, frontendBase?: stri
 
     const serviceIds = parseServiceIdsFromSnapshot(booking.service_snapshot);
     if (serviceIds.length === 1) {
-        params.set('serviceId', serviceIds[0]!);
+        params.set('serviceId', serviceIds[0]);
     } else if (serviceIds.length > 1) {
         params.set('serviceIds', serviceIds.join(','));
     }

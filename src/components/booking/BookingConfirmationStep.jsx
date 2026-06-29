@@ -70,7 +70,7 @@ export default function BookingConfirmationStep({
   onGroupEventLabelChange,
   groupQuote,
   groupDiscountAmount = 0,
-  locationType = 'any',
+  locationType: _locationType = 'any',
   onAddressChange,
   onAddressSelect,
   isGuestCheckout = false,

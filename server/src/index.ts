@@ -149,7 +149,7 @@ const WALLET_WRITE_MESSAGE =
 const MESSAGE_WRITE_MESSAGE =
     'Messages are managed via GET/POST /api/messages/* (chat, reschedule actions).';
 
-const TIP_WRITE_MESSAGE =
+const _TIP_WRITE_MESSAGE =
     'Tips are managed via GET/POST /api/tips/* (post-service pourboires).';
 
 /** Entities that require auth for all access (list/get/create/update/delete). */
@@ -285,7 +285,7 @@ fastify.get('/api/status/public', async (_request, reply) => {
 });
 
 import { getConfigReadiness } from './admin/configReadiness';
-fastify.get('/api/admin/config-readiness', { preHandler: [requireAdminPreHandler] }, async (_request, reply) => {
+fastify.get('/api/admin/config-readiness', { preHandler: [requireAdminPreHandler] }, async (_request, _reply) => {
     return getConfigReadiness();
 });
 
@@ -1076,7 +1076,7 @@ const entities = Object.keys(ENTITY_TABLE);
 
 entities.forEach(entity => {
     const tableName = ENTITY_TABLE[entity];
-    const plural = `/api/${entity}s`.replace(/ys$/, 'ies'); // route path base
+    const _plural = `/api/${entity}s`.replace(/ys$/, 'ies'); // route path base
     const routeBase = `/api/${tableName}`;
     const requireAuth = AUTH_REQUIRED_ENTITIES.has(entity);
     const routeOpts = requireAuth ? { preHandler: [requireAuthPreHandler] } : {};

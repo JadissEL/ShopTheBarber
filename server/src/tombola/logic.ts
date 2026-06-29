@@ -1,10 +1,9 @@
 import crypto from 'crypto';
 import { prisma } from '../db/prisma';
-import { TOMBOLA_CONFIG, type DrawStatus } from './config';
+import { TOMBOLA_CONFIG, type DrawStatus, type EligibilityBreakdown } from './config';
 import {
     evaluateUserEligibility,
     freeEntryEligibility,
-    type EligibilityBreakdown,
 } from './eligibility';
 import { publishTombola } from './events';
 

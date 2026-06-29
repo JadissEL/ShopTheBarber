@@ -10,7 +10,7 @@ export async function getProviderAnalytics(shopId: string, barberId?: string) {
     const now = new Date();
     const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
     const upcomingBookings = confirmedBookings.filter(b => new Date(b.start_time) >= now);
-    const pastBookings = confirmedBookings.filter(b => new Date(b.start_time) < now);
+    const _pastBookings = confirmedBookings.filter(b => new Date(b.start_time) < now);
 
     // 2. Financial KPIs
     const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.price_at_booking || 0), 0);

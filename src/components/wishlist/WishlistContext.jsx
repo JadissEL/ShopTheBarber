@@ -30,7 +30,7 @@ export function WishlistProvider({ children }) {
   });
 
   const addToWishlistMutation = useMutation({
-    mutationFn: async ({ product, notifyOnPriceDrop = false }) => {
+    mutationFn: async ({ product, notifyOnPriceDrop: _notifyOnPriceDrop = false }) => {
       if (!user) {
         sovereign.auth.redirectToLogin(window.location.href);
         throw new Error('User not authenticated');

@@ -1,6 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { resolveUserFromBearer } from '../auth/requestUser';
-import { authenticateRequest } from '../auth/requestUser';
+import { resolveUserFromBearer, authenticateRequest } from '../auth/requestUser';
 import { subscribeUser } from './events';
 import {
     getBookingChatContext,

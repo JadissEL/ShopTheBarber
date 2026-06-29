@@ -1,6 +1,5 @@
 import { prisma } from '../db/prisma';
-import type { PromoAudience } from './config';
-import { DEFAULT_MAX_USES, DEFAULT_MAX_USES_PER_USER } from './config';
+import { type PromoAudience, DEFAULT_MAX_USES, DEFAULT_MAX_USES_PER_USER } from './config';
 
 export type PromoWithTargets = Awaited<ReturnType<typeof loadPromoByCode>>;
 

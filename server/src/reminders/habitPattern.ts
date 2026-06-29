@@ -41,7 +41,7 @@ function median(values: number[]): number {
     if (values.length === 0) return DEFAULT_INTERVAL_DAYS;
     const sorted = [...values].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
 /** Days between consecutive visits (oldest newest), ignoring gaps under MIN_INTERVAL_DAYS. */
@@ -53,7 +53,7 @@ export function computeVisitIntervalsDays(bookings: HabitBookingRow[]): number[]
 
     const intervals: number[] = [];
     for (let i = 1; i < dates.length; i += 1) {
-        const days = (dates[i]!.getTime() - dates[i - 1]!.getTime()) / 86_400_000;
+        const days = (dates[i].getTime() - dates[i - 1].getTime()) / 86_400_000;
         if (days >= MIN_INTERVAL_DAYS) intervals.push(days);
     }
     return intervals;
@@ -65,11 +65,11 @@ export function computePreferredWeekday(bookings: HabitBookingRow[]): number | n
     const counts = new Array<number>(7).fill(0);
     for (const b of bookings) {
         const d = parseBookingStartTime(b.start_time);
-        if (d) counts[d.getDay()]! += 1;
+        if (d) counts[d.getDay()] += 1;
     }
     let best = 0;
     for (let i = 1; i < 7; i += 1) {
-        if (counts[i]! > counts[best]!) best = i;
+        if (counts[i] > counts[best]) best = i;
     }
     return best;
 }
@@ -104,7 +104,7 @@ export function analyzeClientHabit(
         return db - da;
     });
 
-    const lastBooking = sorted[0]!;
+    const lastBooking = sorted[0];
     const lastVisitAt = parseBookingStartTime(lastBooking.start_time);
     if (!lastVisitAt) return null;
 
@@ -126,7 +126,7 @@ export function analyzeClientHabit(
         visit_count: sorted.length,
         median_interval_days: medianIntervalDays,
         preferred_weekday: weekday,
-        preferred_weekday_name: weekday !== null ? WEEKDAYS[weekday]! : null,
+        preferred_weekday_name: weekday !== null ? WEEKDAYS[weekday] : null,
         last_visit_at: lastVisitAt,
         predicted_next_due_at: predictedNextDueAt,
         last_booking: lastBooking,

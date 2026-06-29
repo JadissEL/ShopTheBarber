@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useBooking } from '@/components/context/BookingContext';
@@ -14,7 +13,6 @@ import {
   Check, TrendingUp, DollarSign,
   Award, Sparkles, Loader2, CheckCircle2, Home, Globe, Baby
 } from 'lucide-react';
-import React from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -46,7 +44,6 @@ import {
   saveGuestContact,
   validateGuestContact,
   saveGuestBookingToken,
-  getGuestManagePath,
   isGuestBookingBlocked,
 } from '@/lib/guestBooking';
 
@@ -670,7 +667,7 @@ export default function BookingFlow() {
   const groupModeActive =
     groupMode && groupBookingCaps?.offers_group_booking && groupGuests.length >= (groupBookingCaps.min_party ?? 2);
 
-  const { data: groupQuote, refetch: refetchGroupQuote, isFetching: groupQuoteLoading } = useQuery({
+  const { data: groupQuote, refetch: _refetchGroupQuote, isFetching: groupQuoteLoading } = useQuery({
     queryKey: [
       'group-booking-quote',
       activeBarberId,
@@ -796,7 +793,6 @@ export default function BookingFlow() {
     data: travelQuote,
     isLoading: travelQuoteLoading,
     isFetching: travelQuoteFetching,
-    error: travelQuoteError,
   } = useQuery({
     queryKey: [
       'travel-quote',
@@ -1100,7 +1096,7 @@ export default function BookingFlow() {
         toast.success(`${code} applied`);
         refetchPriceQuote();
       }
-    } catch (e) {
+    } catch {
       toast.info(`Promo ${code} saved, apply at checkout`);
     }
   };

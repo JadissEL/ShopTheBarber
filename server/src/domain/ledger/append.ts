@@ -5,7 +5,7 @@ import { assertValidLedgerEventType, type LedgerEventType } from './types';
 export async function appendLedgerEntry(params: {
     entityType: string;
     entityId: string;
-    eventType: LedgerEventType | string;
+    eventType: LedgerEventType;
     payload?: Record<string, unknown> | null;
     actorId?: string | null;
 }) {

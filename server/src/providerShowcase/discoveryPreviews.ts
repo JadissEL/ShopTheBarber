@@ -77,7 +77,7 @@ export async function getBatchDiscoveryPreviews(
         const thumbnails = barberVideos
             .slice(0, MAX_THUMBNAILS)
             .map((v) => v.thumbnail_url || v.video_url)
-            .filter(Boolean) as string[];
+            .filter(Boolean);
         const portfolioCount = barberVideos.length;
         const careerCount = careerCountByBarber.get(barber.id) ?? 0;
         const snippet = bioSnippet(barber.bio);

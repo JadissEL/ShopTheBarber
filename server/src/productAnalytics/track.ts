@@ -2,7 +2,7 @@ import { prisma } from '../db/prisma';
 import { ANALYTICS_EVENTS, ANALYTICS_SCHEMA_VERSION, type AnalyticsEventName } from './config';
 
 export type TrackEventInput = {
-    event_name: AnalyticsEventName | string;
+    event_name: AnalyticsEventName  ;
     user_id?: string | null;
     session_id?: string | null;
     properties?: Record<string, unknown> | null;

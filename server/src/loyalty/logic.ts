@@ -129,7 +129,7 @@ export async function awardPointsForMarketplaceOrder(userId: string, orderId: st
     const profile = await getOrCreateProfile(userId);
     const points = calculateEarnedPoints(orderTotal, profile.tier, { marketplace: true });
 
-    const { profile: updated, transaction_id } = await applyPointsDelta({
+    const { transaction_id } = await applyPointsDelta({
         user_id: userId,
         points,
         type: 'earned_marketplace',

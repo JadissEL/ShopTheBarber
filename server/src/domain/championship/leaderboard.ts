@@ -55,7 +55,7 @@ export async function ensureActiveSeason() {
     });
 }
 
-export async function computeBarberChampionshipScore(barberId: string, countryCode = 'GR') {
+export async function computeBarberChampionshipScore(barberId: string, _countryCode = 'GR') {
     const barber = await prisma.barbers.findUnique({
         where: { id: barberId },
         select: {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,6 @@ function formatMoney(amount) {
 }
 
 export default function TipBarber({ bookingId, returnPath, compact = false }) {
-    const queryClient = useQueryClient();
     const [customAmount, setCustomAmount] = useState('');
     const [selectedPreset, setSelectedPreset] = useState(null);
     const [message, setMessage] = useState('');

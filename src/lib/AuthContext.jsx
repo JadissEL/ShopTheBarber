@@ -72,9 +72,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [syncStatus, setSyncStatus] = useState('idle');
   const [syncError, setSyncError] = useState(null);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
+  const [isLoadingPublicSettings, _setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState({ public_settings: {} });
+  const [appPublicSettings, _setAppPublicSettings] = useState({ public_settings: {} });
   const referralClaimAttempted = useRef(false);
   const guestClaimAttempted = useRef(false);
   const autoRetryDone = useRef(false);

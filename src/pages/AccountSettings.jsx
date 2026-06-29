@@ -127,7 +127,7 @@ export default function AccountSettings() {
                 await sovereign.reminders.updatePreferences({ phone: data.phone || null });
             }
         },
-        onSuccess: (_data, variables) => {
+        onSuccess: (_data, _variables) => {
             queryClient.invalidateQueries({ queryKey: ['currentUser'] });
             toast.success("Profile updated successfully");
         },
@@ -209,7 +209,7 @@ export default function AccountSettings() {
                                 </CardHeader>
                                 <CardContent className="p-10">
                                     <form onSubmit={form.handleSubmit((d) => {
-                                                const { email: _e, address: addressField, ...editable } = d;
+                                                const { email: _e, address: _addressField, ...editable } = d;
                                                 updateProfileMutation.mutate(editable);
                                             })} className="space-y-8">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

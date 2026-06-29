@@ -65,12 +65,8 @@ export function CartProvider({ children }) {
     const addItem = useCallback(async (productId, quantity = 1, productSnapshot = null) => {
         const q = Math.max(1, Math.min(99, quantity));
         if (isAuthenticated) {
-            try {
-                await sovereign.cart.add(productId, q);
-                await hydrateFromApi();
-            } catch (e) {
-                throw e;
-            }
+            await sovereign.cart.add(productId, q);
+            await hydrateFromApi();
         } else {
             const guest = loadGuestCart();
             const existing = guest.find((i) => i.product_id === productId);

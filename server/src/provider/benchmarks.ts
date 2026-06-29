@@ -33,7 +33,7 @@ function sizeBandForChairs(chairs: number): (typeof SHOP_SIZE_BANDS)[number] {
     for (const band of SHOP_SIZE_BANDS) {
         if (chairs >= band.min && chairs <= band.max) return band;
     }
-    return SHOP_SIZE_BANDS[SHOP_SIZE_BANDS.length - 1]!;
+    return SHOP_SIZE_BANDS[SHOP_SIZE_BANDS.length - 1];
 }
 
 function percentile(sorted: number[], p: number): number {

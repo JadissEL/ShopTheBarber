@@ -185,7 +185,6 @@ export async function upsertStaffServiceConfigs(
         const base = services.find((s) => s.id === cfg.service_id);
         if (!base) continue;
 
-        const price = cfg.custom_price ?? base.price;
         if (cfg.custom_price != null) {
             await enforceServicePriceOnWrite({ price: cfg.custom_price });
         }

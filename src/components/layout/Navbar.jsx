@@ -21,7 +21,7 @@ function isNavGroupActive(pathname, item) {
   return false;
 }
 
-function NavDropdown({ label, items, pathname, isActive, align = 'left' }) {
+function NavDropdown({ label, items, pathname: _pathname, isActive, align = 'left' }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 

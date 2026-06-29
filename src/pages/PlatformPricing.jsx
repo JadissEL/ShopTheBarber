@@ -10,7 +10,6 @@ import {
   DISCOVERY_FEE_STATUS,
   fetchPublicPricingConfig,
   formatMoney,
-  GTM_PRICING_DEFAULTS,
   mergePricingConfig,
 } from '@/lib/gtmPricing';
 import { createPageUrl } from '@/utils';

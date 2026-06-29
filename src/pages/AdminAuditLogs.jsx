@@ -28,7 +28,7 @@ export default function AdminAuditLogs() {
                 </motion.div>
 
                 <div className="grid md:grid-cols-4 gap-6 mb-8">
-                    {Object.entries(severityConfig).map(([key, config], idx) => (
+                    {Object.entries(severityConfig).map(([key, config], _idx) => (
                         <Card key={key} className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
                             <CardContent className="p-6">
                                 <config.icon className={`w-8 h-8 ${config.color} mb-3`} />

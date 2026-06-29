@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { sovereign } from '@/api/apiClient';
 import { getAnalyticsSessionId } from '@/lib/analyticsSession';
 import { Search, MapPin, Bell, Menu, Calendar, Award, DollarSign, UserCheck, Check, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { RefreshIndicator } from '@/components/ui/refresh-indicator';

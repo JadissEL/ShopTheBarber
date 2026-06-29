@@ -67,7 +67,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
   const stepComplete = step ? completion[step.id] : false;
   const href = step ? getStepHref(step) : null;
   const isProviderFlow = role === 'provider' || role === 'shop_owner';
-  const canAdvance = canAdvanceFromStep(step, completion);
+  const _canAdvance = canAdvanceFromStep(step, completion);
 
   // Resume once per user/role, never jump when completion updates mid-step
   useEffect(() => {

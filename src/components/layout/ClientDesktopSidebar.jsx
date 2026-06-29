@@ -16,7 +16,7 @@ const ICON_BY_PAGE = {
   Dashboard: Home,
   UserBookings: Calendar,
   Marketplace: Store,
-  ShoppingBag: ShoppingBag,
+  ShoppingBag,
   GroomingVault: Lock,
   MyOrders: Package,
   CareerHub: Briefcase,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
@@ -13,7 +13,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { ArrowLeft, Save, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 import {
   MARKETPLACE_SELLER_TERMS_VERSION,
   SELLER_TERMS_PATH,

@@ -24,7 +24,7 @@ export async function computeAvailabilityScore(barberId: string): Promise<number
     const noShowRate = noShows / total;
     const completionRate = completed / total;
 
-    let score = 70 + completionRate * 25 - cancelRate * 30 - noShowRate * 20;
+    const score = 70 + completionRate * 25 - cancelRate * 30 - noShowRate * 20;
     return Math.max(0, Math.min(100, Math.round(score)));
 }
 

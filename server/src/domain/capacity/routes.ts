@@ -9,7 +9,7 @@ import {
     upsertShopChair,
 } from './logic';
 
-async function requireShopOwner(request: any, reply: any, shopId: string) {
+async function _requireShopOwner(request: any, reply: any, shopId: string) {
     const ok = await authenticateRequest(request, reply);
     if (!ok) return null;
     const user = request.user as { id: string; role?: string };
@@ -74,7 +74,6 @@ export async function capacityRoutes(fastify: FastifyInstance) {
         const { chairId } = request.params as { chairId: string };
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
-        const user = request.user as { id: string; role?: string };
         const chair = await prisma.shop_chairs.findUnique({
             where: { id: chairId },
             select: { shop_id: true },

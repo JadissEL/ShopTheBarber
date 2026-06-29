@@ -1,7 +1,6 @@
 import { prisma } from '../db/prisma';
 import { CLIENT_LATE_GRACE_MINUTES } from '../domain/booking/clientLatePolicy';
 import { appendLedgerEntry } from '../domain/ledger/append';
-import { logger } from '../lib/logger';
 import { sendEmail } from '../logic/email';
 import { computeNoShowFee, resolveProviderPaymentPolicy } from './policy';
 import { chargeOffSessionFee, handleFeePaymentIntentWebhook } from './offSessionCharge';

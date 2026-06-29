@@ -38,7 +38,7 @@ const MODERATION_MESSAGES = {
     flag: {
         subject: 'Your Account is Under Review',
         greeting: 'Your account has been flagged for review.',
-        body: (reason: string, userId: string) => `Our moderation team has reviewed your account and determined that further review is needed to ensure compliance with our community standards.
+        body: (reason: string, _userId: string) => `Our moderation team has reviewed your account and determined that further review is needed to ensure compliance with our community standards.
 
 Reason: ${reason}
 
@@ -122,7 +122,7 @@ export async function notifyUserOfModerationAction(
             }
         });
         emailSent = emailResult.success;
-    } catch (emailErr) {
+    } catch {
         logger.warn(`Email notification failed for user ${user_id}`);
     }
 
@@ -138,7 +138,7 @@ export async function notifyUserOfModerationAction(
                 is_read: false
             }
         });
-    } catch (notifError) {
+    } catch {
         logger.warn(`In-app notification failed for user ${user_id}`);
     }
 
@@ -164,7 +164,7 @@ export async function notifyUserOfModerationAction(
                 })
             }
         });
-    } catch (auditError) {
+    } catch {
         logger.warn(`Audit log failed for moderation action on user ${user_id}`);
     }
 

@@ -25,7 +25,7 @@ if (stripeApiKey && stripeApiKey.startsWith('sk_')) {
             apiVersion: '2025-01-27.acacia',
             typescript: true,
         });
-    } catch (e) {
+    } catch {
         // Stripe init failed, payment features will be unavailable
     }
 }
@@ -33,7 +33,7 @@ if (stripeApiKey && stripeApiKey.startsWith('sk_')) {
 export async function paymentRoutes(fastify: FastifyInstance) {
 
     // Public config: publishable key for frontend (Stripe.js, test mode). Safe to expose.
-    fastify.get('/api/payments/config', async (_request, reply) => {
+    fastify.get('/api/payments/config', async (_request, _reply) => {
         const publishableKey = getStripePublishableKey();
         return { publishableKey: publishableKey || null };
     });

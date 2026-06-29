@@ -123,10 +123,10 @@ async function buildBarberHomeOffers(
         const barberServices = servicesByBarber.get(barber.id);
         if (!barberServices?.length) continue;
 
-        const starter = barberServices[0]!;
+        const starter = barberServices[0];
         const comboLabel =
             barberServices.length >= 2
-                ? `${starter.name}, ${barberServices[1]!.name}`
+                ? `${starter.name}, ${barberServices[1].name}`
                 : starter.name;
         const location = barber.city || barber.location || 'Independent stylist';
 

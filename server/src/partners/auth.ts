@@ -1,5 +1,4 @@
-import crypto from 'crypto';
-import { createHash, timingSafeEqual } from 'crypto';
+import crypto, { createHash, timingSafeEqual } from 'crypto';
 import { prisma } from '../db/prisma';
 
 type PartnerScopePayload = { scopes: string[]; shop_id?: string; barber_id?: string };

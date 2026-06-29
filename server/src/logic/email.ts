@@ -94,7 +94,7 @@ export async function sendEmail({
         `;
                 break;
 
-            case 'order_confirmation':
+            case 'order_confirmation': {
                 const orderItems = (data.items || []).map((i: { name: string; quantity: number; price: number }) =>
                     `<tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;">${i.name} × ${i.quantity}</td><td style="text-align: right; padding: 8px 0; border-bottom: 1px solid #eee;">$${(Number(i.price) * (i.quantity || 1)).toFixed(2)}</td></tr>`
                 ).join('');
@@ -117,6 +117,7 @@ export async function sendEmail({
           </div>
         `;
                 break;
+            }
 
             case 'reminder':
                 html = `

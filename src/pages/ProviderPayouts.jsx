@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { format } from 'date-fns';
 import ProviderFixedFeePanel from '@/components/provider/ProviderFixedFeePanel';
 import ProviderPhase2Financials from '@/components/provider/ProviderPhase2Financials';
 import ProviderTaxExportPanel from '@/components/provider/ProviderTaxExportPanel';
 import ProviderFinancingApplyPanel from '@/components/provider/ProviderFinancingApplyPanel';
-import { useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 

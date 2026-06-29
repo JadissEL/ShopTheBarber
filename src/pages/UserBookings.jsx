@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { isPast, isFuture } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { createPageUrl } from '@/utils';
-import { Link } from 'react-router-dom';
 import RebookButton from '@/components/booking/RebookButton';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';

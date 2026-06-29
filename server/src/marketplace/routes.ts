@@ -20,7 +20,6 @@ import {
     type ProductStatus,
 } from './logic';
 import {
-    MARKETPLACE_SELLER_TERMS_VERSION,
     marketplaceLegalConfig,
     requireSellerTermsAccepted,
 } from './legalConfig';

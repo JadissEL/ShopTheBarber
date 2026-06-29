@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Scissors, Zap } from 'lucide-react';
+import { Calendar, Scissors, Zap, ListOrdered, Clock, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -13,7 +13,6 @@ import { useOfferCountdown } from '@/hooks/useOfferCountdown';
 import { WAITLIST_OFFER_MS } from '@/lib/waitlistConstants';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListOrdered, Clock, X } from 'lucide-react';
 import { formatMoney } from '@/lib/formatMoney';
 import {
     Dialog,

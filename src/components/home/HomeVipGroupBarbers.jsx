@@ -15,8 +15,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { createPageUrl } from '@/utils';
 
 import ServiceLocationBadges from '@/components/serviceLocation/ServiceLocationBadges';
-import { GroupBookingBadge } from '@/components/groupBooking/GroupBookingBadges';
-import VipBarberBadge from '@/components/groupBooking/GroupBookingBadges';
+import { GroupBookingBadge, VipBarberBadge } from '@/components/groupBooking/GroupBookingBadges';
 
 function groupBookUrlForBarber(barber) {
     const mobileOnly =

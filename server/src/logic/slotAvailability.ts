@@ -96,16 +96,16 @@ export async function listBarberDaySlots(params: {
         const blocked = timeOff.some((block) => {
             const isRelevant = !block.shop_id || block.shop_id === shopId;
             if (!isRelevant) return false;
-            const blockStart = new Date(block.start_datetime!);
-            const blockEnd = new Date(block.end_datetime!);
+            const blockStart = new Date(block.start_datetime);
+            const blockEnd = new Date(block.end_datetime);
             return slotIntervalOverlaps(slotStart, slotEnd, blockStart, blockEnd);
         });
 
         if (blocked) continue;
 
         const taken = bookings.some((b) => {
-            const bStart = new Date(b.start_time!);
-            const bEnd = new Date(b.end_time!);
+            const bStart = new Date(b.start_time);
+            const bEnd = new Date(b.end_time);
             return slotIntervalOverlaps(slotStart, slotEnd, bStart, bEnd);
         });
 

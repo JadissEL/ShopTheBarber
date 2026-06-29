@@ -219,7 +219,7 @@ export async function atHomeServiceRoutes(fastify: FastifyInstance) {
 
     fastify.get<{ Params: { id: string }; Querystring: { shop_id?: string; context_type?: string } }>(
         '/api/barbers/:id/at-home-service',
-        async (request, reply) => {
+        async (request, _reply) => {
             const area = await getPublicAtHomeArea({
                 barberId: request.params.id,
                 shopId: request.query.shop_id,

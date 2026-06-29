@@ -1,6 +1,4 @@
 import { MetaTags } from '@/components/seo/MetaTags';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import { Bell, Smartphone, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';

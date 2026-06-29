@@ -197,7 +197,7 @@ class EntityClient {
         return await res.json();
     }
 
-    subscribe(criteria, callback) { return () => { }; }
+    subscribe(_criteria, _callback) { return () => { }; }
 }
 
 const AUTH_ME_TIMEOUT_MS = 15_000;
@@ -277,7 +277,7 @@ export const sovereign = {
             localStorage.removeItem('sovereign_token');
             try {
                 await fetch(`${BASE_URL}/auth/logout`, { method: 'POST' });
-            } catch { }
+            } catch { void 0; }
             return { success: true };
         },
         redirectToLogin: (returnPath) => {
@@ -1032,6 +1032,15 @@ export const sovereign = {
             }
             return res.json();
         },
+        getMe: async () => {
+            const headers = getAuthHeaders();
+            const res = await fetch(`${BASE_URL}/wallet/me`, { headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to load wallet');
+            }
+            return res.json();
+        },
     },
     disputes: {
         listMine: async () => {
@@ -1538,17 +1547,6 @@ export const sovereign = {
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || 'Failed to load booking habit');
-            }
-            return res.json();
-        },
-    },
-    wallet: {
-        getMe: async () => {
-            const headers = getAuthHeaders();
-            const res = await fetch(`${BASE_URL}/wallet/me`, { headers });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || 'Failed to load wallet');
             }
             return res.json();
         },
@@ -3774,7 +3772,7 @@ export const sovereign = {
         },
     },
     appLogs: {
-        logUserInApp: async (pageName) => {
+        logUserInApp: async (_pageName) => {
             // No-op shim for legacy in-app page logging
             return Promise.resolve();
         }

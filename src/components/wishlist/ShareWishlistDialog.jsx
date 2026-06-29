@@ -65,7 +65,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
 
       alert('Email envoyé avec succès !');
       setEmail('');
-    } catch (error) {
+    } catch {
       alert('Erreur lors de l\'envoi de l\'email');
     } finally {
       setSending(false);

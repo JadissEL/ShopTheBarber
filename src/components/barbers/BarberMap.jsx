@@ -72,7 +72,7 @@ function FitBounds({ barbers, userPosition }) {
   return null;
 }
 
-export default function BarberMap({ barbers, onBarberSelect, userPosition: externalUserPosition }) {
+export default function BarberMap({ barbers, onBarberSelect: _onBarberSelect, userPosition: externalUserPosition }) {
   const [internalUserPosition, setInternalUserPosition] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
 

@@ -9,7 +9,7 @@ export const EXPLORE_SORT_OPTIONS = [
 /**
  * Client-side barber sorting for Explore (no backend changes).
  */
-export function sortExploreBarbers(barbers, sortBy, userCoords) {
+export function sortExploreBarbers(barbers, sortBy, _userCoords) {
   const list = [...barbers];
 
   switch (sortBy) {

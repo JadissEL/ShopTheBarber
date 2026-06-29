@@ -27,7 +27,7 @@ export async function buildRebookPayloadForBooking(bookingId: string) {
     const fromSnapshot = parseServiceSnapshot(booking.service_snapshot);
     const serviceIds = fromJoin.length > 0 ? fromJoin : fromSnapshot;
 
-    const serialized = serializeBookingRow(booking as Record<string, unknown>);
+    const serialized = serializeBookingRow(booking);
     const isGroup = booking.booking_type === 'group';
     const visitType = booking.visit_type === 'mobile' ? 'mobile' : 'shop';
     const shopId = booking.shop_id ?? null;

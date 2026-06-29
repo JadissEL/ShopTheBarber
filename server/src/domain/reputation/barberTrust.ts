@@ -61,7 +61,7 @@ export async function computeBarberTrustScore(barberId: string): Promise<number>
     const ratingBonus = Math.min(15, (barber.rating ?? 0) * 3);
     const kycBonus = (barber.attestation_licensed ? 3 : 0) + (barber.attestation_insured ? 2 : 0);
 
-    let score =
+    const score =
         50 +
         completionRate * 25 -
         cancelRate * 20 -

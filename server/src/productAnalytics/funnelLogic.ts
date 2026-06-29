@@ -262,9 +262,9 @@ export function computeLooseFunnelCounts(events: FunnelEventRow[]) {
 
         const actor = resolveFunnelActor(ev);
 
-        stepSessions[step.key]!.add(actor);
+        stepSessions[step.key].add(actor);
 
-        if (ev.user_id) stepUsers[step.key]!.add(ev.user_id);
+        if (ev.user_id) stepUsers[step.key].add(ev.user_id);
 
     }
 
@@ -306,7 +306,7 @@ function strictCountsFromReachFn(
 
         for (let i = 0; i < reached; i++) {
 
-            const key = BOOKING_FUNNEL_STEPS[i]!.key;
+            const key = BOOKING_FUNNEL_STEPS[i].key;
 
             counts[key] = (counts[key] ?? 0) + 1;
 
@@ -358,9 +358,9 @@ function median(values: number[]): number | null {
 
     return sorted.length % 2 === 0
 
-        ? Math.round(((sorted[mid - 1]! + sorted[mid]!) / 2) * 10) / 10
+        ? Math.round(((sorted[mid - 1] + sorted[mid]) / 2) * 10) / 10
 
-        : Math.round(sorted[mid]! * 10) / 10;
+        : Math.round(sorted[mid] * 10) / 10;
 
 }
 
@@ -374,9 +374,9 @@ export function computeStepMedianHours(events: FunnelEventRow[]) {
 
     for (let i = 0; i < BOOKING_FUNNEL_STEPS.length - 1; i++) {
 
-        const from = BOOKING_FUNNEL_STEPS[i]!.key;
+        const from = BOOKING_FUNNEL_STEPS[i].key;
 
-        const to = BOOKING_FUNNEL_STEPS[i + 1]!.key;
+        const to = BOOKING_FUNNEL_STEPS[i + 1].key;
 
         transitions[`${from}->${to}`] = [];
 
@@ -420,9 +420,9 @@ export function computeStepMedianHours(events: FunnelEventRow[]) {
 
             if (fromTs === undefined || toTs === undefined || toTs < fromTs) continue;
 
-            const key = `${BOOKING_FUNNEL_STEPS[i]!.key}->${BOOKING_FUNNEL_STEPS[i + 1]!.key}`;
+            const key = `${BOOKING_FUNNEL_STEPS[i].key}->${BOOKING_FUNNEL_STEPS[i + 1].key}`;
 
-            transitions[key]!.push((toTs - fromTs) / 3600000);
+            transitions[key].push((toTs - fromTs) / 3600000);
 
         }
 
@@ -432,7 +432,7 @@ export function computeStepMedianHours(events: FunnelEventRow[]) {
 
     return BOOKING_FUNNEL_STEPS.slice(0, -1).map((step, i) => {
 
-        const next = BOOKING_FUNNEL_STEPS[i + 1]!;
+        const next = BOOKING_FUNNEL_STEPS[i + 1];
 
         const key = `${step.key}->${next.key}`;
 
@@ -486,7 +486,7 @@ export function computeDailyFunnelTrend(events: FunnelEventRow[]) {
 
         const actor = resolveFunnelActor(ev);
 
-        byDay.get(day)![stepKey]!.add(actor);
+        byDay.get(day)![stepKey].add(actor);
 
     }
 
@@ -538,11 +538,11 @@ export function buildFunnelStepRows(
 
         const prevSessions =
 
-            idx > 0 ? (stepSessions[BOOKING_FUNNEL_STEPS[idx - 1]!.key]?.size ?? 0) : sessions;
+            idx > 0 ? (stepSessions[BOOKING_FUNNEL_STEPS[idx - 1].key]?.size ?? 0) : sessions;
 
         const prevStrict =
 
-            idx > 0 ? (strictCounts?.[BOOKING_FUNNEL_STEPS[idx - 1]!.key] ?? 0) : strict_sessions;
+            idx > 0 ? (strictCounts?.[BOOKING_FUNNEL_STEPS[idx - 1].key] ?? 0) : strict_sessions;
 
         return {
 

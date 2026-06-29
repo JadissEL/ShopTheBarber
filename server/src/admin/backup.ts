@@ -172,7 +172,7 @@ export async function verifyBackupIntegrity(adminUserId: string): Promise<Backup
                 details: JSON.stringify(backupStatus)
             }
         });
-    } catch (e) {
+    } catch {
         // audit log failure is non-blocking
     }
 

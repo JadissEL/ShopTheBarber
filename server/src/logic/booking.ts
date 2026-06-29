@@ -231,7 +231,7 @@ export async function createBookingLogic(payload: any) {
         const duration = payload.duration_at_booking || 30;
         end_time = addMinutes(start_time, duration);
 
-    } catch (e) {
+    } catch {
         throw new Error(`Invalid date/time format: ${payload.date_text} ${payload.time_text}`);
     }
 

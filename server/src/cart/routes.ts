@@ -4,7 +4,7 @@ import { resolveOptionalUserId } from '../auth/requestUser';
 import { createOrRefreshReservation, getAvailableStock } from '../domain/marketplace/reservations';
 
 export async function cartRoutes(fastify: FastifyInstance) {
-    const getUserId = async (request: any, reply: any): Promise<string | null> => {
+    const getUserId = async (request: any, _reply: any): Promise<string | null> => {
         return await resolveOptionalUserId(request);
     };
 

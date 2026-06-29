@@ -145,11 +145,8 @@ export async function getBookingFunnelMetrics(days = DEFAULT_ANALYTICS_DAYS) {
     const steps = buildFunnelStepRows(
         Object.fromEntries(
             Object.entries(stepSessions).map(([k, v]) => [k, v])
-        ) as Record<string, Set<string>>,
-        Object.fromEntries(Object.entries(stepUsers).map(([k, v]) => [k, v])) as Record<
-            string,
-            Set<string>
-        >,
+        ),
+        Object.fromEntries(Object.entries(stepUsers).map(([k, v]) => [k, v])),
         strictCounts,
         windowedStrictCounts
     );
@@ -562,7 +559,7 @@ export async function getFeeAdoptionMetrics() {
             typeof b.platform_fee_amount === 'number'
                 ? b.platform_fee_amount
                 : typeof bd?.platform_fee === 'number'
-                  ? (bd.platform_fee as number)
+                  ? (bd.platform_fee)
                   : 0;
         if (waived) {
             waivedBookings += 1;
@@ -662,7 +659,7 @@ export async function getMarketplaceAttachmentMetrics() {
         if (!ordersForClient?.length) continue;
         attachedEver += 1;
         totalOrdersFromAttached += ordersForClient.length;
-        const firstOrder = ordersForClient[0]!;
+        const firstOrder = ordersForClient[0];
         const days = (firstOrder.getTime() - firstBook.getTime()) / 86400000;
         if (days >= 0 && days <= 30) attachedWithin30d += 1;
         if (days >= 0 && days <= 90) attachedWithin90d += 1;
@@ -743,7 +740,7 @@ export async function getAnalyticsEventSummary(days = DEFAULT_ANALYTICS_DAYS) {
 
 export async function getLtvMonthlyTrend(monthsBack = 12) {
     const months = monthsBackRange(monthsBack);
-    const since = monthStartIso(months[0]!);
+    const since = monthStartIso(months[0]);
 
     const [bookings, orders, tips] = await Promise.all([
         prisma.bookings.findMany({
@@ -834,7 +831,7 @@ export async function getLtvMonthlyTrend(monthsBack = 12) {
 
 export async function getFeeAdoptionMonthlyTrend(monthsBack = 12) {
     const months = monthsBackRange(monthsBack);
-    const since = monthStartIso(months[0]!);
+    const since = monthStartIso(months[0]);
 
     const [plans, bookings, analyticsEvents] = await Promise.all([
         prisma.provider_fixed_fee_plans.findMany({
@@ -923,7 +920,7 @@ export async function getFeeAdoptionMonthlyTrend(monthsBack = 12) {
             typeof b.platform_fee_amount === 'number'
                 ? b.platform_fee_amount
                 : typeof bd?.platform_fee === 'number'
-                  ? (bd.platform_fee as number)
+                  ? (bd.platform_fee)
                   : 0;
         if (waived) {
             bucket.waived_bookings += 1;
@@ -954,7 +951,7 @@ export async function getFeeAdoptionMonthlyTrend(monthsBack = 12) {
 
 export async function getMarketplaceMonthlyTrend(monthsBack = 12) {
     const months = monthsBackRange(monthsBack);
-    const since = monthStartIso(months[0]!);
+    const since = monthStartIso(months[0]);
 
     const [orders, bookings, analyticsEvents] = await Promise.all([
         prisma.orders.findMany({
