@@ -41,12 +41,13 @@ Backend must match frontend behavior exactly.
 
 ### 4. Database and relationships
 
-- Data models / schemas
+- Data models in **`server/prisma/schema.prisma`** (Neon PostgreSQL)
+- Apply changes via **`npx prisma migrate dev`** locally; commit files under `server/prisma/migrations/`
 - Relationships (1-to-1, 1-to-many, many-to-many)
 - Constraints and integrity rules
 - Scalability and future use
 
-No “temporary” or hardcoded-only data. Real features use real data and schema.
+No “temporary” or hardcoded-only data. Real features use real data and Prisma migrations. See [docs/NEON_PRISMA.md](../../docs/NEON_PRISMA.md).
 
 ### 5. System uniformity
 

@@ -40,9 +40,9 @@ export const sendNotification = async ({ userId, email, title, message, type, li
 
             // Log the email
             await sovereign.entities.NotificationLog.create({
-                type: type,
+                type,
                 recipient_email: email,
-                message: message,
+                message,
                 status: 'Sent',
                 sent_at: new Date().toISOString()
             });

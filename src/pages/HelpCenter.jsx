@@ -1,56 +1,70 @@
-import { MetaTags } from '@/components/seo/MetaTags';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MetaTags } from '@/components/seo/MetaTags';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, HelpCircle, Mail, MessageCircle, BookOpen } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import HelpHero from '@/components/help/HelpHero';
+import HelpQuickActions from '@/components/help/HelpQuickActions';
+import CategoryGrid from '@/components/help/CategoryGrid';
+import FAQAccordion from '@/components/help/FAQAccordion';
+import { filterHelpContent } from '@/components/help/helpCenterContent';
+import { Button } from '@/components/ui/button';
+
 export default function HelpCenter() {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { categories, faqs } = useMemo(
+    () => filterHelpContent(searchQuery),
+    [searchQuery]
+  );
+
+  const isSearching = searchQuery.trim().length > 0;
+
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
-      <MetaTags title="Help Center" description="Get help and support for ShopTheBarber" />
-      <div className="w-full max-w-3xl lg:max-w-4xl mx-auto px-4 lg:px-8 py-12">
-        <Link to={createPageUrl('Dashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </Link>
-        <div className="flex items-center gap-3 mb-8">
-          <HelpCircle className="w-10 h-10 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Help Center</h1>
-            <p className="text-muted-foreground">Find answers and get support</p>
+    <div className="min-h-screen bg-card">
+      <MetaTags
+        title="Help Center"
+        description="How can we help? Search guides for bookings, payments, account settings, and contact ShopTheBarber support."
+      />
+
+      <HelpHero searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 md:py-12 space-y-12 md:space-y-16">
+        <HelpQuickActions />
+
+        {isSearching && categories.length === 0 && faqs.length === 0 ? (
+          <div className="text-center py-16 rounded-xl border border-dashed border-border bg-muted/50/50">
+            <p className="text-foreground font-medium mb-2">No results for &ldquo;{searchQuery}&rdquo;</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Try another keyword or reach out to our team directly.
+            </p>
+            <Button asChild className="rounded-lg">
+              <Link to={`${createPageUrl('SupportChat')}?new=1`}>Contact support</Link>
+            </Button>
           </div>
-        </div>
-        <div className="grid gap-4">
-          <Link to={createPageUrl('Explore')}>
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6 flex items-center gap-4">
-                <BookOpen className="w-8 h-8 text-primary shrink-0" />
-                <div>
-                  <h2 className="font-semibold text-lg">How to book</h2>
-                  <p className="text-sm text-muted-foreground">Browse barbers, pick a time, and confirm your appointment.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to={createPageUrl('UserBookings')}>
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6 flex items-center gap-4">
-                <MessageCircle className="w-8 h-8 text-primary shrink-0" />
-                <div>
-                  <h2 className="font-semibold text-lg">Manage bookings</h2>
-                  <p className="text-sm text-muted-foreground">View, reschedule, or cancel your appointments.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-          <Card>
-            <CardContent className="p-6 flex items-center gap-4">
-              <Mail className="w-8 h-8 text-primary shrink-0" />
-              <div>
-                <h2 className="font-semibold text-lg">Contact us</h2>
-                <p className="text-sm text-muted-foreground">Email support@shopthebarber.com for assistance.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        ) : (
+          <>
+            <CategoryGrid
+              categories={categories}
+              title={isSearching ? 'Matching topics' : 'Browse by topic'}
+            />
+            <FAQAccordion items={faqs} />
+          </>
+        )}
+
+        <section className="rounded-2xl border border-border bg-muted/50 px-6 py-10 md:py-12 text-center">
+          <h2 className="text-lg font-semibold text-foreground mb-2">Still need help?</h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            Our support team is available for bookings, payments, and account issues.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button asChild className="rounded-lg">
+              <Link to={`${createPageUrl('SupportChat')}?new=1`}>Start live chat</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-lg">
+              <a href="mailto:support@shopthebarber.com">Email support</a>
+            </Button>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -42,7 +42,7 @@ describe('integration: Clerk Bearer → GET /auth/me → POST /favorites', () =>
             headers: { authorization: 'Bearer clerk.test.token' },
         });
         expect(me.statusCode).toBe(200);
-        const meBody = JSON.parse(me.body as string);
+        const meBody = JSON.parse(me.body);
         expect(meBody.id).toBeTruthy();
         expect(meBody.email).toBe(EMAIL);
         userId = String(meBody.id);
@@ -59,7 +59,7 @@ describe('integration: Clerk Bearer → GET /auth/me → POST /favorites', () =>
         });
 
         expect(fav.statusCode).toBe(200);
-        const favRow = JSON.parse(fav.body as string);
+        const favRow = JSON.parse(fav.body);
         expect(favRow.user_id).toBe(userId);
         favoriteId = String(favRow.id);
     });

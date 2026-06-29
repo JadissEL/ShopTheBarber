@@ -23,6 +23,8 @@ import {
   NAV_ITEMS,
   shouldUseDarkHeader
 } from '@/components/navigation/navigationVisibility';
+import { shouldHideGlobalNavOnMobile } from '@/lib/mobileLayout';
+import { isNavActive } from '@/lib/navActive';
 
 /**
  * GLOBAL NAVIGATION COMPONENT
@@ -46,8 +48,21 @@ export default function GlobalNavigation() {
   const zone = getZoneFromPath(path);
   const isDesktop = useIsDesktop();
 
-  // On desktop, client zone uses ClientLayout sidebar — hide top nav to avoid duplication
+  // On desktop, client zone uses ClientLayout sidebar, hide top nav to avoid duplication
   if (zone === APP_ZONES.CLIENT && isDesktop) {
+    return null;
+  }
+
+  // Mobile clients use bottom tab bar, hide redundant top icon row
+  if (
+    shouldHideGlobalNavOnMobile({
+      pathname: path,
+      zone,
+      isAuthenticated,
+      isDesktop,
+      role,
+    })
+  ) {
     return null;
   }
 
@@ -81,22 +96,22 @@ export default function GlobalNavigation() {
   // 2. Does not overlap content below it
   // 3. Sticks to top when scrolling
   const headerBaseClasses = `
-    w-full px-4 py-3
+    w-full px-4 h-14 flex items-center
     sticky top-0 z-50
     transition-all duration-300 ease-out
   `;
 
   const headerDarkStyles = `
-    bg-gradient-to-r from-primary to-primary/90 
-    border-b border-white/5 
-    backdrop-blur-md 
-    shadow-lg shadow-black/10
+    bg-primary
+    border-b border-primary/20
+    backdrop-blur-md
+    shadow-sm
   `;
 
   const headerLightStyles = `
-    bg-primary 
-    border-b border-primary/30 
-    shadow-md
+    bg-primary
+    border-b border-primary/20
+    shadow-sm
   `;
 
   // During auth loading, show minimal branded header
@@ -140,12 +155,12 @@ export default function GlobalNavigation() {
     }
   }
 
-  // Marketplace (clients – elite/luxury products)
+  // Explore barbers (clients)
   if (visibility[NAV_ITEMS.EXPLORE]) {
     navigationItems.push({
       icon: Store,
-      label: 'Marketplace',
-      path: 'Marketplace'
+      label: 'Explore',
+      path: 'Explore'
     });
   }
 
@@ -220,12 +235,17 @@ export default function GlobalNavigation() {
         {/* Contextual Navigation Items */}
         {navigationItems.map((item) => {
           const Icon = item.icon;
+          const active = isNavActive(location.pathname, item.path);
           return (
             <Link key={`${item.label}-${item.path}`} to={createPageUrl(item.path)}>
               <Button
                 variant="ghost"
                 size="sm"
-                className={`gap-2 ${hoverBg} ${textColor} transition-colors`}
+                className={`gap-2 rounded-[13px] transition-colors ${
+                  active
+                    ? 'bg-white/20 text-white font-semibold'
+                    : `${hoverBg} ${textColor}`
+                }`}
                 title={item.label}
               >
                 <Icon className="w-4 h-4" />

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Calendar, DollarSign, TrendingUp, Clock, Zap, Download, UserCheck } from 'lucide-react';
+import { Calendar, DollarSign, TrendingUp, Clock, Zap, Download, UserCheck, Heart, Scissors, Ban, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,11 @@ import { toast } from 'sonner';
 import { downloadCSV, prepareBookingsForExport } from '@/components/analytics/ExportUtils';
 import ReviewCard from '@/components/ui/review-card';
 import { PageLoading } from '@/components/ui/page-loading';
+import OnboardingSetupBanner from '@/components/onboarding/OnboardingSetupBanner';
+import ProviderSetupProgressCard from '@/components/onboarding/ProviderSetupProgressCard';
+import ProviderTrustScoreCard from '@/components/provider/ProviderTrustScoreCard';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function ProviderDashboard() {
     const { data: user, isLoading: isUserLoading } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
@@ -51,6 +56,12 @@ export default function ProviderDashboard() {
     const shopId = myShopMembership?.shop_id;
 
     // 2. Fetch Provider Analytics
+    const { data: operationalStats } = useQuery({
+        queryKey: ['provider-operational-stats'],
+        queryFn: () => sovereign.providerStats.getMyStats(),
+        enabled: !!user,
+    });
+
     const { data: analytics } = useQuery({
         queryKey: ['provider-analytics', shopId, myBarberProfile?.id],
         queryFn: () => sovereign.functions.invoke('provider-analytics', { shopId, barberId: myBarberProfile?.id }),
@@ -63,15 +74,17 @@ export default function ProviderDashboard() {
         enabled: !!shopId
     });
 
-    const reviewQuery = {};
-    if (shopId) reviewQuery.shop_id = shopId;
-    else if (myBarberProfile?.id) reviewQuery.barber_id = myBarberProfile.id;
-    if (ratingFilter) reviewQuery.rating = ratingFilter;
-
     const { data: reviews = [] } = useQuery({
-        queryKey: ['dashboard-reviews', reviewQuery, reviewPage],
-        queryFn: () => sovereign.entities.Review.filter(reviewQuery, '-created_at', pageSize, (reviewPage - 1) * pageSize),
-        enabled: !!(shopId || myBarberProfile?.id)
+        queryKey: ['dashboard-reviews', shopId, myBarberProfile?.id, ratingFilter, reviewPage],
+        queryFn: () =>
+            sovereign.reviews.listProvider({
+                shop_id: shopId || undefined,
+                barber_id: !shopId && myBarberProfile?.id ? myBarberProfile.id : undefined,
+                min_rating: ratingFilter || undefined,
+                limit: pageSize,
+                offset: (reviewPage - 1) * pageSize,
+            }),
+        enabled: !!(shopId || myBarberProfile?.id),
     });
 
     const stats = analytics?.summary || {};
@@ -87,33 +100,43 @@ export default function ProviderDashboard() {
     if (isUserLoading) return <PageLoading message="Loading dashboard..." />;
 
     return (
-        <div className="min-h-screen bg-background pb-20 font-sans">
+        <div className="stb-page pb-20 font-sans">
             <MetaTags title="Provider Dashboard" description="Real-time shop analytics and performance." />
 
-            <div className="bg-card border-b border-border pt-8 pb-6 px-4 md:px-8">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-black text-foreground tracking-tight">Shop Console</h1>
-                        <p className="text-muted-foreground mt-1 font-medium">Monitoring platform health and booking velocity.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button onClick={handleExport} variant="outline" className="rounded-xl border-border font-bold bg-card">
-                            <Download className="w-4 h-4 mr-2" /> Export
-                        </Button>
-                        <Button className="rounded-xl bg-primary text-primary-foreground font-bold px-6">
-                            <Zap className="w-4 h-4 mr-2" /> Upgrade
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                label="Provider"
+                title="Shop Console"
+                subtitle="Monitoring platform health and booking velocity."
+                compact
+            >
+                <Button onClick={handleExport} variant="outline" className="rounded-xl border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white font-bold h-11">
+                    <Download className="w-4 h-4 mr-2" /> Export
+                </Button>
+                <Button className="rounded-xl stb-btn-glow font-bold px-6 h-11">
+                    <Zap className="w-4 h-4 mr-2" /> Upgrade
+                </Button>
+            </PageHeader>
 
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <PageContent>
+                <ProviderSetupProgressCard />
+                {myBarberProfile?.id && (
+                    <div className="mb-6">
+                        <ProviderTrustScoreCard barberId={myBarberProfile.id} />
+                    </div>
+                )}
+                <OnboardingSetupBanner autoOpenModal audience="provider" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     <MetricCard
                         title="Total Revenue"
                         value={`$${stats.totalRevenue?.toLocaleString() || '0'}`}
                         subValue="Confirmed Earnings"
                         icon={DollarSign}
+                    />
+                    <MetricCard
+                        title="Tips Received"
+                        value={`$${stats.totalTips?.toLocaleString() || '0'}`}
+                        subValue={`$${stats.tipsThisMonth?.toLocaleString() || '0'} this month`}
+                        icon={Heart}
                     />
                     <MetricCard
                         title="Revenue Forecast"
@@ -135,8 +158,52 @@ export default function ProviderDashboard() {
                     />
                 </div>
 
+                {operationalStats && (
+                    <div className="mb-8">
+                        <h2 className="text-lg font-bold text-foreground mb-4">Operational performance</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <MetricCard
+                                title="Services completed"
+                                value={operationalStats.completed_services?.toLocaleString() ?? '0'}
+                                subValue={`${operationalStats.completed_bookings ?? 0} bookings`}
+                                icon={Scissors}
+                            />
+                            <MetricCard
+                                title="Cancellation rate"
+                                value={`${operationalStats.cancellation_rate_percent ?? 0}%`}
+                                subValue={`${operationalStats.cancelled_bookings ?? 0} cancelled`}
+                                icon={Ban}
+                            />
+                            <MetricCard
+                                title="No-show rate"
+                                value={`${operationalStats.no_show_rate_percent ?? 0}%`}
+                                subValue={`${operationalStats.no_show_bookings ?? 0} no-shows`}
+                                icon={Clock}
+                            />
+                            <MetricCard
+                                title="Open disputes"
+                                value={operationalStats.disputes_open ?? 0}
+                                subValue={`${operationalStats.disputes_total ?? 0} total`}
+                                icon={Scale}
+                            />
+                            <MetricCard
+                                title="Rebooking rate"
+                                value={`${operationalStats.rebooking_rate_percent ?? 0}%`}
+                                subValue={`${operationalStats.repeat_clients ?? 0} repeat clients`}
+                                icon={UserCheck}
+                            />
+                            <MetricCard
+                                title="Health score"
+                                value={`${operationalStats.health_score ?? 100}/100`}
+                                subValue={operationalStats.health_flags?.[0] ?? 'On track'}
+                                icon={TrendingUp}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <Card className="lg:col-span-2 border-slate-200 shadow-sm overflow-hidden bg-white rounded-2xl">
+                    <Card className="lg:col-span-2 border-border shadow-sm overflow-hidden bg-card rounded-2xl">
                         <div className="pt-6 px-6 flex justify-between items-center">
                             <div>
                                 <h3 className="text-lg font-bold text-foreground">Revenue Velocity</h3>
@@ -164,7 +231,7 @@ export default function ProviderDashboard() {
                         </div>
                     </Card>
 
-                    <Card className="border-slate-200 shadow-sm bg-white rounded-2xl p-6">
+                    <Card className="border-border shadow-sm bg-card rounded-2xl p-6">
                         <h3 className="text-lg font-bold text-foreground mb-6">Staff Performance</h3>
                         <div className="space-y-5">
                             {staffData.length > 0 ? staffData.sort((a, b) => b.revenue - a.revenue).slice(0, 5).map((member) => (
@@ -188,7 +255,7 @@ export default function ProviderDashboard() {
                 </div>
 
                 <Tabs defaultValue="upcoming" className="w-full">
-                    <TabsList className="bg-slate-100 p-1 rounded-xl mb-6">
+                    <TabsList className="bg-muted p-1 rounded-xl mb-6">
                         <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                         <TabsTrigger value="history">History</TabsTrigger>
                         <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -205,7 +272,7 @@ export default function ProviderDashboard() {
                     <TabsContent value="history">
                         <div className="space-y-4">
                             {bookings.filter(b => b.status === 'completed' || (b.status === 'confirmed' && new Date(b.start_time) < new Date())).slice(0, 10).map((b) => (
-                                <div key={b.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
+                                <div key={b.id} className="flex items-center justify-between p-4 bg-card border border-border rounded-2xl">
                                     <div className="flex items-center gap-4">
                                         <UserAvatar user={{ full_name: b.created_by?.split('@')[0] }} className="w-10 h-10" />
                                         <div>
@@ -230,14 +297,14 @@ export default function ProviderDashboard() {
                         </div>
                     </TabsContent>
                 </Tabs>
-            </div>
+            </PageContent>
         </div>
     );
 }
 
 function BookingCard({ booking }) {
     return (
-        <Card className="hover:shadow-md transition-all p-5 border-slate-200 group bg-white rounded-3xl">
+        <Card className="hover:shadow-md transition-all p-5 border-border group bg-card rounded-3xl stb-card-lift">
             <div className="flex justify-between items-start mb-4">
                 <div className="text-right">
                     <p className="text-sm font-black text-foreground">{format(parseISO(booking.start_time), 'HH:mm')}</p>
@@ -251,7 +318,7 @@ function BookingCard({ booking }) {
                 <p className="text-sm font-bold text-foreground truncate">{booking.client_name || 'Guest User'}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{booking.service_snapshot?.name || 'Standard Service'}</p>
             </div>
-            <div className="flex items-center justify-between pt-4 border-t border-dashed border-slate-100">
+            <div className="flex items-center justify-between pt-4 border-t border-dashed border-border">
                 <div className="flex items-center gap-2">
                     <UserAvatar user={{ full_name: booking.barber_name }} className="w-6 h-6" />
                     <span className="text-[10px] font-bold text-muted-foreground uppercase truncate max-w-[80px]">{booking.barber_name}</span>

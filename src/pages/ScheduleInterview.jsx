@@ -12,14 +12,14 @@ export default function ScheduleInterview() {
     return null;
   }
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="stb-page lg:pb-8">
       <MetaTags title="Schedule interview | Shop The Barber" />
-      <header className="sticky top-0 z-40 bg-white border-b px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-slate-100" aria-label="Back"><ArrowLeft className="w-5 h-5" /></button>
+      <header className="sticky top-0 z-40 bg-card border-b px-4 py-3 flex items-center gap-3">
+        <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-muted" aria-label="Back"><ArrowLeft className="w-5 h-5" /></button>
         <h1 className="font-bold text-foreground">Schedule Interview</h1>
       </header>
       <main className="max-w-lg mx-auto px-4 py-6">
-        <p className="text-slate-600 mb-6">Use the Applicant Review page and click “Schedule” on an applicant to set a date and format.</p>
+        <p className="text-muted-foreground mb-6">Use the Applicant Review page and click “Schedule” on an applicant to set a date and format.</p>
         <Button variant="outline" onClick={() => navigate(-1)} className="rounded-xl gap-2"><Calendar className="w-4 h-4" /> Back to review</Button>
       </main>
     </div>

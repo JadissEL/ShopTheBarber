@@ -65,7 +65,7 @@ The AI will use the Vercel and Render MCP tools to run the right actions.
 ## 3. Repo and env requirements (same as non-MCP)
 
 - **Git:** Code must be pushed to **GitHub** (or GitLab/Bitbucket). Both Vercel and Render deploy from Git.
-- **Secrets:** The AI can create services and set *non-secret* env vars. For **secrets** (e.g. `JWT_SECRET`, `STRIPE_API_KEY`), you either:
+- **Secrets:** The AI can create services and set *non-secret* env vars. For **secrets** (e.g. `CLERK_SECRET_KEY`, `STRIPE_API_KEY`), you either:
   - Set them in the **Vercel / Render dashboards** after the service exists, or  
   - Pass them when the AI asks (if your workflow allows).
 

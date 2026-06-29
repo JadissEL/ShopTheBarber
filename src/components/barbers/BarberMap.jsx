@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import MapTileLayer from '@/components/maps/MapTileLayer';
+import { DEFAULT_MAP_CENTER } from '@/lib/mapConfig';
 
 // Fix for default markers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -70,19 +72,25 @@ function FitBounds({ barbers, userPosition }) {
   return null;
 }
 
-export default function BarberMap({ barbers, onBarberSelect }) {
-  const [userPosition, setUserPosition] = useState(null);
+export default function BarberMap({ barbers, onBarberSelect, userPosition: externalUserPosition }) {
+  const [internalUserPosition, setInternalUserPosition] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-  // Default center: Paris
-  const defaultCenter = [48.8566, 2.3522];
+  const userPosition =
+    externalUserPosition?.latitude != null && externalUserPosition?.longitude != null
+      ? [externalUserPosition.latitude, externalUserPosition.longitude]
+      : internalUserPosition;
+
+  // Default center: Athens, Greece
+  const defaultCenter = DEFAULT_MAP_CENTER;
 
   const handleGetLocation = () => {
+    if (externalUserPosition) return;
     setLoadingLocation(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserPosition([position.coords.latitude, position.coords.longitude]);
+          setInternalUserPosition([position.coords.latitude, position.coords.longitude]);
           setLoadingLocation(false);
         },
         (error) => {
@@ -93,33 +101,22 @@ export default function BarberMap({ barbers, onBarberSelect }) {
     }
   };
 
-  // Generate random positions around Paris for demo if no coordinates
-  const getBarbersWithCoords = () => {
-    return barbers.map((barber, index) => {
-      if (barber.latitude && barber.longitude) {
-        return barber;
-      }
-      // Generate random position around Paris for demo
-      const lat = 48.8566 + (Math.random() - 0.5) * 0.1;
-      const lng = 2.3522 + (Math.random() - 0.5) * 0.1;
-      return { ...barber, latitude: lat, longitude: lng };
-    });
-  };
-
-  const barbersWithCoords = getBarbersWithCoords();
+  const barbersWithCoords = barbers.filter((barber) => barber.latitude && barber.longitude);
 
   return (
     <div className="relative h-[400px] rounded-[12px] overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+      {barbersWithCoords.length === 0 ? (
+        <div className="h-full flex items-center justify-center text-sm text-muted-foreground bg-muted/30 px-6 text-center">
+          Map view requires barber locations. Browse the list or check back when locations are available.
+        </div>
+      ) : (
       <MapContainer
         center={defaultCenter}
         zoom={12}
         className="h-full w-full z-0"
         scrollWheelZoom={true}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <MapTileLayer />
         
         <LocationMarker position={userPosition} />
         <FitBounds barbers={barbersWithCoords} userPosition={userPosition} />
@@ -168,7 +165,7 @@ export default function BarberMap({ barbers, onBarberSelect }) {
 
                 <Link to={createPageUrl(`BarberProfile?id=${barber.id}`)}>
                   <Button size="sm" className="w-full bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white text-xs h-8">
-                    Voir le Profil
+                    View Profile
                   </Button>
                 </Link>
               </div>
@@ -176,18 +173,22 @@ export default function BarberMap({ barbers, onBarberSelect }) {
           </Marker>
         ))}
       </MapContainer>
+      )}
 
       {/* Locate Me Button */}
+      {barbersWithCoords.length > 0 && (
       <Button
         onClick={handleGetLocation}
         disabled={loadingLocation}
-        className="absolute bottom-4 right-4 z-[1000] bg-white hover:bg-slate-50 text-[#0B2545] shadow-lg rounded-[10px] min-h-[44px]"
+        className="absolute bottom-4 right-4 z-[1000] bg-card hover:bg-muted/50 text-[#0B2545] shadow-lg rounded-[10px] min-h-[44px]"
       >
         <Navigation className={`w-4 h-4 mr-2 ${loadingLocation ? 'animate-pulse' : ''}`} />
         {loadingLocation ? 'Localisation...' : 'Me localiser'}
       </Button>
+      )}
 
       {/* Legend */}
+      {barbersWithCoords.length > 0 && (
       <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-sm p-3 rounded-[10px] shadow-lg">
         <p className="text-xs font-semibold text-[#0B2545] mb-2">Légende</p>
         <div className="flex items-center gap-2 text-xs text-[#4B5563]">
@@ -197,10 +198,11 @@ export default function BarberMap({ barbers, onBarberSelect }) {
         {userPosition && (
           <div className="flex items-center gap-2 text-xs text-[#4B5563] mt-1">
             <div className="w-4 h-4 rounded-full bg-[#0B2545]"></div>
-            <span>Votre position</span>
+            <span>Your location</span>
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

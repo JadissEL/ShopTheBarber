@@ -7,9 +7,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { FormField } from '@/components/ui/form-field';
 import { serviceSchema } from '@/components/schemas';
+import { useProviderSetupTheme } from '@/components/provider-setup/providerSetupTheme';
 
-export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop', barberId }) {
+export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop', barberId, variant = 'dark' }) {
     const queryClient = useQueryClient();
+    const t = useProviderSetupTheme(variant);
 
     const form = useForm({
         resolver: zodResolver(serviceSchema),
@@ -73,10 +75,10 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
         <div className="space-y-6">
             <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">Add Your Services</h2>
-                <p className="text-gray-400">List the main services you offer. You can add more later.</p>
+                <p className={t.subtitle}>List the main services you offer. You can add more later.</p>
             </div>
 
-            <div className="bg-[#1A1D24] p-6 rounded-xl border border-white/10">
+            <div className={t.panel}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
@@ -84,7 +86,7 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
                             name="name"
                             label="Service Name"
                             render={(field) => (
-                                <Input {...field} placeholder="e.g. Skin Fade" className="bg-slate-950 border-white/10 text-white" />
+                                <Input {...field} placeholder="e.g. Skin Fade" className={t.input} />
                             )}
                         />
                         <FormField
@@ -92,7 +94,7 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
                             name="category"
                             label="Category"
                             render={(field) => (
-                                <Input {...field} placeholder="e.g. Hair" className="bg-slate-950 border-white/10 text-white" />
+                                <Input {...field} placeholder="e.g. Hair" className={t.input} />
                             )}
                         />
                     </div>
@@ -102,7 +104,7 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
                             name="price_text"
                             label="Price"
                             render={(field) => (
-                                <Input {...field} placeholder="35" type="number" className="bg-slate-950 border-white/10 text-white" />
+                                <Input {...field} placeholder="35" type="number" className={t.input} />
                             )}
                         />
                         <FormField
@@ -110,11 +112,11 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
                             name="duration_text"
                             label="Duration (min)"
                             render={(field) => (
-                                <Input {...field} placeholder="45" type="number" className="bg-slate-950 border-white/10 text-white" />
+                                <Input {...field} placeholder="45" type="number" className={t.input} />
                             )}
                         />
                     </div>
-                    <Button type="submit" disabled={createServiceMutation.isPending || (context === 'shop' && !shopId) || (context === 'independent' && !barberId)} className="w-full bg-slate-800 hover:bg-slate-700 text-white">
+                    <Button type="submit" disabled={createServiceMutation.isPending || (context === 'shop' && !shopId) || (context === 'independent' && !barberId)} className={t.addBtn}>
                         {createServiceMutation.isPending ? 'Adding...' : 'Add Service'}
                     </Button>
                 </form>
@@ -122,10 +124,10 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
 
             <div className="space-y-3">
                 {services.map(service => (
-                    <div key={service.id} className="bg-[#1A1D24] p-4 rounded-xl border border-white/5 flex justify-between items-center">
+                    <div key={service.id} className={t.listItem}>
                         <div>
-                            <h3 className="font-bold text-white">{service.name}</h3>
-                            <div className="flex gap-3 text-sm text-gray-400">
+                            <h3 className={t.listTitle}>{service.name}</h3>
+                            <div className={t.cn('flex gap-3', t.listMeta)}>
                                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.duration_minutes || service.duration_min || service.duration_text}m</span>
                                 <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> {service.price || service.price_text}</span>
                             </div>
@@ -134,24 +136,24 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
                             variant="ghost"
                             size="icon"
                             onClick={() => deleteServiceMutation.mutate(service.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            className={t.deleteBtn}
                         >
                             <Trash2 className="w-4 h-4" />
                         </Button>
                     </div>
                 ))}
                 {services.length === 0 && (
-                    <div className="text-center py-8 text-gray-500 border border-dashed border-white/10 rounded-xl">
+                    <div className={t.empty}>
                         No services added yet.
                     </div>
                 )}
             </div>
 
             <div className="flex justify-between pt-4">
-                <Button variant="ghost" onClick={onBack} className="text-gray-400 hover:text-white">
+                <Button variant="ghost" onClick={onBack} className={t.ghostBtn}>
                     Back
                 </Button>
-                <Button onClick={handleContinue} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8" disabled={services.length === 0}>
+                <Button onClick={handleContinue} className={t.primaryBtn} disabled={services.length === 0}>
                     Continue
                 </Button>
             </div>

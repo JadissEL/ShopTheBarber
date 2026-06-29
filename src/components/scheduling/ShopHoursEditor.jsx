@@ -31,7 +31,7 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                 end_time: existing.end_time,
                 is_closed: false
             } : {
-                day: day,
+                day,
                 start_time: '09:00',
                 end_time: '18:00',
                 is_closed: true // Default to closed if not defined
@@ -88,14 +88,14 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                 {DAYS.map(day => {
                     const dayData = schedule[day] || {};
                     return (
-                        <div key={day} className={`flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border transition-all ${dayData.is_closed ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 shadow-sm'}`}>
+                        <div key={day} className={`flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border transition-all ${dayData.is_closed ? 'bg-muted/50 border-slate-100 opacity-60' : 'bg-card border-slate-200 shadow-sm'}`}>
                             <div className="flex items-center gap-4 mb-3 md:mb-0">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${dayData.is_closed ? 'bg-slate-200 text-slate-500' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-100'}`}>
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${dayData.is_closed ? 'bg-slate-200 text-muted-foreground' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-100'}`}>
                                     {day.substring(0, 2)}
                                 </div>
                                 <div>
                                     <p className="font-bold text-foreground">{day}</p>
-                                    <p className="text-[11px] text-slate-500 font-bold uppercase">{dayData.is_closed ? 'Rest Day' : 'Work Day'}</p>
+                                    <p className="text-[11px] text-muted-foreground font-bold uppercase">{dayData.is_closed ? 'Rest Day' : 'Work Day'}</p>
                                 </div>
                             </div>
 
@@ -106,11 +106,11 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                                         onCheckedChange={(val) => handleChange(day, 'is_closed', !val)}
                                         className="data-[state=checked]:bg-indigo-600"
                                     />
-                                    <span className="text-sm font-bold text-slate-600">{dayData.is_closed ? 'OFF' : 'ON'}</span>
+                                    <span className="text-sm font-bold text-muted-foreground">{dayData.is_closed ? 'OFF' : 'ON'}</span>
                                 </div>
 
                                 {!dayData.is_closed ? (
-                                    <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                    <div className="flex items-center gap-3 bg-muted/50 p-2 rounded-xl border border-slate-100">
                                         <div className="flex items-center gap-2">
                                             <Clock className="w-3 h-3 text-slate-400" />
                                             <input
@@ -120,7 +120,7 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                                                 className="bg-transparent text-sm font-bold text-foreground outline-none w-20"
                                             />
                                         </div>
-                                        <span className="text-slate-300 font-bold">→</span>
+                                        <span className="text-slate-300 font-bold"></span>
                                         <div className="flex items-center gap-2">
                                             <input
                                                 type="time"

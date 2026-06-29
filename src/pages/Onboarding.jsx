@@ -37,7 +37,7 @@ export default function Onboarding() {
   const slide = slides[currentSlide];
 
   return (
-    <div className="min-h-screen bg-background-dark flex flex-col items-center justify-center px-6 py-12 font-sans">
+    <div className="stb-page-dark flex flex-col items-center justify-center px-6 py-12 font-sans">
       <div className="w-full max-w-md flex flex-col h-full">
 
         {/* Image Card */}

@@ -23,50 +23,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/components/context/CartContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 
-// Fallback product data with premium fields for detail page
-const FALLBACK_PRODUCTS = [
-  {
-    id: '1',
-    name: 'Night Skin Recharge',
-    brand: 'Baxter of California',
-    price: 48,
-    image_url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&fit=crop',
-    category: 'Beard',
-    description: 'A lightweight, fast-absorbing blend designed to restore balance overnight. Crafted with premium natural oils and vitamins to support skin recovery and a healthy-looking beard.',
-    specs: [
-      { icon: Leaf, label: 'Origin', value: '100% Organic' },
-      { icon: Droplets, label: 'Formula', value: 'Oil-based' },
-      { icon: Shield, label: 'Tested', value: 'Dermatologist' },
-      { icon: Sparkles, label: 'Finish', value: 'Non-greasy' },
-    ],
-    applicationTips: 'Apply 3–5 drops to cleansed skin or beard. Warm between palms and press into skin. Best used in the evening for overnight recovery.',
-    ingredients: 'Argan Oil, Jojoba, Vitamin E, Rosemary Extract, Cedarwood.',
-    shippingReturns: 'Free shipping on orders over $50. 30-day returns. Contact support@shopthebarber.com for exchanges.',
-  },
-  {
-    id: '2',
-    name: 'Claymation Styling Kit',
-    brand: 'Hanz de Fuko',
-    price: 24,
-    image_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=800&fit=crop',
-    category: 'Hair',
-    description: 'A versatile, medium-hold clay that adds texture and definition without stiffness. Ideal for modern, natural looks with a matte finish.',
-    specs: [
-      { icon: Leaf, label: 'Origin', value: 'Natural wax' },
-      { icon: Droplets, label: 'Formula', value: 'Water-based' },
-      { icon: Shield, label: 'Tested', value: 'Salon-grade' },
-      { icon: Sparkles, label: 'Finish', value: 'Matte' },
-    ],
-    applicationTips: 'Work a small amount through towel-dried or dry hair. Style with fingers or comb. Build up for stronger hold.',
-    ingredients: 'Beeswax, Kaolin, Carnauba, Vitamin B5.',
-    shippingReturns: 'Free shipping on orders over $50. 30-day returns.',
-  },
-  { id: '3', name: 'Wahl Professional 5-Star Cordless', brand: 'Wahl', price: 145, image_url: 'https://images.unsplash.com/photo-1596981899093-11f15e5f60f0?w=800&fit=crop', category: 'Tools', description: 'Professional-grade cordless clipper for precision cuts. Long-lasting battery and durable blades for barber-quality results.', specs: [{ icon: Leaf, label: 'Origin', value: 'Pro-grade' }, { icon: Droplets, label: 'Type', value: 'Cordless' }, { icon: Shield, label: 'Tested', value: 'Professional' }, { icon: Sparkles, label: 'Finish', value: 'Precision' }], applicationTips: 'Charge fully before first use. Use with guard combs for consistent length. Oil blades regularly.', ingredients: 'Metal, plastic, lithium-ion battery. See manual for full specs.', shippingReturns: 'Free shipping on orders over $50. 30-day returns.' },
-  { id: '4', name: 'Byredo Black Saffron EDP', brand: 'Byredo', price: 190, image_url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&fit=crop', category: 'Fragrance', description: 'A bold, sophisticated fragrance blending saffron, leather, and violet. Long-lasting and distinctive.', specs: [{ icon: Leaf, label: 'Origin', value: 'Luxury' }, { icon: Droplets, label: 'Formula', value: 'EDP' }, { icon: Shield, label: 'Tested', value: 'Allergen-checked' }, { icon: Sparkles, label: 'Finish', value: 'Long-lasting' }], applicationTips: 'Apply to pulse points. One or two sprays sufficient. Store away from heat and light.', ingredients: 'Alcohol, fragrance oils. See packaging for full list.', shippingReturns: 'Free shipping on orders over $50. 30-day returns.' },
-  { id: '5', name: 'Elite Face Serum', brand: 'Curated', price: 68, image_url: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&fit=crop', category: 'Skincare', description: 'A lightweight serum to support skin recovery and radiance. Curated for premium grooming routines.', specs: [{ icon: Leaf, label: 'Origin', value: 'Curated' }, { icon: Droplets, label: 'Formula', value: 'Serum' }, { icon: Shield, label: 'Tested', value: 'Dermatologist' }, { icon: Sparkles, label: 'Finish', value: 'Non-greasy' }], applicationTips: 'Apply to clean, dry skin morning or evening. Follow with moisturizer if desired.', ingredients: 'See packaging for full ingredient list.', shippingReturns: 'Free shipping on orders over $50. 30-day returns.' },
-  { id: '6', name: 'Wooden Comb Set', brand: 'Partner', price: 55, image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&fit=crop', category: 'Tools', description: 'Handcrafted wooden combs for gentle detangling and styling. A timeless addition to any grooming kit.', specs: [{ icon: Leaf, label: 'Origin', value: 'Natural wood' }, { icon: Droplets, label: 'Type', value: 'Set' }, { icon: Shield, label: 'Tested', value: 'Quality assured' }, { icon: Sparkles, label: 'Finish', value: 'Smooth' }], applicationTips: 'Use on damp or dry hair. Store in a dry place. Avoid excessive heat.', ingredients: 'Wood (sandalwood/ebony). No synthetic materials.', shippingReturns: 'Free shipping on orders over $50. 30-day returns.' },
-];
-
+// Default specs for API products missing detail fields
 const DEFAULT_SPECS = [
   { icon: Leaf, label: 'Origin', value: 'Premium blend' },
   { icon: Droplets, label: 'Formula', value: 'Curated' },
@@ -74,7 +31,7 @@ const DEFAULT_SPECS = [
   { icon: Sparkles, label: 'Finish', value: 'Elite' },
 ];
 
-function getProductById(id, apiProduct, fallbackList) {
+function getProductById(id, apiProduct) {
   if (apiProduct && (apiProduct.id === id || String(apiProduct.id) === id)) {
     return {
       id: apiProduct.id,
@@ -90,8 +47,6 @@ function getProductById(id, apiProduct, fallbackList) {
       shippingReturns: 'Free shipping on orders over $50. 30-day returns. Contact support for assistance.',
     };
   }
-  const found = fallbackList.find((p) => String(p.id) === String(id));
-  if (found) return { ...found, specs: found.specs || DEFAULT_SPECS };
   return null;
 }
 
@@ -110,23 +65,41 @@ export default function ProductDetail() {
     }
   }, [isDesktop]);
 
-  const { data: apiProducts = [] } = useQuery({
-    queryKey: ['marketplace-products'],
-    queryFn: () => sovereign.entities.Product.list(),
+  const { data: apiProduct, isLoading } = useQuery({
+    queryKey: ['marketplace-product', productId],
+    queryFn: () => sovereign.products.getPublic(productId),
+    enabled: !!productId,
     staleTime: 60 * 1000,
     retry: 1,
   });
 
-  const apiProduct = Array.isArray(apiProducts)
-    ? apiProducts.find((p) => String(p.id) === String(productId))
-    : null;
-  const product = getProductById(productId, apiProduct, FALLBACK_PRODUCTS);
+  const product = getProductById(productId, apiProduct);
 
-  if (!productId || !product) {
+  if (!productId) {
     return (
-      <div className="min-h-screen bg-background pb-24 lg:pb-8 flex flex-col items-center justify-center px-4">
+      <div className="stb-page pb-24 lg:pb-8 flex flex-col items-center justify-center px-4">
         <MetaTags title="Product not found" description="This product could not be found." />
-        <p className="text-slate-600 font-medium mb-4">Product not found.</p>
+        <p className="text-muted-foreground font-medium mb-4">Product not found.</p>
+        <Link to={createPageUrl('Marketplace')}>
+          <Button variant="outline" className="rounded-xl">Back to Marketplace</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="stb-page pb-24 lg:pb-8 flex items-center justify-center">
+        <p className="text-muted-foreground">Loading product…</p>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="stb-page pb-24 lg:pb-8 flex flex-col items-center justify-center px-4">
+        <MetaTags title="Product not found" description="This product could not be found." />
+        <p className="text-muted-foreground font-medium mb-4">Product not found.</p>
         <Link to={createPageUrl('Marketplace')}>
           <Button variant="outline" className="rounded-xl">Back to Marketplace</Button>
         </Link>
@@ -137,37 +110,37 @@ export default function ProductDetail() {
   const SpecIcon = ({ icon: Icon, label, value }) => {
     const IconComp = Icon || Sparkles;
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col items-start gap-2">
+      <div className="rounded-xl border border-slate-200 bg-card p-4 flex flex-col items-start gap-2">
         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
           <IconComp className="w-5 h-5" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className="text-sm font-semibold text-foreground">{value}</p>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="stb-page pb-24 lg:pb-8">
       <MetaTags
-        title={`${product.name} – ${product.brand}`}
+        title={`${product.name} - ${product.brand}`}
         description={product.description || `Premium ${product.category} product from ${product.brand}.`}
       />
 
-      {/* Top bar: back + share/favorite — desktop: full nav via sidebar */}
+      {/* Top bar: back + share/favorite, desktop: full nav via sidebar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100">
         <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between">
           <Link
             to={createPageUrl('Marketplace')}
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-foreground font-medium text-sm"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Marketplace
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full text-slate-500 hover:text-slate-700" aria-label="Share">
+            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground/90" aria-label="Share">
               <Share2 className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full text-slate-500 hover:text-slate-700" aria-label="Add to wishlist">
+            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground/90" aria-label="Add to wishlist">
               <Heart className="w-4 h-4" />
             </Button>
           </div>
@@ -179,7 +152,7 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
           {/* Product image */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+            <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-slate-200 shadow-sm">
               <OptimizedImage
                 src={product.image_url}
                 alt={product.name}
@@ -199,11 +172,11 @@ export default function ProductDetail() {
             <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">{product.brand}</p>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mb-2">{product.name}</h1>
             <p className="text-2xl font-bold text-foreground mb-6">${Number(product.price).toFixed(2)}</p>
-            <p className="text-slate-600 text-base leading-relaxed mb-8">{product.description}</p>
+            <p className="text-muted-foreground text-base leading-relaxed mb-8">{product.description}</p>
 
             {/* High-End Specs */}
             <section className="mb-8">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">High-End Specs</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">High-End Specs</h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {(product.specs || DEFAULT_SPECS).map((spec, i) => (
                   <SpecIcon key={i} icon={spec.icon} label={spec.label} value={spec.value} />
@@ -213,44 +186,44 @@ export default function ProductDetail() {
 
             {/* Expert Application Tips */}
             <section className="mb-8">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Expert Application Tips</h2>
-              <p className="text-slate-600 text-sm leading-relaxed">{product.applicationTips}</p>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Expert Application Tips</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">{product.applicationTips}</p>
             </section>
 
-            {/* Ingredients — collapsible on mobile, open on desktop */}
+            {/* Ingredients, collapsible on mobile, open on desktop */}
             <Collapsible open={ingredientsOpen} onOpenChange={setIngredientsOpen} className="mb-4">
               <CollapsibleTrigger asChild>
-                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-slate-200 text-left font-semibold text-foreground hover:text-slate-700">
+                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-slate-200 text-left font-semibold text-foreground hover:text-foreground/90">
                   Ingredients
                   {ingredientsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <p className="text-slate-600 text-sm pt-3 pb-2">{product.ingredients}</p>
+                <p className="text-muted-foreground text-sm pt-3 pb-2">{product.ingredients}</p>
               </CollapsibleContent>
             </Collapsible>
 
             {/* Shipping & Returns */}
             <Collapsible open={shippingOpen} onOpenChange={setShippingOpen} className="mb-8">
               <CollapsibleTrigger asChild>
-                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-slate-200 text-left font-semibold text-foreground hover:text-slate-700">
+                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-slate-200 text-left font-semibold text-foreground hover:text-foreground/90">
                   Shipping & Returns
                   {shippingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <p className="text-slate-600 text-sm pt-3 pb-2">{product.shippingReturns}</p>
+                <p className="text-muted-foreground text-sm pt-3 pb-2">{product.shippingReturns}</p>
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Add to Bag — in-flow on desktop */}
+            {/* Add to Bag, in-flow on desktop */}
             <div className="mt-auto pt-6 border-t border-slate-200 hidden lg:flex flex-col sm:flex-row gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Qty</span>
+                <span className="text-sm font-medium text-muted-foreground">Qty</span>
                 <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden">
-                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100" aria-label="Decrease quantity">−</button>
+                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted" aria-label="Decrease quantity">−</button>
                   <span className="w-12 text-center font-semibold text-foreground">{quantity}</span>
-                  <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100" aria-label="Increase quantity">+</button>
+                  <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted" aria-label="Increase quantity">+</button>
                 </div>
               </div>
               <Button
@@ -279,13 +252,13 @@ export default function ProductDetail() {
         </div>
       </main>
 
-      {/* Sticky bottom bar — mobile only (desktop has in-flow CTA) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 p-4 lg:hidden safe-area-pb">
+      {/* Sticky bottom bar, mobile only (desktop has in-flow CTA) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-slate-200 p-4 lg:hidden safe-area-pb">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-12 h-12 flex items-center justify-center text-slate-600" aria-label="Decrease quantity">−</button>
+          <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-card">
+            <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-12 h-12 flex items-center justify-center text-muted-foreground" aria-label="Decrease quantity">−</button>
             <span className="w-10 text-center font-semibold text-foreground">{quantity}</span>
-            <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-12 h-12 flex items-center justify-center text-slate-600" aria-label="Increase quantity">+</button>
+            <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-12 h-12 flex items-center justify-center text-muted-foreground" aria-label="Increase quantity">+</button>
           </div>
           <Button
             className="flex-1 rounded-xl bg-primary text-primary-foreground hover:opacity-95 font-semibold h-12 gap-2"

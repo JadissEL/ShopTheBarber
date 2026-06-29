@@ -5,9 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
+import { useProviderSetupTheme } from '@/components/provider-setup/providerSetupTheme';
 
-export default function AvailabilitySetup({ shopId, onNext, onBack }) {
+export default function AvailabilitySetup({ shopId, onNext, onBack, variant = 'dark' }) {
     const queryClient = useQueryClient();
+    const t = useProviderSetupTheme(variant);
 
     // Local state for schedule
     const [schedule, setSchedule] = useState(() => {
@@ -56,7 +58,7 @@ export default function AvailabilitySetup({ shopId, onNext, onBack }) {
 
     const TimeSelect = ({ value, onChange, disabled }) => (
         <Select value={value} onValueChange={onChange} disabled={disabled}>
-            <SelectTrigger className="w-24 h-9 bg-primary border-primary-foreground/20 text-xs">
+            <SelectTrigger className={t.timeSelect}>
                 <SelectValue placeholder="Time" />
             </SelectTrigger>
             <SelectContent>
@@ -72,14 +74,14 @@ export default function AvailabilitySetup({ shopId, onNext, onBack }) {
         <div className="space-y-6">
             <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">Set Your Availability</h2>
-                <p className="text-gray-400">Define your standard weekly working hours.</p>
+                <p className={t.subtitle}>Define your standard weekly working hours.</p>
             </div>
 
-            <div className="bg-[#1A1D24] rounded-xl border border-white/10 overflow-hidden divide-y divide-white/5">
+            <div className={t.schedulePanel}>
                 {schedule.map((daySchedule, i) => {
                     return (
                         <div key={daySchedule.day} className="p-4 flex items-center gap-4">
-                            <div className="w-28 font-medium text-sm text-gray-300">{daySchedule.day}</div>
+                            <div className={t.cn('w-28', t.dayLabel)}>{daySchedule.day}</div>
                             <Switch
                                 checked={!daySchedule.is_closed}
                                 onCheckedChange={(checked) => handleDayChange(i, 'is_closed', !checked)}
@@ -92,14 +94,14 @@ export default function AvailabilitySetup({ shopId, onNext, onBack }) {
                                             value={daySchedule.open_time}
                                             onChange={(val) => handleDayChange(i, 'open_time', val)}
                                         />
-                                        <span className="text-gray-500 text-xs">to</span>
+                                        <span className="text-muted-foreground text-xs">to</span>
                                         <TimeSelect
                                             value={daySchedule.close_time}
                                             onChange={(val) => handleDayChange(i, 'close_time', val)}
                                         />
                                     </>
                                 ) : (
-                                    <span className="text-sm text-gray-600 italic px-2">Closed</span>
+                                    <span className={t.closedLabel}>Closed</span>
                                 )}
                             </div>
                         </div>
@@ -108,10 +110,10 @@ export default function AvailabilitySetup({ shopId, onNext, onBack }) {
             </div>
 
             <div className="flex justify-between pt-4">
-                <Button variant="ghost" onClick={onBack} className="text-gray-400 hover:text-white">
+                <Button variant="ghost" onClick={onBack} className={t.ghostBtn}>
                     Back
                 </Button>
-                <Button onClick={() => updateScheduleMutation.mutate(schedule)} disabled={updateScheduleMutation.isPending} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8">
+                <Button onClick={() => updateScheduleMutation.mutate(schedule)} disabled={updateScheduleMutation.isPending} className={t.primaryBtn}>
                     {updateScheduleMutation.isPending ? 'Saving...' : 'Continue'}
                 </Button>
             </div>

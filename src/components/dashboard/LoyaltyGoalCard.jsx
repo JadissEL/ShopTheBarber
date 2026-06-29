@@ -7,7 +7,7 @@ export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentP
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-      <Card className="h-full p-5 border border-slate-200 bg-white shadow-sm rounded-2xl flex flex-col items-center justify-center text-center">
+      <Card className="h-full p-5 border border-slate-200 bg-card shadow-sm rounded-2xl flex flex-col items-center justify-center text-center">
         <div className="relative w-24 h-24 mb-3">
           <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
             <circle
@@ -33,8 +33,8 @@ export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentP
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-foreground">{percent}%</span>
         </div>
-        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Loyalty Goal</p>
-        <p className="text-slate-700 text-sm font-medium">{pointsToNext.toLocaleString()} to {nextTier}</p>
+        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-1">Loyalty Goal</p>
+        <p className="text-foreground/90 text-sm font-medium">{pointsToNext.toLocaleString()} to {nextTier}</p>
       </Card>
     </motion.div>
   );

@@ -1,55 +1,106 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Search, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { OptimizedImage } from '@/components/ui/optimized-image';
-import { RefreshIndicator } from '@/components/ui/refresh-indicator';
-import { useQueryClient } from '@tanstack/react-query';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { SchemaMarkup } from '@/components/seo/SchemaMarkup';
-import { AnimatePresence } from 'framer-motion';
-import BarberCard from '@/components/ui/barber-card';
-import ShopCard from '@/components/ui/shop-card';
-import { Button } from '@/components/ui/button';
-import { Store, User, Map } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import AIAdvisor from '@/components/ai/AIAdvisor';
+import HeroSection from '@/components/explore/HeroSection';
+import StickyFilterBar from '@/components/explore/StickyFilterBar';
+import ExploreResultsToolbar from '@/components/explore/ExploreResultsToolbar';
+import ExploreBarberGrid from '@/components/explore/ExploreBarberGrid';
+import ExploreActiveFilters from '@/components/explore/ExploreActiveFilters';
+import ExploreFeaturedSpotlight from '@/components/explore/ExploreFeaturedSpotlight';
+import ExploreChampionshipLink from '@/components/explore/ExploreChampionshipLink';
+import { parseSpokenLanguages, effectiveBarberLanguages, matchesLanguageFilter, FALLBACK_LANGUAGE_OPTIONS } from '@/lib/languages';
+import { parseChildrenFriendly, effectiveChildrenFriendly, matchesChildrenFriendlyFilter } from '@/lib/childrenFriendly';
+import { parseAttestationFlag, effectiveLicensed, effectiveInsured } from '@/lib/providerAttestation';
+import { matchesMobileServiceFilter, matchesShopServiceFilter } from '@/lib/mobileService';
+import { resolveExploreMode, EXPLORE_PAGE_CONFIG } from '@/lib/explorePageConfig';
+import { sortExploreBarbers, buildBarberMinPriceMap } from '@/lib/exploreSort';
+import { barberDistanceKm } from '@/lib/geo';
+import { usePreferredLocation } from '@/hooks/usePreferredLocation';
+import { useExploreFilters } from '@/hooks/useExploreFilters';
+import { useBarberFavorites } from '@/hooks/useBarberFavorites';
+import { useHomepage } from '@/hooks/useHomepage';
+import { siteOrigin } from '@/lib/seoUtils';
+
 export default function Explore() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const [searchTerm, setSearchTerm] = useState(urlParams.get('q') || '');
-  const [activeFilter, setActiveFilter] = useState(urlParams.get('filter') || 'All');
   const queryClient = useQueryClient();
+  const { preferredLocation } = usePreferredLocation();
+  const userCoords = preferredLocation
+    ? { latitude: preferredLocation.latitude, longitude: preferredLocation.longitude }
+    : null;
+
+  const { data: languageOptions = FALLBACK_LANGUAGE_OPTIONS } = useQuery({
+    queryKey: ['language-options'],
+    queryFn: () => sovereign.languages.getOptions(),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    activeFilter,
+    setActiveFilter,
+    cityFilter,
+    mobileOnly,
+    shopOnly,
+    groupOnly,
+    viewType,
+    setViewType,
+    languageFilter,
+    setLanguageFilter,
+    kidsWelcomeOnly,
+    toggleKidsWelcome,
+    sortBy,
+    setSortBy,
+    highlightFilter,
+    setHighlightFilter,
+    setDiscoveryFlag,
+    activeFilterItems,
+    clearAllFilters,
+  } = useExploreFilters({ languageOptions });
+
+  const { isFavorited, toggleFavorite } = useBarberFavorites();
+  const { data: homepageData } = useHomepage();
+  const platformStats = homepageData?.stats;
+
+  const exploreMode = resolveExploreMode({ mobileOnly, shopOnly, groupOnly, activeFilter });
+  const pageConfig = EXPLORE_PAGE_CONFIG[exploreMode] ?? EXPLORE_PAGE_CONFIG.topRated;
+
+  React.useEffect(() => {
+    if (pageConfig.lockProfessionals) {
+      setViewType('professionals');
+    }
+  }, [pageConfig.lockProfessionals, exploreMode, setViewType]);
 
   const {
     data: rawBarbers,
     isFetching: barbersFetching,
     isError: barbersError,
     error: barbersErr,
-    refetch: refetchBarbers
+    refetch: refetchBarbers,
   } = useQuery({
     queryKey: ['explore-barbers'],
     queryFn: async () => {
       const list = await sovereign.entities.Barber.list();
       return Array.isArray(list) ? list : [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     refetchOnMount: 'always',
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
   });
 
-  // Normalize barbers data - flatten data object if exists; safe when API fails
   const barbers = React.useMemo(() => {
     const list = Array.isArray(rawBarbers) ? rawBarbers : [];
-    return list.map(b => {
+    return list.map((b) => {
       const data = b.data || {};
       return {
         id: b.id,
         name: data.name || b.name || 'Unknown',
         location: data.location || b.location,
+        city: data.city || b.city,
         image_url: data.image_url || b.image_url,
         rating: data.rating ?? b.rating ?? 0,
         review_count: data.review_count ?? b.review_count ?? 0,
@@ -58,12 +109,51 @@ export default function Explore() {
         services: data.services || b.services,
         auto_accept: data.auto_accept || b.auto_accept,
         type: data.type || b.type,
-        offers_mobile_service: data.offers_mobile_service || b.offers_mobile_service
+        offers_mobile_service: data.offers_mobile_service === true || b.offers_mobile_service === true,
+        offers_shop_service: data.offers_shop_service ?? b.offers_shop_service,
+        offers_group_booking: data.offers_group_booking === true || b.offers_group_booking === true,
+        group_booking_discount_percent: data.group_booking_discount_percent ?? b.group_booking_discount_percent ?? 0,
+        is_vip: data.is_vip === true || b.is_vip === true,
+        spoken_languages: parseSpokenLanguages(data.spoken_languages ?? b.spoken_languages),
+        children_friendly: parseChildrenFriendly(data.children_friendly ?? b.children_friendly),
+        attestation_licensed: parseAttestationFlag(data.attestation_licensed ?? b.attestation_licensed),
+        attestation_insured: parseAttestationFlag(data.attestation_insured ?? b.attestation_insured),
+        latitude: data.latitude ?? b.latitude,
+        longitude: data.longitude ?? b.longitude,
       };
     });
   }, [rawBarbers]);
 
-  const { data: rawShops, isError: shopsError, refetch: refetchShops } = useQuery({
+  const barberIds = React.useMemo(() => barbers.map((b) => b.id).filter(Boolean), [barbers]);
+
+  const { data: statsMap = {} } = useQuery({
+    queryKey: ['explore-barber-stats', barberIds.slice(0, 100).join(',')],
+    queryFn: () => sovereign.providerStats.getBarberPublicBatch(barberIds.slice(0, 100)),
+    enabled: barberIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: discoveryPreviews = {} } = useQuery({
+    queryKey: ['explore-discovery-previews', barberIds.slice(0, 100).join(',')],
+    queryFn: () => sovereign.showcase.getDiscoveryPreviews(barberIds.slice(0, 100)),
+    enabled: barberIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const barbersWithStats = React.useMemo(
+    () =>
+      barbers.map((b) => ({
+        ...b,
+        completed_services: statsMap[b.id]?.completed_services ?? 0,
+        completion_rate_percent: statsMap[b.id]?.completion_rate_percent ?? null,
+        repeat_customer_rate_percent: statsMap[b.id]?.repeat_customer_rate_percent ?? null,
+        years_on_platform: statsMap[b.id]?.years_on_platform ?? null,
+        discovery_preview: discoveryPreviews[b.id] ?? null,
+      })),
+    [barbers, statsMap, discoveryPreviews]
+  );
+
+  const { data: rawShops, isError: shopsError, isFetching: shopsFetching, refetch: refetchShops } = useQuery({
     queryKey: ['explore-shops'],
     queryFn: async () => {
       const list = await sovereign.entities.Shop.list();
@@ -73,7 +163,7 @@ export default function Explore() {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     refetchOnMount: 'always',
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
   });
 
   const { data: servicesList = [] } = useQuery({
@@ -87,19 +177,36 @@ export default function Explore() {
       }
     },
     staleTime: 1000 * 60 * 5,
-    retry: 2
+    retry: 2,
   });
 
   const shops = React.useMemo(() => {
     const list = Array.isArray(rawShops) ? rawShops : [];
-    return list.map(s => ({
+    return list.map((s) => ({
       ...s,
       ...(s.data || {}),
-      id: s.id
+      id: s.id,
+      spoken_languages: parseSpokenLanguages(s.spoken_languages ?? s.data?.spoken_languages),
+      children_friendly: parseChildrenFriendly(s.children_friendly ?? s.data?.children_friendly),
+      attestation_licensed: parseAttestationFlag(s.attestation_licensed ?? s.data?.attestation_licensed),
+      attestation_insured: parseAttestationFlag(s.attestation_insured ?? s.data?.attestation_insured),
     }));
   }, [rawShops]);
 
-  // Shop IDs that offer a given service (for service-first filter)
+  const shopById = React.useMemo(() => {
+    const map = {};
+    for (const s of shops) {
+      map[s.id] = {
+        ...s,
+        spoken_languages: parseSpokenLanguages(s.spoken_languages),
+        children_friendly: parseChildrenFriendly(s.children_friendly),
+        attestation_licensed: parseAttestationFlag(s.attestation_licensed),
+        attestation_insured: parseAttestationFlag(s.attestation_insured),
+      };
+    }
+    return map;
+  }, [shops]);
+
   const shopIdsByService = React.useMemo(() => {
     const map = {};
     const list = Array.isArray(servicesList) ? servicesList : [];
@@ -117,12 +224,12 @@ export default function Explore() {
         }
       }
       if (cat.includes('hair') || name.includes('hair')) {
-        if (!map['haircut']) map['haircut'] = new Set();
-        map['haircut'].add(shopId);
+        if (!map.haircut) map.haircut = new Set();
+        map.haircut.add(shopId);
       }
       if (cat.includes('beard') || name.includes('beard')) {
-        if (!map['beardtrim']) map['beardtrim'] = new Set();
-        map['beardtrim'].add(shopId);
+        if (!map.beardtrim) map.beardtrim = new Set();
+        map.beardtrim.add(shopId);
       }
     }
     return map;
@@ -137,23 +244,13 @@ export default function Explore() {
         return { shop_ids: [], has_platform_promos: false };
       }
     },
-    retry: false
+    retry: false,
   });
 
-  const { data: inspirationPosts = [] } = useQuery({
-    queryKey: ['inspiration-posts'],
-    queryFn: async () => {
-      try {
-        return await sovereign.entities.InspirationPost?.list?.('-likes', 8) ?? [];
-      } catch {
-        return [];
-      }
-    },
-    initialData: [],
-    retry: false
-  });
-
-  const [viewType, setViewType] = useState('professionals'); // 'professionals' or 'shops'
+  const minPriceByBarber = React.useMemo(
+    () => buildBarberMinPriceMap(Array.isArray(servicesList) ? servicesList : [], barbers),
+    [servicesList, barbers]
+  );
 
   const prefetchBarber = (id) => {
     queryClient.prefetchQuery({
@@ -163,292 +260,270 @@ export default function Explore() {
     });
   };
 
-  const tags = ["All", "Deals", "Haircut", "Beard Trim", "Shave", "Styling", "Facial"];
-
   const filteredBarbers = React.useMemo(() => {
-    return barbers.filter(barber => {
-      const searchTermLower = searchTerm.toLowerCase();
+    return barbersWithStats
+      .filter((barber) => {
+        const searchTermLower = searchTerm.toLowerCase();
 
-      const matchesSearch = !searchTerm || (
-        (barber.name || '').toLowerCase().includes(searchTermLower) ||
-        (barber.location || '').toLowerCase().includes(searchTermLower) ||
-        (barber.title || '').toLowerCase().includes(searchTermLower) ||
-        (Array.isArray(barber.services) && barber.services.some(s =>
-          (typeof s === 'string' ? s : '').toLowerCase().includes(searchTermLower)
-        ))
-      );
+        const matchesSearch =
+          !searchTerm ||
+          (barber.name || '').toLowerCase().includes(searchTermLower) ||
+          (barber.location || '').toLowerCase().includes(searchTermLower) ||
+          (barber.title || '').toLowerCase().includes(searchTermLower) ||
+          (Array.isArray(barber.services) &&
+            barber.services.some((s) =>
+              (typeof s === 'string' ? s : '').toLowerCase().includes(searchTermLower)
+            ));
 
-      const shopDealIds = Array.isArray(promotions?.shop_ids) ? promotions.shop_ids : [];
-      const dealSet = new Set(shopDealIds);
-      const hasPlatform = !!promotions?.has_platform_promos;
-      const hasPromotion =
-        hasPlatform || (!!barber.shop_id && dealSet.has(barber.shop_id));
+        const shopDealIds = Array.isArray(promotions?.shop_ids) ? promotions.shop_ids : [];
+        const dealSet = new Set(shopDealIds);
+        const hasPlatform = !!promotions?.has_platform_promos;
+        const hasPromotion = hasPlatform || (!!barber.shop_id && dealSet.has(barber.shop_id));
 
-      let matchesTag = true;
-      if (activeFilter === 'Deals') {
-        matchesTag = hasPromotion;
-      } else if (activeFilter !== 'All') {
-        const tagKey = activeFilter.toLowerCase().replace(/\s+/g, '');
-        const tagNorm = tagKey === 'beardtrim' ? 'beard' : tagKey === 'haircut' ? 'hair' : tagKey;
-        const shopIds = shopIdsByService[tagNorm] || shopIdsByService[tagKey];
-        const barberShopId = barber.shop_id;
-        const matchesByService = barberShopId && shopIds && shopIds.has(barberShopId);
-        const matchesByBarberServices = Array.isArray(barber.services) &&
-          barber.services.some(s =>
-            (typeof s === 'string' ? s : '').toLowerCase().includes(activeFilter.toLowerCase())
+        let matchesTag = true;
+        if (activeFilter === 'Deals') {
+          matchesTag = hasPromotion;
+        } else if (activeFilter !== 'All') {
+          const tagKey = activeFilter.toLowerCase().replace(/\s+/g, '');
+          const tagNorm = tagKey === 'beardtrim' ? 'beard' : tagKey === 'haircut' ? 'hair' : tagKey;
+          const shopIds = shopIdsByService[tagNorm] || shopIdsByService[tagKey];
+          const barberShopId = barber.shop_id;
+          const matchesByService = barberShopId && shopIds && shopIds.has(barberShopId);
+          const matchesByBarberServices =
+            Array.isArray(barber.services) &&
+            barber.services.some((s) =>
+              (typeof s === 'string' ? s : '').toLowerCase().includes(activeFilter.toLowerCase())
+            );
+          matchesTag = !!(matchesByService || matchesByBarberServices);
+        }
+
+        const matchesLanguage =
+          !languageFilter ||
+          matchesLanguageFilter(
+            barber.spoken_languages,
+            barber.shop_id ? shopById[barber.shop_id]?.spoken_languages : [],
+            [languageFilter]
           );
-        matchesTag = !!(matchesByService || matchesByBarberServices);
-      }
 
-      return matchesSearch && matchesTag;
-    });
-  }, [barbers, searchTerm, activeFilter, promotions, shopIdsByService]);
+        const shopFriendly = barber.shop_id ? shopById[barber.shop_id]?.children_friendly : false;
+        const matchesKids = matchesChildrenFriendlyFilter(barber.children_friendly, shopFriendly, kidsWelcomeOnly);
+        const matchesMobile = matchesMobileServiceFilter(barber.offers_mobile_service, mobileOnly);
+        const matchesShop = matchesShopServiceFilter(barber.offers_shop_service, shopOnly);
+        const matchesGroup = !groupOnly || barber.offers_group_booking === true;
+        const cityLower = cityFilter.toLowerCase();
+        const matchesCity =
+          !cityFilter ||
+          (barber.city || '').toLowerCase().includes(cityLower) ||
+          (barber.location || '').toLowerCase().includes(cityLower);
+
+        let matchesHighlight = true;
+        if (highlightFilter === 'topRated') {
+          matchesHighlight = (barber.rating ?? 0) >= 4.5 && (barber.review_count ?? 0) >= 5;
+        } else if (highlightFilter === 'new') {
+          matchesHighlight = (barber.review_count ?? 0) === 0 && (barber.rating ?? 0) === 0;
+        } else if (highlightFilter === 'trending') {
+          matchesHighlight = (barber.review_count ?? 0) >= 15 && (barber.rating ?? 0) >= 4.0;
+        }
+
+        return (
+          matchesSearch &&
+          matchesTag &&
+          matchesLanguage &&
+          matchesKids &&
+          matchesMobile &&
+          matchesShop &&
+          matchesGroup &&
+          matchesCity &&
+          matchesHighlight
+        );
+      })
+      .map((barber) => ({
+        ...barber,
+        effective_languages: effectiveBarberLanguages(barber, shopById),
+        children_friendly: effectiveChildrenFriendly(
+          barber.children_friendly,
+          barber.shop_id ? shopById[barber.shop_id]?.children_friendly : false
+        ),
+        licensed: effectiveLicensed(
+          barber.attestation_licensed,
+          barber.shop_id ? shopById[barber.shop_id]?.attestation_licensed : false
+        ),
+        insured: effectiveInsured(
+          barber.attestation_insured,
+          barber.shop_id ? shopById[barber.shop_id]?.attestation_insured : false
+        ),
+        min_price: minPriceByBarber[barber.id] ?? null,
+        distance_km: barberDistanceKm(userCoords, barber),
+      }));
+  }, [
+    barbersWithStats,
+    searchTerm,
+    activeFilter,
+    highlightFilter,
+    promotions,
+    shopIdsByService,
+    languageFilter,
+    kidsWelcomeOnly,
+    mobileOnly,
+    shopOnly,
+    groupOnly,
+    cityFilter,
+    shopById,
+    minPriceByBarber,
+    userCoords,
+  ]);
 
   const filteredShops = React.useMemo(() => {
-    return shops.filter(shop => {
-      const searchTermLower = searchTerm.toLowerCase();
-      return !searchTerm || (
-        (shop.name || '').toLowerCase().includes(searchTermLower) ||
-        (shop.location || '').toLowerCase().includes(searchTermLower) ||
-        (shop.description || '').toLowerCase().includes(searchTermLower)
-      );
-    });
-  }, [shops, searchTerm]);
+    return shops
+      .filter((shop) => {
+        const searchTermLower = searchTerm.toLowerCase();
+        const matchesSearch =
+          !searchTerm ||
+          (shop.name || '').toLowerCase().includes(searchTermLower) ||
+          (shop.location || '').toLowerCase().includes(searchTermLower) ||
+          (shop.description || '').toLowerCase().includes(searchTermLower);
+        const cityLower = cityFilter.toLowerCase();
+        const matchesCity = !cityFilter || (shop.location || '').toLowerCase().includes(cityLower);
+        const shopLangs = parseSpokenLanguages(shop.spoken_languages);
+        const matchesLanguage = !languageFilter || shopLangs.includes(languageFilter);
+        const matchesKids = matchesChildrenFriendlyFilter(false, shop.children_friendly, kidsWelcomeOnly);
+        return matchesSearch && matchesLanguage && matchesKids && matchesCity;
+      })
+      .map((shop) => ({
+        ...shop,
+        spoken_languages: parseSpokenLanguages(shop.spoken_languages),
+      }));
+  }, [shops, searchTerm, languageFilter, kidsWelcomeOnly, cityFilter]);
+
+  const sortedBarbers = React.useMemo(
+    () =>
+      sortExploreBarbers(
+        filteredBarbers.map((b) => ({
+          ...b,
+          spoken_languages: b.effective_languages,
+        })),
+        sortBy,
+        userCoords
+      ),
+    [filteredBarbers, sortBy, userCoords]
+  );
+
+  const resultCount = viewType === 'professionals' ? sortedBarbers.length : filteredShops.length;
+
+  const featuredBarber = React.useMemo(() => {
+    if (!pageConfig.showInspiration || sortedBarbers.length === 0) return null;
+    return sortedBarbers.find((b) => (b.rating ?? 0) >= 4.5 && (b.review_count ?? 0) >= 5) ?? sortedBarbers[0];
+  }, [pageConfig.showInspiration, sortedBarbers]);
+
+  const resultsHeading = searchTerm.trim()
+    ? `Results for "${searchTerm.trim()}"`
+    : pageConfig.resultsHeading;
+
+  const canonicalExploreUrl = () => {
+    const params = new URLSearchParams();
+    if (mobileOnly) params.set('mobile', '1');
+    if (shopOnly) params.set('shop', '1');
+    if (groupOnly) params.set('group', '1');
+    if (cityFilter) params.set('city', cityFilter);
+    if (activeFilter && activeFilter !== 'All') params.set('filter', activeFilter);
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    const qs = params.toString();
+    return qs ? `${siteOrigin()}/Explore?${qs}` : `${siteOrigin()}/Explore`;
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans pb-24 lg:pb-8">
+    <div className="stb-page font-sans pb-16">
       <MetaTags
-        title={searchTerm ? `Search: ${searchTerm}` : "Explore Top Barbers"}
-        description="Discover the best grooming professionals in your city."
+        title={pageConfig.metaTitle(cityFilter, searchTerm)}
+        description={pageConfig.metaDescription(cityFilter)}
+        canonicalUrl={canonicalExploreUrl()}
       />
       <SchemaMarkup
         type="CollectionPage"
         data={{
-          name: "Explore Top Barbers",
-          description: "Discover the best grooming professionals in your city.",
-          url: window.location.href
+          name: pageConfig.schemaName,
+          description: pageConfig.metaDescription(cityFilter),
+          url: window.location.href,
         }}
       />
 
-      {/* Header & Search */}
-      <div className="relative bg-background border-b border-border pt-4 pb-4 px-4 md:px-8">
-        <div className="max-w-6xl mx-auto space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search Input */}
-            <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={viewType === 'professionals' ? "Search for professionals, locations..." : "Search for shops, locations..."}
-                className="pl-12 pr-10 h-14 bg-card border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary rounded-full text-sm font-light tracking-wide transition-all shadow-sm"
-              />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors" aria-label="Clear search">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-          </div>
+      <HeroSection
+        pageConfig={pageConfig}
+        cityFilter={cityFilter}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onClearSearch={() => setSearchTerm('')}
+        platformStats={platformStats}
+        locationLabel={preferredLocation?.address ?? (cityFilter || null)}
+        spotlight={
+          featuredBarber ? (
+            <ExploreFeaturedSpotlight
+              barber={featuredBarber}
+              bookingLocation={pageConfig.bookingLocation}
+            />
+          ) : null
+        }
+      />
 
-          {/* View Toggle & Filters */}
-          <div className="flex flex-col md:flex-row justify-between gap-4 items-center">
-            {/* View Type Toggle */}
-            <div className="bg-card p-1 rounded-full border border-border flex w-full md:w-auto">
-              <button
-                onClick={() => setViewType('professionals')}
-                className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 ${viewType === 'professionals'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-              >
-                <User className="w-4 h-4" /> Professionals
-              </button>
-              <button
-                onClick={() => setViewType('shops')}
-                className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 ${viewType === 'shops'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-              >
-                <Store className="w-4 h-4" /> Barbershops
-              </button>
-            </div>
+      <StickyFilterBar
+        exploreMode={exploreMode}
+        pageConfig={pageConfig}
+        viewType={viewType}
+        onViewTypeChange={setViewType}
+        activeFilter={activeFilter}
+        onActiveFilterChange={setActiveFilter}
+        highlightFilter={highlightFilter}
+        onHighlightFilterChange={setHighlightFilter}
+        languageFilter={languageFilter}
+        onLanguageFilterChange={setLanguageFilter}
+        languageOptions={languageOptions}
+        kidsWelcomeOnly={kidsWelcomeOnly}
+        onKidsWelcomeToggle={toggleKidsWelcome}
+        mobileOnly={mobileOnly}
+        shopOnly={shopOnly}
+        groupOnly={groupOnly}
+        onDiscoveryFlag={setDiscoveryFlag}
+      />
 
-            {/* Tags (Only for professionals for now, or could adapt) */}
-            {viewType === 'professionals' && (
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide w-full md:w-auto">
-                {tags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => setActiveFilter(tag)}
-                    className={`px-4 py-2 rounded-full font-medium text-xs transition-all whitespace-nowrap border ${activeFilter === tag
-                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                      : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground'
-                      }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <main className="w-full max-w-6xl lg:max-w-7xl mx-auto px-4 md:px-8 py-4 md:py-6">
+        <ExploreChampionshipLink />
+        <ExploreActiveFilters items={activeFilterItems} onClearAll={clearAllFilters} />
 
-      <div className="w-full max-w-6xl lg:max-w-7xl mx-auto px-4 md:px-8 py-8">
-        {/* Inspiration Section */}
-        {viewType === 'professionals' && !searchTerm && inspirationPosts.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Style Inspiration</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {inspirationPosts.slice(0, 4).map((post) => (
-                <div key={post.id} className="group cursor-pointer">
-                  <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
-                    <OptimizedImage
-                      src={post.image_url}
-                      fill
-                      alt={post.title}
-                      imgClassName="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                  <p className="text-sm font-medium line-clamp-1">{post.title}</p>
-                  <p className="text-xs text-muted-foreground">{post.category}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <ExploreResultsToolbar
+          viewType={viewType}
+          resultsHeading={resultsHeading}
+          resultCount={resultCount}
+          searchTerm={searchTerm}
+          pageConfigSubtext={pageConfig.resultsSubtext}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          isRefreshing={barbersFetching}
+        />
 
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">
-              {searchTerm
-                ? `Results for "${searchTerm}"`
-                : (viewType === 'professionals' ? 'Top Professionals' : 'Top Barbershops')}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {viewType === 'professionals'
-                ? `${filteredBarbers.length} professionals available`
-                : `${filteredShops.length} shops available`}
-            </p>
-          </div>
-          <RefreshIndicator isRefreshing={barbersFetching} />
-          {viewType === 'professionals' && (
-            <Link to={createPageUrl('Barbers')}>
-              <Button variant="outline" className="rounded-full gap-2">
-                <Map className="w-4 h-4" /> Map view
-              </Button>
-            </Link>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {viewType === 'professionals' ? (
-              // Professionals List
-              <>
-                {barbersError && (
-                  <div className="col-span-full py-16 text-center">
-                    <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6 text-destructive border border-destructive/30">
-                      <Search className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">Couldn&apos;t load professionals</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-4">
-                      {barbersErr?.message || 'The server may be offline or the request failed.'} Make sure the backend is running (in the server folder: npm run dev).
-                    </p>
-                    <Button onClick={() => refetchBarbers()} variant="default" className="rounded-full">
-                      Try again
-                    </Button>
-                  </div>
-                )}
-
-                {!barbersError && barbersFetching && barbers.length === 0 && (
-                  <div className="col-span-full py-16 text-center">
-                    <p className="text-muted-foreground">Loading professionals...</p>
-                  </div>
-                )}
-
-                {!barbersError && !barbersFetching && filteredBarbers.map((barber) => {
-                  const shopDealIds = Array.isArray(promotions?.shop_ids) ? promotions.shop_ids : [];
-                  const dealSet = new Set(shopDealIds);
-                  const showDeal =
-                    !!promotions?.has_platform_promos || (!!barber.shop_id && dealSet.has(barber.shop_id));
-                  const barberPromo = showDeal ? { discount_text: 'Promo available' } : null;
-                  return (
-                    <div key={barber.id} onMouseEnter={() => prefetchBarber(barber.id)}>
-                      <BarberCard barber={barber} variant="vertical" badge={barberPromo ? { text: barberPromo.discount_text, color: 'bg-red-500' } : null} />
-                    </div>
-                  );
-                })}
-
-                {!barbersError && !barbersFetching && filteredBarbers.length === 0 && barbers.length > 0 && (
-                  <div className="col-span-full py-32 text-center">
-                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground border border-border">
-                      <Search className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">No professionals found</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto">Try changing your search or filter (e.g. &quot;All&quot; or a different service).</p>
-                  </div>
-                )}
-
-                {!barbersError && !barbersFetching && barbers.length === 0 && (
-                  <div className="col-span-full py-32 text-center">
-                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground border border-border">
-                      <Search className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">No professionals in the database</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-4">Run <code className="bg-muted px-1 rounded">npm run seed</code> in the server folder to add sample barbers and shops. If you just seeded, click Refresh.</p>
-                    <Button onClick={() => refetchBarbers()} variant="default" className="rounded-full" disabled={barbersFetching}>Refresh</Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              // Shops List
-              <>
-                {shopsError && (
-                  <div className="col-span-full py-16 text-center">
-                    <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6 text-destructive border border-destructive/30">
-                      <Store className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">Couldn&apos;t load shops</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-4">Make sure the backend is running (server folder: npm run dev).</p>
-                    <Button onClick={() => refetchShops()} variant="default" className="rounded-full">Try again</Button>
-                  </div>
-                )}
-
-                {!shopsError && filteredShops.map((shop) => (
-                  <div key={shop.id}>
-                    <ShopCard shop={shop} />
-                  </div>
-                ))}
-
-                {!shopsError && filteredShops.length === 0 && shops.length > 0 && (
-                  <div className="col-span-full py-32 text-center">
-                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground border border-border">
-                      <Store className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">No shops found</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto">Try changing your search.</p>
-                  </div>
-                )}
-
-                {!shopsError && shops.length === 0 && (
-                  <div className="col-span-full py-32 text-center">
-                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground border border-border">
-                      <Store className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">No shops in the database</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-4">Run <code className="bg-muted px-1 rounded">npm run seed</code> in the server folder. If you just seeded, click Refresh.</p>
-                    <Button onClick={() => refetchShops()} variant="default" className="rounded-full">Refresh</Button>
-                  </div>
-                )}
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-      <AIAdvisor />
+        <ExploreBarberGrid
+          viewType={viewType}
+          sortedBarbers={sortedBarbers}
+          filteredShops={filteredShops}
+          promotions={promotions}
+          pageConfig={pageConfig}
+          exploreMode={exploreMode}
+          searchTerm={searchTerm}
+          sortBy={sortBy}
+          barbersError={barbersError}
+          barbersErr={barbersErr}
+          barbersFetching={barbersFetching}
+          shopsFetching={shopsFetching}
+          barbersCount={barbers.length}
+          shopsCount={shops.length}
+          shopsError={shopsError}
+          onRetryBarbers={refetchBarbers}
+          onRetryShops={refetchShops}
+          onPrefetchBarber={prefetchBarber}
+          onClearFilters={clearAllFilters}
+          isFavorited={isFavorited}
+          onToggleFavorite={toggleFavorite}
+        />
+      </main>
     </div>
   );
 }

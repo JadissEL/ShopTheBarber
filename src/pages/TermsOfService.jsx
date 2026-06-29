@@ -2,21 +2,18 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import ContextualBackLink from '@/components/ui/ContextualBackLink';
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="stb-page">
       <MetaTags
         title="Terms of Service"
         description="Terms of Service for ShopTheBarber customers"
       />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link to={createPageUrl('Dashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
-        </Link>
+        <ContextualBackLink className="mb-8" />
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold tracking-tight mb-2">Terms of Service</h1>
@@ -152,6 +149,23 @@ export default function TermsOfService() {
             </section>
 
             <section>
+              <h2>8a. Marketplace purchases</h2>
+              <p>
+                Physical grooming products may be sold by independent sellers (barbers, shops, brands) through
+                our marketplace. ShopTheBarber facilitates checkout and payment but is not the seller of
+                record for third-party SKUs unless explicitly labeled.
+              </p>
+              <p>
+                Checkout shows estimated VAT and shipping. Seller return policies and shipping liability
+                apply. See the{' '}
+                <Link to="/marketplace/buyer-terms" className="text-primary hover:underline">
+                  Marketplace Purchase Terms
+                </Link>
+                .
+              </p>
+            </section>
+
+            <section>
               <h2>9. User Conduct</h2>
               <p>
                 You agree not to:
@@ -237,7 +251,7 @@ export default function TermsOfService() {
               <p>
                 For questions or concerns regarding these Terms, please contact:
               </p>
-              <div className="bg-gray-50 p-4 rounded-lg mt-3">
+              <div className="bg-muted/50 p-4 rounded-lg mt-3">
                 <p><strong>Email</strong>: legal@shopthebarber.com</p>
                 <p><strong>Mailing Address</strong>: ShopTheBarber, Legal Team, [Address]</p>
                 <p><strong>Support</strong>: support@shopthebarber.com</p>

@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { createPageUrl } from '@/utils';
 import { useCart } from '@/components/context/CartContext';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Products', icon: Grid3x3 },
@@ -24,29 +26,20 @@ const CATEGORIES = [
   { id: 'tools', label: 'Tools & Kits', icon: TrendingUp },
 ];
 
-const FALLBACK_PRODUCTS = [
-  { id: '1', name: 'Night Skin Recharge', vendor_name: 'Baxter of California', price: 48, image_url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&fit=crop', category: 'skincare' },
-  { id: '2', name: 'Claymation Styling Kit', vendor_name: 'Hanz de Fuko', price: 24, image_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=400&fit=crop', category: 'hair' },
-  { id: '3', name: 'Professional 5-Star Cordless', vendor_name: 'Wahl', price: 145, image_url: 'https://images.unsplash.com/photo-1596981899093-11f15e5f60f0?w=400&fit=crop', category: 'tools' },
-  { id: '4', name: 'Black Saffron EDP', vendor_name: 'Byredo', price: 190, image_url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400&fit=crop', category: 'fragrance' },
-  { id: '5', name: 'Elite Face Serum', vendor_name: 'Premium', price: 68, image_url: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&fit=crop', category: 'skincare' },
-  { id: '6', name: 'Wooden Comb Set', vendor_name: 'Artisan', price: 55, image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&fit=crop', category: 'tools' },
-];
-
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const { itemCount } = useCart();
 
-  const { data: apiProducts = [] } = useQuery({
+  const { data: apiProducts = [], isLoading } = useQuery({
     queryKey: ['marketplace-products'],
-    queryFn: () => sovereign.entities.Product.list(),
+    queryFn: () => sovereign.products.listPublic(),
     staleTime: 60 * 1000,
     retry: 1,
   });
 
   const products = useMemo(() => {
-    const source = Array.isArray(apiProducts) && apiProducts.length > 0 ? apiProducts : FALLBACK_PRODUCTS;
+    const source = Array.isArray(apiProducts) ? apiProducts : [];
     return source.map((p) => ({
       id: p.id,
       name: p.name,
@@ -69,50 +62,43 @@ export default function Marketplace() {
   }, [products, searchTerm, activeCategory]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="stb-page pb-24 lg:pb-8">
       <MetaTags
-        title="Marketplace – Premium Grooming Products"
+        title="Marketplace - Premium Grooming Products"
         description="Shop premium grooming products from luxury brands."
       />
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
-              <p className="text-muted-foreground mt-1">Premium grooming essentials</p>
-            </div>
-            <Link to={createPageUrl('ShoppingBag')} className="relative">
-              <Button variant="outline" className="rounded-full">
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Bag
-                {itemCount > 0 && (
-                  <span className="ml-2 min-w-[20px] h-5 rounded-full bg-primary text-xs font-bold text-primary-foreground flex items-center justify-center px-2">
-                    {itemCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
-          </div>
+      <PageHeader
+        label="Shop"
+        title="Marketplace"
+        subtitle="Premium grooming essentials from barbers and brands you trust."
+      >
+        <Link to={createPageUrl('ShoppingBag')} className="relative">
+          <Button variant="outline" className="rounded-xl border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white h-11">
+            <ShoppingCart className="w-5 h-5 mr-2" />
+            Bag
+            {itemCount > 0 && (
+              <span className="ml-2 min-w-[20px] h-5 rounded-full bg-primary text-xs font-bold text-primary-foreground flex items-center justify-center px-2">
+                {itemCount}
+              </span>
+            )}
+          </Button>
+        </Link>
+      </PageHeader>
 
-          {/* Search */}
-          <div className="relative max-w-2xl">
+      <PageContent>
+          <div className="relative max-w-2xl mb-8">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="Search products, brands..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 rounded-full bg-muted border-border text-foreground"
+              className="pl-12 h-12 rounded-2xl bg-card border-border text-foreground shadow-sm"
             />
           </div>
-        </div>
-      </header>
 
       {/* Categories */}
-      <div className="w-full border-b border-border bg-background">
-        <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-8 pb-2">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
@@ -131,13 +117,8 @@ export default function Marketplace() {
                 </button>
               );
             })}
-          </div>
-        </div>
       </div>
 
-      {/* Main Content */}
-      <main className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-8">
-        
         {/* Results Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -161,7 +142,11 @@ export default function Marketplace() {
         </div>
 
         {/* Product Grid */}
-        {filtered.length > 0 ? (
+        {isLoading ? (
+          <div className="rounded-2xl border border-border bg-muted/30 py-16 px-6 text-center">
+            <p className="text-muted-foreground">Loading products…</p>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map((product) => (
               <Link
@@ -220,7 +205,9 @@ export default function Marketplace() {
               <p className="text-muted-foreground mb-6">
                 {searchTerm
                   ? `No products match "${searchTerm}". Try a different search term.`
-                  : 'No products available in this category.'}
+                  : apiProducts.length === 0
+                    ? 'No products are listed yet. Check back soon.'
+                    : 'No products available in this category.'}
               </p>
               <Button
                 variant="outline"
@@ -235,7 +222,7 @@ export default function Marketplace() {
             </div>
           </div>
         )}
-      </main>
+      </PageContent>
     </div>
   );
 }

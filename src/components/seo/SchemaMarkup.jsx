@@ -16,43 +16,88 @@ export const SchemaMarkup = ({ type = 'WebSite', data }) => {
   );
 };
 
-export const LocalBusinessSchema = ({ name, image, priceRange, address, rating, reviewCount }) => (
-  <SchemaMarkup 
-    type="LocalBusiness"
+export function parseAddressFromLocation(location, city, country) {
+  const locality = (city || location || '').split(',')[0]?.trim() || 'Unknown';
+  const parts = (location || '').split(',').map((p) => p.trim()).filter(Boolean);
+  const streetAddress = parts.length > 1 ? parts.slice(1).join(', ') : (location || '');
+  const region = parts.length > 1 ? parts[1] : undefined;
+  return {
+    '@type': 'PostalAddress',
+    streetAddress: streetAddress || undefined,
+    addressLocality: locality,
+    addressRegion: region,
+    addressCountry: country || 'US',
+  };
+}
+
+export const HairSalonSchema = ({ name, image, priceRange, location, city, country, rating, reviewCount, url }) => (
+  <SchemaMarkup
+    type="HairSalon"
     data={{
+      '@id': url,
       name,
       image,
+      url,
       priceRange: priceRange || '$$',
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: address || '',
-        addressLocality: 'San Francisco', // Default for demo
-        addressRegion: 'CA',
-        addressCountry: 'US'
-      },
+      address: parseAddressFromLocation(location, city, country),
       aggregateRating: rating ? {
         '@type': 'AggregateRating',
         ratingValue: rating,
-        reviewCount: reviewCount || 0
-      } : undefined
+        reviewCount: reviewCount || 0,
+      } : undefined,
     }}
   />
 );
 
+export const BarberPersonSchema = ({ name, image, jobTitle, location, city, country, rating, reviewCount, url, shopName }) => (
+  <SchemaMarkup
+    type="Person"
+    data={{
+      '@id': url,
+      name,
+      image,
+      url,
+      jobTitle: jobTitle || 'Barber',
+      worksFor: shopName ? { '@type': 'HairSalon', name: shopName } : undefined,
+      address: parseAddressFromLocation(location, city, country),
+      aggregateRating: rating ? {
+        '@type': 'AggregateRating',
+        ratingValue: rating,
+        reviewCount: reviewCount || 0,
+      } : undefined,
+    }}
+  />
+);
+
+/** @deprecated use HairSalonSchema or BarberPersonSchema */
+export const LocalBusinessSchema = ({ name, image, priceRange, address, city, country, rating, reviewCount, url }) => (
+  <HairSalonSchema
+    name={name}
+    image={image}
+    priceRange={priceRange}
+    location={address}
+    city={city}
+    country={country}
+    rating={rating}
+    reviewCount={reviewCount}
+    url={url}
+  />
+);
+
 export const ServiceSchema = ({ name, description, provider, areaServed }) => (
-  <SchemaMarkup 
+  <SchemaMarkup
     type="Service"
     data={{
       name,
       description,
       provider: {
-        '@type': 'LocalBusiness',
-        name: provider
+        '@type': 'HairSalon',
+        name: provider,
       },
       areaServed: {
         '@type': 'City',
-        name: areaServed || 'San Francisco'
-      }
+        name: areaServed || 'Unknown',
+      },
     }}
   />
 );

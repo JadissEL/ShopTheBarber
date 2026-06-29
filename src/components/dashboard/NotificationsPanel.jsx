@@ -37,7 +37,7 @@ export default function NotificationsPanel({ isOpen, onClose }) {
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:w-96 p-0 bg-card border-border">
         <div className="flex flex-col h-full">
-          <SheetHeader className="p-4 border-b border-border flex flex-row items-center justify-between bg-white">
+          <SheetHeader className="p-4 border-b border-border flex flex-row items-center justify-between bg-card">
             <SheetTitle className="text-foreground">Notifications</SheetTitle>
             <Button
               variant="ghost"

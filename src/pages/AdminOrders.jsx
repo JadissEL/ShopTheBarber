@@ -14,7 +14,7 @@ const FULFILLMENT_OPTIONS = [
 ];
 
 function formatDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const d = new Date(iso);
     return d.toLocaleDateString(undefined, { dateStyle: 'short' });
@@ -67,7 +67,7 @@ export default function AdminOrders() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Access Denied" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -81,7 +81,7 @@ export default function AdminOrders() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="stb-page pb-16">
       <MetaTags title="Order Management" description="Manage marketplace orders and fulfillment" />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
@@ -181,7 +181,7 @@ export default function AdminOrders() {
                         <td className="px-4 py-3 font-mono text-sm">{order.order_number}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(order.created_at)}</td>
                         <td className="px-4 py-3 text-sm">
-                          <span className="font-medium">{order.user_name || '—'}</span>
+                          <span className="font-medium">{order.user_name || '-'}</span>
                           {order.user_email && (
                             <span className="block text-muted-foreground text-xs">{order.user_email}</span>
                           )}
@@ -217,7 +217,7 @@ export default function AdminOrders() {
                         <td className="px-4 py-3 text-sm text-muted-foreground">
                           {order.estimated_delivery_at
                             ? formatDate(order.estimated_delivery_at)
-                            : '—'}
+                            : '-'}
                         </td>
                         <td className="px-4 py-3">
                           <input

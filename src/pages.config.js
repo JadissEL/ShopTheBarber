@@ -1,216 +1,80 @@
 /**
- * pages.config.js - Page routing configuration
- * 
- * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
- * Pages are auto-registered when you create files in the ./pages/ folder.
- * 
- * THE ONLY EDITABLE VALUE: mainPage
- * This controls which page is the landing page (shown when users visit the app).
- * 
- * Example file structure:
- * 
- *   import HomePage from './pages/HomePage';
- *   import Dashboard from './pages/Dashboard';
- *   import Settings from './pages/Settings';
- *   
- *   export const PAGES = {
- *       "HomePage": HomePage,
- *       "Dashboard": Dashboard,
- *       "Settings": Settings,
- *   }
- *   
- *   export const pagesConfig = {
- *       mainPage: "HomePage",
- *       Pages: PAGES,
- *   };
- * 
- * Example with Layout (wraps all pages):
+ * Page routing configuration.
  *
- *   import Home from './pages/Home';
- *   import Settings from './pages/Settings';
- *   import __Layout from './Layout.jsx';
+ * - **Core** paths (see lib/coreRoutes.js) are imported eagerly for TTI.
+ * - **All other** pages/*.jsx are code-split via import.meta.glob + React.lazy.
+ * - CityLanding / CitiesDirectory / InviteLanding use custom routes in App.jsx only.
  *
- *   export const PAGES = {
- *       "Home": Home,
- *       "Settings": Settings,
- *   }
- *
- *   export const pagesConfig = {
- *       mainPage: "Home",
- *       Pages: PAGES,
- *       Layout: __Layout,
- *   };
- *
- * To change the main page from HomePage to Dashboard, use find_replace:
- *   Old: mainPage: "HomePage",
- *   New: mainPage: "Dashboard",
- *
- * The mainPage value must match a key in the PAGES object exactly.
+ * mainPage controls the landing route (/).
  */
-import About from './pages/About';
-import AccountSettings from './pages/AccountSettings';
-import AdminBackups from './pages/AdminBackups';
-import Auth from './pages/Auth';
-import AdminDisputes from './pages/AdminDisputes';
-import AdminOrders from './pages/AdminOrders';
-import AdminUserModeration from './pages/AdminUserModeration';
-import BarberProfile from './pages/BarberProfile';
-import BrandProfile from './pages/BrandProfile';
-import BookingFlow from './pages/BookingFlow';
-import CareerHub from './pages/CareerHub';
-import JobDetail from './pages/JobDetail';
-import ApplyToJob from './pages/ApplyToJob';
-import ProfessionalPortfolio from './pages/ProfessionalPortfolio';
-import PortfolioCredentials from './pages/PortfolioCredentials';
-import CreateJob from './pages/CreateJob';
-import MyJobs from './pages/MyJobs';
-import ApplicantReview from './pages/ApplicantReview';
-import ScheduleInterview from './pages/ScheduleInterview';
-import Chat from './pages/Chat';
-import ClientList from './pages/ClientList';
-import ConfirmBooking from './pages/ConfirmBooking';
-import Dashboard from './pages/Dashboard';
-import DisputeDetail from './pages/DisputeDetail';
-import Explore from './pages/Explore';
-import Favorites from './pages/Favorites';
-import GlobalFinancials from './pages/GlobalFinancials';
-import HelpCenter from './pages/HelpCenter';
-import Home from './pages/Home';
-import LaunchChecklist from './pages/LaunchChecklist';
-import Loyalty from './pages/Loyalty';
-import Marketplace from './pages/Marketplace';
-import ProductDetail from './pages/ProductDetail';
-import NotificationSettings from './pages/NotificationSettings';
-import Privacy from './pages/Privacy';
-import ProviderMessages from './pages/ProviderMessages';
-import ProviderBookings from './pages/ProviderBookings';
-import ProviderDashboard from './pages/ProviderDashboard';
-import ProviderPayouts from './pages/ProviderPayouts';
-import ProviderSettings from './pages/ProviderSettings';
-import ProviderTermsOfService from './pages/ProviderTermsOfService';
-import Review from './pages/Review';
-import SelectProviderType from './pages/SelectProviderType';
-import ServicesPricing from './pages/ServicesPricing';
-import ShopProfile from './pages/ShopProfile';
-import ShoppingBag from './pages/ShoppingBag';
-import SignUp from './pages/SignUp';
-import Checkout from './pages/Checkout';
-import OrderTracking from './pages/OrderTracking';
-import MyOrders from './pages/MyOrders';
-import GroomingVault from './pages/GroomingVault';
-import SignIn from './pages/SignIn';
-import TermsOfService from './pages/TermsOfService';
-import UserBookings from './pages/UserBookings';
-import UserModerationDetail from './pages/UserModerationDetail';
-import Blog from './pages/Blog';
-import ArticleDetail from './pages/ArticleDetail';
-import Barbers from './pages/Barbers';
-import GiftCards from './pages/GiftCards';
-import Referral from './pages/Referral';
-import Wishlist from './pages/Wishlist';
-import InspirationFeed from './pages/InspirationFeed';
-import Offline from './pages/Offline';
-import LegalDocuments from './pages/LegalDocuments';
-import ClientWallet from './pages/ClientWallet';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentError from './pages/PaymentError';
-import Onboarding from './pages/Onboarding';
-import SelectServices from './pages/SelectServices';
-import ShopInventoryManagement from './pages/ShopInventoryManagement';
-import ShopExpenseTracking from './pages/ShopExpenseTracking';
-import ShopBrandingManagement from './pages/ShopBrandingManagement';
-import ShopEmployeeManagement from './pages/ShopEmployeeManagement';
-import ShopAnalytics from './pages/ShopAnalytics';
-import AdminAuditLogs from './pages/AdminAuditLogs';
-import AdminContentManagement from './pages/AdminContentManagement';
-import AdminFeatureToggles from './pages/AdminFeatureToggles';
-import AdminPlatformHealth from './pages/AdminPlatformHealth';
+import { lazy } from 'react';
 import __Layout from './Layout.jsx';
+import { CORE_EAGER_PAGE_NAMES, CUSTOM_APP_ROUTE_PAGES } from '@/lib/coreRoutes';
 
+import Home from './pages/Home';
+import Explore from './pages/Explore';
+import Barbers from './pages/Barbers';
+import BarberProfile from './pages/BarberProfile';
+import ShopProfile from './pages/ShopProfile';
+import BookingFlow from './pages/BookingFlow';
+import GuestBooking from './pages/GuestBooking';
+import SignIn from './pages/SignIn';
+import SignUp from './pages/SignUp';
+import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
+import UserBookings from './pages/UserBookings';
+import ConfirmBooking from './pages/ConfirmBooking';
+import Review from './pages/Review';
+import About from './pages/About';
+import Privacy from './pages/Privacy';
+import TermsOfService from './pages/TermsOfService';
+import HelpCenter from './pages/HelpCenter';
+import StatusPage from './pages/StatusPage';
+import Offline from './pages/Offline';
 
-export const PAGES = {
-    "About": About,
-    "AccountSettings": AccountSettings,
-    "AdminBackups": AdminBackups,
-    "AdminDisputes": AdminDisputes,
-    "AdminOrders": AdminOrders,
-    "Auth": Auth,
-    "AdminUserModeration": AdminUserModeration,
-    "BarberProfile": BarberProfile,
-    "BrandProfile": BrandProfile,
-    "BookingFlow": BookingFlow,
-    "CareerHub": CareerHub,
-    "JobDetail": JobDetail,
-    "ApplyToJob": ApplyToJob,
-    "ProfessionalPortfolio": ProfessionalPortfolio,
-    "PortfolioCredentials": PortfolioCredentials,
-    "CreateJob": CreateJob,
-    "MyJobs": MyJobs,
-    "ApplicantReview": ApplicantReview,
-    "ScheduleInterview": ScheduleInterview,
-    "Chat": Chat,
-    "ClientList": ClientList,
-    "ConfirmBooking": ConfirmBooking,
-    "Dashboard": Dashboard,
-    "DisputeDetail": DisputeDetail,
-    "Explore": Explore,
-    "Favorites": Favorites,
-    "GlobalFinancials": GlobalFinancials,
-    "HelpCenter": HelpCenter,
-    "Home": Home,
-    "LaunchChecklist": LaunchChecklist,
-    "Loyalty": Loyalty,
-    "Marketplace": Marketplace,
-    "ProductDetail": ProductDetail,
-    "NotificationSettings": NotificationSettings,
-    "Privacy": Privacy,
-    "ProviderBookings": ProviderBookings,
-    "ProviderMessages": ProviderMessages,
-    "ProviderDashboard": ProviderDashboard,
-    "ProviderPayouts": ProviderPayouts,
-    "ProviderSettings": ProviderSettings,
-    "ProviderTermsOfService": ProviderTermsOfService,
-    "Review": Review,
-    "SelectProviderType": SelectProviderType,
-    "ServicesPricing": ServicesPricing,
-    "ShopProfile": ShopProfile,
-    "ShoppingBag": ShoppingBag,
-    "SignUp": SignUp,
-    "Checkout": Checkout,
-    "OrderTracking": OrderTracking,
-    "MyOrders": MyOrders,
-    "GroomingVault": GroomingVault,
-    "SignIn": SignIn,
-    "TermsOfService": TermsOfService,
-    "UserBookings": UserBookings,
-    "UserModerationDetail": UserModerationDetail,
-    "Blog": Blog,
-    "ArticleDetail": ArticleDetail,
-    "Barbers": Barbers,
-    "GiftCards": GiftCards,
-    "Referral": Referral,
-    "Wishlist": Wishlist,
-    "InspirationFeed": InspirationFeed,
-    "Offline": Offline,
-    "LegalDocuments": LegalDocuments,
-    "ClientWallet": ClientWallet,
-    "PaymentSuccess": PaymentSuccess,
-    "PaymentError": PaymentError,
-    "Onboarding": Onboarding,
-    "SelectServices": SelectServices,
-    "ShopInventoryManagement": ShopInventoryManagement,
-    "ShopExpenseTracking": ShopExpenseTracking,
-    "ShopBrandingManagement": ShopBrandingManagement,
-    "ShopEmployeeManagement": ShopEmployeeManagement,
-    "ShopAnalytics": ShopAnalytics,
-    "AdminAuditLogs": AdminAuditLogs,
-    "AdminContentManagement": AdminContentManagement,
-    "AdminFeatureToggles": AdminFeatureToggles,
-    "AdminPlatformHealth": AdminPlatformHealth,
+const eagerPages = {
+  Home,
+  Explore,
+  Barbers,
+  BarberProfile,
+  ShopProfile,
+  BookingFlow,
+  GuestBooking,
+  SignIn,
+  SignUp,
+  Auth,
+  Dashboard,
+  UserBookings,
+  ConfirmBooking,
+  Review,
+  About,
+  Privacy,
+  TermsOfService,
+  HelpCenter,
+  StatusPage,
+  Offline,
+};
+
+const lazyPageModules = import.meta.glob('./pages/*.jsx');
+
+const lazyPages = {};
+for (const [filePath, loadModule] of Object.entries(lazyPageModules)) {
+  const name = filePath.replace('./pages/', '').replace(/\.jsx$/, '');
+  if (CORE_EAGER_PAGE_NAMES.has(name) || CUSTOM_APP_ROUTE_PAGES.has(name)) {
+    continue;
+  }
+  lazyPages[name] = lazy(loadModule);
 }
 
-export const pagesConfig = {
-    mainPage: "Home",
-    Pages: PAGES,
-    Layout: __Layout,
+export const PAGES = {
+  ...eagerPages,
+  ...lazyPages,
 };
+
+export const pagesConfig = {
+  mainPage: 'Home',
+  Pages: PAGES,
+  Layout: __Layout,
+};
+
+export { CORE_EAGER_PAGE_NAMES };

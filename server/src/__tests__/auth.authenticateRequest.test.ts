@@ -49,7 +49,7 @@ describe('auth/authenticateRequest (Clerk-only)', () => {
 
         const req: any = { headers: { authorization: 'Bearer clerk.session' } };
         const reply = mockReply();
-        const ok = await authenticateRequest(req, reply as any);
+        const ok = await authenticateRequest(req, reply);
         expect(ok).toBe(true);
         expect(req.user).toEqual({ id: uid, email: 'c@example.com', role: 'client' });
         expect(clerkMod.verifyClerkToken).toHaveBeenCalledWith('clerk.session');
@@ -59,7 +59,7 @@ describe('auth/authenticateRequest (Clerk-only)', () => {
         vi.mocked(clerkMod.verifyClerkToken).mockResolvedValue(null);
         const req: any = { headers: { authorization: 'Bearer bad' } };
         const reply = mockReply();
-        const ok = await authenticateRequest(req, reply as any);
+        const ok = await authenticateRequest(req, reply);
         expect(ok).toBe(false);
         expect((reply as any).code).toHaveBeenCalledWith(401);
     });

@@ -1,0 +1,49 @@
+# Uptime monitoring — pings production API readiness every 5 minutes.
+# Configure repository secret PRODUCTION_API_URL (e.g. https://shopthebarber-api.onrender.com).
+# Optional: SLACK_WEBHOOK_URL for failure notifications.
+
+name: Uptime Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    name: API readiness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe /api/health/ready
+        id: probe
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "::warning::PRODUCTION_API_URL secret not set — skipping uptime check."
+            exit 0
+          fi
+          BASE="${API_URL%/}"
+          echo "Checking ${BASE}/api/health/ready"
+          HTTP=$(curl -sS -o /tmp/health.json -w "%{http_code}" --max-time 30 "${BASE}/api/health/ready")
+          cat /tmp/health.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            echo "body=$(cat /tmp/health.json | tr -d '\n' | head -c 500)" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "status=ok" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Slack on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set — skipping notification."
+            exit 0
+          fi
+          curl -sS -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\":\"🚨 ShopTheBarber API health check failed. See GitHub Actions → Uptime Monitor.\"}"

@@ -196,7 +196,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-2">Ma Wishlist ShopTheBarber</h3>
-                  <p className="text-slate-600 mb-3">
+                  <p className="text-muted-foreground mb-3">
                     {products.length} produit(s) sélectionnés avec soin
                   </p>
                   <div className="flex gap-2 flex-wrap">

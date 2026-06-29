@@ -75,80 +75,103 @@ button:focus-visible {
 
 
 /* ============================================
-   SHOPTHEBARBER — UNIFIED DESIGN SYSTEM
-   Light mode only. One palette, one experience.
+   SHOPTHEBARBER — UNIFIED DESIGN SYSTEM v2
+   Light mode only. Apple spacing + Fresha booking + controlled accents.
    ============================================ */
 @layer base {
   :root {
-    /* Surfaces */
-    --background: 240 9% 97%;
-    --foreground: 220 26% 14%;
+    /* Surfaces — #FFFFFF / #F6F7F9 / #EEF1F5 / #E3E7EE */
+    --background: 0 0% 100%;
+    --foreground: 220 43% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 220 26% 14%;
+    --card-foreground: 220 43% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 26% 14%;
-    /* Brand primary (teal) — CTAs, links, key accents */
-    --primary: 162 100% 38%;
+    --popover-foreground: 220 43% 11%;
+    /* Primary CTA — orange #FF6A3D */
+    --primary: 14 100% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 6% 92%;
-    --secondary-foreground: 220 26% 14%;
-    --muted: 240 6% 94%;
-    --muted-foreground: 220 9% 32%;
-    --accent: 240 6% 94%;
-    --accent-foreground: 220 26% 14%;
+    --secondary: 220 20% 97%;
+    --secondary-foreground: 220 43% 11%;
+    --muted: 220 20% 97%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 220 20% 97%;
+    --accent-foreground: 220 43% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 162 100% 38%;
-    --radius: 0.75rem;
+    --border: 214 16% 91%;
+    --input: 214 16% 91%;
+    --ring: 14 100% 62%;
+    --radius: 0.8125rem;
+    /* Semantic accents */
+    --success: 174 65% 50%;
+    --success-foreground: 0 0% 100%;
+    --vip: 255 100% 65%;
+    --vip-foreground: 0 0% 100%;
+    --salmon: 8 100% 74%;
+    --salmon-foreground: 220 43% 11%;
+    --highlight: 42 100% 70%;
+    --highlight-foreground: 220 43% 11%;
+    --energy: 8 100% 74%;
+    --energy-foreground: 220 43% 11%;
+    --navy: 220 43% 11%;
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 9% 36%;
-    --sidebar-primary: 162 100% 38%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 14 100% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 96%;
-    --sidebar-accent-foreground: 220 26% 14%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 162 100% 38%;
-    --chart-1: 162 100% 38%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --sidebar-accent: 220 20% 97%;
+    --sidebar-accent-foreground: 220 43% 11%;
+    --sidebar-border: 214 16% 91%;
+    --sidebar-ring: 14 100% 62%;
+    --chart-1: 14 100% 62%;
+    --chart-2: 174 65% 50%;
+    --chart-3: 255 100% 65%;
+    --chart-4: 42 100% 70%;
+    --chart-5: 8 100% 74%;
   }
   .dark {
-    --background: 240 9% 97%;
-    --foreground: 220 26% 14%;
+    --background: 0 0% 100%;
+    --foreground: 220 43% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 220 26% 14%;
+    --card-foreground: 220 43% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 26% 14%;
-    --primary: 162 100% 38%;
+    --popover-foreground: 220 43% 11%;
+    --primary: 14 100% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 6% 92%;
-    --secondary-foreground: 220 26% 14%;
-    --muted: 240 6% 94%;
-    --muted-foreground: 220 9% 32%;
-    --accent: 240 6% 94%;
-    --accent-foreground: 220 26% 14%;
+    --secondary: 220 20% 97%;
+    --secondary-foreground: 220 43% 11%;
+    --muted: 220 20% 97%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 220 20% 97%;
+    --accent-foreground: 220 43% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 162 100% 38%;
+    --border: 214 16% 91%;
+    --input: 214 16% 91%;
+    --ring: 14 100% 62%;
+    --success: 174 65% 50%;
+    --success-foreground: 0 0% 100%;
+    --vip: 255 100% 65%;
+    --vip-foreground: 0 0% 100%;
+    --salmon: 8 100% 74%;
+    --salmon-foreground: 220 43% 11%;
+    --highlight: 42 100% 70%;
+    --highlight-foreground: 220 43% 11%;
+    --energy: 8 100% 74%;
+    --energy-foreground: 220 43% 11%;
+    --navy: 220 43% 11%;
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 9% 36%;
-    --sidebar-primary: 162 100% 38%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 14 100% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 96%;
-    --sidebar-accent-foreground: 220 26% 14%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 162 100% 38%;
-    --chart-1: 162 100% 38%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --sidebar-accent: 220 20% 97%;
+    --sidebar-accent-foreground: 220 43% 11%;
+    --sidebar-border: 214 16% 91%;
+    --sidebar-ring: 14 100% 62%;
+    --chart-1: 14 100% 62%;
+    --chart-2: 174 65% 50%;
+    --chart-3: 255 100% 65%;
+    --chart-4: 42 100% 70%;
+    --chart-5: 8 100% 74%;
   }
 }
 
@@ -158,8 +181,17 @@ button:focus-visible {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1, h2, h3, h4 {
+    @apply tracking-tight text-foreground;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -239,7 +271,7 @@ button:focus-visible {
 .bg-muted a:hover,
 .bg-muted\/50 a:hover,
 .bg-secondary a:hover {
-  color: hsl(162, 100%, 38%);
+  color: hsl(var(--primary));
 }
 .dark .bg-gray-100,
 .dark .bg-gray-200 {
@@ -259,4 +291,174 @@ button:focus-visible {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Mobile layout — safe areas, bottom nav inset, touch targets */
+@layer base {
+  :root {
+    --navbar-height: 4rem;
+    --navbar-height-lg: 4.5rem;
+    --bottom-nav-height: 4rem;
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --content-pad-bottom-mobile: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+  }
+}
+
+@layer utilities {
+  .safe-area-pt {
+    padding-top: var(--safe-area-top);
+  }
+  .safe-area-pb {
+    padding-bottom: var(--safe-area-bottom);
+  }
+  .pb-nav {
+    padding-bottom: var(--content-pad-bottom-mobile);
+  }
+  @media (min-width: 1024px) {
+    .lg\:pb-nav-0 {
+      padding-bottom: 0;
+    }
+  }
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stb-gradient-hero {
+    background:
+      radial-gradient(ellipse 90% 70% at 50% -30%, hsl(var(--primary) / 0.12), transparent 55%),
+      radial-gradient(ellipse 60% 50% at 100% 0%, hsl(var(--salmon) / 0.08), transparent 50%),
+      hsl(var(--background));
+  }
+  .stb-gradient-cta {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.88) 55%, hsl(var(--salmon)) 100%);
+  }
+  .stb-text-gradient {
+    background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stb-card-lift {
+    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 hover:border-primary/20;
+  }
+  .stb-glass {
+    @apply bg-card/80 backdrop-blur-xl border-border/80;
+  }
+  .stb-section-label {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-primary mb-3;
+  }
+  .stb-heading-display {
+    @apply text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.05];
+  }
+  .stb-btn-primary {
+    @apply rounded-[13px] font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-[0.98];
+  }
+  .stb-surface-muted {
+    @apply bg-muted/40 border border-border/60;
+  }
+  .stb-mesh-bg {
+    background-image:
+      radial-gradient(at 40% 20%, hsl(var(--primary) / 0.2) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(var(--salmon) / 0.15) 0px, transparent 45%),
+      radial-gradient(at 0% 50%, hsl(var(--vip) / 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, hsl(var(--highlight) / 0.1) 0px, transparent 45%);
+    animation: stb-mesh-shift 18s ease-in-out infinite alternate;
+  }
+  .stb-text-gradient-light {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--salmon)) 50%, hsl(var(--primary) / 0.85) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stb-booking-float {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.08),
+      0 25px 50px -12px rgb(0 0 0 / 0.45),
+      0 0 80px -20px hsl(var(--primary) / 0.35);
+  }
+  .stb-btn-glow {
+    @apply rounded-[13px] font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all active:scale-[0.98];
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 55%, hsl(var(--salmon)) 100%);
+    color: hsl(var(--primary-foreground));
+    border: none;
+  }
+  .stb-btn-glow:hover {
+    filter: brightness(1.05);
+  }
+  .stb-animate-fade-up {
+    animation: stb-fade-up 0.7s ease-out both;
+  }
+  .stb-delay-1 { animation-delay: 0.08s; }
+  .stb-delay-2 { animation-delay: 0.16s; }
+  .stb-delay-3 { animation-delay: 0.24s; }
+  .stb-delay-4 { animation-delay: 0.32s; }
+  .stb-delay-5 { animation-delay: 0.4s; }
+  .stb-animate-float {
+    animation: stb-float 6s ease-in-out infinite;
+  }
+  .stb-step-active {
+    @apply bg-primary text-primary-foreground shadow-md shadow-primary/25;
+  }
+  .stb-step-done {
+    @apply bg-primary/10 text-primary border border-primary/20;
+  }
+  .stb-slot-selected {
+    @apply bg-success text-success-foreground border-success shadow-sm;
+  }
+  .stb-onboarding-soft {
+    @apply bg-salmon/15 border-salmon/30 text-foreground;
+  }
+  .stb-explore-hero {
+    background:
+      linear-gradient(160deg, hsl(var(--navy)) 0%, hsl(222 47% 16%) 45%, hsl(var(--navy)) 100%);
+  }
+  .stb-site-bg {
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -30%, hsl(var(--primary) / 0.04), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 50%, hsl(var(--salmon) / 0.03), transparent 50%),
+      hsl(var(--background));
+  }
+  .stb-page {
+    @apply min-h-screen bg-background text-foreground font-sans stb-site-bg;
+  }
+  .stb-panel {
+    @apply rounded-[13px] border border-border bg-card shadow-sm;
+  }
+  .stb-panel-hover {
+    @apply stb-panel transition-all duration-300 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5;
+  }
+  .stb-nav-active {
+    @apply bg-primary/10 text-primary font-medium;
+  }
+  .stb-surface-soft {
+    background-color: hsl(220 20% 97%);
+  }
+  .stb-surface-card {
+    background-color: hsl(214 20% 95%);
+  }
+}
+
+@keyframes stb-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stb-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes stb-mesh-shift {
+  0% { filter: hue-rotate(0deg) brightness(1); }
+  100% { filter: hue-rotate(12deg) brightness(1.08); }
 }

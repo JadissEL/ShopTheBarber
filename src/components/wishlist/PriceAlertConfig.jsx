@@ -163,7 +163,7 @@ export default function PriceAlertConfig({ product, trigger }) {
                       <Label htmlFor="any_drop" className="font-semibold cursor-pointer">
                         Toute baisse de prix
                       </Label>
-                      <p className="text-sm text-slate-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         Soyez notifié dès que le prix baisse, même d'1 centime
                       </p>
                     </div>
@@ -176,7 +176,7 @@ export default function PriceAlertConfig({ product, trigger }) {
                       <Label htmlFor="percentage_drop" className="font-semibold cursor-pointer">
                         Baisse de pourcentage
                       </Label>
-                      <p className="text-sm text-slate-600 mt-1 mb-3">
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">
                         Notification si le prix baisse d'un certain pourcentage
                       </p>
                       {alertType === 'percentage_drop' && (
@@ -203,7 +203,7 @@ export default function PriceAlertConfig({ product, trigger }) {
                       <Label htmlFor="target_price" className="font-semibold cursor-pointer">
                         Prix cible
                       </Label>
-                      <p className="text-sm text-slate-600 mt-1 mb-3">
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">
                         Notification quand le prix atteint ou passe sous votre prix cible
                       </p>
                       {alertType === 'target_price' && (

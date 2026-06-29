@@ -190,7 +190,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                               className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-all ${
                                 newCollection.icon === icon
                                   ? 'bg-blue-600 scale-110'
-                                  : 'bg-slate-100 hover:bg-slate-200'
+                                  : 'bg-muted hover:bg-slate-200'
                               }`}
                             >
                               {icon}
@@ -272,13 +272,13 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                                 <div className="flex items-center gap-3">
                                   <div
                                     className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                                    style={{ backgroundColor: collection.color + '20' }}
+                                    style={{ backgroundColor: `${collection.color  }20` }}
                                   >
                                     {collection.icon}
                                   </div>
                                   <div>
                                     <h4 className="font-bold text-lg">{collection.name}</h4>
-                                    <p className="text-sm text-slate-600">{collection.description}</p>
+                                    <p className="text-sm text-muted-foreground">{collection.description}</p>
                                     <Badge variant="outline" className="mt-2">
                                       {collection.product_ids?.length || 0} produit(s)
                                     </Badge>
@@ -333,13 +333,13 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                                             className="w-12 h-12 rounded object-cover"
                                           />
                                         ) : (
-                                          <div className="w-12 h-12 rounded bg-slate-100" />
+                                          <div className="w-12 h-12 rounded bg-muted" />
                                         )}
                                         <div className="flex-1 min-w-0">
                                           <p className="text-sm font-semibold truncate">
                                             {product.name}
                                           </p>
-                                          <p className="text-xs text-slate-600">
+                                          <p className="text-xs text-muted-foreground">
                                             {product.price}€
                                           </p>
                                         </div>
@@ -366,7 +366,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
           {collections.length === 0 && !isCreating && (
             <div className="text-center py-12">
               <FolderPlus className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Créez votre première collection pour mieux organiser votre wishlist
               </p>
             </div>

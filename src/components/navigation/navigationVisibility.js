@@ -9,6 +9,7 @@
  */
 
 import { APP_ZONES } from '@/components/navigationConfig';
+import { isFeatureEnabled } from '@/lib/featureRegistry';
 
 /**
  * Navigation visibility categories
@@ -39,6 +40,8 @@ const ROOT_PATHS = [
     '/helpcenter',
     '/signin',
     '/signup',
+    '/login',
+    '/register',
     '/onboarding',
     '/selectprovidertype',
 ];
@@ -57,11 +60,14 @@ const PUBLIC_PATHS = [
     '/helpcenter',
     '/signin',
     '/signup',
+    '/login',
+    '/register',
     '/selectprovidertype',
-    '/registershop',
     '/servicespricing',
     '/termsofservice',
+    '/privacy',
     '/privacypolicy',
+    '/championshipleaderboard',
     '/providertermsofservice',
     '/barberprofile',
     '/shopprofile',
@@ -84,7 +90,7 @@ export function getNavigationVisibility({ pathname, isAuthenticated, role, zone:
     const path = pathname.toLowerCase();
     const _isPublicPath = PUBLIC_PATHS.includes(path);
     const isRootPath = ROOT_PATHS.includes(path);
-    const isAuthPage = path === '/signin' || path === '/signup';
+    const isAuthPage = path === '/signin' || path === '/signup' || path === '/login' || path === '/register';
 
     // Base visibility - always shown
     const visibility = {
@@ -140,8 +146,12 @@ export function getNavigationVisibility({ pathname, isAuthenticated, role, zone:
         case 'client':
         default:
             visibility[NAV_ITEMS.DASHBOARD] = path !== '/dashboard';
-            visibility[NAV_ITEMS.EXPLORE] = !path.includes('explore') && !path.includes('marketplace');
-            visibility[NAV_ITEMS.LOYALTY] = !path.includes('loyalty');
+            if (isFeatureEnabled('marketplace')) {
+                visibility[NAV_ITEMS.EXPLORE] = !path.includes('explore') && !path.includes('marketplace');
+            }
+            if (isFeatureEnabled('engagement')) {
+                visibility[NAV_ITEMS.LOYALTY] = !path.includes('loyalty');
+            }
             break;
     }
 

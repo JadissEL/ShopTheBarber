@@ -1,10 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { Star, MapPin, Heart, Calendar, ChevronRight } from 'lucide-react';
+import { Star, MapPin, Heart, Calendar, ChevronRight, Scissors } from 'lucide-react';
+import ShowcaseDiscoveryStrip from '@/components/providerShowcase/ShowcaseDiscoveryStrip';
+import SpokenLanguagesBadges from '@/components/languages/SpokenLanguagesBadges';
+import ChildrenFriendlyBadge from '@/components/childrenFriendly/ChildrenFriendlyBadge';
+import ProviderAttestationBadges from '@/components/providerAttestation/ProviderAttestationBadges';
+import ServiceLocationBadges from '@/components/serviceLocation/ServiceLocationBadges';
+import VipBarberBadge from '@/components/groupBooking/GroupBookingBadges';
+import { GroupBookingBadge } from '@/components/groupBooking/GroupBookingBadges';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
@@ -34,7 +41,18 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
         rating: barber.rating || 0,
         review_count: barber.review_count || 0,
         title: barber.title || 'Professional Barber',
-        tags: barber.tags || ['Top Rated']
+        tags: barber.tags || ['Top Rated'],
+        spoken_languages: barber.spoken_languages || barber.effective_languages || [],
+        children_friendly: barber.children_friendly === true,
+        licensed: barber.licensed === true,
+        insured: barber.insured === true,
+        offers_mobile_service: barber.offers_mobile_service === true,
+        offers_shop_service: barber.offers_shop_service !== false,
+        offers_group_booking: barber.offers_group_booking === true,
+        group_booking_discount_percent: barber.group_booking_discount_percent ?? 0,
+        is_vip: barber.is_vip === true,
+        completed_services: barber.completed_services ?? 0,
+        discovery_preview: barber.discovery_preview ?? null,
     };
 
     const isFavorited = favorites.some(f => f.target_id === barberData.id && f.target_type === 'barber');
@@ -45,7 +63,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
 
         if (!user) {
             toast.error("Please login to save favorites");
-            navigate(createPageUrl('SignIn'));
+            navigate(signInUrlWithReturn());
             return;
         }
 
@@ -75,7 +93,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                 <motion.div
                     whileHover={{ y: -5 }}
                     className={isLight
-                        ? "bg-white border border-slate-200 rounded-3xl p-4 flex items-center gap-5 hover:border-primary/30 hover:shadow-md transition-all group shadow-sm"
+                        ? "bg-card border border-border rounded-3xl p-4 flex items-center gap-5 hover:border-primary/30 hover:shadow-md transition-all group shadow-sm stb-card-lift"
                         : "bg-card/95 backdrop-blur-md border border-border rounded-3xl p-4 flex items-center gap-5 hover:border-primary/20 hover:shadow-primary/5 transition-all group"
                     }
                 >
@@ -91,26 +109,38 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                             fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=80"
                             imgClassName="rounded-2xl"
                         />
-                        <div className={isLight ? "absolute -bottom-2 -right-2 bg-white rounded-lg p-1 shadow border border-slate-200" : "absolute -bottom-2 -right-2 bg-primary rounded-lg p-1 shadow-sm border border-primary/30"}>
-                            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                        <div className={isLight ? "absolute -bottom-2 -right-2 bg-card rounded-lg p-1 shadow border border-border" : "absolute -bottom-2 -right-2 bg-primary rounded-lg p-1 shadow-sm border border-primary/30"}>
+                            <div className="bg-chart-4/15 border border-chart-4/30 text-chart-4 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                 <Star className="w-3 h-3 fill-current" /> {barberData.rating > 0 ? barberData.rating.toFixed(1) : "New"}
                             </div>
                         </div>
                     </div>
                     <div className="flex-1 min-w-0 py-1">
                         <h3 className={isLight ? "text-foreground font-bold text-lg truncate group-hover:text-primary transition-colors" : "text-white font-bold text-lg truncate group-hover:text-primary transition-colors"}>{barberData.name}</h3>
-                        <p className={isLight ? "text-slate-500 text-sm mb-2" : "text-slate-400 text-sm mb-2"}>{barberData.location}</p>
-                        <div className={isLight ? "flex items-center gap-2 text-xs text-slate-500" : "flex items-center gap-2 text-xs text-slate-500"}>
+                        <p className={isLight ? "text-muted-foreground text-sm mb-2" : "text-muted-foreground text-sm mb-2"}>{barberData.location}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Calendar className="w-3.5 h-3.5" />
                             <span>Available for booking</span>
+                            {barberData.completed_services > 0 && (
+                                <>
+                                    <span>,</span>
+                                    <Scissors className="w-3.5 h-3.5" />
+                                    <span>{barberData.completed_services.toLocaleString()} cuts</span>
+                                </>
+                            )}
                         </div>
+                        <ShowcaseDiscoveryStrip
+                            preview={barberData.discovery_preview}
+                            compact
+                            className="mt-2"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
                             size="icon"
                             variant="ghost"
                             onClick={toggleFavorite}
-                            className={`rounded-full ${isFavorited ? 'text-red-500' : isLight ? 'text-slate-500 hover:text-red-500' : 'text-muted-foreground hover:text-red-500'}`}
+                            className={`rounded-full ${isFavorited ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'}`}
                         >
                             <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
                         </Button>
@@ -125,7 +155,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
 
     // Vertical Variant
     const cardClass = isLight
-        ? "overflow-hidden border border-slate-200 shadow-sm bg-white hover:shadow-md hover:border-primary/20 transition-all duration-300 h-full rounded-2xl group relative flex flex-col"
+        ? "overflow-hidden border border-border shadow-sm bg-card hover:shadow-lg hover:shadow-primary/10 hover:border-primary/25 transition-all duration-300 h-full rounded-2xl group relative flex flex-col stb-card-lift"
         : "overflow-hidden border border-border shadow-xl bg-card/95 backdrop-blur-md hover:shadow-primary/5 transition-all duration-300 h-full rounded-[2rem] group relative flex flex-col";
 
     return (
@@ -162,8 +192,8 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                                 variant="ghost"
                                 onClick={toggleFavorite}
                                 className={isLight
-                                    ? `w-10 h-10 rounded-full bg-white/90 border border-slate-200 shadow-sm ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'text-slate-600 hover:text-red-500 hover:bg-white'}`
-                                    : `w-10 h-10 rounded-full backdrop-blur-md transition-all border border-white/10 ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'bg-white/20 text-white hover:bg-white hover:text-red-500'}`
+                                    ? `w-10 h-10 rounded-full bg-card/95 border border-border shadow-sm ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'text-muted-foreground hover:text-red-500 hover:bg-card'}`
+                                    : `w-10 h-10 rounded-full backdrop-blur-md transition-all border border-white/10 ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'bg-white/20 text-white hover:bg-card hover:text-red-500'}`
                                 }
                             >
                                 <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
@@ -171,9 +201,9 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                         </div>
 
                         <div className="absolute bottom-3 right-3 z-10">
-                            <div className={isLight ? "flex items-center gap-1.5 bg-white/95 backdrop-blur border border-slate-200 px-3 py-1.5 rounded-full shadow-sm" : "flex items-center gap-1.5 bg-background/90 backdrop-blur-md border border-border px-3 py-1.5 rounded-full shadow-sm"}>
-                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                <span className={isLight ? "font-semibold text-sm text-foreground" : "font-semibold text-sm text-foreground"}>{barberData.rating > 0 ? barberData.rating.toFixed(1) : "New"}</span>
+                            <div className="flex items-center gap-1.5 bg-card/95 backdrop-blur border border-border px-3 py-1.5 rounded-full shadow-sm">
+                                <Star className="w-3.5 h-3.5 text-chart-4 fill-chart-4" />
+                                <span className="font-semibold text-sm text-foreground">{barberData.rating > 0 ? barberData.rating.toFixed(1) : "New"}</span>
                             </div>
                         </div>
                     </div>
@@ -181,22 +211,56 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                     <div className="p-5 pt-3 flex flex-col flex-1">
                         <div className="flex justify-between items-start mb-1">
                             <div>
-                                <h3 className={isLight ? "font-semibold text-xl text-foreground leading-tight group-hover:text-primary transition-colors" : "font-semibold text-xl text-white leading-tight group-hover:text-primary transition-colors"}>{barberData.name}</h3>
-                                <p className={isLight ? "text-sm text-slate-500 font-light mt-0.5" : "text-sm text-slate-400 font-light mt-0.5"}>{barberData.title}</p>
+                                <h3 className="font-semibold text-xl text-foreground leading-tight group-hover:text-primary transition-colors">{barberData.name}</h3>
+                                <p className="text-sm text-muted-foreground font-light mt-0.5">{barberData.title}</p>
                             </div>
                         </div>
 
-                        <div className={isLight ? "flex items-center gap-2 text-sm text-slate-500 mb-6 font-light" : "flex items-center gap-2 text-sm text-slate-400 mb-6 font-light"}>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 font-light">
                             <MapPin className="w-3.5 h-3.5" />
                             <span className="line-clamp-1">{barberData.location}</span>
-                            <span>·</span>
-                            <span>{barberData.review_count} reviews</span>
+                            <span>, {barberData.review_count} reviews</span>
+                            {barberData.completed_services > 0 && (
+                                <span className="flex items-center gap-1">
+                                    , <Scissors className="w-3.5 h-3.5" />
+                                    {barberData.completed_services.toLocaleString()} completed
+                                </span>
+                            )}
                         </div>
+                        <SpokenLanguagesBadges languages={barberData.spoken_languages} size="xs" max={3} className="mb-4" />
+                        {barberData.children_friendly && (
+                            <ChildrenFriendlyBadge size="xs" className="mb-4" />
+                        )}
+                        {(barberData.licensed || barberData.insured) && (
+                            <ProviderAttestationBadges
+                                licensed={barberData.licensed}
+                                insured={barberData.insured}
+                                size="xs"
+                                className="mb-4"
+                            />
+                        )}
+                        {barberData.is_vip && (
+                            <VipBarberBadge className="mb-4" />
+                        )}
 
-                        <div className={isLight ? "mt-auto pt-4 border-t border-slate-200" : "mt-auto pt-4 border-t border-border"}>
+                        <ServiceLocationBadges barber={barberData} size="sm" className="mb-4" />
+                        {barberData.offers_group_booking && (
+                            <GroupBookingBadge
+                                discountPercent={barberData.group_booking_discount_percent}
+                                className="mb-4"
+                            />
+                        )}
+
+                        <ShowcaseDiscoveryStrip
+                            preview={barberData.discovery_preview}
+                            compact
+                            className="mb-4"
+                        />
+
+                        <div className="mt-auto pt-4 border-t border-border">
                             <div className="flex gap-2 flex-wrap">
                                 {barberData.tags.slice(0, 2).map((tag, i) => (
-                                    <span key={i} className={isLight ? "text-[10px] uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200" : "text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/50 px-2 py-1 rounded-md border border-border"}>{tag}</span>
+                                    <span key={i} className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/80 px-2 py-1 rounded-md border border-border">{tag}</span>
                                 ))}
                             </div>
                         </div>

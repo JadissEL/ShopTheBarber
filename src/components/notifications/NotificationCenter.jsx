@@ -66,7 +66,7 @@ export default function NotificationCenter({ isDark = false }) {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className={`relative transition-colors ${isDark ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-gray-100'}`}
+                    className={`relative transition-colors ${isDark ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-muted'}`}
                 >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (

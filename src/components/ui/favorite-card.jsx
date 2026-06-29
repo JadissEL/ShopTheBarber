@@ -3,10 +3,16 @@ import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import RebookButton from '@/components/booking/RebookButton';
 
 export default function FavoriteCard({ fav, onRemove }) {
+  const rebookBooking = {
+    barber_id: fav.barber_id,
+    barber_name: fav.barber_name,
+  };
+
   return (
-    <div className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[240px] group relative shadow-sm hover:shadow-md transition-all">
+    <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[240px] group relative shadow-sm hover:shadow-md transition-all">
       <button 
         onClick={() => onRemove(fav.id)}
         className="absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur-md rounded-full text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors md:left-4 md:right-auto shadow-sm"
@@ -22,14 +28,17 @@ export default function FavoriteCard({ fav, onRemove }) {
              <span>•</span>
              <span>{fav.review_count || 0} reviews</span>
           </div>
-          <Link to={createPageUrl(`BarberProfile?id=${fav.barber_id}`)}>
-              <Button className="bg-primary text-white hover:bg-primary/90 border-none rounded-lg px-6 font-bold shadow-sm">
-                Book Again
+          <div className="flex flex-wrap gap-2">
+            <RebookButton booking={rebookBooking} label="Book again" className="rounded-lg px-6" />
+            <Link to={createPageUrl(`BarberProfile?id=${fav.barber_id}`)}>
+              <Button variant="outline" className="rounded-lg px-6 font-bold">
+                View profile
               </Button>
-          </Link>
+            </Link>
+          </div>
         </div>
       </div>
-      <div className="md:w-[400px] bg-gray-100 relative order-1 md:order-2">
+      <div className="md:w-[400px] bg-muted relative order-1 md:order-2">
         <OptimizedImage
           src={fav.barber_image || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop"} 
           alt={fav.barber_name} 

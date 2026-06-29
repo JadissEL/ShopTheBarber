@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -10,23 +10,92 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
-import { MetaTags } from '@/components/seo/MetaTags';
-import { User, Shield, Bell, MapPin, Key, LogOut, Loader, CheckCircle, ExternalLink } from 'lucide-react';
+import ClientPaymentMethodsPanel from '@/components/payments/ClientPaymentMethodsPanel';
+import { User, Shield, Bell, MapPin, Key, LogOut, Loader, CheckCircle, ExternalLink, Truck } from 'lucide-react';
+import SavedAddressesManager from '@/components/shipping/SavedAddressesManager';
 import { PageLoading } from '@/components/ui/page-loading';
-import { Link } from 'react-router-dom';
+import { MetaTags } from '@/components/seo/MetaTags';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { clientProfileSchema } from '@/lib/validations';
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import { loadPreferredLocation, savePreferredLocation } from '@/lib/userLocation';
+import { ReplaySetupGuideLink } from '@/components/onboarding/ReplaySetupGuideLink';
+
+function AccountNotificationPrefs({ user }) {
+    const queryClient = useQueryClient();
+    const { data: prefs } = useQuery({
+        queryKey: ['reminder-preferences'],
+        queryFn: () => sovereign.reminders.getPreferences(),
+        enabled: !!user?.id,
+    });
+    const saveMutation = useMutation({
+        mutationFn: (payload) => sovereign.reminders.updatePreferences(payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reminder-preferences'] });
+            queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+            toast.success('Reminder preferences updated');
+        },
+    });
+
+    return (
+        <>
+            <div className="flex items-center justify-between p-6 bg-muted/50 rounded-3xl border border-border hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-foreground">SMS appointment reminders</p>
+                        <p className="text-xs text-muted-foreground font-medium">Text alert ~24h before your cut (requires phone on profile).</p>
+                    </div>
+                </div>
+                <Switch
+                    checked={prefs?.sms_reminders_enabled !== false}
+                    disabled={prefs?.phone_valid === false && !prefs?.phone?.trim() && !user?.phone?.trim()}
+                    onCheckedChange={(v) => saveMutation.mutate({ sms_reminders_enabled: v })}
+                />
+            </div>
+            <div className="flex items-center justify-between p-6 bg-muted/50 rounded-3xl border border-border hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
+                        <Shield className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-foreground">Email booking reminders</p>
+                        <p className="text-xs text-muted-foreground font-medium">Confirmation and reminder emails.</p>
+                    </div>
+                </div>
+                <Switch
+                    checked={prefs?.email_reminders_enabled !== false}
+                    onCheckedChange={(v) => saveMutation.mutate({ email_reminders_enabled: v })}
+                />
+            </div>
+        </>
+    );
+}
+
 export default function AccountSettings() {
     const queryClient = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    useEffect(() => {
+        const card = searchParams.get('card');
+        if (card === 'success') {
+            toast.success('Card saved successfully');
+            queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
+        } else if (card === 'cancelled') {
+            toast.info('Card setup cancelled');
+        }
+        if (card) {
+            searchParams.delete('card');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams, queryClient]);
+
     const { data: user, isLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => sovereign.auth.me()
-    });
-
-    const [notifSettings, setNotifSettings] = useState({
-        booking_reminders: true,
-        marketing: false,
-        security_alerts: true
     });
 
     const form = useForm({
@@ -41,18 +110,24 @@ export default function AccountSettings() {
 
     useEffect(() => {
         if (user) {
+            const saved = loadPreferredLocation();
             form.reset({
                 full_name: user.full_name || '',
                 email: user.email || '',
                 phone: user.phone || '',
-                address: user.address || ''
+                address: saved?.address || user.address || ''
             });
         }
     }, [user, form]);
 
     const updateProfileMutation = useMutation({
-        mutationFn: (data) => sovereign.entities.User.update(user.id, data),
-        onSuccess: () => {
+        mutationFn: async (data) => {
+            await sovereign.entities.User.update(user.id, data).catch(() => null);
+            if (data.phone !== undefined) {
+                await sovereign.reminders.updatePreferences({ phone: data.phone || null });
+            }
+        },
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['currentUser'] });
             toast.success("Profile updated successfully");
         },
@@ -72,13 +147,13 @@ export default function AccountSettings() {
                 <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-6" />
                 <h2 className="text-2xl font-black text-foreground mb-2">Session Expired</h2>
                 <p className="text-muted-foreground mb-8 font-medium">Please sign in to access your account settings.</p>
-                <Button onClick={() => window.location.href = '/SignIn'} className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-bold">Return to Login</Button>
+                <Button onClick={() => window.location.href = '/login'} className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-bold">Return to Login</Button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-background pb-24 lg:pb-8">
+        <div className="stb-page lg:pb-8">
             <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10">
             <MetaTags title="Account Settings" description="Manage your personal profile, security, and preferences." />
 
@@ -90,6 +165,7 @@ export default function AccountSettings() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <ReplaySetupGuideLink />
                     <Button variant="outline" onClick={handleLogout} className="rounded-2xl h-12 px-6 border-border hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-bold">
                         <LogOut className="w-4 h-4 mr-2" /> Sign Out
                     </Button>
@@ -103,6 +179,9 @@ export default function AccountSettings() {
                     <TabsList className="flex flex-col bg-transparent w-full space-y-2 h-auto p-0">
                         <TabsTrigger value="profile" className="justify-start px-6 py-4 rounded-2xl w-full data-[state=active]:bg-card data-[state=active]:shadow-xl data-[state=active]:border-border border border-transparent transition-all font-bold text-muted-foreground data-[state=active]:text-primary">
                             <User className="w-4 h-4 mr-3" /> Profile Info
+                        </TabsTrigger>
+                        <TabsTrigger value="shipping" className="justify-start px-6 py-4 rounded-2xl w-full data-[state=active]:bg-card data-[state=active]:shadow-xl data-[state=active]:border-border border border-transparent transition-all font-bold text-muted-foreground data-[state=active]:text-primary">
+                            <Truck className="w-4 h-4 mr-3" /> Shipping
                         </TabsTrigger>
                         <TabsTrigger value="preferences" className="justify-start px-6 py-4 rounded-2xl w-full data-[state=active]:bg-card data-[state=active]:shadow-xl data-[state=active]:border-border border border-transparent transition-all font-bold text-muted-foreground data-[state=active]:text-primary">
                             <Bell className="w-4 h-4 mr-3" /> Notifications
@@ -130,7 +209,7 @@ export default function AccountSettings() {
                                 </CardHeader>
                                 <CardContent className="p-10">
                                     <form onSubmit={form.handleSubmit((d) => {
-                                                const { email: _e, ...editable } = d;
+                                                const { email: _e, address: addressField, ...editable } = d;
                                                 updateProfileMutation.mutate(editable);
                                             })} className="space-y-8">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -151,11 +230,24 @@ export default function AccountSettings() {
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-foreground font-bold ml-1">Preferred Location</Label>
-                                                <div className="relative">
-                                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                                                    <Input {...form.register('address')} className="h-12 rounded-2xl border-border bg-muted/50 focus:bg-card transition-colors pl-11 font-medium text-foreground placeholder:text-muted-foreground" placeholder="Home or Work address" />
+                                                <div className="relative pl-0">
+                                                    <AddressAutocomplete
+                                                        value={form.watch('address') || ''}
+                                                        onChange={(value) => form.setValue('address', value)}
+                                                        onSelect={(item) => {
+                                                            form.setValue('address', item.formatted_address);
+                                                            savePreferredLocation({
+                                                                address: item.formatted_address,
+                                                                latitude: item.latitude,
+                                                                longitude: item.longitude,
+                                                            });
+                                                        }}
+                                                        placeholder="Home or work address"
+                                                        inputClassName="h-12 rounded-2xl border-border bg-muted/50 focus:bg-card pl-11 font-medium text-foreground"
+                                                    />
+                                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
                                                 </div>
-                                                <p className="text-xs text-muted-foreground font-medium ml-1">Optional – used for nearby barbers and directions.</p>
+                                                <p className="text-xs text-muted-foreground font-medium ml-1">Used for nearby barbers, map distance, and booking defaults.</p>
                                             </div>
                                         </div>
                                         <div className="pt-6 border-t border-border flex justify-end">
@@ -167,6 +259,14 @@ export default function AccountSettings() {
                                         </div>
                                     </form>
                                 </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="shipping" className="mt-0">
+                            <Card className="border-none shadow-2xl rounded-[32px] bg-card border border-border p-10">
+                                <h2 className="text-2xl font-black text-foreground mb-2">Saved shipping addresses</h2>
+                                <p className="text-muted-foreground font-medium mb-8">Manage addresses for marketplace checkout and order delivery.</p>
+                                <SavedAddressesManager />
                             </Card>
                         </TabsContent>
 
@@ -183,31 +283,7 @@ export default function AccountSettings() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between p-6 bg-muted/50 rounded-3xl border border-border hover:border-primary/30 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                                                <CheckCircle className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-foreground">Booking Confirmations</p>
-                                                <p className="text-xs text-muted-foreground font-medium">Automatic alerts for any new appointments.</p>
-                                            </div>
-                                        </div>
-                                        <Switch checked={notifSettings.booking_reminders} onCheckedChange={(v) => setNotifSettings(s => ({ ...s, booking_reminders: v }))} />
-                                    </div>
-
-                                    <div className="flex items-center justify-between p-6 bg-muted/50 rounded-3xl border border-border hover:border-primary/30 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
-                                                <Shield className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-foreground">Security & Login Alerts</p>
-                                                <p className="text-xs text-muted-foreground font-medium">Critical alerts for security sensitive actions.</p>
-                                            </div>
-                                        </div>
-                                        <Switch checked={notifSettings.security_alerts} onCheckedChange={(v) => setNotifSettings(s => ({ ...s, security_alerts: v }))} />
-                                    </div>
+                                    <AccountNotificationPrefs user={user} />
                                 </div>
                             </Card>
                         </TabsContent>
@@ -218,6 +294,8 @@ export default function AccountSettings() {
                                     <h2 className="text-2xl font-black text-foreground mb-2">Security & Identity</h2>
                                     <p className="text-muted-foreground font-medium">Manage your access and active sessions.</p>
                                 </div>
+
+                                <ClientPaymentMethodsPanel />
 
                                 <div className="p-8 border-2 border-dashed border-border rounded-[32px] text-center">
                                     <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-6">

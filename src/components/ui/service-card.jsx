@@ -15,9 +15,9 @@ export default function ServiceCard({ service, variant = 'full', index = 0 }) {
             className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[1.5rem] border transition-all duration-300 cursor-pointer min-w-[100px] md:min-w-0 flex-1 h-full group ${service.bg || 'bg-white/5 border-white/5'} hover:bg-white/10 hover:border-white/20`}
         >
             <div className="p-3 rounded-full bg-white/5 group-hover:bg-primary/20 transition-colors duration-300">
-                {service.icon && <service.icon className={`w-6 h-6 ${service.color || 'text-gray-400'} group-hover:text-primary transition-colors duration-300`} />}
+                {service.icon && <service.icon className={`w-6 h-6 ${service.color || 'text-muted-foreground/80'} group-hover:text-primary transition-colors duration-300`} />}
             </div>
-            <span className="text-xs font-medium tracking-wide text-gray-400 group-hover:text-white uppercase transition-colors">{service.name || service.label}</span>
+            <span className="text-xs font-medium tracking-wide text-muted-foreground/80 group-hover:text-white uppercase transition-colors">{service.name || service.label}</span>
         </motion.div>
     );
   }
@@ -60,7 +60,7 @@ export default function ServiceCard({ service, variant = 'full', index = 0 }) {
                     
                     <div>
                         <h3 className="font-bold text-white text-xl mb-1">{service.label || service.name}</h3>
-                        <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Book Now <span className="inline-block ml-1 transition-transform group-hover:translate-x-1">→</span></p>
+                        <p className="text-sm text-muted-foreground/80 group-hover:text-gray-300 transition-colors">Book Now <span className="inline-block ml-1 transition-transform group-hover:translate-x-1"></span></p>
                     </div>
                 </div>
             </motion.div>

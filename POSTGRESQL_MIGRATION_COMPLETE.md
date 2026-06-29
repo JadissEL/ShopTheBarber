@@ -1,5 +1,7 @@
 # ✅ PostgreSQL Migration Complete!
 
+> **Historical note (2026-06-26):** Production now uses **Neon PostgreSQL + Prisma** (not Render Postgres + Drizzle). Current deploy guide: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
 ## 🎉 Your Database Is Now Production-Ready!
 
 I've successfully migrated your entire database from SQLite to PostgreSQL on Render.

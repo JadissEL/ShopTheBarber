@@ -231,7 +231,7 @@ export default function VisualEditAgent() {
 			type: 'element-selected',
 			tagName: element.tagName,
 			classes: element.className?.baseVal || element.className || '',
-			visualSelectorId: visualSelectorId,
+			visualSelectorId,
 			content: element.innerText,
 			dataSourceLocation: element.dataset.sourceLocation,
 			isDynamicContent: element.dataset.dynamicContent === 'true',
@@ -404,7 +404,7 @@ export default function VisualEditAgent() {
 					window.parent.postMessage({
 						type: 'element-position-update',
 						position: elementPosition,
-						isInViewport: isInViewport,
+						isInViewport,
 						visualSelectorId: selectedElementIdRef.current
 					}, '*');
 				}
@@ -488,7 +488,7 @@ export default function VisualEditAgent() {
 							window.parent.postMessage({
 								type: 'element-position-update',
 								position: elementPosition,
-								isInViewport: isInViewport,
+								isInViewport,
 								visualSelectorId: selectedElementIdRef.current
 							}, '*');
 						}

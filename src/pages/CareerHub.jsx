@@ -10,6 +10,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const CATEGORIES = [
   { id: 'artistry', label: 'Artistry' },
@@ -38,7 +39,7 @@ const LOCATION_TYPES = [
 function formatSalary(job) {
   if (job.salary_min != null || job.salary_max != null) {
     const sym = job.salary_currency === 'GBP' ? '£' : '$';
-    if (job.salary_min != null && job.salary_max != null) return `${sym}${Number(job.salary_min / 1000).toFixed(0)}k – ${Number(job.salary_max / 1000).toFixed(0)}k`;
+    if (job.salary_min != null && job.salary_max != null) return `${sym}${Number(job.salary_min / 1000).toFixed(0)}k - ${Number(job.salary_max / 1000).toFixed(0)}k`;
     if (job.salary_min != null) return `${sym}${Number(job.salary_min / 1000).toFixed(0)}k`;
     if (job.salary_max != null) return `${sym}${Number(job.salary_max / 1000).toFixed(0)}k`;
   }
@@ -58,12 +59,12 @@ export default function CareerHub() {
 
   const { data: featured = [], isLoading: isFeaturedLoading } = useQuery({
     queryKey: ['jobs-featured'],
-    queryFn: () => sovereign.jobs.featured(),
+    queryFn: () => sovereign.jobs.featuredPublic(),
   });
 
   const { data: allJobs = [], isLoading: isAllJobsLoading } = useQuery({
     queryKey: ['jobs', category, employmentType, locationType],
-    queryFn: () => sovereign.jobs.list({ category: category || undefined, employment_type: employmentType || undefined, location_type: locationType || undefined }),
+    queryFn: () => sovereign.jobs.listPublic({ category: category || undefined, employment_type: employmentType || undefined, location_type: locationType || undefined }),
   });
 
   const isExploreLoading = isFeaturedLoading || isAllJobsLoading;
@@ -91,7 +92,7 @@ export default function CareerHub() {
   const recentJobs = useMemo(() => filteredJobs.slice(0, 10), [filteredJobs]);
 
   return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-8">
+    <div className="stb-page pb-20 lg:pb-8">
       <MetaTags title="Elite Career Hub | Shop The Barber" description="Jobs and employment in grooming and beyond." />
 
       {/* Header */}
@@ -180,7 +181,7 @@ export default function CareerHub() {
               <p className="text-muted-foreground text-sm mb-4">Curated leadership roles for premium brands.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {featured.map((job) => (
-                  <Link key={job.id} to={createPageUrl('JobDetail') + '?id=' + encodeURIComponent(job.id)} className="group block bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all">
+                  <Link key={job.id} to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`} className="group block bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all">
                     <div className="aspect-[4/3] relative bg-muted overflow-hidden">
                       {job.image_url ? (
                         <OptimizedImage src={job.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -223,7 +224,7 @@ export default function CareerHub() {
                 {recentJobs.map((job) => (
                   <li key={job.id}>
                     <Link
-                      to={createPageUrl('JobDetail') + '?id=' + encodeURIComponent(job.id)}
+                      to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`}
                       className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all"
                     >
                       <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -242,7 +243,16 @@ export default function CareerHub() {
                 ))}
               </ul>
               {recentJobs.length === 0 && (
-                <p className="text-muted-foreground text-sm py-8 text-center">No jobs match your filters.</p>
+                allJobs.length === 0 ? (
+                  <EmptyState
+                    title="No openings yet"
+                    description="We're growing the career hub. Check back soon for barber, shop, and grooming industry roles."
+                    actionLabel="Explore barbers"
+                    actionHref={createPageUrl('Explore')}
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-sm py-8 text-center">No jobs match your filters.</p>
+                )
               )}
             </section>
             </>
@@ -261,7 +271,7 @@ export default function CareerHub() {
               <ul className="space-y-3">
                 {savedJobs.map((job) => (
                   <li key={job.id}>
-                    <Link to={createPageUrl('JobDetail') + '?id=' + encodeURIComponent(job.id)} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:shadow-sm">
+                    <Link to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:shadow-sm">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-foreground">{job.title}</p>
                         <p className="text-sm text-muted-foreground">{job.employer_name} • {job.location_text}</p>

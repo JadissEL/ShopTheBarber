@@ -1,51 +1,95 @@
-# Neon + Prisma (ShopTheBarber production database)
+# Neon + Prisma (ShopTheBarber database)
 
-ShopTheBarber uses **Neon PostgreSQL** in production with **Prisma** for schema migrations and **Drizzle** for runtime queries (existing Fastify routes).
+Production and local development use **Neon PostgreSQL** with **Prisma** for schema migrations and the **Prisma Client** for all runtime queries.
 
-## Neon project (created via MCP)
+Legacy **SQLite / Drizzle** docs elsewhere in the repo are historical — do not use them for new environments.
 
-- **Project:** `shopthebarber` (`purple-glade-90739580`)
-- **Region:** AWS us-west-2
-- **Schema:** applied via `prisma migrate deploy` + `npm run seed`
-- **Local:** `server/.env` has pooled `DATABASE_URL` (git-ignored)
+---
 
-| Variable | Use |
-|----------|-----|
-| `DATABASE_URL` | Pooled Neon connection — app runtime on Render (`-pooler` host) |
+## Neon project (reference)
 
-For **local Prisma migrations** on Neon, temporarily set `DATABASE_URL` to the **direct** (non-pooler) connection string from the Neon dashboard, then run `npx prisma migrate deploy`.
+| Item | Value |
+|------|--------|
+| Project | `shopthebarber` (`purple-glade-90739580`) |
+| Region | AWS us-west-2 |
+| Runtime connection | **Pooled** URL (`-pooler` host) → `DATABASE_URL` |
+| Migrations | **Direct** (non-pooler) URL recommended for `prisma migrate dev` only |
 
-## Local commands
+Never commit connection strings. Store in `server/.env` (gitignored) and Render env.
+
+---
+
+## Local setup
 
 ```bash
 cd server
-npm run prisma:generate
-npx prisma migrate dev --name init   # first time, with DATABASE_URL + DIRECT_URL set
-npm run seed                         # sample data after tables exist
+cp .env.example .env
+# Edit DATABASE_URL → Neon pooled (or dev branch) connection string
+
+npm run generate              # prisma generate
+npx prisma migrate deploy     # apply pending migrations
+npm run seed                  # optional demo data
+npm run dev                   # API on :3001
 ```
+
+### Create a new migration (developers)
+
+Use a **direct** Neon connection string temporarily:
+
+```bash
+cd server
+npx prisma migrate dev --name describe_your_change
+# Commit new files under prisma/migrations/
+```
+
+CI and Render always run **`prisma migrate deploy`** (non-interactive).
+
+---
 
 ## Render build
 
-When `DATABASE_URL` contains `neon.tech`, `build-database.mjs` runs:
+[`scripts/build-database.mjs`](../server/scripts/build-database.mjs) runs on every deploy when `DATABASE_URL` is set:
 
 1. `prisma generate`
 2. `prisma migrate deploy`
+3. `node scripts/verify-production-schema.mjs`
+4. `backfill-barber-cities.ts`
+5. `backfill-barber-coordinates.ts`
+6. `backfill-at-home-areas.ts`
 
-Force Prisma on any Postgres URL: `USE_PRISMA_MIGRATE=true`.
+If `DATABASE_URL` is missing, the build **fails** (no SQLite fallback).
 
-Legacy Drizzle migrate still runs for non-Neon Postgres (e.g. Render Postgres).
+---
 
-## Clerk
+## CI (GitHub Actions)
 
-- Frontend: `VITE_CLERK_PUBLISHABLE_KEY` on Vercel
-- Backend: `CLERK_SECRET_KEY` on Render
-- Users table: `users.clerk_user_id` links Clerk subjects to API scope
+Secret **`TEST_DATABASE_URL`** → isolated Neon branch.
+
+`.github/workflows/ci.yml` runs `prisma migrate deploy` + `npm run verify:schema` + server Vitest when the secret is present.
+
+---
+
+## Clerk ↔ users table
+
+- Frontend: `VITE_CLERK_PUBLISHABLE_KEY`
+- Backend: `CLERK_SECRET_KEY`
+- DB column: `users.clerk_user_id` links Clerk subjects to API user scope
+
+---
 
 ## Verify production
 
 ```bash
-curl https://shopthebarber.onrender.com/api/health
-curl https://shop-the-barber.vercel.app/
+curl -s https://shopthebarber.onrender.com/api/health/ready | jq .
+curl -sI https://shop-the-barber.vercel.app/ | head -1
 ```
 
-Expected: `{"ok":true,"db":"ok"}` and Vercel HTTP 200.
+Expected: readiness JSON with DB checks OK; Vercel HTTP 200.
+
+Local schema check (with production or staging URL in env — **read-only caution**):
+
+```bash
+cd server && npm run verify:schema
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for full deploy steps.

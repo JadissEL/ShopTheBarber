@@ -3,6 +3,7 @@ import { Scissors, Clock, Check, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { cn } from '@/lib/utils';
+import BookingOffersPanel from '@/components/booking/BookingOffersPanel';
 
 const categoryImages = {
   'Hair': 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&fit=crop',
@@ -27,6 +28,13 @@ export default function BookingServicesStep({
   allBarbers,
   totalDuration,
   totalPrice,
+  comboSavings = 0,
+  bundleMatch = null,
+  bookingOffers = null,
+  offersLoading = false,
+  onAddServices,
+  onAddBundle,
+  onApplyPromoFromOffer,
   onNext,
   canProceed,
 }) {
@@ -57,12 +65,21 @@ export default function BookingServicesStep({
       exit={{ opacity: 0, x: -20 }}
       className="space-y-8"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-2">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
           {selectedBarber ? `Booking with ${selectedBarber.name}` : 'Choose Your Services'}
         </h2>
-        <p className="text-muted-foreground">Select a category and pick your services</p>
+        <p className="text-muted-foreground text-sm">Select a category and pick your services</p>
       </div>
+
+      <BookingOffersPanel
+        offers={bookingOffers}
+        isLoading={offersLoading}
+        selectedServices={selectedServices}
+        onAddServices={onAddServices}
+        onAddBundle={onAddBundle}
+        onApplyPromoCode={onApplyPromoFromOffer}
+      />
 
       {servicesLoading ? (
         <div className="text-center py-20">
@@ -84,10 +101,10 @@ export default function BookingServicesStep({
                   key={category}
                   onClick={() => onSelectCategory(category)}
                   className={cn(
-                    "relative h-32 rounded-2xl overflow-hidden border-2 transition-all group",
+                    "relative h-32 rounded-[13px] overflow-hidden border-2 transition-all group",
                     selectedCategory === category
-                      ? "border-primary ring-2 ring-primary/20 scale-105"
-                      : "border-border hover:border-primary/50"
+                      ? "border-primary ring-2 ring-primary/25"
+                      : "border-border hover:border-primary/40"
                   )}
                 >
                   <OptimizedImage
@@ -127,22 +144,22 @@ export default function BookingServicesStep({
                     key={service.id}
                     onClick={() => onServiceToggle(service.id)}
                     className={cn(
-                      "group relative bg-white border-2 rounded-xl overflow-hidden cursor-pointer transition-all duration-300",
+                      "group relative bg-card border-2 rounded-[13px] overflow-hidden cursor-pointer transition-all duration-200",
                       isSelected
-                        ? "border-primary shadow-lg shadow-primary/20 scale-[1.02]"
-                        : "border-border hover:border-primary/50 hover:shadow-lg"
+                        ? "border-primary shadow-md shadow-primary/15 ring-1 ring-primary/20"
+                        : "border-border hover:border-primary/30 hover:shadow-sm"
                     )}
                   >
                     <div className={cn(
                       "absolute top-2 right-2 z-20 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
                       isSelected
                         ? "bg-primary border-primary"
-                        : "bg-white border-gray-300 group-hover:border-primary/50"
+                        : "bg-card border-gray-300 group-hover:border-primary/50"
                     )}>
                       {isSelected && <Check className="w-3 h-3 text-white" />}
                     </div>
 
-                    <div className="relative h-32 w-full overflow-hidden bg-gray-100">
+                    <div className="relative h-32 w-full overflow-hidden bg-muted">
                       {serviceData.image_url ? (
                         <OptimizedImage
                           src={serviceData.image_url}
@@ -152,7 +169,7 @@ export default function BookingServicesStep({
                           imgClassName="object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/80">
                           <Scissors className="w-12 h-12" />
                         </div>
                       )}
@@ -190,17 +207,20 @@ export default function BookingServicesStep({
       )}
 
       {/* Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.08)] safe-area-pb">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs sm:text-sm text-muted-foreground min-w-0">
               {selectedServices.length === 0 ? (
                 <span>Select at least one service to continue</span>
               ) : (
-                <span>
-                  <strong className="text-foreground">{selectedServices.length}</strong> service{selectedServices.length > 1 ? 's' : ''} selected •
+                <span className="line-clamp-2 sm:line-clamp-none">
+                  <strong className="text-foreground">{selectedServices.length}</strong> service{selectedServices.length > 1 ? 's' : ''} •
                   <strong className="text-foreground ml-1">{totalDuration} min</strong> •
                   <strong className="text-primary ml-1">${totalPrice.toFixed(2)}</strong>
+                  {comboSavings > 0 && bundleMatch && (
+                    <span className="text-emerald-600 ml-1 sm:ml-2">({bundleMatch.bundle_name}: -${comboSavings.toFixed(2)})</span>
+                  )}
                 </span>
               )}
             </div>
@@ -208,7 +228,7 @@ export default function BookingServicesStep({
               size="lg"
               onClick={onNext}
               disabled={!canProceed}
-              className="px-8 shadow-lg"
+              className="w-full sm:w-auto min-h-[44px] px-8 shadow-lg shrink-0"
             >
               Continue <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
@@ -216,7 +236,7 @@ export default function BookingServicesStep({
         </div>
       </div>
 
-      <div className="h-24" />
+      <div className="h-28 sm:h-24" />
     </motion.div>
   );
 }

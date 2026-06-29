@@ -72,7 +72,7 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Meet the Team</h2>
-        <p className="text-gray-400">Add your staff members so they can be booked.</p>
+        <p className="text-muted-foreground/80">Add your staff members so they can be booked.</p>
       </div>
 
       <div className="bg-[#1A1D24] p-6 rounded-xl border border-white/10 mb-6">
@@ -126,14 +126,14 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
                       </Button>
                   )}
                   {member.role === 'owner' && (
-                      <span className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded">Owner</span>
+                      <span className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">Owner</span>
                   )}
               </div>
           ))}
       </div>
 
       <div className="flex justify-between pt-4">
-          <Button variant="ghost" onClick={onBack} className="text-gray-400 hover:text-white">
+          <Button variant="ghost" onClick={onBack} className="text-muted-foreground/80 hover:text-white">
               Back
           </Button>
           <Button onClick={onNext} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8">

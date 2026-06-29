@@ -1,0 +1,146 @@
+# Financial Trust Phase 1 crons — auto-confirm, waitlist offers, marketplace holds.
+# Requires repository secrets: PRODUCTION_API_URL, CRON_SECRET (same value as Render CRON_SECRET).
+
+name: Financial Trust Crons
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  financial-trust:
+    name: Phase 1 booking / waitlist / marketplace crons
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/cron/bookings/auto-confirm
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::PRODUCTION_API_URL or CRON_SECRET not set — Phase 1 crons disabled"
+            exit 1
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/auto-confirm.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/bookings/auto-confirm" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/auto-confirm.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Auto-confirm cron failed with HTTP $HTTP"
+            exit 1
+          fi
+
+      - name: POST /api/cron/waitlist/expire-offers
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::PRODUCTION_API_URL or CRON_SECRET not set — Phase 1 crons disabled"
+            exit 1
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/waitlist-expire.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/waitlist/expire-offers" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/waitlist-expire.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Waitlist expire cron failed with HTTP $HTTP"
+            exit 1
+          fi
+
+      - name: POST /api/cron/marketplace/expire-reservations
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::PRODUCTION_API_URL or CRON_SECRET not set — Phase 1 crons disabled"
+            exit 1
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/reservations-expire.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/marketplace/expire-reservations" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/reservations-expire.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Reservation expire cron failed with HTTP $HTTP"
+            exit 1
+          fi
+
+      - name: POST /api/cron/wallet/expire-promotional-credits
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::PRODUCTION_API_URL or CRON_SECRET not set — Phase 1 crons disabled"
+            exit 1
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/promo-expire.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/wallet/expire-promotional-credits" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/promo-expire.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Promo expiry cron failed with HTTP $HTTP"
+            exit 1
+          fi
+
+      - name: POST /api/cron/championships/refresh
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/championship.json -w "%{http_code}" --max-time 120 \
+            -X POST "${BASE}/api/cron/championships/refresh" \
+            -H "x-cron-secret: ${CRON_SECRET}")
+          cat /tmp/championship.json
+          test "$HTTP" = "200"
+
+      - name: POST /api/cron/wallets/reconcile
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/reconcile.json -w "%{http_code}" --max-time 120 \
+            -X POST "${BASE}/api/cron/wallets/reconcile" \
+            -H "x-cron-secret: ${CRON_SECRET}")
+          cat /tmp/reconcile.json
+          test "$HTTP" = "200"
+
+      - name: POST /api/cron/wallets/auto-recharge-nudge
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/auto-recharge.json -w "%{http_code}" --max-time 120 \
+            -X POST "${BASE}/api/cron/wallets/auto-recharge-nudge" \
+            -H "x-cron-secret: ${CRON_SECRET}")
+          cat /tmp/auto-recharge.json
+          test "$HTTP" = "200"
+
+      - name: POST /api/cron/championships/finalize-ended
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/championship-finalize.json -w "%{http_code}" --max-time 120 \
+            -X POST "${BASE}/api/cron/championships/finalize-ended" \
+            -H "x-cron-secret: ${CRON_SECRET}")
+          cat /tmp/championship-finalize.json
+          test "$HTTP" = "200"

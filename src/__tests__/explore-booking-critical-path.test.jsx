@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/react';
 import { AuthProvider } from '@/lib/AuthContext';
@@ -27,6 +27,7 @@ const mockBarbers = [
       rating: 4.9,
       review_count: 42,
       title: 'Master Barber',
+      offers_mobile_service: true,
     },
   },
 ];
@@ -42,20 +43,26 @@ vi.mock('@/api/apiClient', () => ({
       getActivePromotions: vi.fn(() =>
         Promise.resolve({ shop_ids: [], has_platform_promos: false })
       ),
+      getHomepage: vi.fn(() =>
+        Promise.resolve({ stats: { barber_count: 100, avg_rating: 4.8 } })
+      ),
     },
+    languages: { getOptions: vi.fn(() => Promise.resolve([{ code: 'en', label: 'English' }])) },
+    providerStats: { getBarberPublicBatch: vi.fn(() => Promise.resolve({})) },
+    showcase: { getDiscoveryPreviews: vi.fn(() => Promise.resolve({})) },
     entities: {
       Barber: {
         list: vi.fn(() => Promise.resolve(mockBarbers)),
         get: vi.fn((id) => Promise.resolve(mockBarbers.find((b) => b.id === id) || null)),
       },
       Shop: { list: vi.fn(() => Promise.resolve(mockShops)) },
+      Service: { list: vi.fn(() => Promise.resolve([])) },
       Favorite: { filter: vi.fn(() => Promise.resolve([])) },
-      InspirationPost: { list: vi.fn(() => Promise.resolve([])) },
     },
   },
 }));
 
-function renderExplore() {
+function renderExplore(initialEntries = ['/Explore']) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -64,7 +71,7 @@ function renderExplore() {
   return render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <MemoryRouter initialEntries={initialEntries} future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <ClerkProvider publishableKey={CLERK_PUBLISHABLE_TEST}>
             <AuthProvider>
               <CartProvider>
@@ -72,7 +79,7 @@ function renderExplore() {
               </CartProvider>
             </AuthProvider>
           </ClerkProvider>
-        </BrowserRouter>
+        </MemoryRouter>
       </QueryClientProvider>
     </HelmetProvider>
   );
@@ -86,32 +93,33 @@ describe('Critical path: Explore → barber → services', () => {
   it('renders Explore page with discovery UI', async () => {
     renderExplore();
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/search for professionals/i)).toBeInTheDocument();
+      expect(screen.getAllByPlaceholderText(/search barbers/i).length).toBeGreaterThan(0);
     });
   });
 
   it('shows professionals discovery section (heading or count)', async () => {
     renderExplore();
     await waitFor(() => {
-      const heading = screen.queryByText(/Top Professionals/i);
-      const count = screen.queryByText(/professionals available/i);
-      expect(heading ?? count).toBeTruthy();
+      const matches = screen.getAllByText(/Top Rated Barbers|All professionals|professional/i);
+      expect(matches.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
-    const headings = screen.getAllByText(/Top Professionals|professionals available/i);
-    expect(headings.length).toBeGreaterThan(0);
   });
 
   it('has booking flow entry: BarberProfile links when barbers listed, or empty state when none', async () => {
     renderExplore();
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/search for professionals/i)).toBeInTheDocument();
+      const profileLinks = document.querySelectorAll('a[href*="BarberProfile"]');
+      const bookLinks = document.querySelectorAll('a[href*="BookingFlow"]');
+      expect(profileLinks.length + bookLinks.length).toBeGreaterThan(0);
+    }, { timeout: 3000 });
+  });
+
+  it('renders mobile discovery mode with dedicated hero', async () => {
+    renderExplore(['/Explore?mobile=1']);
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: /Mobile Barbers/i })).toBeInTheDocument();
     });
-    const barberLinks = document.querySelectorAll('a[href*="BarberProfile"]');
-    const countOrEmpty = screen.queryAllByText(/professionals available|No professionals found/i);
-    if (barberLinks.length > 0) {
-      expect(barberLinks[0].getAttribute('href')).toMatch(/BarberProfile\?id=/);
-    } else {
-      expect(countOrEmpty.length).toBeGreaterThan(0);
-    }
+    expect(screen.getByRole('status')).toHaveTextContent(/at-home barbers/i);
+    expect(screen.getByRole('heading', { level: 2, name: /Mobile professionals/i })).toBeInTheDocument();
   });
 });

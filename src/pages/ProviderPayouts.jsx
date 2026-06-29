@@ -9,10 +9,26 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { format } from 'date-fns';
+import ProviderFixedFeePanel from '@/components/provider/ProviderFixedFeePanel';
+import ProviderPhase2Financials from '@/components/provider/ProviderPhase2Financials';
+import ProviderTaxExportPanel from '@/components/provider/ProviderTaxExportPanel';
+import ProviderFinancingApplyPanel from '@/components/provider/ProviderFinancingApplyPanel';
+import { useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
-const PLATFORM_FEE_PERCENT = 15; // 15% platform fee
+const DEFAULT_PLATFORM_FEE_PERCENT = 15;
 
 export default function ProviderPayouts() {
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('topup') === 'success') toast.success('Balance topped up successfully');
+    if (searchParams.get('topup') === 'cancelled') toast.info('Top-up cancelled');
+    if (searchParams.get('fixedfee') === 'success') toast.success('Fixed-fee plan activated, no per-booking commission while active');
+    if (searchParams.get('fixedfee') === 'cancelled') toast.info('Fixed-fee checkout cancelled');
+  }, [searchParams]);
+
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => sovereign.auth.me(),
@@ -45,6 +61,16 @@ export default function ProviderPayouts() {
 
   const shopId = myShopMembership?.shop_id;
 
+  const { data: fixedFeeStatus } = useQuery({
+    queryKey: ['fixed-fee-status', shopId],
+    queryFn: () => sovereign.fixedFee.getMe(shopId),
+    enabled: !!user,
+  });
+
+  const platformFeePercent = fixedFeeStatus?.commission_waived
+    ? 0
+    : DEFAULT_PLATFORM_FEE_PERCENT;
+
   const { data: bookings = [] } = useQuery({
     queryKey: ['payout-bookings', shopId],
     queryFn: () => shopId ? sovereign.entities.Booking.filter({ shop_id: shopId }) : [],
@@ -63,7 +89,7 @@ export default function ProviderPayouts() {
   // Calculate metrics
   const paidBookings = bookings.filter(b => b.payment_status === 'paid' || b.data?.payment_status === 'paid');
   const totalGrossRevenue = paidBookings.reduce((sum, b) => sum + ((b.data?.price_at_booking || b.price_at_booking) || 0), 0);
-  const platformFee = totalGrossRevenue * (PLATFORM_FEE_PERCENT / 100);
+  const platformFee = totalGrossRevenue * (platformFeePercent / 100);
   const netRevenue = totalGrossRevenue - platformFee;
 
   const totalPaidOut = payouts
@@ -81,7 +107,7 @@ export default function ProviderPayouts() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Payouts" description="Manage your payouts and earnings" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -94,7 +120,7 @@ export default function ProviderPayouts() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="stb-page pb-16">
       <MetaTags 
         title="Payouts" 
         description="View your earnings and payout history"
@@ -107,12 +133,29 @@ export default function ProviderPayouts() {
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Payouts & Earnings</h1>
             <p className="text-muted-foreground">Track your revenue and payout history</p>
           </div>
-          <Link to={createPageUrl('ProviderSettings')}>
+          <Link to={`${createPageUrl('ProviderSettings')}?tab=payments`}>
             <Button variant="outline" className="gap-2">
               <Settings className="w-4 h-4" />
               Bank Details
             </Button>
           </Link>
+        </div>
+
+        <div className="mb-8 space-y-6">
+          <ProviderFixedFeePanel shopId={shopId} isShopOwner={myShopMembership?.role === 'owner'} />
+          <Card className="border-dashed">
+            <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Wallet balance, auto-recharge, and Stripe Connect live in Settings → Payments.
+              </p>
+              <Link to={`${createPageUrl('ProviderSettings')}?tab=payments`}>
+                <Button variant="outline" size="sm">Open payment settings</Button>
+              </Link>
+            </CardContent>
+          </Card>
+          <ProviderPhase2Financials shopId={shopId} />
+          <ProviderTaxExportPanel shopId={shopId} />
+          <ProviderFinancingApplyPanel />
         </div>
 
         {/* KPI Cards */}
@@ -136,7 +179,7 @@ export default function ProviderPayouts() {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Platform Fee</p>
                   <h3 className="text-3xl font-bold">${platformFee.toFixed(2)}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{PLATFORM_FEE_PERCENT}% of gross</p>
+                  <p className="text-xs text-muted-foreground mt-1">{platformFeePercent}% of gross</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-destructive opacity-50" />
               </div>
@@ -240,19 +283,19 @@ export default function ProviderPayouts() {
                     <span className="font-medium">Gross Revenue</span>
                     <span className="font-bold">${totalGrossRevenue.toFixed(2)}</span>
                   </div>
-                  <div className="bg-gray-100 rounded-lg h-3 overflow-hidden w-full"></div>
+                  <div className="bg-muted rounded-lg h-3 overflow-hidden w-full"></div>
                 </div>
 
                 {/* Platform Fee */}
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <div>
-                      <p className="font-medium">Platform Fee ({PLATFORM_FEE_PERCENT}%)</p>
+                      <p className="font-medium">Platform Fee ({platformFeePercent}%)</p>
                       <p className="text-sm text-muted-foreground">Booking processing & support</p>
                     </div>
                     <span className="font-bold text-destructive">${platformFee.toFixed(2)}</span>
                   </div>
-                  <div className="bg-gray-100 rounded-lg h-3 overflow-hidden w-full">
+                  <div className="bg-muted rounded-lg h-3 overflow-hidden w-full">
                     <div 
                       className="bg-destructive h-full" 
                       style={{ width: `${(platformFee / totalGrossRevenue) * 100}%` }}
@@ -269,7 +312,7 @@ export default function ProviderPayouts() {
                     </div>
                     <span className="text-2xl font-bold text-primary">${netRevenue.toFixed(2)}</span>
                   </div>
-                  <div className="bg-gray-100 rounded-lg h-4 overflow-hidden w-full">
+                  <div className="bg-muted rounded-lg h-4 overflow-hidden w-full">
                     <div 
                       className="bg-primary h-full" 
                       style={{ width: `${(netRevenue / totalGrossRevenue) * 100}%` }}
@@ -298,7 +341,7 @@ export default function ProviderPayouts() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Payouts are processed weekly, typically within 2-3 business days to your connected bank account.
                 </p>
-                <Link to={createPageUrl('ProviderSettings')}>
+                <Link to={`${createPageUrl('ProviderSettings')}?tab=payments`}>
                   <Button variant="outline" size="sm">
                     Update Bank Details
                   </Button>

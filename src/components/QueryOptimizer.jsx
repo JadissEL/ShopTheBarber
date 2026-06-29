@@ -9,7 +9,7 @@ export function QueryOptimizer() {
     queryClient.setDefaultOptions({
       queries: {
         staleTime: 1000 * 60 * 3, // 3 minutes - Data remains fresh for navigation loops
-        gcTime: 1000 * 60 * 10,   // 10 minutes - Keep unused data in memory longer
+        gcTime: 1000 * 60 * 10, // 10 minutes - Keep unused data in memory longer
         refetchOnWindowFocus: true, // Revalidate when returning to app
         refetchOnReconnect: 'always',
         retry: 1,

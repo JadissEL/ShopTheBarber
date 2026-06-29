@@ -1,13 +1,14 @@
-import { FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { resolveOptionalUserId } from '../auth/requestUser';
+import { createOrRefreshReservation, getAvailableStock } from '../domain/marketplace/reservations';
 
 export async function cartRoutes(fastify: FastifyInstance) {
     const getUserId = async (request: any, reply: any): Promise<string | null> => {
         return await resolveOptionalUserId(request);
     };
 
-    // GET /api/cart — list cart items with product details (requires auth)
+    // GET /api/cart, list cart items with product details (requires auth)
     fastify.get('/api/cart', async (request, reply) => {
         const userId = await getUserId(request, reply);
         if (!userId) {
@@ -48,7 +49,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // POST /api/cart — add or update quantity (requires auth)
+    // POST /api/cart, add or update quantity (requires auth)
     fastify.post('/api/cart', async (request, reply) => {
         const userId = await getUserId(request, reply);
         if (!userId) {
@@ -60,6 +61,15 @@ export async function cartRoutes(fastify: FastifyInstance) {
         }
         const quantity = Math.max(1, Math.min(99, body.quantity ?? 1));
         try {
+            const product = await prisma.products.findUnique({ where: { id: body.product_id } });
+            if (!product || product.status !== 'published' || product.published !== true) {
+                return reply.status(400).send({ error: 'Product is not available for purchase' });
+            }
+            const available = await getAvailableStock(body.product_id, userId);
+            if (available < quantity) {
+                return reply.status(400).send({ error: 'Insufficient stock' });
+            }
+            await createOrRefreshReservation(userId, body.product_id, quantity);
             const existing = await prisma.cart_items.findMany({
                 where: { user_id: userId, product_id: body.product_id },
             });
@@ -81,7 +91,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // PATCH /api/cart/:productId — set quantity (requires auth)
+    // PATCH /api/cart/:productId, set quantity (requires auth)
     fastify.patch<{ Params: { productId: string }; Body: { quantity: number } }>('/api/cart/:productId', async (request, reply) => {
         const userId = await getUserId(request, reply);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
@@ -112,7 +122,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // DELETE /api/cart/:productId — remove line (requires auth)
+    // DELETE /api/cart/:productId, remove line (requires auth)
     fastify.delete<{ Params: { productId: string } }>('/api/cart/:productId', async (request, reply) => {
         const userId = await getUserId(request, reply);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });
@@ -123,7 +133,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
         return { ok: true };
     });
 
-    // DELETE /api/cart — clear cart (requires auth)
+    // DELETE /api/cart, clear cart (requires auth)
     fastify.delete('/api/cart', async (request, reply) => {
         const userId = await getUserId(request, reply);
         if (!userId) return reply.status(401).send({ error: 'Unauthorized' });

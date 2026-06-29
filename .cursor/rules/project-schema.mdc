@@ -1,5 +1,5 @@
 ---
-description: Follow PROJECT_SCHEMA.md for structure and where to put code. New pages go in src/pages/, new UI in src/components/ui/ or the correct feature folder, API in src/api/, server logic in server/src/logic/. Use naming: PascalCase for components/pages, camelCase for utils/server modules, lowercase-with-dashes for config and directories.
+description: Follow PROJECT_SCHEMA.md for structure and where to put code. New pages go in src/pages/, new UI in src/components/ui/ or the correct feature folder, API in src/api/, server logic in server/src/logic/. Database schema in server/prisma/schema.prisma (Prisma + Neon). Use naming: PascalCase for components/pages, camelCase for utils/server modules, lowercase-with-dashes for config and directories.
 globs: ["**/*.jsx", "**/*.tsx", "**/*.ts", "**/*.js"]
 alwaysApply: false
 ---
@@ -13,4 +13,5 @@ When adding or moving code in this repo, follow **PROJECT_SCHEMA.md** at the pro
 - **New API call/entity** → `src/api/` (extend or add file).
 - **New server route** → `server/src/<domain>/` (e.g. auth, admin, payments); keep handlers thin, logic in `server/src/logic/`.
 - **New business rule** → `server/src/logic/`.
+- **New DB table/column** → edit `server/prisma/schema.prisma`, run `npx prisma migrate dev`, commit migration under `server/prisma/migrations/` ([docs/NEON_PRISMA.md](../../docs/NEON_PRISMA.md)).
 - **Naming**: React components/pages PascalCase; hooks `use*`; utils and server modules camelCase; directories and config files lowercase-with-dashes.

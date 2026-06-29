@@ -1,7 +1,9 @@
-import { FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import Stripe from 'stripe';
 import { prisma } from '../db/prisma';
 import { resolveOptionalUserId } from '../auth/requestUser';
+import { resolveAddressForCheckout, computeShippingAmount, createFulfillmentsForOrder } from '../shipping/logic';
+import { computeMarketplaceVatAmount } from '../marketplace/legalConfig';
 import dotenv from 'dotenv';
 import { getStripeApiKey, getStripePublishableKey } from '../config/stripeKeys';
 
@@ -24,7 +26,7 @@ if (stripeApiKey && stripeApiKey.startsWith('sk_')) {
             typescript: true,
         });
     } catch (e) {
-        // Stripe init failed — payment features will be unavailable
+        // Stripe init failed, payment features will be unavailable
     }
 }
 
@@ -36,7 +38,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         return { publishableKey: publishableKey || null };
     });
 
-    // Create Product Checkout Session (marketplace cart → Stripe)
+    // Create Product Checkout Session (marketplace cart Stripe)
     fastify.post('/api/functions/create-product-checkout-session', async (request, reply) => {
         try {
             const userId = await resolveOptionalUserId(request);
@@ -45,10 +47,14 @@ export async function paymentRoutes(fastify: FastifyInstance) {
             }
 
             const body = request.body as {
+                saved_address_id?: string;
+                save_address?: boolean;
                 shipping_full_name?: string;
                 shipping_street?: string;
                 shipping_city?: string;
+                shipping_state?: string;
                 shipping_zip?: string;
+                shipping_country?: string;
                 shipping_phone?: string;
             };
 
@@ -88,9 +94,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 });
             }
 
-            const shippingAmount = subtotal >= 50 ? 0 : 0;
-            const taxRate = 0.085;
-            const taxAmount = Math.round((subtotal + shippingAmount) * taxRate * 100) / 100;
+            const shippingAmount = computeShippingAmount(subtotal);
+            const taxAmount = computeMarketplaceVatAmount(subtotal, shippingAmount);
             const total = Math.round((subtotal + shippingAmount + taxAmount) * 100) / 100;
             const taxAndShippingCents = Math.round((shippingAmount + taxAmount) * 100);
             if (taxAndShippingCents > 0) {
@@ -104,6 +109,18 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 });
             }
 
+            const shippingFields = await resolveAddressForCheckout(userId, {
+                saved_address_id: body.saved_address_id,
+                save_address: body.save_address,
+                shipping_full_name: body.shipping_full_name,
+                shipping_street: body.shipping_street,
+                shipping_city: body.shipping_city,
+                shipping_state: body.shipping_state,
+                shipping_zip: body.shipping_zip,
+                shipping_country: body.shipping_country,
+                shipping_phone: body.shipping_phone,
+            });
+
             const order = await prisma.orders.create({
                 data: {
                     user_id: userId,
@@ -112,11 +129,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                     shipping_amount: shippingAmount,
                     tax_amount: taxAmount,
                     total,
-                    shipping_full_name: body.shipping_full_name || null,
-                    shipping_street: body.shipping_street || null,
-                    shipping_city: body.shipping_city || null,
-                    shipping_zip: body.shipping_zip || null,
-                    shipping_phone: body.shipping_phone || null,
+                    ...shippingFields,
                     payment_status: 'unpaid',
                 },
             });
@@ -132,9 +145,14 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                         product_image_url: product.image_url,
                         price: Number(product.price),
                         quantity: row.quantity,
+                        seller_type: product.seller_type,
+                        barber_id: product.barber_id,
+                        shop_id: product.shop_id,
                     },
                 });
             }
+
+            await createFulfillmentsForOrder(order.id);
 
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
@@ -156,7 +174,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
 
             return { url: session.url, orderId: order.id };
         } catch (error: any) {
-            if (error.code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER' || error.message?.includes('Unauthorized')) {
+            if (error.message?.includes('Unauthorized')) {
                 return reply.status(401).send({ error: 'Sign in to checkout' });
             }
             if (isStripeInvalidKeyError(error)) {
@@ -167,7 +185,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // Create Checkout Session (booking) — requires auth + booking ownership
+    // Create Checkout Session (booking), requires auth + booking ownership
     fastify.post('/api/functions/create-checkout-session', async (request, reply) => {
         try {
             const userId = await resolveOptionalUserId(request);
@@ -230,7 +248,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
                 metadata: {
                     booking_id: bookingId,
                     barber_id: booking.barber_id,
-                    shop_id: booking.shop_id || ''
+                    shop_id: booking.shop_id || '',
+                    user_id: userId,
                 }
             });
 
@@ -245,7 +264,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // Stripe balance — admin only
+    // Stripe balance, admin only
     fastify.get('/api/payments/balance', async (request, reply) => {
         const userId = await resolveOptionalUserId(request);
         if (!userId) {

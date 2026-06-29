@@ -240,7 +240,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
                 logger.warn(`Order not found: ${order_id}`);
                 return { processed: false, reason: 'order_not_found' };
             }
-            const orderNumber = 'EMG-' + order_id.slice(-6).toUpperCase();
+            const orderNumber = `EMG-${  order_id.slice(-6).toUpperCase()}`;
             const estimatedDelivery = new Date();
             estimatedDelivery.setDate(estimatedDelivery.getDate() + 3);
             await prisma.orders.update({
@@ -254,6 +254,10 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
                 }
             });
             await prisma.cart_items.deleteMany({ where: { user_id: order.user_id } });
+            const { finalizeReservationsForUser } = await import('../domain/marketplace/reservations');
+            await finalizeReservationsForUser(order.user_id).catch(() => { /* non-blocking */ });
+            const { createFulfillmentsForOrder } = await import('../shipping/logic');
+            await createFulfillmentsForOrder(order_id);
             await prisma.audit_logs.create({
                 data: {
                     action: 'ORDER_PAID',
@@ -268,11 +272,11 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
                 }
             });
             const user = await prisma.users.findFirst({ where: { id: order.user_id } });
-            const orderItems = await prisma.order_items.findMany({ where: { order_id: order_id } });
+            const orderItems = await prisma.order_items.findMany({ where: { order_id } });
             if (user?.email) {
                 sendEmail({
                     to: user.email,
-                    subject: `Order Confirmed – #${order_id.slice(-8)}`,
+                    subject: `Order Confirmed - #${order_id.slice(-8)}`,
                     template: 'order_confirmation',
                     data: {
                         customerName: user.full_name,
@@ -283,34 +287,20 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
                 }).catch(() => { /* email failure is non-blocking */ });
             }
             const orderTotal = Number(order.total);
-            const pointsToAdd = Math.max(10, Math.floor(orderTotal));
-            const existingProfile = await prisma.loyalty_profiles.findMany({ where: { user_id: order.user_id } });
-            if (existingProfile.length > 0) {
-                const profile = existingProfile[0];
-                await prisma.loyalty_profiles.update({
-                    where: { id: profile.id },
-                    data: {
-                        current_points: (profile.current_points ?? 0) + pointsToAdd,
-                        lifetime_points: (profile.lifetime_points ?? 0) + pointsToAdd,
-                    }
-                });
-            } else {
-                await prisma.loyalty_profiles.create({
-                    data: {
-                        user_id: order.user_id,
-                        current_points: pointsToAdd,
-                        lifetime_points: pointsToAdd,
-                        tier: 'Bronze',
-                    }
-                });
-            }
-            await prisma.loyalty_transactions.create({
-                data: {
-                    user_id: order.user_id,
-                    points: pointsToAdd,
-                    description: `Order ${orderNumber} – Marketplace purchase`,
-                }
+            const { awardPointsForMarketplaceOrder } = await import('../loyalty/logic');
+            await awardPointsForMarketplaceOrder(order.user_id, order_id, orderTotal);
+
+            const { trackProductEventInternal } = await import('../productAnalytics/track');
+            trackProductEventInternal({
+                event_name: 'marketplace_order_paid',
+                user_id: order.user_id,
+                properties: {
+                    order_id,
+                    stripe_session_id: session.id,
+                    amount_eur: (session.amount_total || 0) / 100,
+                },
             });
+
             return { processed: true, session_id: session.id, order_id };
         } catch (error: any) {
             logger.error('Error processing product checkout.session.completed', error);
@@ -318,7 +308,55 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
         }
     }
 
-    // Booking payment
+    // Tip payment (post-service pourboire)
+    if (type === 'tip') {
+        const { markTipPaidFromCheckout } = await import('../tips/logic');
+        return markTipPaidFromCheckout(session);
+    }
+
+    // Provider fee wallet top-up
+    if (type === 'provider_wallet_topup') {
+        const { creditWalletFromTopUp } = await import('../providerWallet/logic');
+        return creditWalletFromTopUp(session);
+    }
+
+    // Language program waitlist deposit (20% non-refundable)
+    if (type === 'language_program_waitlist_deposit') {
+        const { confirmWaitlistDepositFromCheckout } = await import('../languagePrograms/logic');
+        return confirmWaitlistDepositFromCheckout(session);
+    }
+
+    // Booking deposit (partial payment at booking)
+    if (type === 'booking_deposit') {
+        const { confirmBookingDepositFromCheckout } = await import('../paymentProtection/checkout');
+        return confirmBookingDepositFromCheckout(session);
+    }
+
+    // Card authorization hold at booking
+    if (type === 'booking_auth_hold') {
+        const { confirmBookingAuthHoldFromCheckout } = await import('../paymentProtection/checkout');
+        return confirmBookingAuthHoldFromCheckout(session);
+    }
+
+    // Save card on file
+    if (type === 'save_card' || type === 'save_card_booking') {
+        const { confirmSaveCardFromCheckout } = await import('../paymentProtection/checkout');
+        return confirmSaveCardFromCheckout(session);
+    }
+
+    // Provider fixed-fee plan (commission waiver)
+    if (type === 'provider_fixed_fee') {
+        const { confirmFixedFeeFromCheckout } = await import('../fixedFee/logic');
+        return confirmFixedFeeFromCheckout(session);
+    }
+
+    // Gift card purchase
+    if (type === 'gift_card_purchase') {
+        const { confirmGiftCardFromCheckout } = await import('../giftCards/checkout');
+        return confirmGiftCardFromCheckout(session);
+    }
+
+    // Booking payment (full or with card saved for future use)
     const booking_id = session.metadata?.booking_id || session.client_reference_id;
     if (!booking_id) {
         logger.warn(`Checkout session completed but no booking_id found: ${session.id}`);
@@ -326,12 +364,44 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     }
 
     try {
+        let syncUserId = session.metadata?.user_id;
+        if (!syncUserId && booking_id) {
+            const b = await prisma.bookings.findUnique({
+                where: { id: booking_id },
+                select: { client_id: true },
+            });
+            syncUserId = b?.client_id ?? undefined;
+        }
+        if (syncUserId && (session.payment_intent || session.setup_intent)) {
+            try {
+                const sessionWithUser = {
+                    ...session,
+                    metadata: { ...session.metadata, user_id: syncUserId },
+                } as Stripe.Checkout.Session;
+                const { syncPaymentMethodFromCheckoutSession } = await import('../paymentProtection/stripeCustomer');
+                await syncPaymentMethodFromCheckoutSession(sessionWithUser);
+            } catch (syncErr) {
+                logger.warn('[stripe] card sync on booking payment failed', { booking_id, syncErr });
+            }
+        }
+
         await prisma.bookings.updateMany({
             where: { id: booking_id },
             data: {
                 payment_status: 'paid',
                 status: 'confirmed'
             }
+        });
+
+        const { trackProductEventInternal } = await import('../productAnalytics/track');
+        trackProductEventInternal({
+            event_name: 'booking_paid',
+            user_id: syncUserId ?? null,
+            properties: {
+                booking_id,
+                stripe_session_id: session.id,
+                amount_eur: (session.amount_total || 0) / 100,
+            },
         });
 
         await prisma.audit_logs.create({
@@ -365,7 +435,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
             if (client?.email) {
                 sendEmail({
                     to: client.email,
-                    subject: `Booking Confirmed – ${booking.service_name || 'Barber Service'}`,
+                    subject: `Booking Confirmed - ${booking.service_name || 'Barber Service'}`,
                     template: 'confirmation',
                     data: {
                         clientName: client.full_name || booking.client_name,
@@ -387,10 +457,36 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     }
 }
 
+async function handlePaymentIntentSucceeded(event: Stripe.Event) {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    if (intent.metadata?.type === 'no_show_fee') {
+        const { handleNoShowFeePaymentIntent } = await import('../paymentProtection/noShow');
+        return handleNoShowFeePaymentIntent(intent.id, true);
+    }
+    if (intent.metadata?.type === 'cancellation_fee') {
+        const { handleFeePaymentIntentWebhook } = await import('../paymentProtection/offSessionCharge');
+        return handleFeePaymentIntentWebhook(intent.id, 'cancellation_fee', true);
+    }
+    return { processed: false, reason: 'unhandled_intent' };
+}
+
+async function handlePaymentIntentFailed(event: Stripe.Event) {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    if (intent.metadata?.type === 'no_show_fee') {
+        const { handleNoShowFeePaymentIntent } = await import('../paymentProtection/noShow');
+        return handleNoShowFeePaymentIntent(intent.id, false);
+    }
+    if (intent.metadata?.type === 'cancellation_fee') {
+        const { handleFeePaymentIntentWebhook } = await import('../paymentProtection/offSessionCharge');
+        return handleFeePaymentIntentWebhook(intent.id, 'cancellation_fee', false);
+    }
+    return { processed: false, reason: 'unhandled_intent' };
+}
+
 export async function handleStripeWebhook(
-    rawBody: string,
+    rawBody: string | Buffer,
     signature: string
-): Promise<{ received: boolean; event_type?: string; event_id?: string; result?: any; error?: string }> {
+): Promise<{ received: boolean; event_type?: string; event_id?: string; result?: any }> {
     const webhookSecret = getStripeWebhookSecret();
 
     if (!signature || !webhookSecret) {
@@ -398,45 +494,44 @@ export async function handleStripeWebhook(
         throw new Error('Unauthorized');
     }
 
-    try {
-        const event = getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret);
+    const payload = typeof rawBody === 'string' ? rawBody : rawBody.toString('utf8');
+    const event = getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
 
-        let result;
-        switch (event.type) {
-            case 'charge.succeeded':
-                result = await handleChargeSucceeded(event);
-                break;
-            case 'checkout.session.completed':
-                result = await handleCheckoutSessionCompleted(event);
-                break;
-            case 'charge.failed':
-                result = await handleChargeFailed(event);
-                break;
-            case 'charge.refunded':
-                result = await handleChargeRefunded(event);
-                break;
-            case 'payout.paid':
-                result = await handlePayoutPaid(event);
-                break;
-            case 'payout.failed':
-                result = await handlePayoutFailed(event);
-                break;
-            default:
-                logger.info(`Unhandled Stripe event type: ${event.type}`);
-                result = { processed: false, reason: 'unhandled_event_type' };
-        }
-
-        return {
-            received: true,
-            event_type: event.type,
-            event_id: event.id,
-            result
-        };
-    } catch (error: any) {
-        logger.error('Webhook handler error', error);
-        return {
-            error: error.message,
-            received: true
-        };
+    let result;
+    switch (event.type) {
+        case 'charge.succeeded':
+            result = await handleChargeSucceeded(event);
+            break;
+        case 'checkout.session.completed':
+            result = await handleCheckoutSessionCompleted(event);
+            break;
+        case 'charge.failed':
+            result = await handleChargeFailed(event);
+            break;
+        case 'charge.refunded':
+            result = await handleChargeRefunded(event);
+            break;
+        case 'payout.paid':
+            result = await handlePayoutPaid(event);
+            break;
+        case 'payout.failed':
+            result = await handlePayoutFailed(event);
+            break;
+        case 'payment_intent.succeeded':
+            result = await handlePaymentIntentSucceeded(event);
+            break;
+        case 'payment_intent.payment_failed':
+            result = await handlePaymentIntentFailed(event);
+            break;
+        default:
+            logger.info(`Unhandled Stripe event type: ${event.type}`);
+            result = { processed: false, reason: 'unhandled_event_type' };
     }
+
+    return {
+        received: true,
+        event_type: event.type,
+        event_id: event.id,
+        result,
+    };
 }

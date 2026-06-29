@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /Admin
+Disallow: /admin
+Disallow: /invite/
+Disallow: /BookingFlow
+Disallow: /Checkout
+Disallow: /Dashboard
+Disallow: /UserBookings
+Disallow: /ProviderDashboard
+Disallow: /GlobalFinancials
+Disallow: /SignIn
+Disallow: /SignUp
+Disallow: /ConfirmBooking
+Disallow: /PaymentSuccess
+Disallow: /PaymentError
+
+Sitemap: https://shop-the-barber.vercel.app/sitemap.xml

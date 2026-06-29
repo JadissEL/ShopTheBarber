@@ -12,6 +12,10 @@
     "seed": "tsx src/db/seed.ts",
     "studio": "prisma studio",
     "build:db": "node scripts/build-database.mjs",
+    "backfill:cities": "tsx scripts/backfill-barber-cities.ts",
+    "backfill:coordinates": "tsx scripts/backfill-barber-coordinates.ts",
+    "backfill:at-home": "tsx scripts/backfill-at-home-areas.ts",
+    "verify:schema": "node scripts/verify-production-schema.mjs",
     "test": "vitest run",
     "set-stripe-keys": "node scripts/set-stripe-keys.js"
   },
@@ -23,11 +27,15 @@
     "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^13.0.2",
     "@prisma/client": "^6.19.0",
+    "@sentry/node": "^9.47.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.7.2",
     "resend": "^6.9.1",
     "stripe": "^20.3.0",
+    "twilio": "^5.5.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {

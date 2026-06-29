@@ -11,7 +11,9 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import BarberCard from '@/components/ui/barber-card';
 import ShopCard from '@/components/ui/shop-card';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signInUrlWithReturn } from '@/utils';
 import { toast } from 'sonner';
+
 export default function Favorites() {
     const [searchTerm, setSearchTerm] = useState('');
     const queryClient = useQueryClient();
@@ -67,14 +69,14 @@ export default function Favorites() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <div className="stb-page flex items-center justify-center p-4">
                 <div className="text-center space-y-4 max-w-sm">
                     <div className="w-16 h-16 bg-card rounded-2xl shadow-sm flex items-center justify-center mx-auto text-muted-foreground">
                         <Heart className="w-8 h-8" />
                     </div>
                     <h2 className="text-2xl font-bold text-foreground">Sign in for Favorites</h2>
                     <p className="text-muted-foreground">Save your favorite barbers and shops to find them easily next time.</p>
-                    <Button variant="default" className="w-full bg-primary text-primary-foreground hover:opacity-95 rounded-xl py-6 h-auto text-lg font-medium" onClick={() => window.location.href = '/SignIn'}>
+                    <Button variant="default" className="w-full bg-primary text-primary-foreground hover:opacity-95 rounded-xl py-6 h-auto text-lg font-medium" onClick={() => { window.location.href = signInUrlWithReturn('/Favorites'); }}>
                         Sign In to Continue
                     </Button>
                 </div>
@@ -83,7 +85,7 @@ export default function Favorites() {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-24 lg:pb-8">
+        <div className="stb-page lg:pb-8">
             <MetaTags title="My Favorites" description="Your saved barbers and shops" />
 
             {/* Premium Header */}

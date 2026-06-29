@@ -20,6 +20,10 @@ on:
         description: 'Run Playwright clerk-browser project (needs CLERK_SECRET_KEY + E2E_CLERK_USER_EMAIL secrets)'
         type: boolean
         default: false
+      run_public_browser:
+        description: 'Run public mobile browser specs (needs frontend reachable at frontend_base_url)'
+        type: boolean
+        default: false
 
 jobs:
   playwright:
@@ -58,3 +62,9 @@ jobs:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL }}
         run: npm run test:e2e:clerk-browser
+
+      - name: Public mobile browser (optional)
+        if: github.event.inputs.run_public_browser == true
+        env:
+          E2E_FRONTEND_URL: ${{ github.event.inputs.frontend_base_url }}
+        run: npm run test:e2e:public

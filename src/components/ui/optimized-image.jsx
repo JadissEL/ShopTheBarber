@@ -129,7 +129,7 @@ export const OptimizedImage = ({
 
   if (error) {
     return (
-      <div className={cn(wrapperClasses, "flex items-center justify-center text-muted-foreground bg-slate-100")}>
+      <div className={cn(wrapperClasses, "flex items-center justify-center text-muted-foreground bg-muted")}>
         {fallbackSrc ? (
           <img
             src={fallbackSrc}

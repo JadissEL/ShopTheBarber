@@ -4,24 +4,25 @@
 
 ## No hardcoded secrets in repo
 
-- **JWT_SECRET**: Server uses `process.env.JWT_SECRET || 'supersecret-shopthebarber'`. The fallback is for local dev only; **production must set JWT_SECRET** in env. No real secret is committed.
+- **Clerk**: `CLERK_SECRET_KEY` (server) and `VITE_CLERK_PUBLISHABLE_KEY` (frontend) must be set in env. No keys are committed.
 - **Stripe**: `server/src/webhooks/stripe.ts` uses a mock fallback key when `STRIPE_API_KEY` is unset (for server stability). **Production must set STRIPE_API_KEY and STRIPE_WEBHOOK_SECRET** in env.
-- **Seed**: `server/src/db/seed.ts` uses a dev password hash for seeded users; not used as a production secret.
 - **`.env`**: Ignored by `.gitignore`; `server/.env.example` documents required vars without values.
 
 **Verdict**: No production secrets in repo. All sensitive config is via env; see README and `server/.env.example`.
 
 ## Auth checks on protected routes
 
-- **Backend**: Auth routes (`/api/auth/register`, `/api/auth/login`, `/api/auth/me`) and JWT verification are implemented. Entity routes that require auth should verify the token (see `server/src/index.ts` and auth middleware where applied).
-- **Frontend**: RouteGuard and role-based nav restrict client/provider/admin zones; unauthenticated users are redirected to SignIn.
+- **Backend**: Auth is **Clerk-only**. `authenticateRequest` in `server/src/auth/requestUser.ts` verifies Clerk Bearer tokens and resolves Neon `users.id`. Public auth routes: `GET /api/auth/me`, `POST /api/auth/logout` (stateless). There is no email/password login or legacy `JWT_SECRET` / `@fastify/jwt` path.
+- **Frontend**: RouteGuard and role-based nav restrict client/provider/admin zones; unauthenticated users are redirected to Clerk SignIn.
 
-**Verdict**: Auth and role-based access are in place. For any new protected API route, ensure JWT or equivalent is checked.
+**Verdict**: Auth and role-based access are in place. For any new protected API route, call `authenticateRequest` (or a route preHandler that uses it).
 
 ## Rate limiting
 
-- Rate limiting middleware is applied on auth and sensitive routes (see `server/src/middleware/rateLimit`).
+- Distributed IP throttling via **Upstash Redis** (`server/src/lib/ipRateLimit.ts`) — required in production (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`).
+- Booking creation uses layered limits in `server/src/middleware/rateLimit.ts` (user quota, duplicate barber, IP rapid-fire).
+- Public endpoints (availability, promo validate, geocode, travel quote) share the same Upstash-backed limiter.
 
 ---
 
-*Last audit: production-readiness loop. Re-run before major releases.*
+*Last audit: 2026-06-26 — removed legacy JWT/password_hash paths. Re-run before major releases.*

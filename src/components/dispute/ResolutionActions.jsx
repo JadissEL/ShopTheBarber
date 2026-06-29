@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { CheckCircle2, XCircle, DollarSign } from 'lucide-react';
+import {
+  normalizeDisputeStatus,
+  isDisputeResolvable,
+} from '@/utils/disputeStatus';
 
 const RESOLUTION_TYPES = {
   'Approve Claim': {
@@ -32,10 +36,18 @@ export default function ResolutionActions({ dispute, onResolved }) {
   const queryClient = useQueryClient();
   const [selectedAction, setSelectedAction] = useState(null);
   const [resolution, setResolution] = useState('');
-  const [refundAmount, setRefundAmount] = useState(dispute?.amount || '0');
+  const [refundAmount, setRefundAmount] = useState(dispute?.amount ?? dispute?.booking_amount ?? '0');
+
+  const disputeStatus = normalizeDisputeStatus(dispute?.status);
+  const bookingAmount = dispute?.amount ?? dispute?.booking_amount ?? 0;
 
   const updateMutation = useMutation({
-    mutationFn: (data) => sovereign.entities.Dispute.update(dispute.id, data),
+    mutationFn: (payload) => {
+      if (payload?.action) {
+        return sovereign.providerStats.resolveDispute(dispute.id, payload);
+      }
+      return sovereign.entities.Dispute.update(dispute.id, payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dispute', dispute.id] });
       queryClient.invalidateQueries({ queryKey: ['all-disputes'] });
@@ -55,19 +67,17 @@ export default function ResolutionActions({ dispute, onResolved }) {
       return;
     }
 
-    const outcome = `${selectedAction} - ${resolution}`;
-    
     updateMutation.mutate({
-      status: 'Resolved',
-      resolution_notes: outcome,
-      resolution_date: new Date().toISOString(),
-      refund_amount: RESOLUTION_TYPES[selectedAction].showRefund ? refundAmount : 0
+      action: selectedAction === 'Approve Claim' ? 'approve_claim' : selectedAction === 'Reject Claim' ? 'reject_claim' : 'request_info',
+      resolution_notes: resolution,
+      refund_amount: RESOLUTION_TYPES[selectedAction].showRefund ? Number(refundAmount) : undefined,
     });
   };
 
   const handleMarkInReview = () => {
     updateMutation.mutate({
-      status: 'In Review'
+      action: 'mark_in_review',
+      resolution_notes: 'Marked in review by admin',
     });
   };
 
@@ -79,7 +89,7 @@ export default function ResolutionActions({ dispute, onResolved }) {
           <CardTitle className="text-lg">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {dispute.status === 'Open' && (
+          {disputeStatus === 'open' && (
             <Button
               onClick={handleMarkInReview}
               disabled={updateMutation.isPending}
@@ -90,7 +100,7 @@ export default function ResolutionActions({ dispute, onResolved }) {
             </Button>
           )}
 
-          {['Open', 'In Review'].includes(dispute.status) && (
+          {isDisputeResolvable(dispute?.status) && (
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">Resolve Dispute</p>
               <div className="space-y-1">
@@ -136,7 +146,7 @@ export default function ResolutionActions({ dispute, onResolved }) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Claimed: ${dispute.amount}
+                  Claimed: ${bookingAmount}
                 </p>
               </div>
             )}
@@ -163,7 +173,7 @@ export default function ResolutionActions({ dispute, onResolved }) {
                 onClick={() => {
                   setSelectedAction(null);
                   setResolution('');
-                  setRefundAmount(dispute?.amount || '0');
+                  setRefundAmount(bookingAmount || '0');
                 }}
                 variant="outline"
                 className="flex-1"
@@ -183,7 +193,7 @@ export default function ResolutionActions({ dispute, onResolved }) {
       )}
 
       {/* Resolved Status */}
-      {dispute.status === 'Resolved' && (
+      {disputeStatus === 'resolved' && (
         <Card className="border-green-200 bg-green-50/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">

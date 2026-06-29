@@ -1,4 +1,11 @@
 import { prisma } from '../db/prisma';
+import {
+    checkPromoApplyEligibility,
+    checkPromoRedeemEligibility,
+    checkPromoUsageLimits,
+    countPromoUses,
+    loadPromoByCode,
+} from '../promotions/targeting';
 
 /**
  * Server-side promo validation against `promo_codes` + booking usage (`bookings.discount_code`).
@@ -29,14 +36,11 @@ export interface PromoCodeResult {
     times_used?: number;
 }
 
-const MAX_GLOBAL_USES = 100;
-const MAX_PER_USER = 1;
-
 function discountLabel(row: { discount_type: string; discount_value: number }): string {
     if (row.discount_type === 'percentage') {
         return `${row.discount_value}% off`;
     }
-    return `$${row.discount_value} off`;
+    return `€${row.discount_value} off`;
 }
 
 export async function validatePromoCode(context: PromoCodeContext): Promise<PromoCodeResult> {
@@ -53,10 +57,7 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
     }
 
     const normalizedCode = code.trim().toUpperCase();
-
-    const row = await prisma.promo_codes.findUnique({
-        where: { code: normalizedCode },
-    });
+    const row = await loadPromoByCode(normalizedCode);
 
     if (!row) {
         return {
@@ -76,10 +77,32 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
         };
     }
 
+    const redeemCheck = await checkPromoRedeemEligibility(row, { user_id });
+    if (!redeemCheck.ok) {
+        return {
+            status: 'INVALID',
+            reason: redeemCheck.reason,
+            message: redeemCheck.message,
+            code: normalizedCode,
+        };
+    }
+
+    const { getActivePricingPolicy, validatePromoValues } = await import('../pricing/logic');
+    const isPersonal =
+        !!row.owner_user_id || (row.targets ?? []).some((t) => t.target_type === 'user');
+    if (!isPersonal) {
+        try {
+            const policy = await getActivePricingPolicy();
+            validatePromoValues(row.discount_type, Number(row.discount_value), policy);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : 'Promo exceeds platform limits';
+            return { status: 'INVALID', reason: 'POLICY_LIMIT', message: msg, code: normalizedCode };
+        }
+    }
+
     if (row.expiry_date) {
         const expiryDate = new Date(row.expiry_date);
-        const now = new Date();
-        if (now > expiryDate) {
+        if (new Date() > expiryDate) {
             return {
                 status: 'INVALID',
                 reason: 'CODE_EXPIRED',
@@ -90,62 +113,29 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
         }
     }
 
-    const promoShopId = row.shop_id;
-
-    if (promoShopId != null && promoShopId !== '') {
-        if (context_type === 'shop') {
-            if (shop_id !== promoShopId) {
-                return {
-                    status: 'INVALID',
-                    reason: 'NOT_APPLICABLE',
-                    message: 'This promo code cannot be used for this service or provider',
-                    code: normalizedCode,
-                };
-            }
-        } else {
-            const barber = await prisma.barbers.findUnique({
-                where: { id: barber_id },
-                select: { shop_id: true },
-            });
-            if (!barber?.shop_id || barber.shop_id !== promoShopId) {
-                return {
-                    status: 'INVALID',
-                    reason: 'NOT_APPLICABLE',
-                    message: 'This promo code cannot be used for this service or provider',
-                    code: normalizedCode,
-                };
-            }
-        }
-    }
-
-    const allUses = await prisma.bookings.findMany({
-        where: { discount_code: normalizedCode },
-        select: { id: true },
+    const applyCheck = await checkPromoApplyEligibility(row, {
+        barber_id,
+        shop_id,
+        context_type,
     });
-    const totalUses = allUses.length;
-
-    const usesThisUserRows = await prisma.bookings.findMany({
-        where: { discount_code: normalizedCode, client_id: user_id },
-        select: { id: true },
-    });
-    const usesThisUser = usesThisUserRows.length;
-
-    if (totalUses >= MAX_GLOBAL_USES) {
+    if (!applyCheck.ok) {
         return {
             status: 'INVALID',
-            reason: 'CODE_EXHAUSTED',
-            message: 'This promo code has reached its usage limit',
+            reason: applyCheck.reason,
+            message: applyCheck.message,
             code: normalizedCode,
         };
     }
 
-    if (usesThisUser >= MAX_PER_USER) {
+    const usageCheck = await checkPromoUsageLimits(row, normalizedCode, user_id);
+    if (!usageCheck.ok) {
+        const { userUses } = await countPromoUses(normalizedCode, user_id);
         return {
             status: 'INVALID',
-            reason: 'ALREADY_USED',
-            message: 'You have already used this promo code',
+            reason: usageCheck.reason,
+            message: usageCheck.message,
             code: normalizedCode,
-            times_used: usesThisUser,
+            times_used: userUses,
         };
     }
 
@@ -170,6 +160,7 @@ export async function validatePromoCode(context: PromoCodeContext): Promise<Prom
 
     if (!skip_audit) {
         try {
+            const { totalUses } = await countPromoUses(normalizedCode);
             await prisma.audit_logs.create({
                 data: {
                     action: 'PROMO_CODE_VALIDATED',

@@ -6,6 +6,8 @@ This document defines the **canonical structure** for **ShopTheBarber**. Use it 
 
 **Full-stack only**: Every feature must be complete end-to-end (frontend, UX, backend, database, system uniformity). No frontend-only or backend-only work. See [docs/ARCHITECTURE_FULL_STACK_UNIFIED.md](docs/ARCHITECTURE_FULL_STACK_UNIFIED.md) and `.cursor/rules/full-stack-unified-development.mdc`.
 
+**Database (2026-06):** **Neon PostgreSQL + Prisma** only. Schema: `server/prisma/schema.prisma`. Migrations: `server/prisma/migrations/`. See [docs/NEON_PRISMA.md](docs/NEON_PRISMA.md). Legacy SQLite/Drizzle paths in older docs are obsolete.
+
 ---
 
 ## Root Layout
@@ -13,7 +15,7 @@ This document defines the **canonical structure** for **ShopTheBarber**. Use it 
 ```
 shop-the-barber/
 ├── public/                 # Static assets (served as-is)
-├── server/                 # Backend API (Node + Fastify + Drizzle)
+├── server/                 # Backend API (Node + Fastify + Prisma + Neon)
 ├── src/                    # Frontend app (React + Vite)
 ├── docs/                   # Specifications, audits, and specs
 ├── index.html
@@ -73,7 +75,7 @@ components/
 ├── notifications/          # NotificationCenter, RealTimeNotifications, notificationUtils
 ├── analytics/              # ExportUtils
 ├── admin/                  # Admin-only (e.g. BackupHealthDashboard)
-├── ai/                     # AIAdvisor
+├── dashboard/              # FeaturedServices, PersonalizedBarberPicks, etc.
 ├── hooks/                  # use-debounce, useFormValidation (component-level hooks)
 ├── schemas.jsx             # Form/validation schemas (e.g. Zod)
 ├── theme-provider.jsx
@@ -95,49 +97,41 @@ components/
 
 ```
 server/
+├── prisma/
+│   ├── schema.prisma       # Canonical DB schema (Neon PostgreSQL)
+│   └── migrations/         # Versioned Prisma migrations
+├── scripts/
+│   ├── build-database.mjs  # Render build: generate + migrate deploy + verify
+│   └── verify-production-schema.mjs
 ├── src/
 │   ├── index.ts            # App entry, Fastify setup, route registration
-│   ├── db/                 # Database
-│   │   ├── index.ts        # DB client / connection
-│   │   ├── schema.ts       # Drizzle schema
-│   │   └── seed.ts         # Seed data
-│   ├── auth/               # Auth
-│   │   ├── routes.ts       # Auth HTTP routes
-│   │   └── password.ts     # Hashing, verification
-│   ├── middleware/        # rateLimit, etc.
+│   ├── db/
+│   │   ├── prisma.ts       # Prisma Client singleton
+│   │   └── seed.ts         # Seed data (npm run seed)
+│   ├── auth/               # Clerk auth (requestUser.ts, routes.ts)
+│   ├── middleware/         # rateLimit, etc.
 │   ├── logic/              # Domain logic (no HTTP)
 │   │   ├── booking.ts
 │   │   ├── review.ts
 │   │   ├── email.ts
 │   │   ├── promoCode.ts
-│   │   ├── moderation.ts
-│   │   └── ai.ts
+│   │   └── moderation.ts
 │   ├── admin/              # Admin-only API
-│   │   ├── analytics.ts
-│   │   └── backup.ts
 │   ├── provider/           # Provider-facing API
-│   │   └── analytics.ts
-│   ├── payments/           # Payments
-│   │   └── routes.ts
-│   ├── webhooks/           # Stripe, etc.
-│   │   └── stripe.ts
-│   └── scripts/            # One-off or migration scripts
-│       ├── patch_schema.ts
-│       └── patch_schema_direct.ts
-├── drizzle/                # Migrations and meta
-├── drizzle.config.ts
+│   ├── payments/           # Stripe routes
+│   ├── webhooks/           # Stripe webhooks
+│   └── <domain>/           # Feature modules (reviews, providerShowcase, …)
 ├── package.json
-├── database.sqlite         # Dev DB (gitignored in prod)
-└── sovereign.sqlite        # Alternate DB if used
+└── .env.example            # DATABASE_URL, CLERK_SECRET_KEY, …
 ```
 
 **Rules:**
 
-- **Routes** — In `auth/`, `admin/`, `provider/`, `payments/`; wire in `index.ts`.
-- **Business logic** — In `logic/`; keep handlers thin and call into `logic/`.
-- **DB** — Schema and migrations in `db/` and `drizzle/`.
+- **Routes** — Domain folders under `src/`; wire in `index.ts`.
+- **Business logic** — In `logic/` or domain modules; keep HTTP handlers thin.
+- **DB** — Edit `prisma/schema.prisma`; run `npx prisma migrate dev`; commit migration SQL.
 - **Webhooks** — In `webhooks/` (e.g. Stripe).
-- **Scripts** — In `scripts/`; run via `npm run` or `npx tsx`.
+- **Scripts** — In `scripts/`; run via `npm run` or `node`.
 
 ---
 
@@ -197,15 +191,16 @@ docs/
 | New hook | `src/hooks/` or `src/components/hooks/` |
 | New backend route | `server/src/<domain>/` (e.g. `auth/`, `admin/`) |
 | New business rule | `server/src/logic/` |
-| New DB table/column | `server/src/db/schema.ts` + migration in `drizzle/` |
+| New DB table/column | `server/prisma/schema.prisma` + `npx prisma migrate dev` → commit under `server/prisma/migrations/` |
 | New spec or audit | `docs/` |
 
 ---
 
 ## Tech Stack Summary
 
-- **Frontend:** React 18, Vite 6, React Router, TanStack Query, Tailwind, Radix UI (shadcn-style), Zod.
-- **Backend:** Node, Fastify, Drizzle ORM, SQLite.
-- **Payments:** Stripe (including webhooks).
+- **Frontend:** React 18, Vite 6, React Router, TanStack Query, Tailwind, Radix UI (shadcn-style), Zod, Clerk.
+- **Backend:** Node 20+, Fastify, **Prisma Client**, **Neon PostgreSQL**, Clerk auth, Zod validation.
+- **Payments:** Stripe Connect (including webhooks).
+- **Deploy:** Vercel (frontend) + Render (API) — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-This schema is the single source of truth for the preferred project structure. When in doubt, match this layout and naming.
+This schema is the single source of truth for the preferred project structure. When in doubt, match this layout and naming. For database commands, see [docs/NEON_PRISMA.md](docs/NEON_PRISMA.md) and [AGENTS.md](AGENTS.md).

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { sovereign } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,18 +16,16 @@ import { fr } from "date-fns/locale";
 export default function ArticleDetail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const articleId = searchParams.get('id');
 
   const { data: article, isLoading } = useQuery({
     queryKey: ['article', articleId],
-    queryFn: () => sovereign.entities.Article.list().then(list => list.find(a => a.id === articleId)),
+    queryFn: () => sovereign.articles.getPublic(articleId),
     enabled: !!articleId
   });
 
   const incrementViewMutation = useMutation({
-    mutationFn: async () => { if (article) await sovereign.entities.Article.update(article.id, { views: (article.views || 0) + 1 }); },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['article', articleId] })
+    mutationFn: async () => { if (articleId) await sovereign.articles.recordView(articleId); },
   });
 
   React.useEffect(() => { if (article && !isLoading) incrementViewMutation.mutate(); }, [article?.id]);
@@ -60,7 +57,7 @@ export default function ArticleDetail() {
     <div className="min-h-screen py-12 bg-[#F7F8FA]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-8">
-          <Button variant="ghost" className="text-[#4B5563] hover:bg-slate-100 rounded-[10px] min-h-[44px]" onClick={() => navigate(createPageUrl("Blog"))}>
+          <Button variant="ghost" className="text-[#4B5563] hover:bg-muted rounded-[10px] min-h-[44px]" onClick={() => navigate(createPageUrl("Blog"))}>
             <ChevronLeft className="w-5 h-5 mr-2" />Retour au Blog
           </Button>
         </motion.div>
@@ -103,12 +100,12 @@ export default function ArticleDetail() {
           </Card>
 
           <div className="flex items-center gap-4 mb-12">
-            <Button className="flex-1 border-2 border-slate-200 text-[#4B5563] hover:bg-slate-100 bg-white rounded-[10px] h-14 min-h-[44px]"><ThumbsUp className="w-5 h-5 mr-2" />J'aime ({article.likes || 0})</Button>
-            <Button className="flex-1 border-2 border-slate-200 text-[#4B5563] hover:bg-slate-100 bg-white rounded-[10px] h-14 min-h-[44px]"><Heart className="w-5 h-5 mr-2" />Sauvegarder</Button>
-            <Button className="border-2 border-slate-200 text-[#4B5563] hover:bg-slate-100 bg-white rounded-[10px] h-14 px-6 min-h-[44px]"><Share2 className="w-5 h-5" /></Button>
+            <Button className="flex-1 border-2 border-slate-200 text-[#4B5563] hover:bg-muted bg-card rounded-[10px] h-14 min-h-[44px]"><ThumbsUp className="w-5 h-5 mr-2" />J'aime ({article.likes || 0})</Button>
+            <Button className="flex-1 border-2 border-slate-200 text-[#4B5563] hover:bg-muted bg-card rounded-[10px] h-14 min-h-[44px]"><Heart className="w-5 h-5 mr-2" />Sauvegarder</Button>
+            <Button className="border-2 border-slate-200 text-[#4B5563] hover:bg-muted bg-card rounded-[10px] h-14 px-6 min-h-[44px]"><Share2 className="w-5 h-5" /></Button>
           </div>
 
-          <Card className="rounded-[12px] border-2 border-slate-200 p-8 text-center bg-white">
+          <Card className="rounded-[12px] border-2 border-slate-200 p-8 text-center bg-card">
             <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-[#0B2545] mb-3">Découvrir Plus d'Articles</h3>
             <p className="text-[#4B5563] mb-6">Explorez notre collection de conseils et tendances</p>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -27,11 +27,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 
 import BarberMap from "@/components/barbers/BarberMap";
+import AddressAutocomplete from "@/components/maps/AddressAutocomplete";
+import { toast } from "sonner";
+import { barberDistanceKm, formatDistanceKm } from "@/lib/geo";
+import { usePreferredLocation } from "@/hooks/usePreferredLocation";
 
 export default function Barbers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("rating");
-  const [viewMode, setViewMode] = useState("list"); // 'list', 'grid', 'map'
+  const [viewMode, setViewMode] = useState("list");
+  const { preferredLocation, setPreferredLocation, clearPreferredLocation } = usePreferredLocation();
+  const [addressInput, setAddressInput] = useState(() => preferredLocation?.address ?? "");
+  const userCoords = preferredLocation
+    ? { latitude: preferredLocation.latitude, longitude: preferredLocation.longitude }
+    : null;
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [filters, setFilters] = useState({
     providerType: 'all',
     mode: 'all',
@@ -41,30 +51,82 @@ export default function Barbers() {
   });
 
   const { data: barbers = [], isLoading } = useQuery({
-    queryKey: ['barbers', sortBy],
-    queryFn: async () => {
-      const sortField = sortBy === 'rating' ? '-rating' :
-        sortBy === 'distance' ? 'distance' :
-          sortBy === 'price_low' ? 'min_price' : '-created_date';
-      return await sovereign.entities.Barber.list(sortField === '-created_date' ? '-created_at' : sortField);
-    }
+    queryKey: ['barbers'],
+    queryFn: async () => sovereign.entities.Barber.list('-rating'),
   });
 
-  const filteredBarbers = barbers.filter(barber => {
-    const matchesSearch = (barber.name || barber.shop_name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRating = (barber.rating || 5) >= filters.minRating;
-    const matchesKidFriendly = !filters.kidFriendly || barber.kid_friendly;
-    return matchesSearch && matchesRating && matchesKidFriendly;
-  });
+  const handleUseMyLocation = useCallback(async () => {
+    setIsLoadingLocation(true);
+    try {
+      if (!navigator.geolocation) {
+        toast.error('Geolocation is not supported by your browser');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          let label = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          try {
+            const data = await sovereign.atHomeService.reverseGeocode(latitude, longitude);
+            label = data.formatted_address || label;
+          } catch {
+            // keep coordinate label
+          }
+          setPreferredLocation({ address: label, latitude, longitude });
+          setAddressInput(label);
+          setIsLoadingLocation(false);
+        },
+        () => {
+          toast.error('Unable to retrieve your location');
+          setIsLoadingLocation(false);
+        }
+      );
+    } catch {
+      toast.error('Error accessing location');
+      setIsLoadingLocation(false);
+    }
+  }, [setPreferredLocation]);
+
+  const enrichedBarbers = useMemo(() => {
+    return barbers.map((barber) => ({
+      ...barber,
+      distance_km: barberDistanceKm(userCoords, barber),
+    }));
+  }, [barbers, userCoords]);
+
+  const filteredBarbers = useMemo(() => {
+    let list = enrichedBarbers.filter((barber) => {
+      const displayName = (barber.name || barber.shop_name || '').toLowerCase();
+      const matchesSearch = displayName.includes(searchQuery.toLowerCase()) ||
+        (barber.location || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRating = (barber.rating || 5) >= filters.minRating;
+      const matchesKidFriendly = !filters.kidFriendly || barber.children_friendly || barber.kid_friendly;
+      const matchesDistance =
+        !userCoords ||
+        barber.distance_km == null ||
+        barber.distance_km <= filters.maxDistance;
+      return matchesSearch && matchesRating && matchesKidFriendly && matchesDistance;
+    });
+
+    if (sortBy === 'distance' && userCoords) {
+      list = [...list].sort((a, b) => (a.distance_km ?? 999) - (b.distance_km ?? 999));
+    } else if (sortBy === 'rating') {
+      list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (sortBy === 'newest') {
+      list = [...list].sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    }
+
+    return list;
+  }, [enrichedBarbers, searchQuery, filters, sortBy, userCoords]);
 
   const FilterContent = () => (
     <div className="space-y-8">
       {/* Provider Type */}
       <div>
-        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Type de Prestataire</h3>
+        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Provider Type</h3>
         <div className="space-y-3">
           {[
-            { id: 'all', label: 'Tous' },
+            { id: 'all', label: 'All' },
             { id: 'freelance', label: 'Freelance' },
             { id: 'salon', label: 'Salon' }
           ].map((type) => (
@@ -87,9 +149,9 @@ export default function Barbers() {
         <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Mode</h3>
         <div className="space-y-3">
           {[
-            { id: 'all', label: 'Tous', icon: null },
-            { id: 'on_site', label: 'Sur place', icon: HomeIcon },
-            { id: 'mobile', label: 'À domicile', icon: Car }
+            { id: 'all', label: 'All', icon: null },
+            { id: 'on_site', label: 'In-shop', icon: HomeIcon },
+            { id: 'mobile', label: 'Mobile', icon: Car }
           ].map((mode) => (
             <label key={mode.id} className="flex items-center gap-3 cursor-pointer group">
               <Checkbox
@@ -108,7 +170,7 @@ export default function Barbers() {
 
       {/* Min Rating */}
       <div>
-        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Évaluation Minimale</h3>
+        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Minimum Rating</h3>
         <div className="space-y-4">
           <Input
             type="range"
@@ -118,14 +180,35 @@ export default function Barbers() {
             value={filters.minRating}
             onChange={(e) => setFilters({ ...filters, minRating: Number(e.target.value) })}
             className="w-full accent-primary"
-            aria-label="Évaluation minimale"
+            aria-label="Minimum rating"
           />
           <div className="flex items-center gap-2 text-slate dark:text-matte-silver">
             <Star className="w-4 h-4 text-amber-500 fill-current" />
-            <span>{filters.minRating}+ étoiles</span>
+            <span>{filters.minRating}+ stars</span>
           </div>
         </div>
       </div>
+
+      {userCoords && (
+        <div>
+          <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Maximum Distance</h3>
+          <div className="space-y-4">
+            <Input
+              type="range"
+              min={1}
+              max={100}
+              step={1}
+              value={filters.maxDistance}
+              onChange={(e) => setFilters({ ...filters, maxDistance: Number(e.target.value) })}
+              className="w-full accent-primary"
+              aria-label="Maximum distance in km"
+            />
+            <p className="text-sm text-slate dark:text-matte-silver">
+              Within <span className="font-bold text-charcoal dark:text-white">{filters.maxDistance} km</span>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Kid Friendly */}
       <div>
@@ -137,7 +220,7 @@ export default function Barbers() {
           />
           <Baby className="w-5 h-5 text-emerald-600" />
           <span className="text-slate dark:text-matte-silver group-hover:text-primary transition-colors font-medium">
-            Amical avec les enfants
+            Kid-friendly
           </span>
         </label>
       </div>
@@ -146,15 +229,20 @@ export default function Barbers() {
       <Button
         variant="outline"
         className="w-full border-slate text-slate hover:bg-background-light rounded-button"
-        onClick={() => setFilters({
+        onClick={() => {
+          setSearchQuery("");
+          clearPreferredLocation();
+          setAddressInput("");
+          setFilters({
           providerType: 'all',
           mode: 'all',
           minRating: 0,
           maxDistance: 50,
           kidFriendly: false
-        })}
+        });
+        }}
       >
-        Réinitialiser les Filtres
+        Reset Filters
       </Button>
     </div>
   );
@@ -165,10 +253,10 @@ export default function Barbers() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-charcoal dark:text-white mb-4">
-            Trouvez Votre Barbier Idéal
+            Find Your Ideal Barber
           </h1>
           <p className="text-xl text-slate dark:text-matte-silver">
-            Des professionnels qualifiés près de chez vous
+            Qualified professionals near you
           </p>
         </div>
 
@@ -180,7 +268,7 @@ export default function Barbers() {
                 <Search className="text-slate w-5 h-5 group-focus-within:text-primary transition-colors" />
               </div>
               <Input
-                placeholder="Rechercher par nom de salon..."
+                placeholder="Search by shop name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-16 h-12 text-lg border-none bg-background-light dark:bg-background-dark rounded-xl focus:ring-0 placeholder:text-slate/50"
@@ -197,13 +285,13 @@ export default function Barbers() {
 
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full md:w-64 h-12 rounded-xl border-none bg-background-light dark:bg-background-dark">
-                <SelectValue placeholder="Trier par" />
+                <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rating">Mieux Notés</SelectItem>
-                <SelectItem value="distance">Le Plus Proche</SelectItem>
-                <SelectItem value="price_low">Prix Croissant</SelectItem>
-                <SelectItem value="newest">Plus Récents</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="distance">Nearest</SelectItem>
+                <SelectItem value="price_low">Price: Low to High</SelectItem>
+                <SelectItem value="newest">Newest</SelectItem>
               </SelectContent>
             </Select>
 
@@ -211,21 +299,21 @@ export default function Barbers() {
             <div className="flex gap-2 bg-background-light dark:bg-background-dark p-1 rounded-xl">
               <Button
                 variant="ghost"
-                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'list' ? 'bg-white dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
+                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'list' ? 'bg-card dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
                 onClick={() => setViewMode('list')}
               >
                 <ListIcon className="w-5 h-5" />
               </Button>
               <Button
                 variant="ghost"
-                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'grid' ? 'bg-white dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
+                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'grid' ? 'bg-card dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
                 onClick={() => setViewMode('grid')}
               >
                 <LayoutGrid className="w-5 h-5" />
               </Button>
               <Button
                 variant="ghost"
-                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'map' ? 'bg-white dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
+                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'map' ? 'bg-card dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
                 onClick={() => setViewMode('map')}
               >
                 <Map className="w-5 h-5" />
@@ -237,18 +325,52 @@ export default function Barbers() {
               <SheetTrigger asChild>
                 <Button variant="outline" className="lg:hidden h-12 rounded-xl border-none bg-background-light dark:bg-background-dark">
                   <SlidersHorizontal className="w-5 h-5 mr-2" />
-                  Filtres
+                  Filters
                 </Button>
               </SheetTrigger>
               <SheetContent side="bottom" className="filter-sheet h-[80vh] overflow-y-auto">
                 <SheetHeader>
-                  <SheetTitle className="text-charcoal dark:text-white">Filtres</SheetTitle>
+                  <SheetTitle className="text-charcoal dark:text-white">Filters</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6">
                   <FilterContent />
                 </div>
               </SheetContent>
             </Sheet>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3 mt-4">
+            <AddressAutocomplete
+              placeholder="Votre adresse pour trouver les barbiers proches…"
+              value={addressInput}
+              onChange={(value) => {
+                setAddressInput(value);
+                if (!value.trim()) clearPreferredLocation();
+              }}
+              onSelect={(item) => {
+                setAddressInput(item.formatted_address);
+                setPreferredLocation({
+                  address: item.formatted_address,
+                  latitude: item.latitude,
+                  longitude: item.longitude,
+                });
+              }}
+              inputClassName="h-12 border-none bg-background-light dark:bg-background-dark"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleUseMyLocation}
+              disabled={isLoadingLocation}
+              className="h-12 shrink-0 rounded-xl border-none bg-background-light dark:bg-background-dark"
+            >
+              {isLoadingLocation ? '…' : (
+                <>
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Ma position
+                </>
+              )}
+            </Button>
           </div>
 
           {/* Quick Filters */}
@@ -268,7 +390,7 @@ export default function Barbers() {
         {/* Map View */}
         {viewMode === 'map' && (
           <div className="mb-8 rounded-2xl overflow-hidden shadow-soft border border-soft-gray dark:border-slate/20">
-            <BarberMap barbers={filteredBarbers} />
+            <BarberMap barbers={filteredBarbers} userPosition={userCoords} />
           </div>
         )}
 
@@ -278,7 +400,7 @@ export default function Barbers() {
             <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 sticky top-24 shadow-soft">
               <h2 className="text-xl font-bold text-charcoal dark:text-white mb-6 flex items-center gap-2">
                 <SlidersHorizontal className="w-5 h-5" />
-                Filtres
+                Filters
               </h2>
               <FilterContent />
             </div>
@@ -328,7 +450,7 @@ export default function Barbers() {
                     });
                   }}
                 >
-                  Réinitialiser les Filtres
+                  Reset Filters
                 </Button>
               </div>
             ) : (
@@ -358,18 +480,22 @@ export default function Barbers() {
                                   {barber.kid_friendly && (
                                     <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-none text-xs">
                                       <Baby className="w-3 h-3 mr-1" />
-                                      Enfants
+                                      Kids
                                     </Badge>
                                   )}
                                 </div>
                                 <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-2 group-hover:text-primary transition-colors">
-                                  {barber.shop_name}
+                                  {barber.name || barber.shop_name}
                                 </h3>
                                 <div className="flex items-center gap-2 text-slate dark:text-matte-silver mb-4 text-sm">
                                   <MapPin className="w-4 h-4 text-primary" />
-                                  <span>Paris, France</span>
-                                  <span className="w-1 h-1 bg-slate/30 rounded-full mx-1"></span>
-                                  <span>{barber.distance || "2.5"} km</span>
+                                  <span>{barber.location || barber.city || '-'}</span>
+                                  {barber.distance_km != null && (
+                                    <>
+                                      <span className="w-1 h-1 bg-slate/30 rounded-full mx-1" />
+                                      <span>{formatDistanceKm(barber.distance_km)}</span>
+                                    </>
+                                  )}
                                 </div>
                                 <div className="flex flex-wrap gap-2 mb-4">
                                   {barber.specialties?.slice(0, 3).map((specialty, i) => (
@@ -382,7 +508,7 @@ export default function Barbers() {
                               <div className="flex items-center gap-4 mt-auto pt-4 border-t border-soft-gray dark:border-slate/10">
                                 <Link to={createPageUrl(`BarberProfile?id=${barber.id}`)} className="w-full">
                                   <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-button">
-                                    Voir les disponibilités
+                                    View availability
                                   </Button>
                                 </Link>
                               </div>
@@ -426,19 +552,25 @@ export default function Barbers() {
                             {barber.kid_friendly && (
                               <Badge className="absolute top-4 left-4 bg-emerald-500 text-white border-none shadow-sm">
                                 <Baby className="w-3 h-3 mr-1" />
-                                Enfants
+                                Kids
                               </Badge>
                             )}
                           </div>
 
                           <CardContent className="p-6">
                             <h3 className="text-xl font-bold mb-2 text-charcoal dark:text-white group-hover:text-primary transition-colors">
-                              {barber.shop_name}
+                              {barber.name || barber.shop_name}
                             </h3>
 
                             <div className="flex items-center gap-2 text-slate dark:text-matte-silver mb-4 text-sm">
                               <MapPin className="w-4 h-4 text-primary" />
-                              <span>Paris, France</span>
+                              <span>{barber.location || barber.city || '-'}</span>
+                              {barber.distance_km != null && (
+                                <>
+                                  <span className="w-1 h-1 bg-slate/30 rounded-full mx-1" />
+                                  <span>{formatDistanceKm(barber.distance_km)}</span>
+                                </>
+                              )}
                             </div>
 
                             <div className="mb-6">
@@ -455,7 +587,7 @@ export default function Barbers() {
 
                             <Link to={createPageUrl(`BarberProfile?id=${barber.id}`)}>
                               <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-button">
-                                Voir le Profil
+                                View Profile
                               </Button>
                             </Link>
                           </CardContent>

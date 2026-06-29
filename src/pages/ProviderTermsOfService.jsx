@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function ProviderTermsOfService() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="stb-page">
       <MetaTags
         title="Provider Terms of Service"
         description="Terms of Service for ShopTheBarber service providers"
@@ -232,6 +232,18 @@ export default function ProviderTermsOfService() {
             </section>
 
             <section>
+              <h2>Marketplace retail products</h2>
+              <p>
+                If you sell physical products on the marketplace, you also accept the{' '}
+                <Link to="/marketplace/seller-terms" className="text-primary hover:underline">
+                  Marketplace Seller Terms
+                </Link>
+                : VAT-inclusive list prices where required, fulfillment, shipping liability, and returns.
+                Service booking commissions in Section 5 are separate from product sales unless agreed in writing.
+              </p>
+            </section>
+
+            <section>
               <h2>14. Changes to Terms & Fees</h2>
               <p>
                 We may update these Terms or commission rates at any time. Changes to fees will take effect 30 days after notice. Your continued use of the Platform constitutes acceptance.
@@ -275,7 +287,7 @@ export default function ProviderTermsOfService() {
               <p>
                 For questions regarding these Terms, contact:
               </p>
-              <div className="bg-gray-50 p-4 rounded-lg mt-3">
+              <div className="bg-muted/50 p-4 rounded-lg mt-3">
                 <p><strong>Provider Support</strong>: provider-support@shopthebarber.com</p>
                 <p><strong>Legal Questions</strong>: legal@shopthebarber.com</p>
                 <p><strong>Dispute Escalation</strong>: disputes@shopthebarber.com</p>

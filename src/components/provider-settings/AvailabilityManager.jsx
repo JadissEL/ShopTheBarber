@@ -107,7 +107,7 @@ export default function AvailabilityManager({ barber, shopId }) {
                       <button 
                         key={s.id}
                         onClick={() => setSelectedShopId(s.id)}
-                        className={`px-3 py-1 rounded-full text-sm ${selectedShopId === s.id ? 'bg-primary text-white' : 'bg-gray-100'}`}
+                        className={`px-3 py-1 rounded-full text-sm ${selectedShopId === s.id ? 'bg-primary text-white' : 'bg-muted'}`}
                       >
                         {s.name}
                       </button>

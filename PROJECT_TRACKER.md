@@ -1,12 +1,164 @@
-# PROJECT TRACKER — ShopTheBarber Platform
+# PROJECT TRACKER - ShopTheBarber Platform
 
-**Last Updated**: 2026-05-01  
-**Project Status**: 💎 Sovereign stack — Clerk + JWT (Fastify); UI toolchain restored  
-**Current Phase**: Audit hardening — Clerk ↔ DB user resolution (`clerk_user_id`), findings log shipped
+**Last updated:** 2026-06-26  
+**Project status:** Production - Vercel + Render + Neon PostgreSQL + Clerk  
+**Current phase:** Platform polish (feature flags, financial UI, discovery, guest booking, reviews)
 
 ---
 
-## 📋 PROJECT VISION & GOALS
+## Documentation (single source of truth)
+
+**If two docs disagree, use the canonical source for that topic.**
+
+| Topic | Canonical doc |
+|-------|----------------|
+| **Deploy & production env** | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| **Database, Prisma, Neon, migrations** | [docs/NEON_PRISMA.md](docs/NEON_PRISMA.md) |
+| **Agent / CI / E2E commands** | [AGENTS.md](AGENTS.md) |
+| **Repo layout & where to put code** | [PROJECT_SCHEMA.md](PROJECT_SCHEMA.md) |
+| **Feature modules (optional verticals)** | [docs/FEATURE_MODULES.md](docs/FEATURE_MODULES.md) |
+| **Git branching to production** | [docs/GIT_BRANCHING_AND_DEPLOYMENT.md](docs/GIT_BRANCHING_AND_DEPLOYMENT.md) |
+| **GTM: ICP, pricing, pilot, partners** | [docs/ICP.md](docs/ICP.md), [docs/GTM_PRICING.md](docs/GTM_PRICING.md), [docs/PILOT_PROGRAM.md](docs/PILOT_PROGRAM.md), [docs/PARTNER_CHANNEL.md](docs/PARTNER_CHANNEL.md) |
+
+**Public GTM routes:** `/pricing`, `/for-barbers`, `/for-shops`, `/for-networks`, `/pilot`, `/partners`
+
+**Schema source of truth:** `server/prisma/schema.prisma` and `server/prisma/migrations/`.
+
+**Obsolete (historical only):** SQLite, Drizzle ORM, `drizzle-kit`, `JWT_SECRET`, `DRIZZLE_BOOTSTRAP`, `server/src/db/schema.ts`, `server/drizzle/`. Do not use for new work.
+
+---
+
+## Architecture (current - 2026-06)
+
+| Layer | Stack | Notes |
+|-------|--------|--------|
+| Frontend | React 18 + Vite 6, TanStack Query, Tailwind, shadcn/Radix | Desktop-first; proxy `/api` to `:3001` |
+| API | Fastify (Node 20+) | Domain routes under `server/src/<domain>/` |
+| Database | **Neon PostgreSQL** | Pooled `DATABASE_URL` on Render |
+| ORM / migrations | **Prisma** | `prisma migrate deploy` in CI and Render build |
+| Auth | **Clerk** | Bearer to `users.clerk_user_id` via `authenticateRequest` |
+| Cache / rate limit | Upstash Redis | Required in production (fail-fast) |
+| Geocoding | Mapbox or Google Maps | Required in production |
+| Payments | Stripe Connect + webhooks | |
+
+**Build pipeline (Render):** `server/scripts/build-database.mjs` runs `prisma generate`, `prisma migrate deploy`, schema verify, and coordinate backfills.
+
+**Local DB setup:**
+
+```bash
+cd server
+cp .env.example .env   # DATABASE_URL (Neon), CLERK_SECRET_KEY
+npm run generate
+npx prisma migrate deploy
+npm run seed           # optional
+```
+
+There is **no local SQLite** in the current server package.
+
+---
+
+## Project vision
+
+Deliver a **Sovereign API-free**, production-grade barbershop booking platform: independent Fastify API, real PostgreSQL data, Clerk auth, and a premium desktop-first UX.
+
+### Key mandates
+
+1. **No Sovereign API** - All data via `src/api/apiClient.js` (`sovereign`) to Fastify REST.
+2. **Prisma + Neon only** - Every schema change = committed migration under `server/prisma/migrations/`.
+3. **Preserve working UX** - Extend without breaking existing flows (tracker-first, change control).
+4. **Full-stack features** - UI + API + schema together (see `.cursor/rules/full-stack-unified-development.mdc`).
+
+---
+
+## Replaced Sovereign API components
+
+| Component | Before | After | Status |
+|-----------|--------|-------|--------|
+| API layer | Sovereign API SDK | Fastify REST + `sovereign` client | done |
+| Database | Mock / Sovereign entities | Neon PostgreSQL + Prisma Client | done |
+| Migrations | Drizzle / SQLite (legacy) | Prisma migrations | done |
+| Auth | Sovereign API.auth | Clerk (+ DB user via `requestUser.ts`) | done |
+| Functions | Serverless | Fastify routes + `server/src/logic/` | done |
+
+---
+
+## Database (Prisma / Neon)
+
+**Define schema in:** `server/prisma/schema.prisma`  
+**Apply locally:** `npx prisma migrate deploy`  
+**Create migration:** `npx prisma migrate dev --name describe_change` (direct Neon URL)  
+**CI / Render:** `prisma migrate deploy` only (non-interactive)
+
+Core models include: `users`, `barbers`, `shops`, `bookings`, `services`, `promo_codes`, `reviews`, `messages`, `notifications`, `disputes`, `shop_members`, and domain-specific tables added via migrations (guest booking, review loop, provider showcase, payment protection, etc.).
+
+**Verify:** `cd server && npm run verify:schema`
+
+---
+
+## Recent completed work (2026-06)
+
+| Date | Item |
+|------|------|
+| 2026-06-26 | **GTM stack** - `/pricing`, ICP landings, ROI calculator, `/pilot`, `/partners`, docs ICP/GTM_PRICING/PILOT/PARTNER |
+| 2026-06-26 | **P0 doc alignment** - AGENTS.md, PROJECT_TRACKER.md, PROJECT_SCHEMA.md, Cursor rules synced to Prisma/Neon SSOT |
+| 2026-06-26 | **P2 portfolio / story** - discovery previews, empty states, provider completeness checklist |
+| 2026-06-26 | **P2 review loop** - post-appointment review requests + 24h nudge cron |
+| 2026-06-26 | **P1 guest booking** - public BookingFlow, guest API, magic-link status/cancel |
+| 2026-06-26 | Runtime feature flags, GlobalFinancials tabs, entity write hardening, public E2E |
+| 2026-06-26 | Prisma/Neon production SSOT - DEPLOYMENT.md, README, NEON_PRISMA.md; removed Drizzle runtime |
+
+---
+
+## Open items / risks
+
+| Item | Status | Notes |
+|------|--------|-------|
+| API keys finalization | pending | `.cursor_memory/api_keys_checklist.md` |
+| Render cold starts | known | Free tier ~30s; health at `/api/health/ready` |
+| Integration tests | env | Need `TEST_DATABASE_URL` (isolated Neon branch) in CI |
+
+---
+
+## Tracker-first rule (for agents)
+
+1. Read this file before significant work.
+2. Follow [AGENTS.md](AGENTS.md) for commands and [docs/NEON_PRISMA.md](docs/NEON_PRISMA.md) for DB changes.
+3. Never introduce Drizzle/SQLite/JWT-only auth paths.
+4. After major features, append a dated row under **Recent completed work** and a short **User prompts log** entry below.
+
+---
+
+## User prompts log (recent)
+
+### [2026-06-26] - P0 Align docs with Prisma/Neon
+
+**Request:** Align AGENTS.md, PROJECT_TRACKER.md, and Cursor rules with Prisma/Neon as SSOT.  
+**Action:** Rewrote tracker header and architecture; updated PROJECT_SCHEMA.md, antigravity-system.mdc, project-schema.mdc; strengthened AGENTS.md doc table. Historical SQLite/Drizzle content archived below.
+
+### [2026-06-26] - P2 barber portfolio / story
+
+**Request:** On-platform discovery; rich empty states.  
+**Action:** Discovery previews API, ShowcaseEmptyState, Explore card strips, provider completeness card.
+
+### [2026-06-26] - P2 review generation loop
+
+**Request:** Auto-ask for reviews after appointments.  
+**Action:** `review_request_token`, email/SMS, cron nudges, guest token submit, Dashboard banner.
+
+### [2026-06-26] - P1 guest booking
+
+**Request:** Cutly-style guest book without account friction.  
+**Action:** Public routes, guest API, pay-at-shop MVP, GuestBooking page.
+
+---
+
+# Historical archive (pre-Prisma/Neon SSOT)
+
+> **Read-only context.** Entries below may reference SQLite, Drizzle, `JWT_SECRET`, or `server/src/db/schema.ts`.  
+> **Do not follow for new development.** Use the sections above and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+---
+## ?? PROJECT VISION & GOALS
 
 Deliver a **Sovereign API-free**, future-proof, production-grade, and technically sovereign system. The platform must remain functional, premium, and elegant while transitioning to an independent, well-documented architecture.
 
@@ -18,7 +170,7 @@ Deliver a **Sovereign API-free**, future-proof, production-grade, and technicall
 
 ---
 
-## 🏗️ ARCHITECTURE OVERVIEW (NON-Sovereign API)
+## ??? ARCHITECTURE OVERVIEW (NON-Sovereign API)
 
 ### Frontend Stack (SOVEREIGN)
 - **Framework**: React 18.2.0 + Vite 6.1.0
@@ -37,20 +189,20 @@ Deliver a **Sovereign API-free**, future-proof, production-grade, and technicall
 
 ---
 
-### 2026-05-01 — PRODUCTIVITY REMEDIATION (BUILD + API + ENV)
+### 2026-05-01 ? PRODUCTIVITY REMEDIATION (BUILD + API + ENV)
 
 **Summary**
-1. **Frontend toolchain**: Restored root `tailwind.config.js`, `postcss.config.js`, `components.json`; re-added Radix/shadcn-style primitives under [`src/components/ui/`](src/components/ui/) (`input`, `dialog`, `tabs`, `select`, `sheet`, `form`, `table`, …) so `npm run build` succeeds.
-2. **Auth documentation**: Canonical model documented in [`.env.example`](.env.example) and [`server/.env.example`](server/.env.example) — Clerk for interactive UX (`VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`); **`JWT_SECRET` required in production** for `@fastify/jwt` and legacy email/password fallback. [`App.jsx`](src/App.jsx) copy aligned; server startup log clarifies why `JWT_SECRET` remains mandatory.
+1. **Frontend toolchain**: Restored root `tailwind.config.js`, `postcss.config.js`, `components.json`; re-added Radix/shadcn-style primitives under [`src/components/ui/`](src/components/ui/) (`input`, `dialog`, `tabs`, `select`, `sheet`, `form`, `table`, ?) so `npm run build` succeeds.
+2. **Auth documentation**: Canonical model documented in [`.env.example`](.env.example) and [`server/.env.example`](server/.env.example) ? Clerk for interactive UX (`VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`); **`JWT_SECRET` required in production** for `@fastify/jwt` and legacy email/password fallback. [`App.jsx`](src/App.jsx) copy aligned; server startup log clarifies why `JWT_SECRET` remains mandatory.
 3. **Entity API**: `GET /api/:plural` supports `?limit=&offset=&order=`; `POST /api/:plural/filter` handles `$in`, `$nin`, `$gt`, `$lt`, `$gte`, `$lte`, `$ne` plus row-level auth scope. [`src/api/apiClient.js`](src/api/apiClient.js) `list()` / `filter()` use server-side pagination and filter (no full-table client fetch).
-4. **Operations**: Added [`docs/OBSERVABILITY_AND_DATA.md`](docs/OBSERVABILITY_AND_DATA.md) — error tracking placeholders and Render/ephemeral SQLite guidance.
+4. **Operations**: Added [`docs/OBSERVABILITY_AND_DATA.md`](docs/OBSERVABILITY_AND_DATA.md) ? error tracking placeholders and Render/ephemeral SQLite guidance.
 
-### 2026-05-01 — TEN-PASS UI / BACKEND / DB AUDIT (EXECUTED)
+### 2026-05-01 ? TEN-PASS UI / BACKEND / DB AUDIT (EXECUTED)
 
 **Outcome**
-- **Evidence log**: [`docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md`](docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md) — 30 themed passes, backlog, ops warning on destructive `drizzle-kit push`.
-- **Blocker fixed (full-stack)**: Clerk session tokens now resolve to **sovereign `users.id` UUID** via [`server/src/auth/requestUser.ts`](server/src/auth/requestUser.ts) `authenticateRequest` (JWT first, else Clerk verify → link by `clerk_user_id` / email or provision row). **All** authenticated entity routes and `/api/auth/me` + `/api/auth/refresh` use this resolver. Frontend [`AuthContext.jsx`](src/lib/AuthContext.jsx) merges `sovereign.auth.me()` so **`user.id`** matches DB for filters (favorites, bookings, notifications).
-- **Schema**: `users.clerk_user_id` in [`server/src/db/schema.ts`](server/src/db/schema.ts). **SQLite safe migration**: [`server/scripts/add-clerk-user-id-column.js`](server/scripts/add-clerk-user-id-column.js) + `npm run db:add-clerk-column` — do **not** rely on interactive `drizzle-kit push` when it proposes dropping tables.
+- **Evidence log**: [`docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md`](docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md) ? 30 themed passes, backlog, ops warning on destructive `drizzle-kit push`.
+- **Blocker fixed (full-stack)**: Clerk session tokens now resolve to **sovereign `users.id` UUID** via [`server/src/auth/requestUser.ts`](server/src/auth/requestUser.ts) `authenticateRequest` (JWT first, else Clerk verify ? link by `clerk_user_id` / email or provision row). **All** authenticated entity routes and `/api/auth/me` + `/api/auth/refresh` use this resolver. Frontend [`AuthContext.jsx`](src/lib/AuthContext.jsx) merges `sovereign.auth.me()` so **`user.id`** matches DB for filters (favorites, bookings, notifications).
+- **Schema**: `users.clerk_user_id` in [`server/src/db/schema.ts`](server/src/db/schema.ts). **SQLite safe migration**: [`server/scripts/add-clerk-user-id-column.js`](server/scripts/add-clerk-user-id-column.js) + `npm run db:add-clerk-column` ? do **not** rely on interactive `drizzle-kit push` when it proposes dropping tables.
 - **UX polish**: Clarified [`AppLayout.jsx`](src/components/layout/AppLayout.jsx) shell comment vs [`Layout.jsx`](src/Layout.jsx) `forcedTheme` for provider/admin.
 - **Audit follow-up (same day)**: Request-scoped [`EntityScopeCache`](server/src/entityScope.ts) on authenticated routes (dedupe barber/shop id queries); removed duplicate skip link from [`AppLayout.jsx`](src/components/layout/AppLayout.jsx); Vitest [`auth.authenticateRequest.test.ts`](server/src/__tests__/auth.authenticateRequest.test.ts).
 - **Audit follow-up (continuation)**: Postgres migration [`server/drizzle/0000_clerk_user_id.sql`](server/drizzle/0000_clerk_user_id.sql) + `npm run migrate`; [`api.authFavorite.integration.test.ts`](server/src/__tests__/api.authFavorite.integration.test.ts) (`fastify.inject`, `VITEST` skips `listen`); Router v7 `future` flags in Explore test; jobs `canEditJob` boolean fix.
@@ -58,48 +210,48 @@ Deliver a **Sovereign API-free**, future-proof, production-grade, and technicall
 - **Audit follow-up (round 4)**: `DRIZZLE_BOOTSTRAP=push` path for one-time Postgres cold start; [`e2e/health-public.spec.ts`](e2e/health-public.spec.ts); manual GitHub Action [`.github/workflows/playwright-api.yml`](.github/workflows/playwright-api.yml); Clerk Playwright requires both `E2E_API_BASE_URL` and `E2E_CLERK_JWT`.
 - **Audit follow-up (round 5)**: `@clerk/testing` + [`e2e/clerk-browser-signin.spec.ts`](e2e/clerk-browser-signin.spec.ts); Playwright **projects** `api` vs `clerk-browser`; workflow input `run_browser_clerk`; `npm run test:e2e:clerk-browser`.
 - **Docs sync (2026 continuation)**: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) + [`README.md`](README.md) aligned with [`render.yaml`](render.yaml) / `build-database.mjs`; [`ci.yml`](.github/workflows/ci.yml) references manual Playwright workflow.
-- **Audit follow-up — public promos client (2026-05-01)**: [`sovereign.public.getActivePromotions`](src/api/apiClient.js) so Explore / PromotionList hit **`VITE_API_URL`** in production; Vitest + [`e2e/health-public.spec.ts`](e2e/health-public.spec.ts) coverage; Sovereign API wording removed from [`server/src/admin/backup.ts`](server/src/admin/backup.ts) comment.
-- **Audit follow-up — CI + docs (2026-05-01)**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) server job runs `npx drizzle-kit push --force` before `npm run test` so Fastify/Drizzle integration tests have tables on a clean runner; [README.md](README.md) Development section documents additive SQLite scripts, `migrate`, and `db:add-promo-columns` / test prelude.
-- **Audit follow-up — promo stack (2026-05-01)**: `promo_codes.shop_id` + `bookings.discount_code` ([`server/src/db/schema.ts`](server/src/db/schema.ts)); Postgres [`server/drizzle/0001_promo_shop_discount.sql`](server/drizzle/0001_promo_shop_discount.sql) + `npm run db:add-promo-columns` ([`scripts/add-promo-shop-discount-columns.mjs`](server/scripts/add-promo-shop-discount-columns.mjs)) for SQLite; **`npm run test`** in `server/` runs additive migration first; `promoCodesIsActiveClause()` avoids SQLite boolean bind errors on `GET /api/public/active-promotions`; entity [`promo_code`](server/src/index.ts) + [`validatePromoCode`](server/src/logic/promoCode.ts); Vitest [`api.publicPromotions.integration.test.ts`](server/src/__tests__/api.publicPromotions.integration.test.ts); frontend wiring as prior bullet.
+- **Audit follow-up ? public promos client (2026-05-01)**: [`sovereign.public.getActivePromotions`](src/api/apiClient.js) so Explore / PromotionList hit **`VITE_API_URL`** in production; Vitest + [`e2e/health-public.spec.ts`](e2e/health-public.spec.ts) coverage; Sovereign API wording removed from [`server/src/admin/backup.ts`](server/src/admin/backup.ts) comment.
+- **Audit follow-up ? CI + docs (2026-05-01)**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) server job runs `npx drizzle-kit push --force` before `npm run test` so Fastify/Drizzle integration tests have tables on a clean runner; [README.md](README.md) Development section documents additive SQLite scripts, `migrate`, and `db:add-promo-columns` / test prelude.
+- **Audit follow-up ? promo stack (2026-05-01)**: `promo_codes.shop_id` + `bookings.discount_code` ([`server/src/db/schema.ts`](server/src/db/schema.ts)); Postgres [`server/drizzle/0001_promo_shop_discount.sql`](server/drizzle/0001_promo_shop_discount.sql) + `npm run db:add-promo-columns` ([`scripts/add-promo-shop-discount-columns.mjs`](server/scripts/add-promo-shop-discount-columns.mjs)) for SQLite; **`npm run test`** in `server/` runs additive migration first; `promoCodesIsActiveClause()` avoids SQLite boolean bind errors on `GET /api/public/active-promotions`; entity [`promo_code`](server/src/index.ts) + [`validatePromoCode`](server/src/logic/promoCode.ts); Vitest [`api.publicPromotions.integration.test.ts`](server/src/__tests__/api.publicPromotions.integration.test.ts); frontend wiring as prior bullet.
 
 ---
 
-## 🗄️ DATABASE SCHEMA (RECONSTRUCTED)
+## ??? DATABASE SCHEMA (RECONSTRUCTED)
 
 | Entity | Description | Status |
 | :--- | :--- | :--- |
-| `users` | Core user accounts & roles | ✅ Implemented |
-| `barbers` | Professional profiles & settings | ✅ Implemented |
-| `shops` | Barbershop entities & configuration | ✅ Implemented |
-| `bookings` | Appointments & scheduling data | ✅ Implemented |
-| `services` | Grooming services & pricing | ✅ Implemented |
-| `shifts` | Operating hours & availability | ✅ Implemented |
-| `time_blocks` | Vacations, breaks, & blocks | ✅ Implemented |
-| `loyalty_profiles` | Customer rewards & points | ✅ Implemented |
-| `loyalty_transactions` | Points history & tier changes | ✅ Implemented |
-| `messages` | Client-provider communication | ✅ Implemented |
-| `notifications` | System & transactional alerts | ✅ Implemented |
-| `disputes` | Stripe-linked transaction disputes | ✅ Implemented |
-| `audit_logs` | Compliance & system activity logs | ✅ Implemented |
+| `users` | Core user accounts & roles | ? Implemented |
+| `barbers` | Professional profiles & settings | ? Implemented |
+| `shops` | Barbershop entities & configuration | ? Implemented |
+| `bookings` | Appointments & scheduling data | ? Implemented |
+| `services` | Grooming services & pricing | ? Implemented |
+| `shifts` | Operating hours & availability | ? Implemented |
+| `time_blocks` | Vacations, breaks, & blocks | ? Implemented |
+| `loyalty_profiles` | Customer rewards & points | ? Implemented |
+| `loyalty_transactions` | Points history & tier changes | ? Implemented |
+| `messages` | Client-provider communication | ? Implemented |
+| `notifications` | System & transactional alerts | ? Implemented |
+| `disputes` | Stripe-linked transaction disputes | ? Implemented |
+| `audit_logs` | Compliance & system activity logs | ? Implemented |
 
-Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, `pricing_rules`, `reviews`, `payouts`, `favorites`, `waiting_list_entries`, `staff_service_configs` — all ✅ Implemented.
+Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, `pricing_rules`, `reviews`, `payouts`, `favorites`, `waiting_list_entries`, `staff_service_configs` ? all ? Implemented.
 
 ---
 
-## ✅ COMPLETED ACTIONS
+## ? COMPLETED ACTIONS
 
 ### 2026-01-28 - Initial Setup & Eradication Start
-1. ✅ **Sovereign API Dependency Audit**: Identified SDK and Vite-plugin dependencies.
-2. ✅ **Functional Audit**: Mapped 19 serverless functions to be migrated to Node.js backend.
-3. ✅ **Entity Mapping**: Identified 13+ core entities for the new SQLite schema.
-4. ✅ **Stripe MCP Verification**: Confirmed Stripe tools are ready for integration in the new backend.
-5. ✅ **Backend Initialization**: Created Fastify backend in `/server`.
-6. ✅ **Database Schema Implementation**: Defined Drizzle schemas for all core entities.
-7. ✅ **SQLite Migration**: Successfully generated and pushed schema to `sovereign.sqlite`.
-8. ✅ **Database Seeding**: Populated database with initial production-grade data.
-9. ✅ **Function Migration (MVP)**: Migrated `validateBookingAvailability` to Fastify endpoint.
-10. ✅ **Backend Live**: Sovereign backend running on `http://localhost:3001`.
-11. ✅ **API Client Fix**: Fixed sovereign client to fully match Sovereign API SDK interface.
+1. ? **Sovereign API Dependency Audit**: Identified SDK and Vite-plugin dependencies.
+2. ? **Functional Audit**: Mapped 19 serverless functions to be migrated to Node.js backend.
+3. ? **Entity Mapping**: Identified 13+ core entities for the new SQLite schema.
+4. ? **Stripe MCP Verification**: Confirmed Stripe tools are ready for integration in the new backend.
+5. ? **Backend Initialization**: Created Fastify backend in `/server`.
+6. ? **Database Schema Implementation**: Defined Drizzle schemas for all core entities.
+7. ? **SQLite Migration**: Successfully generated and pushed schema to `sovereign.sqlite`.
+8. ? **Database Seeding**: Populated database with initial production-grade data.
+9. ? **Function Migration (MVP)**: Migrated `validateBookingAvailability` to Fastify endpoint.
+10. ? **Backend Live**: Sovereign backend running on `http://localhost:3001`.
+11. ? **API Client Fix**: Fixed sovereign client to fully match Sovereign API SDK interface.
     - Added proper method signatures (list, filter with order/limit/offset)
     - Implemented sorting support (-field for DESC)
     - Added MongoDB-style query operators ($nin, $in, $gt, etc.)
@@ -107,32 +259,32 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
     - Proper 404 handling (returns null)
     - Exported `User` for auth compatibility
     - Fixed `Query` export to reference entities collection
-12. ✅ **Blank Page Fix**: Resolved frontend build failure
+12. ? **Blank Page Fix**: Resolved frontend build failure
     - Created `/src/functions/sendBookingConfirmationEmail.js` stub
     - Functions now call sovereign backend email endpoints
     - Frontend compiles and loads successfully
 
 ### 2026-02-09 - Git Branching and Deployment Workflow
-13. ✅ **Branch roles**: `master` = CI/testing only; `main` = production-only, stable.
-14. ✅ **Branches**: Created and pushed `main` (in sync with `master`); CI runs on both.
-15. ✅ **Docs**: Added `docs/GIT_BRANCHING_AND_DEPLOYMENT.md` (workflow, promotion steps, protection).
-16. ✅ **Promote workflow**: Added `.github/workflows/promote-to-main.yml` (manual run, type "promote" to merge master → main).
-17. ✅ **CI**: `.github/workflows/ci.yml` comments updated; DEPLOYMENT.md updated to deploy from `main` only.
+13. ? **Branch roles**: `master` = CI/testing only; `main` = production-only, stable.
+14. ? **Branches**: Created and pushed `main` (in sync with `master`); CI runs on both.
+15. ? **Docs**: Added `docs/GIT_BRANCHING_AND_DEPLOYMENT.md` (workflow, promotion steps, protection).
+16. ? **Promote workflow**: Added `.github/workflows/promote-to-main.yml` (manual run, type "promote" to merge master ? main).
+17. ? **CI**: `.github/workflows/ci.yml` comments updated; DEPLOYMENT.md updated to deploy from `main` only.
 
 ---
 
-## 📂 REPLACED Sovereign API COMPONENTS
+## ?? REPLACED Sovereign API COMPONENTS
 
 | Component | Before (Sovereign API) | After (Sovereign) | Status |
 | :--- | :--- | :--- | :--- |
-| API Layer | `@Sovereign API/sdk` | `Fastify REST API` | ✅ Active (Complete) |
-| Database | Sovereign API Entities (Mock) | `SQLite + Drizzle ORM` | ✅ Active (Complete) |
-| Functions | Serverless (Deno/Sovereign API) | `Fastify Routes` | ✅ Active (Complete) |
-| Auth | `Sovereign API.auth` | `Clerk (primary UI) + JWT (Fastify + legacy /api/auth)` | ✅ Active |
+| API Layer | `@Sovereign API/sdk` | `Fastify REST API` | ? Active (Complete) |
+| Database | Sovereign API Entities (Mock) | `SQLite + Drizzle ORM` | ? Active (Complete) |
+| Functions | Serverless (Deno/Sovereign API) | `Fastify Routes` | ? Active (Complete) |
+| Auth | `Sovereign API.auth` | `Clerk (primary UI) + JWT (Fastify + legacy /api/auth)` | ? Active |
 
 ---
 
-## 🔄 PENDING TASKS
+## ?? PENDING TASKS
 
 ### Phase 1: Backend Foundation
 - [x] Initialize Node.js/Fastify backend in `/server`
@@ -150,8 +302,8 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - [x] Implement Server-Side Booking Creation Logic (Validation, Fees, Email)
 
 **Recently Migrated (2026-01-28)**:
-- ✅ `/api/functions/calculate-taxes` - Full Greek tax calculation (VAT, withholding, social security)
-- ✅ `/api/functions/calculate-fees` - Commission and fee breakdown with audit logging
+- ? `/api/functions/calculate-taxes` - Full Greek tax calculation (VAT, withholding, social security)
+- ? `/api/functions/calculate-fees` - Commission and fee breakdown with audit logging
   - Supports: `calculateFees`, `calculateRefund`, `verifyLocked` actions
   - Implements refund policy (100% >24h, 50% 2-24h, 0% <2h)
 
@@ -163,7 +315,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 
 ---
 
-## ⚠️ OPEN DECISIONS / RISKS
+## ?? OPEN DECISIONS / RISKS
 - **Risk**: Auth transition must handle existing user sessions (if any).
 - **Decision**: Using Fastify + Drizzle for maximum performance and future-proofing (Postgres-ready).
 
@@ -171,7 +323,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 
 ## USER PROMPTS LOG
 
-### [2026-05-02] — DISCREPANCY CHECK AND LAUNCH VERIFICATION
+### [2026-05-02] ? DISCREPANCY CHECK AND LAUNCH VERIFICATION
 
 **Request**: Check project for discrepancies, confirming no Sovereign API code exists, then launch it.
 **Action**:
@@ -179,10 +331,10 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Executed full linting (`npm run lint` in root) which passed successfully with 0 errors.
 - Executed unit and integration tests (`npm run test` in server/) which passed successfully (11/11).
 - Verified that both the Vite frontend server (port 3000) and Fastify backend server (port 3001) are already actively running and serving traffic.
-**Status**: ✅ System is 100% production-ready. No discrepancies found. Application is launched and accessible at `http://localhost:3000`.
+**Status**: ? System is 100% production-ready. No discrepancies found. Application is launched and accessible at `http://localhost:3000`.
 
 
-### [2026-05-02] — DATABASE SEED & LOCAL ENVIRONMENT LAUNCH
+### [2026-05-02] ? DATABASE SEED & LOCAL ENVIRONMENT LAUNCH
 
 **Request**: Rerun frontend, backend, database seeds, and launch the app.
 **Action**:
@@ -191,9 +343,9 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Started backend Fastify server (`npm run dev` in `/server`) on port 3001.
 - Started frontend Vite server (`npm run dev` in root).
 - Both servers are active.
-**Status**: ✅ System seeded and running locally. (Note: Ensure valid Clerk keys are present in `.env.local` for authentication to function).
+**Status**: ? System seeded and running locally. (Note: Ensure valid Clerk keys are present in `.env.local` for authentication to function).
 
-### [2026-05-02] — PROJECT DISCREPANCY & Sovereign API ERADICATION CHECK
+### [2026-05-02] ? PROJECT DISCREPANCY & Sovereign API ERADICATION CHECK
 
 **Request**: Check project for discrepancies, rescan for Sovereign API traces, and verify 100% independence and production readiness.
 **Action**:
@@ -201,37 +353,37 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Verified production readiness: Ran `npm run build` (Vite) successfully with exit code 0.
 - Verified backend stability: Ran `npm run test` (Vitest) in the server directory successfully (11/11 tests passed).
 - Confirmed full architectural independence.
-**Status**: ✅ No discrepancies found. System is 100% sovereign and production-ready.
+**Status**: ? No discrepancies found. System is 100% sovereign and production-ready.
 
-### [2026-05-01] — CLERK BROWSER E2E (@clerk/testing)
+### [2026-05-01] ? CLERK BROWSER E2E (@clerk/testing)
 
 **Request**: Continue backlog.  
 **Action**: `e2e/clerk-browser-signin.spec.ts` using `clerk.signIn({ emailAddress })`; `playwright.config` split `api` / `clerk-browser` projects; `@clerk/testing` devDependency; GHA workflow optional browser step (`CLERK_SECRET_KEY`, `E2E_CLERK_USER_EMAIL`).  
 **Status**: Done (skipped locally without env).
 
-### [2026-05-01] — AUDIT CONTINUATION (PLAYWRIGHT + POSTGRES BOOTSTRAP)
+### [2026-05-01] ? AUDIT CONTINUATION (PLAYWRIGHT + POSTGRES BOOTSTRAP)
 
 **Request**: Continue backlog (Clerk E2E, Render migrate story).  
 **Action**: `DRIZZLE_BOOTSTRAP=push` in `build-database.mjs`; `e2e/health-public.spec.ts`; `playwright-api.yml` workflow_dispatch; Clerk specs require `E2E_API_BASE_URL` + JWT; Render `DRIZZLE_BOOTSTRAP` env key.  
 **Status**: Done (browser Clerk UI still optional).
 
-### [2026-05-01] — TEN-PASS UX / BACKEND / DB AUDIT (EXECUTED + BLOCKER FIX)
+### [2026-05-01] ? TEN-PASS UX / BACKEND / DB AUDIT (EXECUTED + BLOCKER FIX)
 **Request**: Implement the ten-pass methodology (30 themed passes); deliver findings log, backlog, tracker update; do not edit plan file.  
-**Action**: Produced [`docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md`](docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md). Fixed **Clerk ↔ DB user id** gap: `authenticateRequest` links/provisions `users` row from Clerk claims; `users.clerk_user_id`; `AuthContext` uses `sovereign.auth.me()` for `user.id`; additive SQLite script `db:add-clerk-column`; clarified `AppLayout` comment.  
-**Status**: ✅ Audit log + critical auth fix shipped; optional backlog items remain in findings doc.
+**Action**: Produced [`docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md`](docs/AUDIT_FINDINGS_TEN_PASS_2026-05-01.md). Fixed **Clerk ? DB user id** gap: `authenticateRequest` links/provisions `users` row from Clerk claims; `users.clerk_user_id`; `AuthContext` uses `sovereign.auth.me()` for `user.id`; additive SQLite script `db:add-clerk-column`; clarified `AppLayout` comment.  
+**Status**: ? Audit log + critical auth fix shipped; optional backlog items remain in findings doc.
 
-### [2026-05-01] — PRODUCTIVITY READINESS PLAN (IMPLEMENTED)
+### [2026-05-01] ? PRODUCTIVITY READINESS PLAN (IMPLEMENTED)
 **Request**: Implement productivity-level plan (Tailwind/UI, auth/env alignment, tracker, MCP docs clarity, entity pagination/filter, tests, observability/DB playbook).  
 **Action**: Restored root Tailwind/postcss/`components.json` and missing `@/components/ui/*`; aligned Clerk vs `JWT_SECRET` in `.env.example` files, `App.jsx`, and server startup message; `GET /api/:plural?order=` + richer `POST .../filter`; `src/api/apiClient.js` uses server-side `list`/`filter`; added `docs/OBSERVABILITY_AND_DATA.md`; Vitest (`apiClient` contract + Explore + `ClerkProvider`); `AGENTS.md` sqlite rebuild hint; lint fixes.  
-**Status**: ✅ Completed (see dated block under Architecture Overview).
+**Status**: ? Completed (see dated block under Architecture Overview).
 
 ### [2026-02-09] - GIT BRANCHING AND DEPLOYMENT WORKFLOW
-**Request**: Establish master (CI/testing) and main (production-only); no untested code on main; controlled promotion master → main.
+**Request**: Establish master (CI/testing) and main (production-only); no untested code on main; controlled promotion master ? main.
 **Action**: Created `main` and pushed; added `docs/GIT_BRANCHING_AND_DEPLOYMENT.md`, `.github/workflows/promote-to-main.yml`; updated CI and DEPLOYMENT.md to deploy from `main` only.
-**Status**: ✅ Documented and enforced via workflow and docs.
+**Status**: ? Documented and enforced via workflow and docs.
 
 ### [2026-01-28 21:46:34] - Sovereign API ERADICATION MANDATE
-**Request**: "🔥 Sovereign API ERADICATION MANDATE (CRITICAL)... Provide a Sovereign API-free, future-proof, production-grade system."  
+**Request**: "?? Sovereign API ERADICATION MANDATE (CRITICAL)... Provide a Sovereign API-free, future-proof, production-grade system."  
 **Action**: Initiated Phase 2; audited codebase for Sovereign API dependencies; planned sovereign backend architecture.
 
 ### [2026-01-31 01:25] - LOCAL AI INTEGRATION (GROK/QWEN)
@@ -241,7 +393,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Implemented `askLocalAI` utility with model-aware routing (`qwen/qwen3-4b-thinking-2507`).
 - Created `AIAdvisor.jsx` premium floating widget with glassmorphism design.
 - Integrated AI Style Advisor into the Explore page.
-**Status**: 🚀 ACTIVE & VERIFIED (Zero-cost AI logic operational)
+**Status**: ?? ACTIVE & VERIFIED (Zero-cost AI logic operational)
 
 ### [2026-01-30] - BRANDING & INFRASTRUCTURE FIXES
 **Request**: Fix UI errors, update branding, resolve "For Professionals" button issues.
@@ -251,7 +403,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Configured Vite Proxy for backend API (port 3001).
 - Regenerated corrupt `icon-192x192.png`.
 - Created missing `SelectProviderType` page and registered it.
-**Status**: 🚀 ACTIVE
+**Status**: ?? ACTIVE
 
 ### [2026-01-31 01:45] - PLATFORM HARDENING & SCHEMA STABILIZATION
 **Request**: Fix 500 errors on messages and AI parse failures.
@@ -259,30 +411,30 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - **Database Reset**: Discovered a schema mismatch in the `messages` table (legacy `created_date` vs new `created_at`). Forced a schema push and re-seeded the database.
 - **AI Robustness**: Updated `AIRecommendations.jsx` and `AIAdvisor.jsx` with defensive parsing logic. The system now handles unclosed `<think>` tags and extracts JSON even if the local LLM includes conversational text.
 - **Backend Logging**: Added try-catch blocks and detailed error logging to all generic entity routes to prevent silent 500 errors.
-**Status**: 🚀 ACTIVE & STABLE
+**Status**: ?? ACTIVE & STABLE
 
 ### [2026-02-07] - UNIFIED CLIENT EXPERIENCE: BARBER & EMPLOYER DASHBOARDS
 **Request**: Apply the same unified (light) client experience to barber and employer dashboards and merchants while preserving role-specific behavior.
 **Action**:
 - **AppLayout**: Provider and admin zones use `bg-background` / `text-foreground` (unified light); no dark container for provider/admin.
 - **SidebarNav**: Active state and accents use `primary` (`bg-primary/10`, `border-primary/20`, `text-primary`); inactive uses `text-muted-foreground` and hover `text-foreground`.
-- **ProviderBookings**: Full light conversion — `bg-background`, `bg-card`, `border-border`, tabs/inputs with design tokens; primary for main CTAs and status (Confirmed/Completed); destructive kept for Decline/Cancel.
+- **ProviderBookings**: Full light conversion ? `bg-background`, `bg-card`, `border-border`, tabs/inputs with design tokens; primary for main CTAs and status (Confirmed/Completed); destructive kept for Decline/Cancel.
 - **ProviderDashboard**: `bg-background`, `bg-card`, `border-border`; "Settled" badge and icon hover use primary; headings `text-foreground`.
 - **ProviderSettings**: Replaced slate/indigo/emerald with design tokens; Stripe "active" state uses primary; amber retained for inactive/warning.
 - **ProviderPayouts**: Processing and Completed status use primary; semantic colors (yellow/red) kept for Pending/Failed.
 - **BookingCard**: Removed dark overrides; uses `bg-card`, `border-border`, light-only.
 - **Employer pages**: MyJobs, ApplicantReview, CreateJob already use `bg-background` and primary; verified consistent.
 **Modified files**: `AppLayout.jsx`, `SidebarNav.jsx`, `ProviderBookings.jsx`, `ProviderDashboard.jsx`, `ProviderSettings.jsx`, `ProviderPayouts.jsx`, `booking-card.jsx`. Tracker updated.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS CONTROL & VISIBILITY AUDIT
 **Request**: Deep, system-wide access control and visibility audit; ensure every feature has a clear access rule and no sensitive data exposed.
 **Action**:
-- **RouteGuard**: (1) CLIENT zone now requires auth — unauthenticated users redirect to SignIn with `?return=<current-path>`. (2) ADMIN zone: unauthenticated redirect to SignIn (was commented out). (3) Employer-only routes (CreateJob, MyJobs, ApplicantReview, ScheduleInterview): authenticated users without barber/shop_owner/admin role redirect to CareerHub. (4) SignIn return URL helper used for all auth redirects.
+- **RouteGuard**: (1) CLIENT zone now requires auth ? unauthenticated users redirect to SignIn with `?return=<current-path>`. (2) ADMIN zone: unauthenticated redirect to SignIn (was commented out). (3) Employer-only routes (CreateJob, MyJobs, ApplicantReview, ScheduleInterview): authenticated users without barber/shop_owner/admin role redirect to CareerHub. (4) SignIn return URL helper used for all auth redirects.
 - **Public paths**: Extended `getZoneFromPath()` so BarberProfile, ShopProfile, JobDetail, ProductDetail, BrandProfile are PUBLIC (view without login); Apply/Book/Add to cart still require auth and are handled by pages with Sign in CTAs.
-- **Documentation**: Added `docs/ACCESS_CONTROL_AUDIT.md` — user states, zone classification (PUBLIC / AUTH / CLIENT / PROVIDER / ADMIN / employer-only), implemented protections, UX rules for unauthenticated users, backend alignment notes (generic entity routes still unauthenticated; auth present on auth, cart, orders, jobs, applicants).
+- **Documentation**: Added `docs/ACCESS_CONTROL_AUDIT.md` ? user states, zone classification (PUBLIC / AUTH / CLIENT / PROVIDER / ADMIN / employer-only), implemented protections, UX rules for unauthenticated users, backend alignment notes (generic entity routes still unauthenticated; auth present on auth, cart, orders, jobs, applicants).
 **Modified files**: `navigationConfig.jsx`, `RouteGuard.jsx`; added `docs/ACCESS_CONTROL_AUDIT.md`. Tracker updated.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS CONTROL CONTINUED: NAV VISIBILITY + BACKEND JWT
 **Request**: Continue access-control work after initial audit.
@@ -291,31 +443,31 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - **Backend entity auth**: In `server/src/index.ts`, added `AUTH_REQUIRED_ENTITIES` (booking, loyalty_profile, loyalty_transaction, message, notification, payout, favorite, dispute, audit_log, waiting_list_entry) and `requireAuthPreHandler` (JWT verify, 401 on failure). All list/get/filter/create/update/delete routes for these entities now require a valid JWT. Public entities (barber, shop, service, review, product, brand, etc.) remain unauthenticated for discovery.
 - **Docs**: Updated `ACCESS_CONTROL_AUDIT.md` section 6 and 8 accordingly.
 **Modified files**: `navigationVisibility.js`, `server/src/index.ts`, `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS CONTROL: OWNERSHIP SCOPE FOR SENSITIVE ENTITIES
-**Request**: Continue access control — ensure users only see and modify their own data (ownership/scope).
+**Request**: Continue access control ? ensure users only see and modify their own data (ownership/scope).
 **Action**:
 - **`server/src/entityScope.ts`**: Added `getEntityScopeCondition(entity, table, user)` and `rowInScope(entity, table, row, user)` to enforce per-entity ownership. Scope rules: booking (client or barber/shop linked to user), loyalty_profile/loyalty_transaction/notification/favorite (user_id), message (sender or receiver), payout (barber provider_id), dispute (via booking ownership), audit_log (actor_id), waiting_list_entry (client or barber). Admin role bypasses scope.
 - **`server/src/index.ts`**: For AUTH_REQUIRED_ENTITIES, LIST and FILTER now apply scope condition so only in-scope rows are returned; GET by id, PATCH, DELETE verify row ownership via `rowInScope` and return 404 if not in scope.
 - **Docs**: Updated `ACCESS_CONTROL_AUDIT.md` section 6 with scope rules and reference to entityScope.
 **Modified files**: `server/src/entityScope.ts` (new), `server/src/index.ts`, `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS CONTROL: ADMIN-ONLY ROUTES
-**Request**: Continue access control — protect admin endpoints with JWT + role check.
+**Request**: Continue access control ? protect admin endpoints with JWT + role check.
 **Action**:
 - **`server/src/index.ts`**: Added `requireAdminPreHandler` (JWT verify then role === 'admin'; 401 if unauthenticated, 403 if not admin). Applied to: POST `/api/admin/moderation/notify`, POST `/api/admin/backup/verify`, POST `/api/functions/financial-analytics`. Removed `// TODO: Add proper admin auth check` comments.
 **Modified files**: `server/src/index.ts`, `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS RULES BY ROLE (NORMATIVE DOC)
 **Request**: Document all access rules per user role so future features cannot violate them.
 **Action**:
-- **`docs/ACCESS_RULES_BY_ROLE.md`** (new): Normative document defining (1) canonical roles (unauthenticated, client, barber, shop_owner, admin), (2) frontend zones and per-role allowed/forbidden pages, (3) backend entity classification (public vs auth-required + scoped) and admin-only endpoints, (4) ownership scope rules per entity, (5) **Contract for new features** — checklist for new routes, APIs, entities, and actions, (6) implementation file references, (7) violations to avoid. All new features must comply with this doc.
+- **`docs/ACCESS_RULES_BY_ROLE.md`** (new): Normative document defining (1) canonical roles (unauthenticated, client, barber, shop_owner, admin), (2) frontend zones and per-role allowed/forbidden pages, (3) backend entity classification (public vs auth-required + scoped) and admin-only endpoints, (4) ownership scope rules per entity, (5) **Contract for new features** ? checklist for new routes, APIs, entities, and actions, (6) implementation file references, (7) violations to avoid. All new features must comply with this doc.
 - **`docs/ACCESS_CONTROL_AUDIT.md`**: Added pointer at top to ACCESS_RULES_BY_ROLE.md as the normative reference.
 **Modified files**: `docs/ACCESS_RULES_BY_ROLE.md` (new), `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS GAPS: CONVERSATIONS, PROVIDER-ANALYTICS, REVIEWS
 **Request**: Align implementation with normative access rules (continue hardening).
@@ -325,10 +477,10 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - **POST /api/reviews**: Added `requireAuthPreHandler`; reviewer_id is set from `request.user.id` (body.reviewer_id ignored or rejected if different). Only authenticated users can submit reviews, as themselves.
 - **Docs**: Updated ACCESS_RULES_BY_ROLE.md and ACCESS_CONTROL_AUDIT.md with these endpoint rules.
 **Modified files**: `server/src/index.ts`, `docs/ACCESS_RULES_BY_ROLE.md`, `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - ACCESS: BOOKING, CALCULATE-FEES, STRIPE, SEND-EMAIL
-**Request**: Continue hardening — protect remaining custom routes per normative access rules.
+**Request**: Continue hardening ? protect remaining custom routes per normative access rules.
 **Action**:
 - **POST /api/bookings**: Added `requireAuthPreHandler`; `client_id` forced to `request.user.id` (403 if body sends different client_id). Only authenticated users can create bookings, and only for themselves.
 - **POST /api/functions/calculate-fees**: Added `requireAuthPreHandler` and booking scope check via `rowInScope('booking', ...)` for actions calculateFees, calculateRefund, verifyLocked; 403 if booking not owned by current user (client or barber/shop).
@@ -336,18 +488,18 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - **POST /api/functions/send-booking-email**: Added `requireAuthPreHandler` to prevent unauthenticated email abuse.
 - **Docs**: Updated ACCESS_RULES_BY_ROLE.md and ACCESS_CONTROL_AUDIT.md with these endpoint rules.
 **Modified files**: `server/src/index.ts`, `docs/ACCESS_RULES_BY_ROLE.md`, `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - AUTH CONTEXT UNIFICATION
 **Request**: Single source of truth for auth state (unify lib vs context AuthContext).
 **Action**:
 - **`src/lib/AuthContext.jsx`**: Added `role` (user?.role ?? 'client'), `login`, `register`, `checkSession` (alias for checkUserAuth), and `isLoading` (alias for isLoadingAuth). Context value now matches what RouteGuard and pages need.
-- **`src/Layout.jsx`**: Removed duplicate `AuthProvider` wrapper; auth is provided only by App’s AuthProvider (lib).
+- **`src/Layout.jsx`**: Removed duplicate `AuthProvider` wrapper; auth is provided only by App?s AuthProvider (lib).
 - **Consumers**: RouteGuard, GlobalNavigation, CartContext, MyOrders, JobDetail, ProfessionalPortfolio, MyJobs, CareerHub, GroomingVault, OrderTracking, ShoppingBag, Checkout now import `useAuth` from `@/lib/AuthContext`.
 - **`src/components/context/AuthContext.jsx`**: Replaced implementation with re-export from `@/lib/AuthContext` for backward compatibility.
 - **Docs**: `ACCESS_CONTROL_AUDIT.md` section 5.1 documents unified auth context.
 **Modified files**: `src/lib/AuthContext.jsx`, `src/Layout.jsx`, `src/components/context/AuthContext.jsx`, 10 page/component files, `docs/ACCESS_CONTROL_AUDIT.md`, `PROJECT_TRACKER.md`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - AUTH 500 DEBUG (STRICT DEBUG MODE)
 **Request**: Find and fix exact cause of Sign In / Sign Up returning 500; no assumptions, evidence-only.
@@ -355,47 +507,47 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - **Auth routes** (`server/src/auth/routes.ts`): Request logging at entry (REGISTER/LOGIN request with hasBody, bodyKeys). Catch logging with message, code, stack (REGISTER catch / LOGIN catch). Login `jwt.sign` wrapped in try/catch so it never throws uncaught. All 500 responses return JSON with `error` and optional `hint`.
 - **Global error handler** (`server/src/index.ts`): setErrorHandler logs full err, message, code, stack, url (UNHANDLED_ERROR) and returns JSON 500.
 - **DB** (`server/src/db/index.ts`): Startup log of resolved SQLite path (when NODE_ENV !== 'test').
-- **Frontend** (`src/api/apiClient.js`): Login and signup use `res.text()` then `JSON.parse` with fallback so non-JSON 500 bodies don’t break the client.
+- **Frontend** (`src/api/apiClient.js`): Login and signup use `res.text()` then `JSON.parse` with fallback so non-JSON 500 bodies don?t break the client.
 - **Debug assets**: `server/DEBUG_AUTH.md` (step-by-step debug, common causes, verification). `server/scripts/test-auth-request.mjs` (register/login test against localhost:3001). `server/scripts/add-users-stripe-columns.mjs` (add missing users columns if needed).
 **Modified files**: `server/src/auth/routes.ts`, `server/src/index.ts`, `server/src/db/index.ts`, `server/DEBUG_AUTH.md`, `server/scripts/test-auth-request.mjs`. Tracker updated.
-**Status**: ✅ Debug instrumentation in place. Exact root cause requires running backend and reproducing; server logs and response body will show the real error.
+**Status**: ? Debug instrumentation in place. Exact root cause requires running backend and reproducing; server logs and response body will show the real error.
 
-**Follow-up (2026-02-08) – AUTH ROOT CAUSE & BOOKING FLOWS**:
-- **Auth 500 root cause**: Server was crashing on startup with `FST_ERR_DUPLICATED_ROUTE` — `GET /api/shops` was registered twice (generic entity routes in index.ts and again in jobs/routes.ts). Removed duplicate from `server/src/jobs/routes.ts`. Seed was failing with FK on delete: `products` references `barbers`; fixed delete order in `server/src/db/seed.ts` (delete order_items, orders, cart_items, products before barbers). Shifts added to seed so barbers have availability; booking create now succeeds after seed.
-- **Booking flows production-ready**: (1) **Barber-first**: Find a Barber → barber profile → Book → Services → Date & Time → Confirmation. (2) **Service-first**: Home (Curated Services) or Explore service filter → barbers who offer that service → same booking flow. Explore: error/loading/empty states for barbers and shops; retries and “Try again”; “No professionals in the database” with seed hint. BarberProfile: error state and retry when barber fails to load. BookingFlow: “Professional not found” when barberId invalid; barber list/get wrapped in try/catch and retries. Service filter on Explore uses `GET /api/services` to map services to shops and filter barbers by shop_id. Home Services links to `Explore?filter=Haircut` (etc.) for service-first entry.
-- **Stripe invalid key**: Payment routes return a safe 503 message when Stripe returns “Invalid API Key”; frontend no longer echoes raw key.
-- **Docs**: `docs/BOOKING_FLOWS.md` — barber-first vs service-first, data requirements, key files, error/empty state summary. `server/DEBUG_AUTH.md` updated with duplicate-route root cause.
+**Follow-up (2026-02-08) ? AUTH ROOT CAUSE & BOOKING FLOWS**:
+- **Auth 500 root cause**: Server was crashing on startup with `FST_ERR_DUPLICATED_ROUTE` ? `GET /api/shops` was registered twice (generic entity routes in index.ts and again in jobs/routes.ts). Removed duplicate from `server/src/jobs/routes.ts`. Seed was failing with FK on delete: `products` references `barbers`; fixed delete order in `server/src/db/seed.ts` (delete order_items, orders, cart_items, products before barbers). Shifts added to seed so barbers have availability; booking create now succeeds after seed.
+- **Booking flows production-ready**: (1) **Barber-first**: Find a Barber ? barber profile ? Book ? Services ? Date & Time ? Confirmation. (2) **Service-first**: Home (Curated Services) or Explore service filter ? barbers who offer that service ? same booking flow. Explore: error/loading/empty states for barbers and shops; retries and ?Try again?; ?No professionals in the database? with seed hint. BarberProfile: error state and retry when barber fails to load. BookingFlow: ?Professional not found? when barberId invalid; barber list/get wrapped in try/catch and retries. Service filter on Explore uses `GET /api/services` to map services to shops and filter barbers by shop_id. Home Services links to `Explore?filter=Haircut` (etc.) for service-first entry.
+- **Stripe invalid key**: Payment routes return a safe 503 message when Stripe returns ?Invalid API Key?; frontend no longer echoes raw key.
+- **Docs**: `docs/BOOKING_FLOWS.md` ? barber-first vs service-first, data requirements, key files, error/empty state summary. `server/DEBUG_AUTH.md` updated with duplicate-route root cause.
 **Modified/added files**: `server/src/jobs/routes.ts`, `server/src/db/seed.ts`, `server/src/payments/routes.ts`, `server/DEBUG_AUTH.md`, `src/pages/Explore.jsx`, `src/pages/BarberProfile.jsx`, `src/pages/BookingFlow.jsx`, `src/api/apiClient.js` (create error body), `src/components/home/Services.jsx`, `docs/BOOKING_FLOWS.md`. Tracker updated.
-**Status**: ✅ COMPLETE — Auth and seed fixed; both booking workflows production-ready with resilient fetches and clear error/empty states.
+**Status**: ? COMPLETE ? Auth and seed fixed; both booking workflows production-ready with resilient fetches and clear error/empty states.
 
 **Continue (2026-02-08)**:
-- **Explore Professionals tab**: When Barbershops showed data but Professionals showed "No professionals", fixed generic entity table resolution: added explicit `barber` → `schema.barbers` and `shop` → `schema.shops` in `server/src/index.ts`; list handler now returns `Array.isArray(rows) ? rows : []`. Run `npm run seed` in server and refresh to see professionals.
-- **Stripe "not configured"**: Added **Quick fix** section to `docs/STRIPE_SETUP.md` — set `STRIPE_API_KEY=sk_test_...` in `server/.env`, restart server, retry payment.
+- **Explore Professionals tab**: When Barbershops showed data but Professionals showed "No professionals", fixed generic entity table resolution: added explicit `barber` ? `schema.barbers` and `shop` ? `schema.shops` in `server/src/index.ts`; list handler now returns `Array.isArray(rows) ? rows : []`. Run `npm run seed` in server and refresh to see professionals.
+- **Stripe "not configured"**: Added **Quick fix** section to `docs/STRIPE_SETUP.md` ? set `STRIPE_API_KEY=sk_test_...` in `server/.env`, restart server, retry payment.
 
 ### [2026-02-07] - UNIFIED EXPERIENCE CONTINUED (4): REMAINING PAGES & COMPONENTS
 **Request**: Continue design-token unification across all remaining files.
 **Action**:
 - **Pages**: UserBookings, PortfolioCredentials, ApplicantReview, ScheduleInterview, CreateJob, MyJobs, MyOrders, ApplyToJob, JobDetail, SelectProviderType, Home, ProfessionalPortfolio (header + CTAs primary), LaunchChecklist, BrandProfile, GlobalFinancials (primary for header/cards/CTAs).
-- **UI components**: service-card (bg-card, gradient from-foreground), barber-card (light variant tokens; dark variant → primary/card), GlobalNavigation (gradient/header → primary).
+- **UI components**: service-card (bg-card, gradient from-foreground), barber-card (light variant tokens; dark variant ? primary/card), GlobalNavigation (gradient/header ? primary).
 - **Dashboard components**: MonthlySpendingCard, QuickActions, NextAppointmentCard, LoyaltyGoalCard, SidebarMenu, SmartSuggestions, MetricCard, QuickInsights, AIRecommendations, MessagesPanel, NotificationsPanel, InsightBanner.
 - **Provider/scheduling**: AvailabilitySetup (primary trigger), ShopHoursEditor (primary CTA).
 - **Misc**: App.jsx (spinner border-primary), PageNotFound (bg-background, muted), UserNotRegisteredError (card + foreground/muted).
 **Modified files**: UserBookings, PortfolioCredentials, ApplicantReview, ScheduleInterview, CreateJob, MyJobs, MyOrders, ApplyToJob, JobDetail, SelectProviderType, Home, ProfessionalPortfolio, LaunchChecklist, BrandProfile, GlobalFinancials, service-card, barber-card, GlobalNavigation, MonthlySpendingCard, QuickActions, NextAppointmentCard, LoyaltyGoalCard, SidebarMenu, SmartSuggestions, MetricCard, QuickInsights, AIRecommendations, MessagesPanel, NotificationsPanel, InsightBanner, AvailabilitySetup, ShopHoursEditor, App, PageNotFound, UserNotRegisteredError. Tracker updated.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - UNIFIED EXPERIENCE CONTINUED (3): DASHBOARD, MARKETPLACE, HOME, FOOTER, CAREER, ABOUT
 **Request**: Continue design-token unification across remaining pages and components.
 **Action**:
-- **Dashboard**: Header, search, sections, cards — `bg-card`/`bg-muted`, `border-border`, `text-foreground`/`text-muted-foreground`; wallet and loyalty cards use tokens.
-- **Marketplace**: Header, search, category pills (active `bg-primary`), product cards, empty states — tokens throughout; hero strip `bg-primary/90`; CTAs primary.
-- **Home**: Hero, Features, Services, CTA, FeaturedBarbers, Testimonials — headings and body use `text-foreground`; gradients use `from-foreground/80` or `from-foreground/90`.
-- **Footer**: Light footer — `bg-muted`, `border-border`, `text-foreground`/`text-muted-foreground`; logo block `bg-primary text-primary-foreground`; social buttons `bg-card border-border` with primary hover.
+- **Dashboard**: Header, search, sections, cards ? `bg-card`/`bg-muted`, `border-border`, `text-foreground`/`text-muted-foreground`; wallet and loyalty cards use tokens.
+- **Marketplace**: Header, search, category pills (active `bg-primary`), product cards, empty states ? tokens throughout; hero strip `bg-primary/90`; CTAs primary.
+- **Home**: Hero, Features, Services, CTA, FeaturedBarbers, Testimonials ? headings and body use `text-foreground`; gradients use `from-foreground/80` or `from-foreground/90`.
+- **Footer**: Light footer ? `bg-muted`, `border-border`, `text-foreground`/`text-muted-foreground`; logo block `bg-primary text-primary-foreground`; social buttons `bg-card border-border` with primary hover.
 - **ClientDesktopSidebar**: Active nav `bg-primary text-primary-foreground`; inactive `text-muted-foreground hover:bg-muted hover:text-foreground`.
 - **ClientBottomNav**: Same active/inactive pattern; bar `bg-card border-border`.
 - **CareerHub**: Tabs and category filters use primary when active; headings and job cards `text-foreground`; CTA primary.
 - **About**: Headings and links use foreground/muted; primary CTA.
 **Modified files**: `Dashboard.jsx`, `Marketplace.jsx`, `Hero.jsx`, `Features.jsx`, `Services.jsx`, `CTA.jsx`, `FeaturedBarbers.jsx`, `Testimonials.jsx`, `Footer.jsx`, `ClientDesktopSidebar.jsx`, `ClientBottomNav.jsx`, `CareerHub.jsx`, `About.jsx`. Tracker updated.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ### [2026-02-07] - UNIFIED EXPERIENCE CONTINUED: SIGNIN, ACCOUNT, CHAT, MARKETPLACE
 **Request**: Continue applying unified light + primary design tokens across remaining pages (design system light-only).
@@ -405,9 +557,9 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - **AccountSettings**: Session-expired card and all tabs use `bg-card`, `border-border`, `text-foreground`/`text-muted-foreground`; profile header `bg-primary text-primary-foreground`; form inputs and preference cards use muted/card; primary for submit and return-to-login.
 - **Chat**: Headings/body `text-foreground`/`text-muted-foreground`; panels `bg-card`/`bg-muted`; message bubbles: outgoing `bg-primary text-primary-foreground`, incoming `bg-card border-border`; send button and sign-in CTA primary.
 - **ShopProfile, BarberProfile**: Headings `text-foreground`; CTAs and footer block use primary; borders/cards use design tokens.
-- **Marketplace/checkout**: GroomingVault, Checkout, ProductDetail, Favorites, ShoppingBag, OrderTracking — primary for main buttons, `text-foreground` for headings, muted for secondary text where applied.
+- **Marketplace/checkout**: GroomingVault, Checkout, ProductDetail, Favorites, ShoppingBag, OrderTracking ? primary for main buttons, `text-foreground` for headings, muted for secondary text where applied.
 **Modified files**: `SignIn.jsx`, `BookingFlow.jsx`, `AccountSettings.jsx`, `Chat.jsx`, `ShopProfile.jsx`, `BarberProfile.jsx`, `GroomingVault.jsx`, `Checkout.jsx`, `ProductDetail.jsx`, `Favorites.jsx`, `ShoppingBag.jsx`, `OrderTracking.jsx`.
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ---
 
@@ -422,7 +574,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Updated `PublicLayout.jsx` to use dark background
 - Updated `Explore.jsx` to use theme tokens instead of hardcoded colors
 - Added loading state handling to prevent flash-of-white
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 **Technical Notes**:
 - Navigation items now respect: isAuthenticated, user role, page context
@@ -460,11 +612,11 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - `SelectProviderType.jsx` - Dark theme styling
 
 **Validation**:
-- ☑ Hero headline fully visible on load
-- ☑ No text clipped at top
-- ☑ Natural scrolling behavior
-- ☑ Header in document flow (not floating)
-- ☑ Works on desktop & mobile
+- ? Hero headline fully visible on load
+- ? No text clipped at top
+- ? Natural scrolling behavior
+- ? Header in document flow (not floating)
+- ? Works on desktop & mobile
 
 ---
 
@@ -488,7 +640,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
    - Cards: `bg-white` with light borders
    - Text: `text-slate-900`, `text-slate-600`
 
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ---
 
@@ -515,7 +667,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - `app-params.js` - storage key `Sovereign API_access_token`
 - `apiClient.js` - comment and alias export
 
-**Status**: ✅ COMPLETE (Phase 1)
+**Status**: ? COMPLETE (Phase 1)
 
 ---
 
@@ -527,7 +679,7 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 - Falls back to `window.location.href` if not provided
 - This removes TypeScript errors while maintaining SEO functionality
 
-**Status**: ✅ COMPLETE
+**Status**: ? COMPLETE
 
 ---
 
@@ -539,25 +691,25 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
 1. **Codebase Scan**: Comprehensive grep search across all file types
    - Searched: `*.js`, `*.jsx`, `*.ts`, `*.tsx`, `*.json`, `*.md`, `*.html`
    - Query: "Sovereign API" (case-insensitive)
-   - **Result**: ✅ ZERO references found
+   - **Result**: ? ZERO references found
    
 2. **Package Dependencies**: Verified `package.json`
    - Checked for `@Sovereign API/sdk`, `@Sovereign API/vite-plugin`
-   - **Result**: ✅ Clean - No Sovereign API dependencies
+   - **Result**: ? Clean - No Sovereign API dependencies
    
 3. **Vite Configuration**: Verified `vite.config.js`
    - Checked for Sovereign API Vite plugin
-   - **Result**: ✅ Clean - Only React plugin
+   - **Result**: ? Clean - Only React plugin
    
 4. **Import Statements**: Scanned for Sovereign API imports
    - Searched: `from '@/api/Sovereign APIClient'` and `Sovereign APIClient`
-   - **Result**: ✅ Zero active imports (all migrated to `apiClient`)
+   - **Result**: ? Zero active imports (all migrated to `apiClient`)
    
 5. **Backend Server Verification**:
-   - **Status**: ✅ Running on `http://localhost:3001`
+   - **Status**: ? Running on `http://localhost:3001`
    - **Framework**: Fastify + Drizzle ORM + SQLite
    - **Database**: `sovereign.sqlite` (200KB, seeded)
-   - **Test Query**: `GET /api/barbers` ✅ Returns 2 seeded barbers
+   - **Test Query**: `GET /api/barbers` ? Returns 2 seeded barbers
    - **Endpoints Active**: 
      - `/api/auth/me`
      - `/api/functions/validate-availability`
@@ -569,32 +721,32 @@ Additional tables in schema: `booking_services`, `shop_members`, `promo_codes`, 
    
 6. **Legacy Functions Directory**:
    - **Location**: `/functions/` (19 files)
-   - **Usage Status**: ✅ No active imports from frontend
+   - **Usage Status**: ? No active imports from frontend
    - **Action**: Preserved as reference documentation
    - **Note**: Core logic migrated to `/server/src/`
 
 **Final Verification Results**:
-✅ **Frontend**: 100% Sovereign API-free  
-✅ **Backend**: Sovereign Fastify server operational  
-✅ **Database**: SQLite with Drizzle ORM (engine-agnostic)  
-✅ **API Client**: Custom `apiClient.js` fully functional  
-✅ **Dependencies**: Zero Sovereign API packages  
-✅ **Build**: Vite compiles cleanly  
-✅ **Runtime**: Dev server running without errors  
+? **Frontend**: 100% Sovereign API-free  
+? **Backend**: Sovereign Fastify server operational  
+? **Database**: SQLite with Drizzle ORM (engine-agnostic)  
+? **API Client**: Custom `apiClient.js` fully functional  
+? **Dependencies**: Zero Sovereign API packages  
+? **Build**: Vite compiles cleanly  
+? **Runtime**: Dev server running without errors  
 
 **Architecture Status**:
 | Component | Technology | Status |
 | :--- | :--- | :--- |
-| Frontend Framework | React 18.2 + Vite 6.1 | ✅ Active |
-| Backend Framework | Fastify 5.7 | ✅ Active |
-| Database | SQLite (better-sqlite3) | ✅ Active |
-| ORM | Drizzle ORM 0.45 | ✅ Active |
-| API Client | Custom Sovereign Client | ✅ Active |
-| Auth | Clerk UI + JWT (Fastify signup/login fallback) | ✅ Active |
-| Stripe | Stripe SDK checkout/webhooks (`server/src/payments`, `docs/STRIPE_*`); MCP = optional Cursor tooling | ✅ Active |
+| Frontend Framework | React 18.2 + Vite 6.1 | ? Active |
+| Backend Framework | Fastify 5.7 | ? Active |
+| Database | SQLite (better-sqlite3) | ? Active |
+| ORM | Drizzle ORM 0.45 | ? Active |
+| API Client | Custom Sovereign Client | ? Active |
+| Auth | Clerk UI + JWT (Fastify signup/login fallback) | ? Active |
+| Stripe | Stripe SDK checkout/webhooks (`server/src/payments`, `docs/STRIPE_*`); MCP = optional Cursor tooling | ? Active |
 
 **Conclusion**:  
-🎉 **Sovereign API ERADICATION: 100% COMPLETE**
+?? **Sovereign API ERADICATION: 100% COMPLETE**
 
 The project is now fully sovereign, with zero dependencies on Sovereign API infrastructure, SDKs, or conventions. The system functions perfectly as if Sovereign API never existed.
 
@@ -717,7 +869,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
    - Removed redundant 'AuthContext.jsx' to ensure a single source of truth in '/src/lib/'.
    - Fixed undefined 'sovereign' variable errors in the global Auth provider.
 
-**Status**: ✅ PRODUCTION READY 
+**Status**: ? PRODUCTION READY 
 - Auth: 100% Functional (Real JWT, Role Selection, Welcome Emails)
 - Email: 100% Functional (Resend Templates, Auto-notifications)
 - Booking Flow: 100% Sovereign (Validated, Confetti, Success Modal)
@@ -748,7 +900,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
    - All payment and logic endpoints consolidated under `/api/functions/` for consistent client-side invocation.
    - Verified 100% independence from Sovereign API infrastructure.
 
-**Status**: 💎 SYSTEM FULLY OPERATIONAL & SOVEREIGN
+**Status**: ?? SYSTEM FULLY OPERATIONAL & SOVEREIGN
 
 
 ### [2026-01-30 20:30] - ADVANCED ANALYTICS & REAL-TIME DASHBOARDS
@@ -776,7 +928,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
    - Updated `apiClient.js` to support consistent function invocation.
    - Standardized on `/api/functions/` path for all business logic.
 
-**Status**: 🚀 ANALYTICS SCALE READY 
+**Status**: ?? ANALYTICS SCALE READY 
 - Admin: 100% Data-Driven
 - Provider: 100% Data-Driven
 - Architecture: 100% Sovereign (No external analytics dependencies)
@@ -801,7 +953,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 
 4. **Final Eradication Verification**:
    - Rescanned entire `/src` and `/server` directories for "Sovereign API" traces.
-   - **Result**: ✅ 0 results found. System is officially 100% independent.
+   - **Result**: ? 0 results found. System is officially 100% independent.
 
 ### [2026-01-30 19:30] - THEMATIC CONSOLIDATION & TS COMPLIANCE
 **Request**: Resolve `review.ts` lint errors and ensure card components are theme-aware.
@@ -816,11 +968,11 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
    - Fixed interactive hover states in `Explore.jsx` to respect the system's dark theme tokens.
    - Standardized rating badge aesthetics across all feed components.
 
-**Status**: 💎 **SYSTEM 100% COMPLETE — PRODUCTION READY**
-- Theming: 💎 Fully Responsive Silos (Light Marketing / Dark App)
-- Reliability: ✅ TypeScript Compliant & Atomic Transaction Backed
-- Aesthetics: ✨ Premium Glassmorphism & High-Fidelity Consoles
-- Sovereignty: 🚀 100% Platform Independent (Sovereign API Eradicated)
+**Status**: ?? **SYSTEM 100% COMPLETE ? PRODUCTION READY**
+- Theming: ?? Fully Responsive Silos (Light Marketing / Dark App)
+- Reliability: ? TypeScript Compliant & Atomic Transaction Backed
+- Aesthetics: ? Premium Glassmorphism & High-Fidelity Consoles
+- Sovereignty: ?? 100% Platform Independent (Sovereign API Eradicated)
 
 ---
 
@@ -838,21 +990,21 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 
 2. **Backend**
    - **Cart API** (`server/src/cart/routes.ts`): GET/POST/PATCH/DELETE `/api/cart`, auth-required; list cart with product details, add/update/remove/clear.
-   - **Product Checkout** (`server/src/payments/routes.ts`): POST `/api/functions/create-product-checkout-session` — creates order + order_items from cart, Stripe Checkout Session (line_items + tax/shipping), returns URL. Requires JWT.
-   - **Webhook** (`server/src/webhooks/stripe.ts`): `checkout.session.completed` with `metadata.type === 'product'` → update order to paid, clear user cart, audit log.
+   - **Product Checkout** (`server/src/payments/routes.ts`): POST `/api/functions/create-product-checkout-session` ? creates order + order_items from cart, Stripe Checkout Session (line_items + tax/shipping), returns URL. Requires JWT.
+   - **Webhook** (`server/src/webhooks/stripe.ts`): `checkout.session.completed` with `metadata.type === 'product'` ? update order to paid, clear user cart, audit log.
 
 3. **Frontend**
    - **CartContext** (`src/components/context/CartContext.jsx`): Cart state; when authenticated syncs with API, when guest uses localStorage; merge guest cart into API on login; addItem, updateQuantity, removeItem, clearCart, itemCount.
-   - **apiClient** (`src/api/apiClient.js`): `sovereign.cart` — get, add, updateQuantity, remove, clear.
-   - **ShoppingBag page** (`src/pages/ShoppingBag.jsx`): Luxury cart UI — back/title/menu header; product cards (image, name, details, price, pill quantity −/+/); “Add promo code” dashed block; Summary (Subtotal, Shipping Free, Tax, Total); “Secure Checkout” button; “Complimentary 2-day shipping applied” footer.
-   - **Checkout page** (`src/pages/Checkout.jsx`): Multi-step flow — progress (SHIPPING → PAYMENT → REVIEW); Express “Pay with Card (Stripe)”; Shipping form (Full Name, Street, City, Zip, Phone) with Apple-style rounded inputs; “Saved Addresses” link; footer total + “Continue to Payment” (creates product checkout session, redirects to Stripe); success state shows thank-you and order id.
-   - **ProductDetail**: “Add to Bag” calls `addItem(productId, quantity, productSnapshot)` and toast.
+   - **apiClient** (`src/api/apiClient.js`): `sovereign.cart` ? get, add, updateQuantity, remove, clear.
+   - **ShoppingBag page** (`src/pages/ShoppingBag.jsx`): Luxury cart UI ? back/title/menu header; product cards (image, name, details, price, pill quantity ?/+/); ?Add promo code? dashed block; Summary (Subtotal, Shipping Free, Tax, Total); ?Secure Checkout? button; ?Complimentary 2-day shipping applied? footer.
+   - **Checkout page** (`src/pages/Checkout.jsx`): Multi-step flow ? progress (SHIPPING ? PAYMENT ? REVIEW); Express ?Pay with Card (Stripe)?; Shipping form (Full Name, Street, City, Zip, Phone) with Apple-style rounded inputs; ?Saved Addresses? link; footer total + ?Continue to Payment? (creates product checkout session, redirects to Stripe); success state shows thank-you and order id.
+   - **ProductDetail**: ?Add to Bag? calls `addItem(productId, quantity, productSnapshot)` and toast.
    - **Marketplace**: Cart icon in header links to ShoppingBag with item count badge.
-   - **ClientDesktopSidebar**: “Shopping Bag” nav item with cart count badge.
+   - **ClientDesktopSidebar**: ?Shopping Bag? nav item with cart count badge.
    - **Layout**: Wrapped app with `CartProvider`.
    - **Routes**: Registered `ShoppingBag` and `Checkout` in `pages.config.js`.
 
-**Status**: ✅ COMPLETE — Full-stack cart and checkout; desktop-first; sovereign backend; Stripe product payments; guest cart in localStorage, merged on login.
+**Status**: ? COMPLETE ? Full-stack cart and checkout; desktop-first; sovereign backend; Stripe product payments; guest cart in localStorage, merged on login.
 
 **Follow-up (continue)**:
 - **ClientBottomNav**: Added "Bag" tab with cart count badge on mobile so Shopping Bag is reachable from the bottom nav (desktop already had it in sidebar).
@@ -877,11 +1029,11 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 
 3. **Frontend**
    - **apiClient**: `sovereign.orders.list()`, `sovereign.orders.get(orderId)`.
-   - **OrderTracking page** (`src/pages/OrderTracking.jsx`): Luxury tracking UI — header with back + "TRACKING" (serif); thank-you with blue checkmark and "Thank You, [Name]", ORDER #EMG-xxx; Estimated Arrival card (date, "Via Premium White-Glove Courier"); Order Journey timeline (Order Confirmed, Preparing Your Selection, In Transit, Delivered) with soft progress indicators and elegant typography; "Your Selection" with item cards (image, brand, name, qty, price); "Contact Concierge" with headset icon; footer "ELITE GROOMING MARKETPLACE". Uses `fulfillment_status` to drive current step; fallback estimated date from created_at + 3 days.
+   - **OrderTracking page** (`src/pages/OrderTracking.jsx`): Luxury tracking UI ? header with back + "TRACKING" (serif); thank-you with blue checkmark and "Thank You, [Name]", ORDER #EMG-xxx; Estimated Arrival card (date, "Via Premium White-Glove Courier"); Order Journey timeline (Order Confirmed, Preparing Your Selection, In Transit, Delivered) with soft progress indicators and elegant typography; "Your Selection" with item cards (image, brand, name, qty, price); "Contact Concierge" with headset icon; footer "ELITE GROOMING MARKETPLACE". Uses `fulfillment_status` to drive current step; fallback estimated date from created_at + 3 days.
    - **Checkout success**: Added "Track Order" button linking to `OrderTracking?id=...` alongside "Continue Shopping".
    - **Routes**: Registered `OrderTracking` in `pages.config.js`.
 
-**Status**: ✅ COMPLETE — Premium order tracking with journey timeline and concierge CTA.
+**Status**: ? COMPLETE ? Premium order tracking with journey timeline and concierge CTA.
 
 **Follow-up (continue)**:
 - **My Orders page** (`src/pages/MyOrders.jsx`): Lists current user's product orders (from `sovereign.orders.list()`); each card shows order number, date, total, fulfillment status, and links to OrderTracking. Empty state with "Browse Marketplace" CTA. Auth-required; redirects to SignIn with return URL if not logged in.
@@ -909,7 +1061,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 
 ### [2026-02-07] - GROOMING VAULT
 
-**Request**: Premium space for managing past purchases and effortless reordering — Total Investment summary, Frequently Replenished carousel, card-based Vault History.
+**Request**: Premium space for managing past purchases and effortless reordering ? Total Investment summary, Frequently Replenished carousel, card-based Vault History.
 
 **Changes Made**:
 
@@ -919,23 +1071,23 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 
 2. **Frontend**
    - **apiClient**: `sovereign.vault.getSummary()`.
-   - **GroomingVault page** (`src/pages/GroomingVault.jsx`): Header (back, "Grooming Vault", settings). **Vault Net Worth** card (dark blue): total $, "+N points earned". **Quick Replenish**: carousel of product cards (image, name, frequency), "View All" → Marketplace; cards link to ProductDetail. **Vault History**: card list with image, name, "Ordered: date", status badge (DELIVERED / REFILL READY / IN VAULT), Reorder or Buy Again button (adds to cart, navigates to Shopping Bag). Empty states with Marketplace CTA. Auth required.
-   - **Routes**: Registered `GroomingVault` in `pages.config.js`. **Sidebar**: "Grooming Vault" (Lock icon). **Quick Actions**: "Vault" (Archive icon) → Grooming Vault.
+   - **GroomingVault page** (`src/pages/GroomingVault.jsx`): Header (back, "Grooming Vault", settings). **Vault Net Worth** card (dark blue): total $, "+N points earned". **Quick Replenish**: carousel of product cards (image, name, frequency), "View All" ? Marketplace; cards link to ProductDetail. **Vault History**: card list with image, name, "Ordered: date", status badge (DELIVERED / REFILL READY / IN VAULT), Reorder or Buy Again button (adds to cart, navigates to Shopping Bag). Empty states with Marketplace CTA. Auth required.
+   - **Routes**: Registered `GroomingVault` in `pages.config.js`. **Sidebar**: "Grooming Vault" (Lock icon). **Quick Actions**: "Vault" (Archive icon) ? Grooming Vault.
 
-**Status**: ✅ COMPLETE — Grooming Vault with net worth, quick replenish carousel, and vault history with reorder.
+**Status**: ? COMPLETE ? Grooming Vault with net worth, quick replenish carousel, and vault history with reorder.
 
 **Follow-up (2026-02-07)**:
-- **Loyalty points on product purchase**: In `server/src/webhooks/stripe.ts`, after marking a product order paid and sending the order confirmation email, the webhook now awards loyalty points (max(10, floor(order total))), upserts `loyalty_profiles` (current_points, lifetime_points, tier Bronze if new), and inserts `loyalty_transactions` with description "Order #… – Marketplace purchase". Vault Net Worth "+N points earned" now reflects real purchases.
+- **Loyalty points on product purchase**: In `server/src/webhooks/stripe.ts`, after marking a product order paid and sending the order confirmation email, the webhook now awards loyalty points (max(10, floor(order total))), upserts `loyalty_profiles` (current_points, lifetime_points, tier Bronze if new), and inserts `loyalty_transactions` with description "Order #? ? Marketplace purchase". Vault Net Worth "+N points earned" now reflects real purchases.
 - **Vault History filter**: GroomingVault filter icon opens a dropdown (All, Delivered, Refill ready, In vault). History list is filtered by `fulfillment_status`; empty state shows "No items match this filter" when filtered result is empty but user has history.
 
-**Follow-up (2026-02-07) – Admin Order Management**:
+**Follow-up (2026-02-07) ? Admin Order Management**:
 - **Backend**: `GET /api/admin/orders` (admin-only) returns all marketplace orders with `order_number`, customer `user_email`, `user_name`, totals, `fulfillment_status`, `estimated_delivery_at`. Implemented in `server/src/orders/routes.ts`.
 - **apiClient**: `sovereign.orders.listAdmin()`.
 - **Admin Orders page** (`src/pages/AdminOrders.jsx`): Admin-only. Metrics cards (total orders, paid, in transit, delivered). Filter by fulfillment. Table: Order #, Date, Customer, Total, Payment, Fulfillment (dropdown to update), Est. delivery, Set date (date input). Update fulfillment and estimated delivery via existing `PATCH /api/orders/:id`. Registered in `pages.config.js`. Linked from GlobalFinancials header ("Orders" and "Disputes" buttons).
 
 ---
 
-### 2026-02-07 – EMPLOYMENT / JOBS ECOSYSTEM (FULL STACK)
+### 2026-02-07 ? EMPLOYMENT / JOBS ECOSYSTEM (FULL STACK)
 
 **Scope**: Jobs & Employment system where barbershops and companies post jobs, users apply with existing or extended profiles, applications are saved and reusable, employer flow for posting and reviewing applicants.
 
@@ -958,30 +1110,30 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 **Frontend**:
 - **CareerHub** (`src/pages/CareerHub.jsx`): Elite Career Hub header, category tabs (Artistry, Grooming, Operations, etc.), filters (employment type, location type), Featured Operations grid, Recent Opportunities list. Tabs: Explore, Saved, Applied, Profile (mobile bottom nav only). Links to JobDetail, ProfessionalPortfolio.
 - **JobDetail** (`src/pages/JobDetail.jsx`): Job header (employer, share/more), category badge, title, location/employment/work arrangement, Mission and Operational Excellence sections, Partnership (compensation), Apply with Elite Profile, Save for later.
-- **ApplyToJob** (`src/pages/ApplyToJob.jsx`): Cover letter textarea, optional credential checkboxes, Submit application → invalidates applications list, redirects to Career Hub Applied tab.
-- **ProfessionalPortfolio** (`src/pages/ProfessionalPortfolio.jsx`): Header “Professional Portfolio / ELITE SPECIALIST”, portfolio placeholder, stats (views, rating, experience), Credentials & Vault list with + Upload → PortfolioCredentials, Career Readiness progress, Apply with Profile CTA.
+- **ApplyToJob** (`src/pages/ApplyToJob.jsx`): Cover letter textarea, optional credential checkboxes, Submit application ? invalidates applications list, redirects to Career Hub Applied tab.
+- **ProfessionalPortfolio** (`src/pages/ProfessionalPortfolio.jsx`): Header ?Professional Portfolio / ELITE SPECIALIST?, portfolio placeholder, stats (views, rating, experience), Credentials & Vault list with + Upload ? PortfolioCredentials, Career Readiness progress, Apply with Profile CTA.
 - **PortfolioCredentials** (`src/pages/PortfolioCredentials.jsx`): Add credential (type, file name; file_path placeholder for MVP).
-- **CreateJob** (`src/pages/CreateJob.jsx`): Step 1 – Select role type (Creative / Business Operations). Step 2 – Job title, employer (company/shop), company or shop dropdown, employment type, location type, location text, description; Create draft → MyJobs.
-- **MyJobs** (`src/pages/MyJobs.jsx`): List employer’s jobs, “New opening” → CreateJob, each row → ApplicantReview.
-- **ApplicantReview** (`src/pages/ApplicantReview.jsx`): Job summary card, status counts (Shortlisted, Interviewing, Pending), search, applicant list with status dropdown, Schedule and Message actions; Schedule opens modal (date, time, format) → scheduleInterview API.
+- **CreateJob** (`src/pages/CreateJob.jsx`): Step 1 ? Select role type (Creative / Business Operations). Step 2 ? Job title, employer (company/shop), company or shop dropdown, employment type, location type, location text, description; Create draft ? MyJobs.
+- **MyJobs** (`src/pages/MyJobs.jsx`): List employer?s jobs, ?New opening? ? CreateJob, each row ? ApplicantReview.
+- **ApplicantReview** (`src/pages/ApplicantReview.jsx`): Job summary card, status counts (Shortlisted, Interviewing, Pending), search, applicant list with status dropdown, Schedule and Message actions; Schedule opens modal (date, time, format) ? scheduleInterview API.
 - **ScheduleInterview** (`src/pages/ScheduleInterview.jsx`): Standalone page; primary flow is modal in ApplicantReview.
 
 **apiClient** (`src/api/apiClient.js`): jobs (list, featured, get, my, create, update), companies.list, shops.list, applicant (getProfile, saveProfile, getCredentials, addCredential, getApplications, apply, getSaved, saveJob, unsaveJob), applications (listForJob, updateStatus, scheduleInterview, getInterviews).
 
 **Navigation**: Career Hub added to ClientDesktopSidebar (Briefcase icon). All new pages registered in `pages.config.js`.
 
-**Status**: ✅ COMPLETE — End-to-end Employment / Jobs ecosystem (desktop-first, DB + backend + frontend, applicant and employer flows, native to platform).
+**Status**: ? COMPLETE ? End-to-end Employment / Jobs ecosystem (desktop-first, DB + backend + frontend, applicant and employer flows, native to platform).
 
 **Follow-up (continue)**:
-- **My Jobs – Publish / Close**: Each job row shows status badge (draft / published / closed). Draft jobs have a "Publish" button; published jobs have a "Close" button. Status is updated via `sovereign.jobs.update(id, { status })`. Row layout: title (link to Applicant Review), status, actions, link to review.
-- **Professional Portfolio – Edit profile**: "Professional profile" section with Edit/Save/Cancel. Fields: professional summary (textarea), years of experience (number), skills (comma-separated). Saved via `sovereign.applicant.saveProfile()`. Career readiness % reflects profile data.
-- **Career Hub – Desktop tabs**: On desktop (useIsDesktop()), a tab bar below the header for Explore, Saved, Applied, Profile (same as mobile bottom nav); URL `?tab=` kept in sync.
+- **My Jobs ? Publish / Close**: Each job row shows status badge (draft / published / closed). Draft jobs have a "Publish" button; published jobs have a "Close" button. Status is updated via `sovereign.jobs.update(id, { status })`. Row layout: title (link to Applicant Review), status, actions, link to review.
+- **Professional Portfolio ? Edit profile**: "Professional profile" section with Edit/Save/Cancel. Fields: professional summary (textarea), years of experience (number), skills (comma-separated). Saved via `sovereign.applicant.saveProfile()`. Career readiness % reflects profile data.
+- **Career Hub ? Desktop tabs**: On desktop (useIsDesktop()), a tab bar below the header for Explore, Saved, Applied, Profile (same as mobile bottom nav); URL `?tab=` kept in sync.
 
 **Follow-up (continue)**:
-- **Job Detail – Applied status**: If the current user has already applied to the job, the main CTA is replaced by a card "You applied" with status (e.g. under review, shortlisted) and a link to Career Hub → Applied tab. Uses `applicant.getApplications()` to find application for current job.
-- **Career Hub – Employer entry**: In the Profile tab, added "Are you hiring?" section with "My job postings" button linking to My Jobs so employers can discover the employer flow from the hub.
+- **Job Detail ? Applied status**: If the current user has already applied to the job, the main CTA is replaced by a card "You applied" with status (e.g. under review, shortlisted) and a link to Career Hub ? Applied tab. Uses `applicant.getApplications()` to find application for current job.
+- **Career Hub ? Employer entry**: In the Profile tab, added "Are you hiring?" section with "My job postings" button linking to My Jobs so employers can discover the employer flow from the hub.
 
-**Employment feature – UX/nav consistency (2026-02-07)**:
+**Employment feature ? UX/nav consistency (2026-02-07)**:
 - **ClientBottomNav**: Added to CreateJob, MyJobs, ApplicantReview, ScheduleInterview (and previously JobDetail, ApplyToJob, ProfessionalPortfolio, PortfolioCredentials); Career Hub hides main bottom nav when path is `/careerhub` so only career tab bar shows on mobile.
 - **Sidebar active state**: ClientDesktopSidebar highlights "Career Hub" when on any career sub-route (careerhub, jobdetail, applytojob, professionalportfolio, portfoliocredentials, myjobs, createjob, applicantreview, scheduleinterview).
 - **Career Hub loading**: Explore tab shows centered spinner while featured/jobs list is loading (same pattern as MyOrders/GroomingVault).
@@ -993,14 +1145,14 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 - **PublicLayout**: Navbar and Footer use primary for logo, links, CTAs; nav extended with Marketplace, Careers, Help.
 - **Discovery**: Marketplace, CareerHub, HelpCenter in public paths (same Navbar+Footer).
 - **Client chrome**: ClientLayout bg-background; sidebar and GlobalNav logo = primary; Dashboard uses design tokens.
-- **Design unification (continued)**: CareerHub, JobDetail, ApplyToJob, MyJobs, ProfessionalPortfolio, CreateJob, Marketplace, MyOrders, About, SelectProviderType use bg-background; About and SelectProviderType cards use primary/10 and text-primary; Checkout and ShoppingBag CTAs use primary; Dashboard loyalty tx and QuickActions/MonthlySpendingCard use primary; FeaturedBarbers and Testimonials remaining accents → primary; CareerHub shortlisted badge → primary.
-- **Design unification (continued)**: Checkout, ShoppingBag, ScheduleInterview, ApplicantReview, PortfolioCredentials, GroomingVault, OrderTracking, ProductDetail, Favorites, Chat, AccountSettings → bg-background; GroomingVault delivered badge, BarberProfile, ShopProfile, AccountSettings tabs/icons, Chat online indicator, Checkout link → primary.
+- **Design unification (continued)**: CareerHub, JobDetail, ApplyToJob, MyJobs, ProfessionalPortfolio, CreateJob, Marketplace, MyOrders, About, SelectProviderType use bg-background; About and SelectProviderType cards use primary/10 and text-primary; Checkout and ShoppingBag CTAs use primary; Dashboard loyalty tx and QuickActions/MonthlySpendingCard use primary; FeaturedBarbers and Testimonials remaining accents ? primary; CareerHub shortlisted badge ? primary.
+- **Design unification (continued)**: Checkout, ShoppingBag, ScheduleInterview, ApplicantReview, PortfolioCredentials, GroomingVault, OrderTracking, ProductDetail, Favorites, Chat, AccountSettings ? bg-background; GroomingVault delivered badge, BarberProfile, ShopProfile, AccountSettings tabs/icons, Chat online indicator, Checkout link ? primary.
 - **Design unification (continued)**: SignIn (PREMIUM GROOMING, role tabs, inputs focus, submit button, links) and BookingFlow (duration/price highlight, confirm button, success dialog) use primary; service-card hover uses primary; design doc updated with unified scope list.
 - **Design unification (continued)**: UserBookings and Review converted from dark (bg-slate-950) to light (bg-background, bg-card, border-border, text-foreground/muted-foreground) for full client-journey consistency.
 
 ### [2026-03-05] - OAUTH SOCIAL LOGIN IMPLEMENTATION (GOOGLE & APPLE)
 
-**Request**: Fix social media login buttons (Google and Apple) that were non-functional — clicking did nothing.
+**Request**: Fix social media login buttons (Google and Apple) that were non-functional ? clicking did nothing.
 
 **Root Cause**: Social login buttons in SignIn page were purely decorative UI elements with no onClick handlers or backend OAuth infrastructure.
 
@@ -1043,7 +1195,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
      - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
      - `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`
      - `BACKEND_URL` (for OAuth callback URIs)
-   - Created `docs/OAUTH_SETUP.md` — comprehensive guide:
+   - Created `docs/OAUTH_SETUP.md` ? comprehensive guide:
      - Google Cloud Console setup (OAuth consent screen, credentials, redirect URIs)
      - Apple Developer Portal setup (App ID, Services ID, private key, client secret generation)
      - Environment variable configuration
@@ -1056,8 +1208,8 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
      - Apple button: Shows toast "Apple Sign-In is not configured. Contact support to enable Apple authentication."
      - Google button: Shows toast "Google Sign-In is not configured. Contact support to enable Google authentication."
    - Verified buttons are now clickable and responsive (no longer dead)
-   - Backend logs: `⚠️  OAuth not configured. Set GOOGLE_CLIENT_ID/SECRET or APPLE_CLIENT_ID/SECRET in .env to enable social login.`
-   - When credentials are added, OAuth flow will work end-to-end: redirect to provider → user authorizes → redirect to callback → create/login user → redirect to dashboard
+   - Backend logs: `??  OAuth not configured. Set GOOGLE_CLIENT_ID/SECRET or APPLE_CLIENT_ID/SECRET in .env to enable social login.`
+   - When credentials are added, OAuth flow will work end-to-end: redirect to provider ? user authorizes ? redirect to callback ? create/login user ? redirect to dashboard
 
 **Modified/Added Files**:
 - `server/package.json` (added `@fastify/oauth2`)
@@ -1070,7 +1222,7 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 - `src/components/navigationConfig.jsx` (added `/oauthcallback` to AUTH zone)
 - `docs/OAUTH_SETUP.md` (new, comprehensive setup guide)
 
-**Status**: ✅ COMPLETE — Social login buttons now functional with proper user feedback; OAuth infrastructure ready for Google and Apple Sign-In when credentials are configured. System degrades gracefully without credentials (email/password auth still works).
+**Status**: ? COMPLETE ? Social login buttons now functional with proper user feedback; OAuth infrastructure ready for Google and Apple Sign-In when credentials are configured. System degrades gracefully without credentials (email/password auth still works).
 
 ### [2026-03-05] - CLERK AUTHENTICATION INTEGRATION (FULL REPLACEMENT)
 
@@ -1117,17 +1269,17 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
    - Updated `.env.example` with `VITE_CLERK_PUBLISHABLE_KEY`
 
 **Why Clerk?**:
-- ✅ **Zero OAuth Setup**: Google and Apple work immediately in development
-- ✅ **Beautiful UI**: Pre-built, customizable sign-in components
-- ✅ **Full Auth Suite**: Email/password, social, MFA, session management, password reset
-- ✅ **User Dashboard**: Manage users, roles, metadata from Clerk Dashboard
-- ✅ **Secure by Default**: Industry-standard security, automatic token refresh
-- ✅ **Free Tier**: Up to 10,000 monthly active users
+- ? **Zero OAuth Setup**: Google and Apple work immediately in development
+- ? **Beautiful UI**: Pre-built, customizable sign-in components
+- ? **Full Auth Suite**: Email/password, social, MFA, session management, password reset
+- ? **User Dashboard**: Manage users, roles, metadata from Clerk Dashboard
+- ? **Secure by Default**: Industry-standard security, automatic token refresh
+- ? **Free Tier**: Up to 10,000 monthly active users
 
 **User Experience**:
 - **Sign In page** (`/signin`): Clerk component with Google + Apple buttons, email/password, "Forgot password?" link
 - **Sign Up page** (`/signup`): Clerk component with social sign-up, email verification
-- **Social Login**: Click Google/Apple → OAuth flow → Automatic account creation → Redirects to dashboard
+- **Social Login**: Click Google/Apple ? OAuth flow ? Automatic account creation ? Redirects to dashboard
 - **No Config Required**: Social login works out-of-the-box in development (Clerk provides OAuth apps)
 
 **Migration Strategy**:
@@ -1142,4 +1294,4 @@ The project is now fully sovereign, with zero dependencies on Sovereign API infr
 - Docs: `docs/CLERK_SETUP.md` (new), `CLERK_QUICKSTART.md` (new)
 - Removed: `server/src/auth/oauth.ts`, `src/pages/OAuthCallback.jsx`, `docs/OAUTH_SETUP.md`
 
-**Status**: ✅ COMPLETE — Clerk fully integrated; Google and Apple social login work immediately; email/password auth with verification; backward compatible with legacy auth during migration. Social login buttons now powered by Clerk (no manual OAuth configuration required).
+**Status**: ? COMPLETE ? Clerk fully integrated; Google and Apple social login work immediately; email/password auth with verification; backward compatible with legacy auth during migration. Social login buttons now powered by Clerk (no manual OAuth configuration required).

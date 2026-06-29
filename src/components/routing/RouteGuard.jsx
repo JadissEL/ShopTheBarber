@@ -14,13 +14,23 @@ function signInUrlWithReturn(currentPath) {
   return `${base}?return=${returnPath}`;
 }
 
+/** Clerk session exists but backend user is not ready, never send to SignIn (Clerk would bounce back). */
+function handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate }) {
+  if (!isSignedIn) return false;
+
+  if (syncStatus === 'error' && path !== '/setupguide') {
+    navigate(createPageUrl('SetupGuide'), { replace: true });
+  }
+  return true;
+}
+
 /** Employer-only pages: require barber/shop_owner/admin (job poster role) */
 const EMPLOYER_PATHS = ['/createjob', '/myjobs', '/applicantreview', '/scheduleinterview'];
 
 export default function RouteGuard() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role, isLoading } = useAuth();
+  const { user, role, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
   const { bookingState } = useBooking();
   const path = location.pathname.toLowerCase();
   const zone = getZoneFromPath(path);
@@ -37,7 +47,7 @@ export default function RouteGuard() {
   });
 
   useEffect(() => {
-    if (isLoading || isManagerLoading) return; // Wait for both auth and manager check
+    if (isLoadingAuth || isManagerLoading) return; // Wait for Clerk + backend sync and manager check
 
     // 1. Booking Flow Protection
     if (path.includes('/payment') || path.includes('/bookingconfirm')) {
@@ -51,6 +61,7 @@ export default function RouteGuard() {
     // 2. CLIENT ZONE: Require authentication (dashboard, account, bookings, cart, etc.)
     if (zone === APP_ZONES.CLIENT) {
       if (!user) {
+        if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
         navigate(signInUrlWithReturn(location.pathname + location.search), { replace: true });
         return;
       }
@@ -60,6 +71,7 @@ export default function RouteGuard() {
     const isProviderRole = ['provider', 'barber', 'shop_owner', 'admin'].includes(role);
     if (zone === APP_ZONES.PROVIDER) {
       if (!user) {
+        if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
         navigate(signInUrlWithReturn(location.pathname), { replace: true });
         return;
       }
@@ -67,8 +79,17 @@ export default function RouteGuard() {
         navigate(createPageUrl('Dashboard'), { replace: true });
         return;
       }
-      const managerPages = ['/staffroster', '/staffschedule', '/finances', '/inventorymanagement'];
-      if (managerPages.some(p => path.includes(p)) && isManager === false) {
+      const managerPages = [
+        '/staffroster',
+        '/staffschedule',
+        '/shopemployeemanagement',
+        '/networkownerdashboard',
+        '/shopinventorymanagement',
+        '/shopexpensetracking',
+        '/shopbrandingmanagement',
+        '/shopanalytics',
+      ];
+      if (managerPages.some((p) => path.includes(p)) && isManager === false) {
           navigate(createPageUrl('ProviderDashboard'), { replace: true });
       }
     }
@@ -76,6 +97,7 @@ export default function RouteGuard() {
     // 4. ADMIN ZONE: Require auth + admin role
     if (zone === APP_ZONES.ADMIN) {
       if (!user) {
+        if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
         navigate(signInUrlWithReturn(location.pathname), { replace: true });
         return;
       }
@@ -85,7 +107,7 @@ export default function RouteGuard() {
     }
 
     // 5. Employer-only routes (job posting/applicant management): require auth + barber/shop_owner/admin
-    const isEmployerRoute = EMPLOYER_PATHS.some(p => path === p || path.startsWith(p + '/'));
+    const isEmployerRoute = EMPLOYER_PATHS.some(p => path === p || path.startsWith(`${p  }/`));
     if (isEmployerRoute && user && !isProviderRole) {
       navigate(createPageUrl('CareerHub'), { replace: true });
     }
@@ -94,7 +116,7 @@ export default function RouteGuard() {
     if (path === '/dashboard' && isProviderRole && role !== 'admin') {
         navigate(createPageUrl('ProviderDashboard'), { replace: true });
     }
-  }, [location, user, role, isLoading, isManagerLoading, isManager, bookingState, navigate, path, zone]);
+  }, [location, user, role, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
 
   return null;
 }

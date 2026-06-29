@@ -21,7 +21,7 @@ export default function Blog() {
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['articles'],
     queryFn: async () => {
-      return await sovereign.entities.Article.filter({ published: true }, '-created_at');
+      return await sovereign.articles.listPublic();
     }
   });
 
@@ -66,12 +66,12 @@ export default function Blog() {
         </motion.div>
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-[12px] p-6 mb-12 shadow-lg border border-slate-200">
+        <div className="bg-card rounded-[12px] p-6 mb-12 shadow-lg border border-slate-200">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#4B5563] w-5 h-5" />
               <Input
-                placeholder="Rechercher un article..."
+                placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 h-12 border-slate-200 text-[#0B2545] placeholder:text-[#4B5563] rounded-[10px] focus:ring-2 focus:ring-[#D08B3D] focus:border-[#D08B3D]"
@@ -105,7 +105,7 @@ export default function Blog() {
             <Link to={createPageUrl(`ArticleDetail?id=${featuredArticle.id}`)}>
               <Card className="group rounded-[12px] border-2 border-slate-200 overflow-hidden hover:border-[#D08B3D] hover:shadow-2xl transition-all">
                 <div className="grid md:grid-cols-2 gap-8">
-                  <div className="relative h-[400px] md:h-auto overflow-hidden bg-slate-100">
+                  <div className="relative h-[400px] md:h-auto overflow-hidden bg-muted">
                     {featuredArticle.image_url ? (
                       <img
                         src={featuredArticle.image_url}
@@ -123,7 +123,7 @@ export default function Blog() {
                     </Badge>
                   </div>
 
-                  <div className="p-8 flex flex-col justify-center bg-white">
+                  <div className="p-8 flex flex-col justify-center bg-card">
                     <Badge className="w-fit mb-4 bg-[#0B2545]/10 text-[#0B2545] border-0">
                       {categories.find(c => c.id === featuredArticle.category)?.icon || "📰"}{" "}
                       {categories.find(c => c.id === featuredArticle.category)?.label || featuredArticle.category}
@@ -173,7 +173,7 @@ export default function Blog() {
             ))}
           </div>
         ) : regularArticles.length === 0 ? (
-          <div className="bg-white rounded-[12px] p-16 text-center border border-slate-200">
+          <div className="bg-card rounded-[12px] p-16 text-center border border-slate-200">
             <BookOpen className="w-20 h-20 text-slate-300 mx-auto mb-6" />
             <h3 className="text-2xl font-bold text-[#0B2545] mb-3">
               Aucun article trouvé
@@ -193,7 +193,7 @@ export default function Blog() {
               >
                 <Link to={createPageUrl(`ArticleDetail?id=${article.id}`)}>
                   <Card className="group rounded-[12px] border-2 border-slate-200 overflow-hidden hover:border-[#D08B3D] hover:shadow-2xl transition-all h-full flex flex-col">
-                    <div className="relative aspect-video overflow-hidden bg-slate-100">
+                    <div className="relative aspect-video overflow-hidden bg-muted">
                       {article.image_url ? (
                         <img
                           src={article.image_url}
@@ -207,7 +207,7 @@ export default function Blog() {
                       )}
                     </div>
 
-                    <div className="p-6 flex flex-col flex-1 bg-white">
+                    <div className="p-6 flex flex-col flex-1 bg-card">
                       <Badge className="w-fit mb-3 bg-[#D08B3D]/10 text-[#D08B3D] border-0 text-xs">
                         {categories.find(c => c.id === article.category)?.icon || "📰"}{" "}
                         {categories.find(c => c.id === article.category)?.label || article.category}

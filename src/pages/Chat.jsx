@@ -1,79 +1,156 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
+import { useAuth } from '@/lib/AuthContext';
+import { useMessageStream } from '@/hooks/useMessageStream';
+import BookingChatBanner from '@/components/messages/BookingChatBanner';
+import RescheduleProposalCard from '@/components/messages/RescheduleProposalCard';
 import {
-    Send, Search, MessageSquare, Phone, Video, Info,
-    MoreVertical, CheckCheck, Paperclip, Smile,
-    ChevronLeft, Scissors, Store, ShieldCheck
+    Send, Search, MessageSquare, ChevronLeft, Scissors, Store, ShieldCheck, CheckCheck, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MetaTags } from '@/components/seo/MetaTags';
+import { signInUrlWithReturn } from '@/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
+import { toast } from 'sonner';
+
+function readChatParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        contactUserId: params.get('contact') || params.get('contactId') || null,
+        bookingId: params.get('booking') || params.get('bookingId') || null,
+        barberId: params.get('barber_id') || params.get('barberId') || null,
+        shopId: params.get('shop_id') || params.get('shopId') || null,
+    };
+}
+
+function formatMsgTime(value) {
+    if (!value) return '';
+    const d = parseISO(value);
+    return isValid(d) ? format(d, 'p') : '';
+}
+
 export default function Chat() {
-    const [selectedContactId, setSelectedContactId] = useState(null);
-    const [messageText, setMessageText] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
+    const { user, isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
     const scrollRef = useRef(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [messageText, setMessageText] = useState('');
+    const [selectedContactId, setSelectedContactId] = useState(null);
+    const [activeBookingId, setActiveBookingId] = useState(null);
+    const [rescheduleOpen, setRescheduleOpen] = useState(false);
+    const [proposedDateTime, setProposedDateTime] = useState('');
 
-    const { data: user } = useQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => sovereign.auth.me().catch(() => null),
+    const initialParams = useMemo(() => readChatParams(), []);
+
+    useMessageStream(user?.id, isAuthenticated);
+
+    const { data: threads = [], isLoading: threadsLoading } = useQuery({
+        queryKey: ['message-threads', user?.id],
+        queryFn: () => sovereign.messages.getThreads(),
+        enabled: !!user?.id,
+        refetchInterval: 15000,
     });
 
-    const { data: conversations = [] } = useQuery({
-        queryKey: ['conversations', user?.id],
-        queryFn: () => user ? sovereign.request('GET', `/conversations/${user.id}`) : [],
-        enabled: !!user,
-        refetchInterval: 5000, // Poll for new conversations
-    });
-
-    const { data: messages = [] } = useQuery({
-        queryKey: ['messages', selectedContactId],
+    const { data: resolvedContact } = useQuery({
+        queryKey: ['resolve-contact', initialParams.barberId, initialParams.shopId, initialParams.contactUserId],
         queryFn: async () => {
-            if (!user || !selectedContactId) return [];
-            // Fetch messages where (sender=user AND receiver=contact) OR (sender=contact AND receiver=user)
-            const sent = await sovereign.entities.Message.filter({
-                sender_id: user.id,
-                receiver_id: selectedContactId
-            });
-            const received = await sovereign.entities.Message.filter({
-                sender_id: selectedContactId,
-                receiver_id: user.id
-            });
-
-            return [...sent, ...received].sort((a, b) =>
-                new Date(a.created_date).getTime() - new Date(b.created_date).getTime()
-            );
+            if (initialParams.contactUserId) {
+                return sovereign.messages.resolveContact({ user_id: initialParams.contactUserId });
+            }
+            if (initialParams.barberId) {
+                return sovereign.messages.resolveContact({ barber_id: initialParams.barberId });
+            }
+            if (initialParams.shopId) {
+                return sovereign.messages.resolveContact({ shop_id: initialParams.shopId });
+            }
+            return null;
         },
-        enabled: !!user && !!selectedContactId,
-        refetchInterval: 3000, // Frequent polling for messages
+        enabled: !!user && !!(initialParams.contactUserId || initialParams.barberId || initialParams.shopId),
     });
 
-    const sendMessageMutation = useMutation({
-        mutationFn: (content) => sovereign.entities.Message.create({
-            sender_id: user.id,
-            receiver_id: selectedContactId,
-            content,
-            is_read: false,
-            created_date: new Date().toISOString()
-        }),
+    useEffect(() => {
+        if (resolvedContact?.user_id && !selectedContactId) {
+            setSelectedContactId(resolvedContact.user_id);
+        } else if (initialParams.contactUserId && !selectedContactId) {
+            setSelectedContactId(initialParams.contactUserId);
+        }
+        if (initialParams.bookingId && !activeBookingId) {
+            setActiveBookingId(initialParams.bookingId);
+        }
+    }, [resolvedContact, initialParams, selectedContactId, activeBookingId]);
+
+    const { data: bookingContext } = useQuery({
+        queryKey: ['booking-chat-context', activeBookingId],
+        queryFn: () => sovereign.messages.getBookingContext(activeBookingId),
+        enabled: !!activeBookingId && !!user,
+    });
+
+    useEffect(() => {
+        if (!bookingContext || !user?.id) return;
+        const otherId =
+            user.id === bookingContext.client_id
+                ? bookingContext.barber_user_id
+                : bookingContext.client_id;
+        if (otherId && !selectedContactId) {
+            setSelectedContactId(otherId);
+        }
+    }, [bookingContext, user?.id, selectedContactId]);
+
+    const { data: messages = [], isLoading: messagesLoading } = useQuery({
+        queryKey: ['message-thread', user?.id, selectedContactId, activeBookingId],
+        queryFn: () => sovereign.messages.getThread(selectedContactId, activeBookingId),
+        enabled: !!user?.id && !!selectedContactId,
+        refetchInterval: 8000,
+    });
+
+    const sendMutation = useMutation({
+        mutationFn: (content) =>
+            sovereign.messages.send({
+                receiver_id: selectedContactId,
+                content,
+                booking_id: activeBookingId,
+            }),
         onSuccess: () => {
             setMessageText('');
-            queryClient.invalidateQueries({ queryKey: ['messages', selectedContactId] });
-            queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
-        }
+            queryClient.invalidateQueries({ queryKey: ['message-thread', user?.id, selectedContactId] });
+            queryClient.invalidateQueries({ queryKey: ['message-threads', user?.id] });
+        },
+        onError: (err) => toast.error(err.message),
     });
 
-    const handleSendMessage = (e) => {
-        e.preventDefault();
-        if (!messageText.trim() || sendMessageMutation.isPending) return;
-        sendMessageMutation.mutate(messageText.trim());
-    };
+    const proposeMutation = useMutation({
+        mutationFn: () => {
+            const dt = new Date(proposedDateTime);
+            if (Number.isNaN(dt.getTime())) throw new Error('Pick a valid date and time');
+            return sovereign.messages.proposeReschedule(activeBookingId, dt.toISOString());
+        },
+        onSuccess: () => {
+            setRescheduleOpen(false);
+            setProposedDateTime('');
+            queryClient.invalidateQueries({ queryKey: ['message-thread', user?.id, selectedContactId] });
+            toast.success('Reschedule proposal sent');
+        },
+        onError: (err) => toast.error(err.message),
+    });
+
+    const respondMutation = useMutation({
+        mutationFn: ({ messageId, accept }) => sovereign.messages.respondReschedule(messageId, accept),
+        onSuccess: (data, vars) => {
+            queryClient.invalidateQueries({ queryKey: ['message-thread', user?.id, selectedContactId] });
+            queryClient.invalidateQueries({ queryKey: ['booking-chat-context', activeBookingId] });
+            queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['provider-bookings'] });
+            toast.success(vars.accept ? 'Appointment rescheduled' : 'Proposal declined');
+        },
+        onError: (err) => toast.error(err.message),
+    });
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -81,23 +158,53 @@ export default function Chat() {
         }
     }, [messages]);
 
-    const selectedContact = conversations.find(c => c.id === selectedContactId);
+    const mergedThreads = useMemo(() => {
+        const list = [...threads];
+        if (resolvedContact && !list.some((t) => t.contact_user_id === resolvedContact.user_id)) {
+            list.unshift({
+                contact_user_id: resolvedContact.user_id,
+                full_name: resolvedContact.display_name,
+                role: resolvedContact.role,
+                avatar_url: resolvedContact.avatar_url,
+                unread_count: 0,
+                last_message: null,
+                booking_id: initialParams.bookingId,
+            });
+        }
+        return list;
+    }, [threads, resolvedContact, initialParams.bookingId]);
 
-    const filteredConversations = conversations.filter(c =>
+    const selectedContact =
+        mergedThreads.find((c) => c.contact_user_id === selectedContactId) ||
+        (resolvedContact && selectedContactId === resolvedContact.user_id
+            ? {
+                  contact_user_id: resolvedContact.user_id,
+                  full_name: resolvedContact.display_name,
+                  role: resolvedContact.role,
+                  avatar_url: resolvedContact.avatar_url,
+              }
+            : null);
+
+    const filteredConversations = mergedThreads.filter((c) =>
         c.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (!user) {
+    const handleSend = (e) => {
+        e.preventDefault();
+        if (!messageText.trim() || sendMutation.isPending) return;
+        sendMutation.mutate(messageText.trim());
+    };
+
+    if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <div className="stb-page flex items-center justify-center p-4">
+                <MetaTags title="Messages" description="Chat with your barber or clients" />
                 <div className="text-center space-y-4 max-w-sm">
-                    <div className="w-16 h-16 bg-card rounded-2xl shadow-sm flex items-center justify-center mx-auto text-muted-foreground">
-                        <MessageSquare className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-foreground">Sign in for Chat</h2>
-                    <p className="text-muted-foreground">Connect with your barbers or clients directly through our secure platform.</p>
-                    <Button variant="default" className="w-full bg-primary text-primary-foreground hover:opacity-95 rounded-xl py-6 h-auto text-lg font-medium shadow-lg shadow-md" onClick={() => window.location.href = '/SignIn'}>
-                        Sign In to Continue
+                    <MessageSquare className="w-12 h-12 text-primary mx-auto" />
+                    <h2 className="text-2xl font-bold">Sign in for Messages</h2>
+                    <p className="text-muted-foreground">Coordinate appointments and reschedule in real time.</p>
+                    <Button asChild>
+                        <a href={signInUrlWithReturn('/Chat')}>Sign in</a>
                     </Button>
                 </div>
             </div>
@@ -105,201 +212,202 @@ export default function Chat() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col pb-24 lg:pb-8">
-            <MetaTags title="Secure Messages" description="Connect with grooming professionals" />
+        <div className="stb-page flex flex-col lg:pb-8">
+            <MetaTags title="Messages" description="Secure booking chat" />
             <div className="flex-1 flex overflow-hidden min-h-0">
-
-            {/* Sidebar: Conversations List */}
-            <div className={`w-full md:w-80 lg:w-96 bg-card border-r border-border flex flex-col ${selectedContactId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-slate-100 flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-xl font-bold text-foreground">Messages</h1>
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <MoreVertical className="w-5 h-5" />
-                        </Button>
+                <div className={`w-full md:w-80 lg:w-96 bg-card border-r border-border flex flex-col ${selectedContactId ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="p-4 border-b flex flex-col gap-4">
+                        <h1 className="text-xl font-bold">Messages</h1>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9 rounded-xl h-10"
+                            />
+                        </div>
                     </div>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search conversations..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 bg-muted border-transparent focus:bg-card rounded-xl h-10 text-sm"
-                        />
-                    </div>
+                    <ScrollArea className="flex-1">
+                        <div className="p-2 space-y-1">
+                            {threadsLoading && (
+                                <div className="py-8 flex justify-center">
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                </div>
+                            )}
+                            {filteredConversations.map((contact) => (
+                                <button
+                                    key={contact.contact_user_id}
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedContactId(contact.contact_user_id);
+                                        if (contact.booking_id) setActiveBookingId(contact.booking_id);
+                                    }}
+                                    className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
+                                        selectedContactId === contact.contact_user_id ? 'bg-muted' : 'hover:bg-muted/60'
+                                    }`}
+                                >
+                                    <Avatar className="w-11 h-11">
+                                        {contact.avatar_url?.trim() ? <AvatarImage src={contact.avatar_url} /> : null}
+                                        <AvatarFallback>{contact.full_name?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 text-left min-w-0">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-semibold truncate text-sm">{contact.full_name}</span>
+                                            {contact.unread_count > 0 && (
+                                                <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full">
+                                                    {contact.unread_count}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {contact.last_message?.content || 'Start conversation'}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
+                            {!threadsLoading && filteredConversations.length === 0 && (
+                                <p className="text-center text-sm text-muted-foreground py-12 px-4">
+                                    Message a barber from their profile, or open chat from a booking.
+                                </p>
+                            )}
+                        </div>
+                    </ScrollArea>
                 </div>
 
-                <ScrollArea className="flex-1">
-                    <div className="p-2 space-y-1">
-                        {filteredConversations.map(contact => (
-                            <button
-                                key={contact.id}
-                                onClick={() => setSelectedContactId(contact.id)}
-                                className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${selectedContactId === contact.id ? 'bg-muted' : 'hover:bg-muted'}`}
-                            >
-                                <div className="relative">
-                                    <Avatar className="w-12 h-12 border-2 border-white shadow-sm">
-                                        {contact.avatar_url?.trim() ? <AvatarImage src={contact.avatar_url} /> : null}
-                                        <AvatarFallback className="bg-muted text-foreground font-bold uppercase">
-                                            {contact.full_name?.charAt(0)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    {/* Status Indicator */}
-                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-primary border-2 border-white rounded-full shadow-sm"></div>
-                                </div>
-                                <div className="flex-1 text-left min-w-0">
-                                    <div className="flex justify-between items-center mb-0.5">
-                                        <span className="font-bold text-foreground truncate">{contact.full_name}</span>
-                                        <span className="text-[10px] text-muted-foreground">12:45 PM</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        {contact.role === 'barber' && <Scissors className="w-3 h-3 text-muted-foreground" />}
-                                        {contact.role === 'shop_owner' && <Store className="w-3 h-3 text-muted-foreground" />}
-                                        <p className="text-xs text-muted-foreground truncate">Click to message...</p>
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
-                        {conversations.length === 0 && (
-                            <div className="py-20 text-center px-6">
-                                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                                    <MessageSquare className="w-6 h-6" />
-                                </div>
-                                <p className="text-sm font-medium text-foreground mb-1">No conversations yet</p>
-                                <p className="text-xs text-muted-foreground">Go to Explore to find a barber and start a conversation.</p>
-                            </div>
-                        )}
-                    </div>
-                </ScrollArea>
-            </div>
-
-            {/* Main Chat Area */}
-            <div className={`flex-1 bg-muted flex flex-col ${!selectedContactId ? 'hidden md:flex' : 'flex'}`}>
-                {selectedContactId ? (
-                    <>
-                        {/* Header */}
-                        <div className="bg-card border-b border-border p-3 px-4 flex items-center justify-between sticky top-0 z-20">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="md:hidden rounded-full"
-                                    onClick={() => setSelectedContactId(null)}
-                                >
+                <div className={`flex-1 bg-muted/40 flex flex-col ${!selectedContactId ? 'hidden md:flex' : 'flex'}`}>
+                    {selectedContactId ? (
+                        <>
+                            <div className="bg-card border-b p-3 flex items-center gap-3 sticky top-0 z-20">
+                                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSelectedContactId(null)}>
                                     <ChevronLeft className="w-6 h-6" />
                                 </Button>
                                 <Avatar className="w-10 h-10">
                                     {selectedContact?.avatar_url?.trim() ? <AvatarImage src={selectedContact.avatar_url} /> : null}
-                                    <AvatarFallback className="bg-muted text-foreground font-bold">
-                                        {selectedContact?.full_name?.charAt(0)}
-                                    </AvatarFallback>
+                                    <AvatarFallback>{selectedContact?.full_name?.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div>
-                                    <h2 className="font-bold text-foreground leading-none mb-1 flex items-center gap-1.5">
+                                <div className="flex-1 min-w-0">
+                                    <h2 className="font-bold text-sm flex items-center gap-1 truncate">
                                         {selectedContact?.full_name}
-                                        {selectedContact?.role !== 'client' && <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />}
+                                        {selectedContact?.role !== 'client' && <ShieldCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
                                     </h2>
-                                    <p className="text-[10px] text-primary font-medium flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span> Online
+                                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                        {selectedContact?.role === 'barber' && <Scissors className="w-3 h-3" />}
+                                        {selectedContact?.role === 'shop_owner' && <Store className="w-3 h-3" />}
+                                        {selectedContact?.role ?? 'client'}
                                     </p>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground">
-                                    <Phone className="w-5 h-5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground">
-                                    <Video className="w-5 h-5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground">
-                                    <Info className="w-5 h-5" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Messages Area */}
-                        <ScrollArea
-                            viewportRef={scrollRef}
-                            className="flex-1 p-4 md:p-6"
-                        >
-                            <div className="space-y-4 pb-4">
-                                <div className="text-center py-4">
-                                    <span className="px-3 py-1 bg-card border border-slate-100 text-[10px] text-muted-foreground rounded-full font-medium">
-                                        Conversation Started on {format(new Date(), 'MMMM d, yyyy')}
-                                    </span>
-                                </div>
-
-                                <AnimatePresence initial={false}>
-                                    {messages.map((msg, _idx) => {
-                                        const isMe = msg.sender_id === user.id;
-                                        return (
-                                            <motion.div
-                                                key={msg.id}
-                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
-                                            >
-                                                <div className={`max-w-[80%] md:max-w-[70%] space-y-1`}>
-                                                    <div className={`p-3 md:p-4 rounded-3xl shadow-sm relative ${isMe ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-card text-foreground border border-border rounded-tl-none'}`}>
-                                                        <p className="text-sm md:text-base leading-relaxed">{msg.content}</p>
-                                                        <div className={`flex items-center gap-1 mt-1 justify-end ${isMe ? 'text-white/40' : 'text-muted-foreground'}`}>
-                                                            <span className="text-[9px]">{format(new Date(msg.created_date), 'p')}</span>
-                                                            {isMe && <CheckCheck className="w-3 h-3" />}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })}
-                                </AnimatePresence>
-                                {sendMessageMutation.isPending && (
-                                    <div className="flex justify-end">
-                                        <div className="bg-muted text-muted-foreground p-3 rounded-2xl animate-pulse">
-                                            Sending...
-                                        </div>
-                                    </div>
+                                {activeBookingId && (
+                                    <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setActiveBookingId(null)}>
+                                        All messages
+                                    </Button>
                                 )}
                             </div>
-                        </ScrollArea>
 
-                        {/* Input Area */}
-                        <div className="bg-card border-t border-border p-3 md:p-4">
-                            <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3 max-w-4xl mx-auto">
-                                <Button type="button" variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground flex-shrink-0">
-                                    <Paperclip className="w-5 h-5" />
-                                </Button>
-                                <div className="flex-1 relative">
+                            {activeBookingId && bookingContext && (
+                                <BookingChatBanner
+                                    context={bookingContext}
+                                    onProposeReschedule={() => setRescheduleOpen(true)}
+                                />
+                            )}
+
+                            <ScrollArea viewportRef={scrollRef} className="flex-1 p-4">
+                                {messagesLoading ? (
+                                    <div className="flex justify-center py-12">
+                                        <Loader2 className="w-6 h-6 animate-spin" />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 max-w-3xl mx-auto">
+                                        <AnimatePresence initial={false}>
+                                            {messages.map((msg) => {
+                                                const isMe = msg.sender_id === user.id;
+                                                if (msg.message_type === 'reschedule_proposal') {
+                                                    return (
+                                                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                            <RescheduleProposalCard
+                                                                message={msg}
+                                                                isMe={isMe}
+                                                                isPending={respondMutation.isPending}
+                                                                onAccept={(id) => respondMutation.mutate({ messageId: id, accept: true })}
+                                                                onDecline={(id) => respondMutation.mutate({ messageId: id, accept: false })}
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+                                                return (
+                                                    <motion.div
+                                                        key={msg.id}
+                                                        initial={{ opacity: 0, y: 6 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                                                    >
+                                                        <div
+                                                            className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
+                                                                isMe
+                                                                    ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                                                                    : 'bg-card border rounded-tl-sm'
+                                                            }`}
+                                                        >
+                                                            <p className="leading-relaxed">{msg.content}</p>
+                                                            <div className={`flex items-center gap-1 mt-1 justify-end text-[10px] ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                                                                {formatMsgTime(msg.created_at)}
+                                                                {isMe && <CheckCheck className="w-3 h-3" />}
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                            </ScrollArea>
+
+                            <div className="bg-card border-t p-3">
+                                <form onSubmit={handleSend} className="flex gap-2 max-w-3xl mx-auto">
                                     <Input
-                                        placeholder="Type your message..."
+                                        placeholder="Type a message..."
                                         value={messageText}
                                         onChange={(e) => setMessageText(e.target.value)}
-                                        className="h-12 border-slate-100 bg-muted focus:bg-card rounded-2xl px-4 pr-10 text-sm md:text-base"
+                                        className="rounded-xl h-11"
                                     />
-                                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground">
-                                        <Smile className="w-5 h-5" />
+                                    <Button type="submit" disabled={!messageText.trim() || sendMutation.isPending} className="rounded-xl h-11 w-11 p-0 shrink-0">
+                                        <Send className="w-5 h-5" />
                                     </Button>
-                                </div>
-                                <Button
-                                    type="submit"
-                                    disabled={!messageText.trim() || sendMessageMutation.isPending}
-                                    className="bg-primary text-primary-foreground hover:opacity-95 rounded-full h-12 w-12 p-0 flex-shrink-0"
-                                >
-                                    <Send className="w-5 h-5" />
-                                </Button>
-                            </form>
+                                </form>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                            <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
+                            <p className="text-muted-foreground text-sm">Select a conversation or message someone from a booking.</p>
                         </div>
-                    </>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-muted">
-                        <div className="w-20 h-20 bg-card rounded-3xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 text-muted-foreground transform rotate-3">
-                            <MessageSquare className="w-10 h-10" />
-                        </div>
-                        <h2 className="text-xl font-bold text-foreground mb-2">Your Conversations</h2>
-                        <p className="text-muted-foreground max-w-xs mx-auto text-sm">Select a contact from the sidebar to start chatting with your barber or shop manager.</p>
+                    )}
+                </div>
+            </div>
+
+            <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
+                <DialogContent className="rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Propose a new time</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2 py-2">
+                        <Label htmlFor="proposed-dt">Date & time</Label>
+                        <Input
+                            id="proposed-dt"
+                            type="datetime-local"
+                            value={proposedDateTime}
+                            onChange={(e) => setProposedDateTime(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">The other party can accept or decline in chat. Slot availability is checked automatically.</p>
                     </div>
-                )}
-            </div>
-            </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRescheduleOpen(false)}>Cancel</Button>
+                        <Button onClick={() => proposeMutation.mutate()} disabled={!proposedDateTime || proposeMutation.isPending}>
+                            Send proposal
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -9,8 +9,10 @@ import { sovereign } from '@/api/apiClient';
 import { FormField } from '@/components/ui/form-field';
 import { shopSchema } from '@/components/schemas';
 import { Upload } from 'lucide-react';
+import { useProviderSetupTheme } from '@/components/provider-setup/providerSetupTheme';
 
-export default function ProfileSetup({ shop, onNext }) {
+export default function ProfileSetup({ shop, onNext, variant = 'dark' }) {
+  const t = useProviderSetupTheme(variant);
   const queryClient = useQueryClient();
   
   const form = useForm({
@@ -53,17 +55,17 @@ export default function ProfileSetup({ shop, onNext }) {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Complete Your Profile</h2>
-        <p className="text-gray-400">Add more details to help clients find and contact you.</p>
+        <p className={t.subtitle}>Add more details to help clients find and contact you.</p>
       </div>
 
-      <div className="bg-[#1A1D24] p-6 rounded-xl border border-white/10">
+      <div className={t.panel}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                   control={form.control}
                   name="name"
                   label="Shop Name"
                   render={(field) => (
-                      <Input {...field} className="bg-slate-950 border-white/10 text-white" />
+                      <Input {...field} className={t.input} />
                   )}
               />
 
@@ -72,7 +74,7 @@ export default function ProfileSetup({ shop, onNext }) {
                   name="location"
                   label="Address"
                   render={(field) => (
-                      <Input {...field} className="bg-slate-950 border-white/10 text-white" />
+                      <Input {...field} className={t.input} placeholder="Street, city" />
                   )}
               />
 
@@ -82,7 +84,7 @@ export default function ProfileSetup({ shop, onNext }) {
                       name="phone"
                       label="Phone Number"
                       render={(field) => (
-                          <Input {...field} placeholder="(555) 123-4567" className="bg-slate-950 border-white/10 text-white" />
+                          <Input {...field} placeholder="(555) 123-4567" className={t.input} />
                       )}
                   />
                   <FormField
@@ -90,7 +92,7 @@ export default function ProfileSetup({ shop, onNext }) {
                       name="website"
                       label="Website (Optional)"
                       render={(field) => (
-                          <Input {...field} placeholder="https://" className="bg-slate-950 border-white/10 text-white" />
+                          <Input {...field} placeholder="https://" className={t.input} />
                       )}
                   />
               </div>
@@ -100,21 +102,21 @@ export default function ProfileSetup({ shop, onNext }) {
                   name="description"
                   label="Description"
                   render={(field) => (
-                      <Textarea {...field} className="min-h-[100px] bg-slate-950 border-white/10 text-white" />
+                      <Textarea {...field} className={t.cn('min-h-[100px]', t.input)} />
                   )}
               />
 
               <div className="pt-2">
-                  <div className="border-2 border-dashed border-white/10 rounded-xl p-6 text-center hover:bg-white/5 transition-colors cursor-pointer">
-                      <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <Upload className="w-5 h-5 text-gray-400" />
+                  <div className={t.uploadZone}>
+                      <div className={t.uploadIcon}>
+                          <Upload className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <p className="text-gray-300 text-sm font-medium">Update Shop Banner</p>
+                      <p className={t.uploadText}>Update Shop Banner</p>
                   </div>
               </div>
 
               <div className="pt-4">
-                  <Button type="submit" disabled={updateShopMutation.isPending} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white">
+                  <Button type="submit" disabled={updateShopMutation.isPending} className={t.saveBtn}>
                       {updateShopMutation.isPending ? 'Saving...' : 'Save & Continue'}
                   </Button>
               </div>

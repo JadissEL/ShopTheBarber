@@ -1,90 +1,209 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/react';
 import { sovereign } from '@/api/apiClient';
+import { toast } from 'sonner';
+import { claimPendingGuestBookings } from '@/lib/guestBooking';
+import { createPageUrl } from '@/utils';
 
 const AuthContext = createContext();
 
+const REF_STORAGE_KEY = 'stb_referral_code';
+
+const SYNC_ERROR_DEFAULT =
+  'Could not connect your account to the server. Check that the API is running and CLERK_SECRET_KEY is set in server/.env.';
+
+async function tryClaimPendingGuestBookings() {
+  try {
+    const result = await claimPendingGuestBookings();
+    if (result?.linked_count > 0) {
+      toast.success(
+        result.linked_count === 1
+          ? 'Your guest booking is now on your account'
+          : `${result.linked_count} guest bookings linked to your account`
+      );
+      return { status: 'claimed', count: result.linked_count };
+    }
+    return { status: 'none' };
+  } catch (err) {
+    return { status: 'failed', reason: err instanceof Error ? err.message : 'claim failed' };
+  }
+}
+
+async function tryClaimPendingReferral() {
+  const code = localStorage.getItem(REF_STORAGE_KEY);
+  if (!code?.trim()) return { status: 'none' };
+  try {
+    const result = await sovereign.referral.claim(code.trim());
+    localStorage.removeItem(REF_STORAGE_KEY);
+    toast.success(result.message || 'Referral applied, welcome bonus unlocked at checkout!');
+    return { status: 'claimed' };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Could not apply referral code';
+    if (/already|own code|invalid/i.test(msg)) {
+      localStorage.removeItem(REF_STORAGE_KEY);
+      return { status: 'skipped', reason: msg };
+    }
+    return { status: 'failed', reason: msg };
+  }
+}
+
+function mapClerkUser(clerkUser, serverUser) {
+  const email = serverUser?.email ?? clerkUser.primaryEmailAddress?.emailAddress;
+  return {
+    id: serverUser?.id,
+    uid: clerkUser.id,
+    email,
+    full_name: serverUser?.full_name || clerkUser.fullName || clerkUser.firstName || 'User',
+    avatar_url: serverUser?.avatar_url || clerkUser.imageUrl,
+    role: serverUser?.role || clerkUser.publicMetadata?.role || 'client',
+    created_at: serverUser?.created_at || clerkUser.createdAt,
+    phone: serverUser?.phone,
+    stripe_connect_status: serverUser?.stripe_connect_status,
+    stripe_account_id: serverUser?.stripe_account_id,
+  };
+}
+
 export const AuthProvider = ({ children }) => {
-  const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useUser();
-  const { signOut, getToken } = useClerkAuth();
+  const { user: clerkUser, isLoaded: userLoaded } = useUser();
+  const { isLoaded: sessionLoaded, isSignedIn, signOut, getToken } = useClerkAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
-  
+
   const [user, setUser] = useState(null);
+  const [syncStatus, setSyncStatus] = useState('idle');
+  const [syncError, setSyncError] = useState(null);
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState({ public_settings: {} });
+  const referralClaimAttempted = useRef(false);
+  const guestClaimAttempted = useRef(false);
+  const autoRetryDone = useRef(false);
+  const syncInFlight = useRef(false);
+  const syncedClerkIdRef = useRef(null);
 
-  // Sync Clerk user to backend and local state
-  useEffect(() => {
-    const syncUser = async () => {
-      if (clerkLoaded && isSignedIn && clerkUser) {
-        try {
-          // Get Clerk JWT token
-          const token = await getToken();
-          
-          // Store token for API calls
-          if (token) {
-            localStorage.setItem('clerk_token', token);
-          }
-
-          // Map Clerk user to our user format
-          let serverUser = null;
-          try {
-            serverUser = await sovereign.auth.me();
-          } catch {
-            serverUser = null;
-          }
-
-          const email =
-            serverUser?.email ?? clerkUser.primaryEmailAddress?.emailAddress;
-          const mappedUser = {
-            id: serverUser?.id,
-            uid: clerkUser.id,
-            email,
-            full_name: serverUser?.full_name || clerkUser.fullName || clerkUser.firstName || 'User',
-            avatar_url: serverUser?.avatar_url || clerkUser.imageUrl,
-            role: serverUser?.role || clerkUser.publicMetadata?.role || 'client',
-            created_at: serverUser?.created_at || clerkUser.createdAt,
-            phone: serverUser?.phone,
-          };
-
-          setUser(mappedUser);
-          setAuthError(null);
-        } catch (error) {
-          console.error('Error syncing Clerk user:', error);
-          setAuthError({
-            type: 'sync_error',
-            message: 'Failed to sync user data'
-          });
-        }
-      } else if (clerkLoaded && !isSignedIn) {
+  const runBackendSync = useCallback(async () => {
+    if (!sessionLoaded || !userLoaded || !isSignedIn || !clerkUser?.id) {
+      if (sessionLoaded && !isSignedIn) {
         setUser(null);
+        setSyncStatus('idle');
+        setSyncError(null);
+        localStorage.removeItem('clerk_token');
+        autoRetryDone.current = false;
+        syncedClerkIdRef.current = null;
       }
-    };
+      return;
+    }
 
-    syncUser();
-  }, [clerkLoaded, isSignedIn, clerkUser]); // Removed getToken to prevent loop
+    const clerkId = clerkUser.id;
+    if (syncedClerkIdRef.current === clerkId) {
+      return;
+    }
+
+    if (syncInFlight.current) return;
+    syncInFlight.current = true;
+    setSyncStatus('syncing');
+    setSyncError(null);
+
+    try {
+      const token = await getToken();
+      if (token) {
+        localStorage.setItem('clerk_token', token);
+      } else {
+        throw new Error('Could not obtain a Clerk session token. Try signing out and back in.');
+      }
+
+      const { user: serverUser, error } = await sovereign.auth.meResult();
+
+      if (!serverUser?.id) {
+        const message =
+          error?.hint && error?.message
+            ? `${error.message} ${error.hint}`
+            : error?.hint || error?.message || SYNC_ERROR_DEFAULT;
+
+        if (!autoRetryDone.current) {
+          autoRetryDone.current = true;
+          syncInFlight.current = false;
+          await new Promise((r) => setTimeout(r, 800));
+          return runBackendSync();
+        }
+
+        setUser(null);
+        setSyncStatus('error');
+        setSyncError(message);
+        setAuthError({ type: 'sync_error', message });
+        syncedClerkIdRef.current = null;
+        return;
+      }
+
+      const mappedUser = mapClerkUser(clerkUser, serverUser);
+      setUser(mappedUser);
+      setSyncStatus('ready');
+      setSyncError(null);
+      setAuthError(null);
+      autoRetryDone.current = false;
+      syncedClerkIdRef.current = clerkId;
+
+      void (async () => {
+        sovereign.analytics.identify?.();
+        const claimResult = await tryClaimPendingReferral();
+        if (claimResult.status === 'failed' && !referralClaimAttempted.current) {
+          referralClaimAttempted.current = true;
+        } else if (claimResult.status === 'claimed' || claimResult.status === 'skipped') {
+          referralClaimAttempted.current = true;
+        }
+
+        const guestClaim = await tryClaimPendingGuestBookings();
+        if (guestClaim.status === 'claimed' || guestClaim.status === 'none') {
+          guestClaimAttempted.current = true;
+        } else if (!guestClaimAttempted.current) {
+          guestClaimAttempted.current = true;
+        }
+      })();
+    } catch (error) {
+      console.error('Error syncing Clerk user:', error);
+      const message = error instanceof Error ? error.message : SYNC_ERROR_DEFAULT;
+      setUser(null);
+      setSyncStatus('error');
+      setSyncError(message);
+      setAuthError({ type: 'sync_error', message });
+      syncedClerkIdRef.current = null;
+    } finally {
+      syncInFlight.current = false;
+    }
+  }, [sessionLoaded, userLoaded, isSignedIn, clerkUser?.id, getToken]);
+
+  useEffect(() => {
+    void runBackendSync();
+  }, [runBackendSync]);
+
+  const retrySync = useCallback(async () => {
+    autoRetryDone.current = false;
+    syncedClerkIdRef.current = null;
+    await runBackendSync();
+  }, [runBackendSync]);
 
   const logout = async (shouldRedirect = true) => {
     await signOut();
     setUser(null);
+    setSyncStatus('idle');
+    setSyncError(null);
+    autoRetryDone.current = false;
+    syncedClerkIdRef.current = null;
     localStorage.removeItem('clerk_token');
-    
+
     if (shouldRedirect) {
       window.location.href = '/';
     }
   };
 
   const navigateToLogin = () => {
-    window.location.href = '/signin';
+    window.location.href = createPageUrl('SignIn');
   };
 
-  // Email/password login via Clerk
   const login = async (email, password) => {
     try {
       if (!signIn) throw new Error('SignIn not ready');
-      
+
       const result = await signIn.create({
         identifier: email,
         password,
@@ -94,7 +213,7 @@ export const AuthProvider = ({ children }) => {
         await signIn.setActive({ session: result.createdSessionId });
         return { success: true };
       }
-      
+
       throw new Error('Login incomplete');
     } catch (error) {
       console.error('Login error:', error);
@@ -102,11 +221,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Email/password registration via Clerk
   const register = async (email, password, userData) => {
     try {
       if (!signUp) throw new Error('SignUp not ready');
-      
+
       const result = await signUp.create({
         emailAddress: email,
         password,
@@ -114,22 +232,19 @@ export const AuthProvider = ({ children }) => {
         lastName: userData?.full_name?.split(' ').slice(1).join(' ') || '',
       });
 
-      // Set role in public metadata
       if (userData?.role) {
         await signUp.update({
-          unsafeMetadata: { role: userData.role }
+          unsafeMetadata: { role: userData.role },
         });
       }
 
-      // Send email verification
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
 
       if (result.status === 'complete') {
         await signUp.setActive({ session: result.createdSessionId });
         return { success: true };
       }
-      
-      // If verification needed, return pending status
+
       return { success: true, verificationRequired: true };
     } catch (error) {
       console.error('Registration error:', error);
@@ -137,37 +252,58 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkUserAuth = async () => {
-    // Clerk handles auth checking automatically
-    return user;
+  const checkUserAuth = async () => user;
+
+  const refreshUser = async () => {
+    if (!sessionLoaded || !isSignedIn || !clerkUser) return null;
+    try {
+      const token = await getToken();
+      if (token) localStorage.setItem('clerk_token', token);
+      const serverUser = await sovereign.auth.me();
+      if (!serverUser?.id) return user;
+      const mappedUser = mapClerkUser(clerkUser, serverUser);
+      setUser(mappedUser);
+      setSyncStatus('ready');
+      setSyncError(null);
+      return mappedUser;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      return user;
+    }
   };
 
-  const checkAppState = async () => {
-    // No-op for Clerk - it handles state automatically
-  };
+  const checkAppState = async () => {};
 
   const role = user?.role ?? 'client';
-  const isLoading = !clerkLoaded;
-  const isAuthenticated = isSignedIn; // Use Clerk's auth state directly
-  const isLoadingAuth = !clerkLoaded;
+  const clerkReady = sessionLoaded && userLoaded;
+  const isLoading = !clerkReady;
+  const isAuthenticated = !!isSignedIn && syncStatus === 'ready' && !!user?.id;
+  const isLoadingAuth = !clerkReady || (isSignedIn && (syncStatus === 'syncing' || syncStatus === 'idle'));
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      isLoadingAuth,
-      isLoading,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-      role,
-      logout,
-      navigateToLogin,
-      checkAppState,
-      checkSession: checkUserAuth,
-      login,
-      register
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isSignedIn: !!isSignedIn,
+        isLoadingAuth,
+        isLoading,
+        isLoadingPublicSettings,
+        authError,
+        appPublicSettings,
+        role,
+        syncStatus,
+        syncError,
+        retrySync,
+        logout,
+        navigateToLogin,
+        checkAppState,
+        checkSession: checkUserAuth,
+        login,
+        register,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

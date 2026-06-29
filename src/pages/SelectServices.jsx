@@ -12,7 +12,7 @@ const defaultServices = [
     price: 35,
     duration: 45,
     image: "https://images.unsplash.com/photo-1621607512214-68297480165e?w=200&h=200&fit=crop",
-    bgColor: "bg-gray-100"
+    bgColor: "bg-muted"
   },
   {
     id: "2",
@@ -28,7 +28,7 @@ const defaultServices = [
     price: 40,
     duration: 45,
     image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200&h=200&fit=crop",
-    bgColor: "bg-slate-100"
+    bgColor: "bg-muted"
   },
   {
     id: "4",
@@ -87,16 +87,16 @@ export default function SelectServices() {
               <span className="text-white font-bold text-xl">Groomr</span>
             </Link>
             <nav className="hidden md:flex items-center gap-6">
-              <Link to={createPageUrl("UserHome")} className="text-gray-400 hover:text-white text-sm transition-colors">
+              <Link to={createPageUrl("UserHome")} className="text-muted-foreground/80 hover:text-white text-sm transition-colors">
                 Home
               </Link>
               <Link to={createPageUrl("SelectServices")} className="text-white text-sm transition-colors">
                 Services
               </Link>
-              <Link to={createPageUrl("Barbers")} className="text-gray-400 hover:text-white text-sm transition-colors">
+              <Link to={createPageUrl("Barbers")} className="text-muted-foreground/80 hover:text-white text-sm transition-colors">
                 Stylists
               </Link>
-              <Link to={createPageUrl("Barbers")} className="text-gray-400 hover:text-white text-sm transition-colors">
+              <Link to={createPageUrl("Barbers")} className="text-muted-foreground/80 hover:text-white text-sm transition-colors">
                 Locations
               </Link>
             </nav>
@@ -123,7 +123,7 @@ export default function SelectServices() {
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Select Services</h1>
-          <p className="text-gray-400">Choose the services you'd like to book.</p>
+          <p className="text-muted-foreground/80">Choose the services you'd like to book.</p>
         </div>
 
         {/* Services Grid */}
@@ -150,7 +150,7 @@ export default function SelectServices() {
                 />
               </div>
               <h3 className="text-white font-medium text-sm mb-1">{service.name}</h3>
-              <p className="text-gray-500 text-sm">
+              <p className="text-muted-foreground text-sm">
                 ${service.price} - {formatDuration(service.duration)}
               </p>
             </div>

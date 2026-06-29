@@ -101,16 +101,16 @@ Both saved in the artifacts folder showing:
 
 **Frontend** (`.env.local`):
 ```bash
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_b3V0Z29pbmctYmVldGxlLTIzLmNsZXJrLmFjY291bnRzLmRldiQ
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
 ```
 
 **Backend** (`server/.env`):
 ```bash
-CLERK_SECRET_KEY=sk_test_uNUX1evmC8p9tZg2JX2G5U5PvJQH66iHiFEzimBqfQ
-CLERK_PUBLISHABLE_KEY=pk_test_b3V0Z29pbmctYmVldGxlLTIzLmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_your_secret_key_here
+CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
 ```
 
-✅ Both files configured and working!
+Replace placeholders with keys from the Clerk Dashboard. **Never commit real keys to git.**
 
 ---
 

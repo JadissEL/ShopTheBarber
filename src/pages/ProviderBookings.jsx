@@ -12,22 +12,18 @@ import { useDebounce } from '@/components/hooks/use-debounce';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookingCard from '@/components/ui/booking-card';
+import { GroupBookingGuestPanel } from '@/components/booking/GroupBookingGuestPanel';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { sendNotification } from '@/components/notifications/notificationUtils';
-import { Check, X } from 'lucide-react';
+import { Check, X, MessageSquare } from 'lucide-react';
+import ProviderWaitlistPanel from '@/components/booking/ProviderWaitlistPanel';
+import ProviderCheckInDialog from '@/components/booking/ProviderCheckInDialog';
 import { sendBookingConfirmationEmail, sendCancellationEmail } from '@/functions/sendBookingConfirmationEmail';
-
-const POINTS_PER_DOLLAR = 10;
-const TIERS = {
-    Bronze: 0,
-    Silver: 5000,
-    Gold: 15000,
-    Platinum: 30000
-};
 
 export default function ProviderBookings() {
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [checkInBooking, setCheckInBooking] = useState(null);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -38,11 +34,33 @@ export default function ProviderBookings() {
     setPage(1);
   }, [debouncedSearch]);
 
+  const { data: user } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
+
+  const { data: myBarber } = useQuery({
+    queryKey: ['provider-bookings-barber', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const barbers = await sovereign.entities.Barber.filter({ user_id: user.id });
+      return barbers[0] ?? null;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: waitlistQueueData, isLoading: waitlistLoading } = useQuery({
+    queryKey: ['barber-waitlist-queue', myBarber?.id],
+    queryFn: () => sovereign.bookingWaitlist.getBarberQueue(myBarber.id),
+    enabled: activeTab === 'waitlist' && !!myBarber?.id,
+  });
+  const waitlistQueue = Array.isArray(waitlistQueueData)
+    ? waitlistQueueData
+    : waitlistQueueData?.entries ?? [];
+
   const getQuery = () => {
-      let query = {};
-      if (activeTab === 'upcoming') query.status = { $nin: ['completed', 'cancelled'] };
+      const query = {};
+      if (activeTab === 'upcoming') query.status = { $nin: ['completed', 'cancelled', 'no_show'] };
       if (activeTab === 'completed') query.status = 'completed';
       if (activeTab === 'cancelled') query.status = 'cancelled';
+      if (activeTab === 'no_show') query.status = 'no_show';
       if (activeTab === 'waitlist') return null; // Special handling for waitlist
       
       if (debouncedSearch) {
@@ -54,9 +72,10 @@ export default function ProviderBookings() {
   const { data: bookings = [], isFetching } = useQuery({
     queryKey: ['provider-bookings', activeTab, page, debouncedSearch],
     queryFn: () => {
-      if (activeTab === 'waitlist') return sovereign.entities.WaitingListEntry.list('-created_date', pageSize, (page - 1) * pageSize);
-      return sovereign.entities.Booking.filter(getQuery(), '-date_text', pageSize, (page - 1) * pageSize);
+      if (activeTab === 'waitlist') return Promise.resolve([]);
+      return sovereign.entities.Booking.filter(getQuery(), '-start_time', pageSize, (page - 1) * pageSize);
     },
+    enabled: activeTab !== 'waitlist',
     keepPreviousData: true,
     placeholderData: (prev) => prev,
   });
@@ -65,21 +84,38 @@ export default function ProviderBookings() {
     if (bookings.length === pageSize) {
       queryClient.prefetchQuery({
         queryKey: ['provider-bookings', activeTab, page + 1, debouncedSearch],
-        queryFn: () => sovereign.entities.Booking.filter(getQuery(), '-date_text', pageSize, page * pageSize),
+        queryFn: () => sovereign.entities.Booking.filter(getQuery(), '-start_time', pageSize, page * pageSize),
       });
     }
   }, [bookings, page, debouncedSearch, activeTab, queryClient]);
 
   const updateStatusMutation = useMutation({
       mutationFn: async ({ id, status, booking }) => {
+          if (status === 'confirmed') {
+              return sovereign.providerWallet.confirmBooking(id);
+          }
+          if (status === 'completed') {
+              if (booking?.authorization_status === 'authorized') {
+                  await sovereign.paymentProtection.captureAuthorization(id);
+              }
+              return sovereign.entities.Booking.update(id, { status: 'completed' });
+          }
+          if (status === 'cancelled') {
+              if (booking?.authorization_status === 'authorized') {
+                  await sovereign.paymentProtection.releaseAuthorization(id).catch(() => null);
+              }
+              try {
+                  return await sovereign.paymentProtection.cancelBooking(id);
+              } catch {
+                  return sovereign.providerWallet.cancelBooking(id);
+              }
+          }
           const updated = await sovereign.entities.Booking.update(id, { status });
 
-          // Send confirmation email when booking is confirmed
           if (status === 'confirmed' && booking) {
               await sendBookingConfirmationEmail(booking);
           }
 
-          // Send cancellation email
           if (status === 'cancelled' && booking) {
               await sendCancellationEmail(booking, 'barber');
           }
@@ -88,9 +124,8 @@ export default function ProviderBookings() {
       },
       onSuccess: async (data, variables) => {
           queryClient.invalidateQueries(['provider-bookings']);
+          queryClient.invalidateQueries({ queryKey: ['provider-fee-wallet'] });
           toast.success(`Booking ${variables.status.toLowerCase()}`);
-          
-          // Notify Client
           // variables.client_id should be passed or fetched. 
           // For now, assuming we have client_id in the booking object we acted upon, 
           // but react-query mutation variables usually only have input.
@@ -105,78 +140,49 @@ export default function ProviderBookings() {
              
              await sendNotification({
                  userId: variables.booking.client_id,
-                 // email: variables.booking.client_email, // If we had it
-                 title: title,
+                 title,
                  message: msg,
                  type: variables.status === 'confirmed' ? 'booking_confirmed' : 'booking_cancelled',
                  link: `/bookingdetails?id=${variables.booking.id}`,
                  relatedEntityId: variables.booking.id
                  });
-                 }
+          }
 
-                 // LOYALTY INTEGRATION: Award points on completion
-                 if (variables.status === 'completed' && variables.booking && variables.booking.client_id) {
-                 try {
-                  const clientId = variables.booking.client_id;
-                  const amount = variables.booking.price_at_booking || 0;
-                  if (amount > 0) {
-                      const points = Math.floor(amount * POINTS_PER_DOLLAR);
-
-                      // 1. Get/Create Profile
-                      const profiles = await sovereign.entities.LoyaltyProfile.filter({ user_id: clientId });
-                      let profile = profiles[0];
-                      if (!profile) {
-                          profile = await sovereign.entities.LoyaltyProfile.create({
-                              user_id: clientId,
-                              current_points: 0,
-                              lifetime_points: 0,
-                              tier: 'Bronze',
-                              joined_date: new Date().toISOString()
-                          });
-                      }
-
-                      // 2. Update Profile
-                      const newCurrent = (profile.current_points || 0) + points;
-                      const newLifetime = (profile.lifetime_points || 0) + points;
-
-                      // Calculate Tier
-                      let newTier = profile.tier;
-                      if (newLifetime >= TIERS.Platinum) newTier = 'Platinum';
-                      else if (newLifetime >= TIERS.Gold) newTier = 'Gold';
-                      else if (newLifetime >= TIERS.Silver) newTier = 'Silver';
-
-                      await sovereign.entities.LoyaltyProfile.update(profile.id, {
-                          current_points: newCurrent,
-                          lifetime_points: newLifetime,
-                          tier: newTier
-                      });
-
-                      // 3. Log Transaction
-                      await sovereign.entities.LoyaltyTransaction.create({
-                          user_id: clientId,
-                          points: points,
-                          type: 'earned_booking',
-                          description: `Earned from ${variables.booking.service_name}`,
-                          related_entity_id: variables.booking.id,
-                          date_text: new Date().toISOString()
-                      });
-
-                      // 4. Notify
-                      await sendNotification({
-                          userId: clientId,
-                          title: "Points Earned!",
-                          message: `You earned ${points} loyalty points for your booking.`,
-                          type: 'system',
-                          link: '/LoyaltyProgram',
-                          relatedEntityId: variables.booking.id
-                      });
-                  }
-                 } catch (e) {
-                  console.error("Loyalty error:", e);
-                 }
-                 }
+          if (variables.status === 'completed' && variables.booking?.client_id) {
+             await sendNotification({
+                 userId: variables.booking.client_id,
+                 title: 'How was your visit?',
+                 message: `Thanks for visiting! Leave a quick review for ${variables.booking.barber_name || 'your barber'}.`,
+                 type: 'review_request',
+                 link: `/Review?bookingId=${variables.booking.id}`,
+                 relatedEntityId: variables.booking.id
+             });
+          }
                  },
       onError: () => toast.error("Failed to update status")
+  });
+
+  const noShowMutation = useMutation({
+      mutationFn: (bookingId) => sovereign.paymentProtection.markNoShow(bookingId),
+      onSuccess: (data) => {
+          queryClient.invalidateQueries(['provider-bookings']);
+          const feeMsg = data.fee_amount > 0
+              ? data.charge?.charged
+                  ? ` No-show fee €${data.fee_amount.toFixed(2)} charged.`
+                  : ` Fee €${data.fee_amount.toFixed(2)}, ${data.charge?.error || 'charge pending'}.`
+              : '';
+          toast.success(`Marked as no-show.${feeMsg}`);
+      },
+      onError: (e) => toast.error(e.message || 'Failed to mark no-show'),
+  });
+
+  const retryNoShowMutation = useMutation({
+      mutationFn: (bookingId) => sovereign.paymentProtection.retryNoShowFee(bookingId),
+      onSuccess: () => {
+          queryClient.invalidateQueries(['provider-bookings']);
+          toast.success('No-show fee retry submitted');
+      },
+      onError: (e) => toast.error(e.message),
   });
 
   const handleTabChange = (tab) => {
@@ -199,7 +205,7 @@ export default function ProviderBookings() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans pb-12">
+    <div className="stb-page font-sans pb-12">
       <MetaTags 
         title="Manage Bookings" 
         description="View and manage client appointments." 
@@ -238,7 +244,7 @@ export default function ProviderBookings() {
         {/* Controls Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <div className="flex bg-muted p-1 rounded-xl border border-border">
-                {['upcoming', 'completed', 'cancelled', 'waitlist'].map((tab) => (
+                {['upcoming', 'completed', 'no_show', 'cancelled', 'waitlist'].map((tab) => (
                     <button 
                         key={tab}
                         onClick={() => handleTabChange(tab)}
@@ -272,7 +278,9 @@ export default function ProviderBookings() {
         {/* Bookings List */}
         <div className="space-y-4">
             <AnimatePresence mode="popLayout">
-                {bookings.length === 0 && !isFetching ? (
+                {activeTab === 'waitlist' ? (
+                    <ProviderWaitlistPanel entries={waitlistQueue} isLoading={waitlistLoading} />
+                ) : bookings.length === 0 && !isFetching ? (
                     <motion.div 
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         className="text-center py-20 bg-muted/50 rounded-3xl border border-border border-dashed"
@@ -283,38 +291,22 @@ export default function ProviderBookings() {
                         <h3 className="text-lg font-bold text-foreground mb-1">No bookings found</h3>
                         <p className="text-muted-foreground">Try adjusting your filters or create a new appointment.</p>
                     </motion.div>
-                ) : activeTab === 'waitlist' ? (
-                    bookings.map((entry) => (
-                        <motion.div 
-                            key={entry.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-card border border-border rounded-xl p-4"
-                        >
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h4 className="font-semibold text-foreground">{entry.client_name || 'Customer'}</h4>
-                                    <p className="text-sm text-muted-foreground">{entry.service_name || 'Service Request'}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">{entry.preferred_date || 'Flexible timing'}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button size="sm" className="bg-primary text-primary-foreground hover:opacity-95 h-8">
-                                        Book Slot
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="border-border h-8">
-                                        Notify
-                                    </Button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))
                 ) : (
-                    bookings.map((booking) => (
-                        <BookingCard 
-                            key={booking.id} 
-                            booking={booking} 
+                    bookings.map((booking) => {
+                      const isGroup = booking.is_group || booking.booking_type === 'group';
+                      return (
+                        <div key={booking.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+                            <BookingCard
+                            booking={booking}
+                            className="border-0 rounded-none shadow-none"
                             actions={
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap justify-end">
+                                    <Link to={createPageUrl(`ProviderMessages?booking=${booking.id}`)}>
+                                        <Button size="sm" variant="outline" className="h-8 rounded-xl">
+                                            <MessageSquare className="w-4 h-4 mr-1" />
+                                            Chat
+                                        </Button>
+                                    </Link>
                                     {booking.status === 'pending' && (
                                         <>
                                             <Button 
@@ -335,6 +327,35 @@ export default function ProviderBookings() {
                                         </>
                                     )}
                                     {booking.status === 'confirmed' && (
+                                        <>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8"
+                                            disabled={false}
+                                            onClick={() => setCheckInBooking(booking)}
+                                        >
+                                            Check in
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="bg-emerald-600 text-white hover:bg-emerald-700 h-8"
+                                            onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'completed', booking })}
+                                        >
+                                            <Check className="w-4 h-4 mr-1" /> Complete
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 border-amber-500/30 text-amber-700 hover:bg-amber-50"
+                                            onClick={() => {
+                                                if (confirm('Mark this client as a no-show? A fee may be charged per your policy.')) {
+                                                    noShowMutation.mutate(booking.id);
+                                                }
+                                            }}
+                                        >
+                                            No-show
+                                        </Button>
                                         <Button 
                                             size="sm" 
                                             variant="outline"
@@ -347,16 +368,39 @@ export default function ProviderBookings() {
                                         >
                                             Cancel
                                         </Button>
+                                        </>
+                                    )}
+                                    {booking.status === 'no_show' && booking.no_show_fee_status === 'failed' && (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8"
+                                            onClick={() => retryNoShowMutation.mutate(booking.id)}
+                                        >
+                                            Retry no-show fee
+                                        </Button>
                                     )}
                                 </div>
                             }
                         />
-                    ))
+                            {isGroup && (
+                              <div className="px-5 pb-4">
+                                <GroupBookingGuestPanel
+                                  bookingId={booking.id}
+                                  partySize={booking.party_size}
+                                  eventLabel={booking.group_event_label}
+                                />
+                              </div>
+                            )}
+                        </div>
+                      );
+                    })
                 )}
             </AnimatePresence>
         </div>
 
         <div className="mt-6">
+            {activeTab !== 'waitlist' && (
             <PaginationControls 
                 currentPage={page}
                 onPrevious={() => setPage(p => Math.max(1, p - 1))}
@@ -364,8 +408,15 @@ export default function ProviderBookings() {
                 hasNext={bookings.length === pageSize}
                 className="justify-center"
             />
+            )}
         </div>
       </div>
+
+      <ProviderCheckInDialog
+        booking={checkInBooking}
+        open={!!checkInBooking}
+        onOpenChange={(open) => !open && setCheckInBooking(null)}
+      />
     </div>
   );
 }

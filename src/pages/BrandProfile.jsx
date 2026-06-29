@@ -101,8 +101,7 @@ export default function BrandProfile() {
     queryKey: ['brand-products', brandId],
     queryFn: async () => {
       if (!brandId) return [];
-      const all = await sovereign.entities.Product.list();
-      return all.filter((p) => p.brand_id === brandId);
+      return sovereign.products.listPublic({ brand_id: brandId });
     },
     enabled: !!brandId,
   });
@@ -127,7 +126,7 @@ export default function BrandProfile() {
 
   if (!brandId) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-8">
+      <div className="stb-page flex items-center justify-center p-8">
         <p className="text-muted-foreground">Select a brand to view its profile.</p>
         <Link to={createPageUrl('Marketplace')} className="ml-2 text-primary font-medium hover:underline">
           Back to Marketplace
@@ -138,7 +137,7 @@ export default function BrandProfile() {
 
   if (!brand && !isBrandLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+      <div className="stb-page flex flex-col items-center justify-center p-8">
         <p className="text-muted-foreground">Brand not found.</p>
         <Link to={createPageUrl('Marketplace')} className="mt-2 text-primary font-medium hover:underline">
           Back to Marketplace
@@ -151,7 +150,7 @@ export default function BrandProfile() {
   const priceRange = displayBrand.price_range || '$$$';
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="stb-page lg:pb-8">
       <MetaTags
         title={displayBrand.name}
         description={displayBrand.description || `Elite brand profile for ${displayBrand.name}.`}
@@ -162,7 +161,7 @@ export default function BrandProfile() {
       <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-slate-200 lg:border-0 lg:bg-transparent lg:absolute lg:left-0 lg:right-0 lg:py-6 lg:px-6">
         <Link
           to={createPageUrl('Marketplace')}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 border border-slate-200 text-slate-700 hover:bg-slate-50 lg:bg-white/80 lg:backdrop-blur"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 border border-slate-200 text-foreground/90 hover:bg-muted/50 lg:bg-white/80 lg:backdrop-blur"
           aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -200,7 +199,7 @@ export default function BrandProfile() {
         <div className="bg-card rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="shrink-0">
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted border border-slate-200">
                 <OptimizedImage
                   src={displayBrand.logo_url}
                   alt=""
@@ -221,7 +220,7 @@ export default function BrandProfile() {
                 )}
               </div>
               {displayBrand.locations && (
-                <p className="text-sm text-slate-600 mb-3">{displayBrand.locations}</p>
+                <p className="text-sm text-muted-foreground mb-3">{displayBrand.locations}</p>
               )}
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" className="rounded-full" onClick={handleToggleFollow}>
@@ -240,7 +239,7 @@ export default function BrandProfile() {
             </div>
           </div>
           {displayBrand.description && (
-            <p className="mt-4 text-slate-600 text-sm leading-relaxed">{displayBrand.description}</p>
+            <p className="mt-4 text-muted-foreground text-sm leading-relaxed">{displayBrand.description}</p>
           )}
         </div>
 
@@ -265,7 +264,7 @@ export default function BrandProfile() {
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${colorClass}`}>
                       <IconComponent className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 leading-tight">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">
                       {acc.label}
                     </span>
                   </div>
@@ -286,7 +285,7 @@ export default function BrandProfile() {
                   to={`${createPageUrl('Marketplace')}?brand=${brandId}&collection=${coll.id}`}
                   className="shrink-0 w-[200px] group"
                 >
-                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted border border-slate-200">
                     <OptimizedImage
                       src={coll.image_url}
                       alt={coll.name}
@@ -302,7 +301,7 @@ export default function BrandProfile() {
                   </div>
                   <p className="font-semibold text-foreground mt-2 truncate">{coll.name}</p>
                   {coll.subtitle && (
-                    <p className="text-xs text-slate-500 truncate">{coll.subtitle}</p>
+                    <p className="text-xs text-muted-foreground truncate">{coll.subtitle}</p>
                   )}
                 </Link>
               ))}
@@ -327,7 +326,7 @@ export default function BrandProfile() {
                   to={`${createPageUrl('ProductDetail')}?id=${encodeURIComponent(product.id)}`}
                   className="group text-left"
                 >
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 mb-2">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-muted border border-slate-200 mb-2">
                     <OptimizedImage
                       src={product.image_url}
                       alt={product.name}
@@ -336,13 +335,13 @@ export default function BrandProfile() {
                       height={400}
                     />
                     <span
-                      className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-sm"
+                      className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-card border border-slate-200 flex items-center justify-center text-foreground/90 shadow-sm"
                       aria-hidden
                     >
                       <Plus className="w-4 h-4" />
                     </span>
                   </div>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                     {product.category || 'Product'}
                   </p>
                   <p className="font-semibold text-foreground text-sm line-clamp-2">{product.name}</p>
@@ -351,16 +350,16 @@ export default function BrandProfile() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 py-12 px-6 text-center">
-              <p className="text-slate-600 font-medium">No products in catalog yet.</p>
+            <div className="rounded-xl border border-slate-200 bg-muted/50 py-12 px-6 text-center">
+              <p className="text-muted-foreground font-medium">No products in catalog yet.</p>
             </div>
           )}
         </section>
       </div>
 
-      {/* Bottom bar – mobile only */}
+      {/* Bottom bar - mobile only */}
       <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-4 py-3 bg-card border-t border-slate-200 lg:hidden z-20">
-        <span className="text-sm font-semibold text-slate-700">PRICE RANGE {priceRange}</span>
+        <span className="text-sm font-semibold text-foreground/90">PRICE RANGE {priceRange}</span>
         <Button className="rounded-full gap-2" asChild>
           <Link to={createPageUrl('Explore')}>
             <Calendar className="w-4 h-4" />

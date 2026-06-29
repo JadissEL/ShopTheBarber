@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { AlertCircle, Filter, Search, Clock, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,8 +8,19 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import DisputeCard from '@/components/dispute/DisputeCard';
+import AdminDisputeAppealsPanel from '@/components/admin/AdminDisputeAppealsPanel';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
+import { normalizeDisputeStatus, disputeStatusLabel } from '@/utils/disputeStatus';
+
+function toCardDispute(row) {
+  return {
+    ...row,
+    status: row.status_label || disputeStatusLabel(row.status),
+    amount: row.booking_amount,
+    booking_date: row.date_text,
+  };
+}
 
 export default function AdminDisputes() {
   const { data: user } = useQuery({
@@ -22,44 +33,40 @@ export default function AdminDisputes() {
 
   const { data: disputes = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['all-disputes'],
-    queryFn: () => sovereign.entities.Dispute.list('-created_date', 100),
-    initialData: []
+    queryFn: () => sovereign.providerStats.listAdminDisputes(100),
+    enabled: user?.role === 'admin',
+    initialData: [],
   });
 
-  const queryClient = useQueryClient();
+  const cardDisputes = disputes.map(toCardDispute);
 
-  const _updateDisputeMutation = useMutation({
-    mutationFn: ({ id, data }) => sovereign.entities.Dispute.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-disputes'] });
-    }
-  });
-
-  // Filter disputes
-  const filteredDisputes = disputes.filter(d => {
-    const matchesSearch = 
+  const filteredDisputes = cardDisputes.filter((d) => {
+    const matchesSearch =
       d.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.barber_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.reason?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || d.status === filterStatus;
-    
+
+    const normalized = normalizeDisputeStatus(d.status);
+    const matchesStatus =
+      filterStatus === 'all' ||
+      (filterStatus === 'Open' && normalized === 'open') ||
+      (filterStatus === 'In Review' && normalized === 'in_review') ||
+      (filterStatus === 'Resolved' && normalized === 'resolved');
+
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate metrics
-  const openCount = disputes.filter(d => d.status === 'Open').length;
-  const reviewCount = disputes.filter(d => d.status === 'In Review').length;
-  const resolvedCount = disputes.filter(d => d.status === 'Resolved').length;
-  const totalAmount = disputes.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+  const openCount = disputes.filter((d) => normalizeDisputeStatus(d.status) === 'open').length;
+  const reviewCount = disputes.filter((d) => normalizeDisputeStatus(d.status) === 'in_review').length;
+  const resolvedCount = disputes.filter((d) => normalizeDisputeStatus(d.status) === 'resolved').length;
+  const totalAmount = disputes.reduce((sum, d) => sum + (parseFloat(d.booking_amount) || 0), 0);
 
   if (isLoading) return <PageLoading message="Loading disputes..." />;
   if (isError) return <PageError onRetry={refetch} />;
 
-  // Role check
   if (user?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Access Denied" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -73,20 +80,22 @@ export default function AdminDisputes() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
-      <MetaTags 
-        title="Dispute Resolution" 
+    <div className="stb-page pb-16">
+      <MetaTags
+        title="Dispute Resolution"
         description="Manage and resolve customer disputes"
       />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Dispute Resolution</h1>
           <p className="text-muted-foreground">Review and resolve customer disputes and claims</p>
         </div>
 
-        {/* Metrics */}
+        <div className="mb-8">
+          <AdminDisputeAppealsPanel />
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="p-4">
@@ -137,7 +146,6 @@ export default function AdminDisputes() {
           </Card>
         </div>
 
-        {/* Search & Filter */}
         <div className="space-y-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -151,7 +159,7 @@ export default function AdminDisputes() {
             </div>
             <div className="flex gap-2">
               <Filter className="w-4 h-4 text-muted-foreground mt-3" />
-              <select 
+              <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm"
@@ -165,12 +173,7 @@ export default function AdminDisputes() {
           </div>
         </div>
 
-        {/* Disputes List */}
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading disputes...</p>
-          </div>
-        ) : filteredDisputes.length > 0 ? (
+        {filteredDisputes.length > 0 ? (
           <div className="space-y-4">
             {filteredDisputes.map((dispute) => (
               <Link key={dispute.id} to={createPageUrl(`DisputeDetail?id=${dispute.id}`)}>

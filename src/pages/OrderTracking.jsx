@@ -8,6 +8,8 @@ import { PageLoading } from '@/components/ui/page-loading';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
+import ContextualBackLink from '@/components/ui/ContextualBackLink';
+
 const JOURNEY_STEPS = [
   { key: 'confirmed', label: 'Order Confirmed', sub: null, icon: Check },
   { key: 'preparing', label: 'Preparing Your Selection', sub: 'Our grooming consultants are curating your kit', icon: Circle },
@@ -17,7 +19,7 @@ const JOURNEY_STEPS = [
 
 function formatEstimatedArrival(isoDateStr) {
   if (!isoDateStr) return null;
-  const d = new Date(isoDateStr + 'T12:00:00');
+  const d = new Date(`${isoDateStr  }T12:00:00`);
   const options = { weekday: 'long', month: 'short', day: 'numeric' };
   const formatted = d.toLocaleDateString('en-US', options);
   const day = d.getDate();
@@ -43,27 +45,28 @@ export default function OrderTracking() {
   const estimatedDateRaw = order?.estimated_delivery_at || (order?.created_at ? (() => { const d = new Date(order.created_at); d.setDate(d.getDate() + 3); return d.toISOString().slice(0, 10); })() : null);
   const estimatedDate = estimatedDateRaw ? formatEstimatedArrival(estimatedDateRaw) : null;
   const fulfillmentStatus = order?.fulfillment_status || 'confirmed';
+  const fulfillments = order?.fulfillments || [];
   const statusOrder = { confirmed: 0, preparing: 1, in_transit: 2, delivered: 3 };
   const currentStepIndex = statusOrder[fulfillmentStatus] ?? 1;
 
   if (!orderId) {
     return (
-      <div className="min-h-screen bg-background pb-24 lg:pb-8 flex flex-col items-center justify-center px-4">
+      <div className="stb-page lg:pb-8 flex flex-col items-center justify-center px-4">
         <MetaTags title="Order Tracking" description="Track your order." />
-        <p className="text-slate-600 mb-4">No order specified.</p>
-        <Link to={createPageUrl('Dashboard')}><Button variant="outline" className="rounded-xl">Back to Dashboard</Button></Link>
+        <p className="text-muted-foreground mb-4">No order specified.</p>
+        <ContextualBackLink />
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent(`/OrderTracking?id=${orderId}`));
+    navigate(`${createPageUrl('SignIn')  }?return=${  encodeURIComponent(`/OrderTracking?id=${orderId}`)}`);
     return null;
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-24 lg:pb-8">
+      <div className="stb-page lg:pb-8">
         <PageLoading message="Loading order details..." />
       </div>
     );
@@ -71,10 +74,10 @@ export default function OrderTracking() {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-background pb-24 lg:pb-8 flex flex-col items-center justify-center px-4">
+      <div className="stb-page lg:pb-8 flex flex-col items-center justify-center px-4">
         <MetaTags title="Order Not Found" description="Order not found." />
-        <p className="text-slate-600 mb-4">Order not found.</p>
-        <Link to={createPageUrl('Dashboard')}><Button variant="outline" className="rounded-xl">Back to Dashboard</Button></Link>
+        <p className="text-muted-foreground mb-4">Order not found.</p>
+        <ContextualBackLink />
       </div>
     );
   }
@@ -82,13 +85,13 @@ export default function OrderTracking() {
   const items = order.items || [];
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="stb-page lg:pb-8">
       <MetaTags
-        title={`Tracking – Order ${orderNumber}`}
+        title={`Tracking - Order ${orderNumber}`}
         description="Track your premium grooming order."
       />
 
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-100">
+      <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
         <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
           <button
             type="button"
@@ -113,16 +116,46 @@ export default function OrderTracking() {
           <h2 className="text-2xl font-bold text-foreground mb-1" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
             Thank You, {customerName}
           </h2>
-          <p className="text-sm text-slate-500 font-medium">ORDER {orderNumber}</p>
+          <p className="text-sm text-muted-foreground font-medium">ORDER {orderNumber}</p>
         </div>
 
         {estimatedDate && (
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 mb-8 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-card p-5 mb-8 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wider text-sky-600 mb-1">Estimated Arrival</p>
             <p className="text-xl font-bold text-foreground mb-0.5" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
               {estimatedDate}
             </p>
-            <p className="text-sm text-slate-500">Via Premium White-Glove Courier</p>
+            <p className="text-sm text-muted-foreground">Via Premium White-Glove Courier</p>
+          </section>
+        )}
+
+        {(order.tracking_number || fulfillments.some((f) => f.tracking_number)) && (
+          <section className="rounded-2xl border border-slate-200 bg-card p-5 mb-8 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wider text-sky-600 mb-2">Tracking</p>
+            {fulfillments.filter((f) => f.tracking_number).length > 0 ? (
+              <ul className="space-y-2">
+                {fulfillments.filter((f) => f.tracking_number).map((f) => (
+                  <li key={f.id} className="text-sm">
+                    <span className="font-medium capitalize">{f.carrier || 'Carrier'}: </span>
+                    <span className="font-mono">{f.tracking_number}</span>
+                    <span className="text-muted-foreground ml-2 capitalize">({f.fulfillment_status?.replace('_', ' ')})</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm font-mono">{order.tracking_number}{order.carrier ? `, ${order.carrier}` : ''}</p>
+            )}
+          </section>
+        )}
+
+        {(order.shipping_street || order.shipping_full_name) && (
+          <section className="rounded-2xl border border-slate-200 bg-card p-5 mb-8 shadow-sm text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wider text-sky-600 mb-2">Deliver to</p>
+            <p className="font-medium">{order.shipping_full_name}</p>
+            <p className="text-muted-foreground">{order.shipping_street}</p>
+            <p className="text-muted-foreground">
+              {order.shipping_city}{order.shipping_state ? `, ${order.shipping_state}` : ''} {order.shipping_zip}
+            </p>
           </section>
         )}
 
@@ -138,7 +171,7 @@ export default function OrderTracking() {
               const Icon = step.icon;
               return (
                 <div key={step.key} className="relative pb-6 last:pb-0">
-                  <div className="absolute -left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-white border-2 border-slate-200">
+                  <div className="absolute -left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-card border-2 border-slate-200">
                     {isDone ? (
                       <Check className="w-3.5 h-3.5 text-sky-600" strokeWidth={2.5} />
                     ) : isCurrent ? (
@@ -150,10 +183,10 @@ export default function OrderTracking() {
                   <div className={`${isPending ? 'text-muted-foreground' : 'text-foreground'}`}>
                     <p className="font-semibold text-sm">{step.label}</p>
                     {step.sub && (
-                      <p className={`text-xs mt-0.5 ${isCurrent ? 'text-sky-600 italic' : 'text-slate-500'}`}>{step.sub}</p>
+                      <p className={`text-xs mt-0.5 ${isCurrent ? 'text-sky-600 italic' : 'text-muted-foreground'}`}>{step.sub}</p>
                     )}
                     {i === 0 && order?.created_at && (
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                       </p>
                     )}
@@ -170,8 +203,8 @@ export default function OrderTracking() {
           </h3>
           <ul className="space-y-4">
             {items.map((item) => (
-              <li key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4 flex gap-4 shadow-sm">
-                <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+              <li key={item.id} className="rounded-2xl border border-slate-200 bg-card p-4 flex gap-4 shadow-sm">
+                <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
                   <OptimizedImage
                     src={item.product_image_url || ''}
                     alt={item.product_name}
@@ -182,7 +215,7 @@ export default function OrderTracking() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Elite Grooming</p>
                   <p className="font-semibold text-foreground">{item.product_name}</p>
-                  <p className="text-sm text-slate-500 mt-0.5">Qty: {item.quantity}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
                   <p className="font-bold text-foreground mt-1">${(Number(item.price) * (item.quantity || 1)).toFixed(2)}</p>
                 </div>
               </li>
@@ -191,11 +224,11 @@ export default function OrderTracking() {
         </section>
 
         <div className="mb-6">
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Your personal grooming consultant is available for any delivery adjustments or styling advice.
           </p>
-          <Link to={createPageUrl('Chat')}>
-            <Button className="w-full rounded-xl h-12 bg-white border-2 border-sky-600 text-sky-600 hover:bg-sky-50 font-semibold gap-2" variant="outline">
+          <Link to={createPageUrl('SupportChat') + (order?.id ? `?order_id=${order.id}&new=1` : '?new=1')}>
+            <Button className="w-full rounded-xl h-12 bg-card border-2 border-sky-600 text-sky-600 hover:bg-sky-50 font-semibold gap-2" variant="outline">
               <Headphones className="w-5 h-5" />
               Contact Concierge
             </Button>

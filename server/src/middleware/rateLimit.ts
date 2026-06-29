@@ -1,12 +1,12 @@
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../db/prisma';
+import { consumeIpRateLimit } from '../lib/ipRateLimit';
 
 /**
- * Rate Limiting Middleware
- * 
- * Prevents abuse/spam on booking creation endpoint
- * - Max 5 bookings per user per hour (across all barbers)
+ * Booking creation rate limits (see docs/RATE_LIMIT_SPECIFICATION.md):
+ * - Max 5 bookings per user per hour
  * - Max 1 booking per user per barber per 30 minutes
- * - Max 3 requests per second per IP (rapid click prevention)
+ * - Max 3 booking attempts per second per IP (Upstash sliding window)
  */
 
 interface RateLimitContext {
@@ -25,10 +25,8 @@ interface RateLimitResult {
     remaining_quota?: number;
 }
 
-export async function enforceBookingRateLimit(
-    context: RateLimitContext
-): Promise<RateLimitResult> {
-    const { client_id, barber_id, client_email, ip_address } = context;
+export async function enforceBookingRateLimit(context: RateLimitContext): Promise<RateLimitResult> {
+    const { client_id, barber_id, ip_address } = context;
 
     if (!client_id || !barber_id) {
         throw new Error('client_id and barber_id required');
@@ -38,12 +36,11 @@ export async function enforceBookingRateLimit(
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
 
-    // CHECK 1: User's total bookings in last hour
     const userBookingsLastHour = await prisma.bookings.findMany({
         where: {
             client_id,
-            created_at: { gte: oneHourAgo.toISOString() }
-        }
+            created_at: { gte: oneHourAgo.toISOString() },
+        },
     });
 
     if (userBookingsLastHour.length >= 5) {
@@ -51,17 +48,16 @@ export async function enforceBookingRateLimit(
             status: 'RATE_LIMITED',
             reason: 'USER_BOOKING_QUOTA_EXCEEDED',
             message: 'You can only create 5 bookings per hour. Try again later.',
-            retry_after_seconds: 3600
+            retry_after_seconds: 3600,
         };
     }
 
-    // CHECK 2: Same user booking same barber within 30 minutes
     const recentBarberBookings = await prisma.bookings.findMany({
         where: {
             client_id,
             barber_id,
-            created_at: { gte: thirtyMinutesAgo.toISOString() }
-        }
+            created_at: { gte: thirtyMinutesAgo.toISOString() },
+        },
     });
 
     if (recentBarberBookings.length > 0) {
@@ -69,52 +65,54 @@ export async function enforceBookingRateLimit(
             status: 'RATE_LIMITED',
             reason: 'DUPLICATE_BARBER_BOOKING',
             message: 'You already have a recent booking with this barber. Wait 30 minutes before booking again.',
-            retry_after_seconds: 1800
+            retry_after_seconds: 1800,
         };
     }
 
-    // CHECK 3: Rapid-fire requests from same IP (prevent spam clicks)
-    // Note: In production, use Redis for sub-second accuracy
-    // For now, we use simple in-memory tracking
     if (ip_address) {
-        // This would ideally use Redis or a proper rate limiter
-        // For MVP, we skip the sub-second IP check
-        // IP-based rapid-fire check requires Redis; skipped for SQLite-only deployments
+        const ipResult = await consumeIpRateLimit('booking:create', ip_address, 3, 1000);
+        if (!ipResult.allowed) {
+            return {
+                status: 'RATE_LIMITED',
+                reason: 'IP_RAPID_FIRE',
+                message: 'Too many booking attempts. Please wait a moment.',
+                retry_after_seconds: ipResult.retryAfterSeconds ?? 1,
+            };
+        }
     }
 
-    // SUCCESS - Rate limit check passed
     return {
         status: 'ALLOWED',
         message: 'Rate limit check passed',
         user_bookings_this_hour: userBookingsLastHour.length,
-        remaining_quota: 5 - userBookingsLastHour.length
+        remaining_quota: 5 - userBookingsLastHour.length,
     };
 }
 
-/**
- * Fastify plugin wrapper for rate limiting
- * Can be used as route-level middleware
- */
-export async function rateLimitMiddleware(request: any, reply: any) {
-    const { client_id, barber_id, client_email } = request.body;
+export async function rateLimitMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    const body = request.body as { client_id?: string; barber_id?: string; client_email?: string } | undefined;
+    const { client_id, barber_id, client_email } = body ?? {};
     const ip_address = request.ip;
 
     if (!client_id || !barber_id) {
-        return; // Skip rate limiting if required fields missing (let validation handle it)
+        return;
     }
 
     const result = await enforceBookingRateLimit({
         client_id,
         barber_id,
-        client_email: client_email || request.user?.email || '',
-        ip_address
+        client_email: client_email || (request.user as { email?: string } | undefined)?.email || '',
+        ip_address,
     });
 
     if (result.status === 'RATE_LIMITED') {
-        return reply.status(429).send({
+        if (result.retry_after_seconds) {
+            reply.header('Retry-After', String(result.retry_after_seconds));
+        }
+        reply.status(429).send({
             error: result.message,
             reason: result.reason,
-            retry_after: result.retry_after_seconds
+            retry_after: result.retry_after_seconds,
         });
     }
 }

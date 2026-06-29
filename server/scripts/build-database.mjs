@@ -35,4 +35,8 @@ if (!process.env.DATABASE_URL) {
 
 run('Prisma generate', ['npx', 'prisma', 'generate']);
 run('Prisma migrate deploy', ['npx', 'prisma', 'migrate', 'deploy']);
+run('Verify production schema', ['node', 'scripts/verify-production-schema.mjs']);
+run('Backfill barber cities', ['npx', 'tsx', 'scripts/backfill-barber-cities.ts']);
+run('Backfill barber coordinates', ['npx', 'tsx', 'scripts/backfill-barber-coordinates.ts']);
+run('Backfill at-home service areas', ['npx', 'tsx', 'scripts/backfill-at-home-areas.ts']);
 console.log('[build-database] Done.');

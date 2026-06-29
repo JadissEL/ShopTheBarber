@@ -90,7 +90,7 @@ export default function AdminBackups() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Access Denied" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -107,7 +107,7 @@ export default function AdminBackups() {
   const restoreReadiness = backups.every(b => b.restore_tested);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="stb-page pb-16">
       <MetaTags 
         title="Backup Verification" 
         description="Monitor and verify system backups"
@@ -233,7 +233,7 @@ export default function AdminBackups() {
                           <Badge className="bg-blue-50 text-blue-700">Verified</Badge>
                         )}
                         {backup.restore_tested && (
-                          <Badge className="bg-purple-50 text-purple-700">Restore OK</Badge>
+                          <Badge className="bg-success/10 text-success border-success/20">Restore OK</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{backup.notes}</p>

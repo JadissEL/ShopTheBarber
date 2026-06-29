@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
+import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+
 export default function ApplyToJob() {
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get('id');
@@ -13,10 +15,17 @@ export default function ApplyToJob() {
   const queryClient = useQueryClient();
   const [coverLetter, setCoverLetter] = useState('');
   const [selectedCredentialIds, setSelectedCredentialIds] = useState([]);
+  const [attachAll, setAttachAll] = useState(true);
 
   const { data: job } = useQuery({
     queryKey: ['job', jobId],
     queryFn: () => sovereign.jobs.get(jobId),
+    enabled: !!jobId,
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['applicant-profile'],
+    queryFn: () => sovereign.applicant.getProfile(),
     enabled: !!jobId,
   });
 
@@ -26,19 +35,36 @@ export default function ApplyToJob() {
     enabled: !!jobId,
   });
 
+  useEffect(() => {
+    if (credentials.length && selectedCredentialIds.length === 0) {
+      const cv = credentials.find((c) => c.type === 'cv');
+      if (cv) setSelectedCredentialIds([cv.id]);
+    }
+  }, [credentials]);
+
   const applyMutation = useMutation({
-    mutationFn: () => sovereign.applicant.apply(jobId, { cover_letter: coverLetter || undefined, credential_ids: selectedCredentialIds.length ? selectedCredentialIds : undefined }),
-    onSuccess: () => {
+    mutationFn: () =>
+      sovereign.applicant.apply(jobId, {
+        cover_letter: coverLetter || undefined,
+        credential_ids: attachAll ? credentials.map((c) => c.id) : selectedCredentialIds,
+        attach_all_credentials: attachAll,
+      }),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['applicant-applications'] });
-      toast.success('Application submitted');
-      navigate(createPageUrl('CareerHub') + '?tab=applied');
+      const score = data?.match_score;
+      toast.success(score != null ? `Application submitted (${score}% match)` : 'Application submitted');
+      navigate(`${createPageUrl('CareerHub')  }?tab=applied`);
     },
     onError: (e) => toast.error(e.message),
   });
 
   const toggleCredential = (id) => {
+    setAttachAll(false);
     setSelectedCredentialIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
+
+  const percent = profile?.completeness?.percent ?? 0;
+  const ready = profile?.completeness?.ready_to_apply ?? false;
 
   if (!jobId) {
     navigate(createPageUrl('CareerHub'));
@@ -46,19 +72,54 @@ export default function ApplyToJob() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
-      <MetaTags title={`Apply – ${job?.title || 'Job'} | Shop The Barber`} />
+    <div className="stb-page lg:pb-8">
+      <MetaTags title={`Apply - ${job?.title || 'Job'} | Shop The Barber`} />
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-foreground mb-2">Apply to {job?.title}</h1>
-        <p className="text-slate-600 mb-6">{job?.employer_name}</p>
+        <p className="text-muted-foreground mb-6">{job?.employer_name}</p>
+
+        <div className={`rounded-xl border p-4 mb-6 ${ready ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
+          <div className="flex gap-3">
+            {ready ? (
+              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            )}
+            <div className="text-sm">
+              <p className="font-medium text-foreground">Profile {percent}% complete</p>
+              <p className="text-muted-foreground mt-1">
+                {ready
+                  ? 'Your profile looks good. Employers will receive your summary, skills, and selected documents.'
+                  : 'Complete your portfolio for stronger applications, add a summary, skills, and CV.'}
+              </p>
+              <Link to={createPageUrl('ProfessionalPortfolio')} className="inline-flex items-center gap-1 text-primary font-medium mt-2 hover:underline">
+                Edit portfolio <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {profile?.professional_summary && (
+          <section className="mb-6 p-4 rounded-xl border border-slate-200 bg-card">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Profile preview</p>
+            <p className="text-sm text-foreground/90 line-clamp-4">{profile.professional_summary}</p>
+            {profile.skills?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {profile.skills.slice(0, 8).map((s) => (
+                  <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-muted">{s}</span>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Cover letter (optional)</label>
+            <label className="block text-sm font-medium text-foreground/90 mb-2">Cover letter (optional)</label>
             <textarea
               value={coverLetter}
               onChange={(e) => setCoverLetter(e.target.value)}
-              placeholder="Introduce yourself and why you're a fit..."
+              placeholder="Introduce yourself and why you're a fit for this role…"
               className="w-full min-h-[120px] px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground"
               rows={5}
             />
@@ -66,14 +127,34 @@ export default function ApplyToJob() {
 
           {credentials.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Attach credentials (optional)</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-foreground/90">Documents to attach</label>
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={attachAll}
+                    onChange={(e) => {
+                      setAttachAll(e.target.checked);
+                      if (e.target.checked) setSelectedCredentialIds(credentials.map((c) => c.id));
+                    }}
+                    className="rounded"
+                  />
+                  Attach all
+                </label>
+              </div>
               <ul className="space-y-2">
                 {credentials.map((c) => (
                   <li key={c.id}>
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-slate-50">
-                      <input type="checkbox" checked={selectedCredentialIds.includes(c.id)} onChange={() => toggleCredential(c.id)} className="rounded" />
-                      <span className="font-medium text-foreground">{c.file_name}</span>
-                      <span className="text-xs text-slate-500">{c.type}</span>
+                    <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-card cursor-pointer hover:bg-muted/50">
+                      <input
+                        type="checkbox"
+                        checked={attachAll || selectedCredentialIds.includes(c.id)}
+                        disabled={attachAll}
+                        onChange={() => toggleCredential(c.id)}
+                        className="rounded"
+                      />
+                      <span className="font-medium text-foreground flex-1">{c.file_name}</span>
+                      <span className="text-xs text-muted-foreground capitalize">{c.type}</span>
                     </label>
                   </li>
                 ))}
@@ -81,7 +162,12 @@ export default function ApplyToJob() {
             </div>
           )}
 
-          <p className="text-sm text-slate-500">Your profile information will be shared with the employer. You can save this draft and return later from your dashboard.</p>
+          {credentials.length === 0 && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+              No documents uploaded yet. You can still apply, but adding a CV improves your match score.{' '}
+              <Link to={createPageUrl('PortfolioCredentials')} className="font-medium underline">Upload now</Link>
+            </p>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button variant="outline" onClick={() => navigate(-1)} className="flex-1 rounded-xl">Cancel</Button>

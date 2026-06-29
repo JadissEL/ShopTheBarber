@@ -64,7 +64,7 @@ export default function ProductComparison({ products, onClose }) {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card className="rounded-[12px] border-2 border-slate-200 overflow-hidden">
-                  <div className="relative aspect-square bg-slate-100">
+                  <div className="relative aspect-square bg-muted">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -119,8 +119,8 @@ export default function ProductComparison({ products, onClose }) {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b-2 border-slate-200 bg-slate-50">
-                      <th className="text-left p-4 font-bold sticky left-0 bg-slate-50 z-10">
+                    <tr className="border-b-2 border-slate-200 bg-muted/50">
+                      <th className="text-left p-4 font-bold sticky left-0 bg-muted/50 z-10">
                         Caractéristiques
                       </th>
                       {products.map((product) => (
@@ -129,7 +129,7 @@ export default function ProductComparison({ products, onClose }) {
                             {product.image_url ? (
                               <img src={product.image_url} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full bg-slate-100" />
+                              <div className="w-full h-full bg-muted" />
                             )}
                           </div>
                         </th>
@@ -140,7 +140,7 @@ export default function ProductComparison({ products, onClose }) {
                     {features.map((feature, idx) => {
                       const bestValue = getBestValue(feature.key);
                       return (
-                        <tr key={feature.key} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                        <tr key={feature.key} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/50'}>
                           <td className="p-4 font-semibold sticky left-0 bg-inherit z-10 border-r-2 border-slate-200">
                             <div className="flex items-center gap-2">
                               <span className="text-xl">{feature.icon}</span>
@@ -166,8 +166,8 @@ export default function ProductComparison({ products, onClose }) {
                     })}
 
                     {/* Description Row */}
-                    <tr className="bg-white">
-                      <td className="p-4 font-semibold sticky left-0 bg-white z-10 border-r-2 border-slate-200">
+                    <tr className="bg-card">
+                      <td className="p-4 font-semibold sticky left-0 bg-card z-10 border-r-2 border-slate-200">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">📝</span>
                           <span>Description</span>
@@ -175,7 +175,7 @@ export default function ProductComparison({ products, onClose }) {
                       </td>
                       {products.map((product) => (
                         <td key={product.id} className="p-4">
-                          <p className="text-sm text-slate-600 line-clamp-3">
+                          <p className="text-sm text-muted-foreground line-clamp-3">
                             {product.description || 'Aucune description'}
                           </p>
                         </td>

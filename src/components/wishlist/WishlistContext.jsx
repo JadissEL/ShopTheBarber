@@ -13,8 +13,8 @@ export function WishlistProvider({ children }) {
       try {
         const currentUser = await sovereign.auth.me();
         setUser(currentUser);
-      } catch (error) {
-        console.log("User not logged in");
+      } catch {
+        setUser(null);
       }
     };
     loadUser();

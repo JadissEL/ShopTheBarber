@@ -4,9 +4,18 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 export default function LoyaltyCard({ profile, nextTierPoints, progress }) {
+    const tierProgressLabel =
+        profile.tier === 'Platinum' || !nextTierPoints
+            ? `${profile.lifetime_points} lifetime pts`
+            : `${profile.lifetime_points} / ${nextTierPoints} Lifetime Pts`;
+
+    const pointsToNext =
+        profile.tier !== 'Platinum' && nextTierPoints
+            ? Math.max(0, nextTierPoints - profile.lifetime_points)
+            : null;
     const getTierColor = (tier) => {
         switch(tier) {
-            case 'Silver': return 'from-slate-300 to-slate-400 text-slate-900';
+            case 'Silver': return 'from-slate-300 to-slate-400 text-foreground';
             case 'Gold': return 'from-yellow-300 to-amber-500 text-amber-950';
             case 'Platinum': return 'from-slate-800 to-black text-white border-slate-700';
             default: return 'from-orange-100 to-orange-200 text-orange-900'; // Bronze
@@ -50,13 +59,13 @@ export default function LoyaltyCard({ profile, nextTierPoints, progress }) {
                 <div className="relative z-10 mt-8">
                     <div className="flex justify-between text-sm font-medium mb-2 opacity-90">
                         <span>Progress to {profile.tier === 'Platinum' ? 'Max Level' : 'Next Tier'}</span>
-                        <span>{profile.lifetime_points} / {nextTierPoints} Lifetime Pts</span>
+                        <span>{tierProgressLabel}</span>
                     </div>
                     <Progress value={progress} className="h-3 bg-black/10" indicatorClassName="bg-current opacity-80" />
-                    {profile.tier !== 'Platinum' && (
+                    {pointsToNext != null && pointsToNext > 0 && (
                         <p className="text-xs mt-2 opacity-75 flex items-center gap-1">
                             <TrendingUp className="w-3 h-3" />
-                            Only {nextTierPoints - profile.lifetime_points} more points to reach next level
+                            Only {pointsToNext} more lifetime points to reach next level
                         </p>
                     )}
                 </div>

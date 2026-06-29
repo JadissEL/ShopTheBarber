@@ -50,7 +50,7 @@ export default function AdminUserModeration() {
   // Role check
   if (user?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Access Denied" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -64,7 +64,7 @@ export default function AdminUserModeration() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="stb-page pb-16">
       <MetaTags 
         title="User Moderation" 
         description="Manage and moderate platform users"

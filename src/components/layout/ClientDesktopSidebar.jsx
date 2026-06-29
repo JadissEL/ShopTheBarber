@@ -1,71 +1,116 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, MessageCircle, User, Plus, Store, ShoppingBag, Package, Lock, Scissors, Briefcase } from 'lucide-react';
+import {
+  Home, Calendar, MessageCircle, User, Plus, Store, ShoppingBag, Package, Lock, Scissors, Briefcase,
+  Search, Heart, Trophy, Gift, Wallet, Star, Bell, Headphones,
+} from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { useCart } from '@/components/context/CartContext';
+import {
+  getClientNavItems,
+  getClientMoreItems,
+  CAREER_PATH_SEGMENTS,
+} from '@/lib/featureRegistry';
+import { isNavActive, navItemClassName } from '@/lib/navActive';
 
-const navItems = [
-  { icon: Home, label: 'Home', page: 'Dashboard' },
-  { icon: Calendar, label: 'Bookings', page: 'UserBookings' },
-  { icon: Store, label: 'Marketplace', page: 'Marketplace' },
-  { icon: ShoppingBag, label: 'Shopping Bag', page: 'ShoppingBag' },
-  { icon: Lock, label: 'Grooming Vault', page: 'GroomingVault' },
-  { icon: Package, label: 'My Orders', page: 'MyOrders' },
-  { icon: Briefcase, label: 'Career Hub', page: 'CareerHub' },
-  { icon: MessageCircle, label: 'Chat', page: 'Chat' },
-  { icon: User, label: 'Profile', page: 'AccountSettings' },
-];
+const ICON_BY_PAGE = {
+  Dashboard: Home,
+  UserBookings: Calendar,
+  Marketplace: Store,
+  ShoppingBag: ShoppingBag,
+  GroomingVault: Lock,
+  MyOrders: Package,
+  CareerHub: Briefcase,
+  Chat: MessageCircle,
+  AccountSettings: User,
+  Explore: Search,
+  Favorites: Heart,
+  Loyalty: Star,
+  Referral: Gift,
+  GiftCards: Gift,
+  ChampionshipLeaderboard: Trophy,
+  ClientWallet: Wallet,
+  Wishlist: Heart,
+  NotificationSettings: Bell,
+  SupportChat: Headphones,
+  HelpCenter: Headphones,
+};
 
 export default function ClientDesktopSidebar() {
   const location = useLocation();
   const path = location.pathname.toLowerCase();
   const { itemCount } = useCart();
 
+  const primaryItems = getClientNavItems({ primaryOnly: true });
+  const secondaryItems = getClientNavItems().filter((item) => !item.primary);
+  const moreItems = getClientMoreItems().filter(
+    (item) => !primaryItems.some((p) => p.page === item.page) && !secondaryItems.some((s) => s.page === item.page),
+  );
+
   const isActive = (page) => {
-    const pagePath = createPageUrl(page).toLowerCase().replace(/^\//, '');
     if (page === 'CareerHub') {
-      const careerSegments = ['careerhub', 'jobdetail', 'applytojob', 'professionalportfolio', 'portfoliocredentials', 'myjobs', 'createjob', 'applicantreview', 'scheduleinterview'];
       const firstSegment = path.replace(/^\//, '').split('/')[0] || '';
-      return careerSegments.includes(firstSegment);
+      return CAREER_PATH_SEGMENTS.includes(firstSegment);
     }
-    return path === '/' + pagePath || path === '/' || (page === 'Dashboard' && (path.includes('dashboard') || path === '/'));
+    return isNavActive(location.pathname, page, {
+      aliases: page === 'Dashboard' ? ['dashboard'] : [],
+    });
+  };
+
+  const renderLink = (item) => {
+    const Icon = ICON_BY_PAGE[item.page] ?? Home;
+    const active = isActive(item.page);
+    return (
+      <Link
+        key={item.page}
+        to={createPageUrl(item.page)}
+        className={navItemClassName(active)}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+        {item.label}
+        {item.page === 'ShoppingBag' && itemCount > 0 && (
+          <span className={`ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-primary/15 text-primary' : 'bg-primary/10 text-primary'}`}>
+            {itemCount > 99 ? '99+' : itemCount}
+          </span>
+        )}
+      </Link>
+    );
   };
 
   return (
-    <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 bg-white border-r border-slate-200">
-      <div className="p-4 border-b border-slate-200">
+    <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 bg-card border-r border-border">
+      <div className="p-4 border-b border-border">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <Scissors className="w-4 h-4 text-white" strokeWidth={2.5} />
+            <Scissors className="w-4 h-4 text-primary-foreground" strokeWidth={2.5} />
           </div>
           <span className="font-semibold text-foreground">ShopTheBarber</span>
         </Link>
       </div>
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.page);
-          return (
-            <Link
-              key={item.page}
-              to={createPageUrl(item.page)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              {item.label}
-              {item.page === 'ShoppingBag' && itemCount > 0 && (
-                <span className={`ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-primary text-white'}`}>
-                  {itemCount > 99 ? '99+' : itemCount}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-        <div className="pt-4 mt-4 border-t border-slate-200">
+        {primaryItems.map(renderLink)}
+
+        {secondaryItems.length > 0 && (
+          <div className="pt-3 mt-3 border-t border-border space-y-1">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Account
+            </p>
+            {secondaryItems.map(renderLink)}
+          </div>
+        )}
+
+        {moreItems.length > 0 && (
+          <div className="pt-3 mt-3 border-t border-border space-y-1">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Discover &amp; rewards
+            </p>
+            {moreItems.map(renderLink)}
+          </div>
+        )}
+
+        <div className="pt-4 mt-4 border-t border-border">
           <Link
             to={createPageUrl('BookingFlow')}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-[13px] bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm shadow-primary/15"
           >
             <Plus className="w-5 h-5" strokeWidth={2.5} />
             Book appointment

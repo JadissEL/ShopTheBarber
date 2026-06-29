@@ -1,75 +1,81 @@
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { useAuth } from '@/lib/AuthContext';
+import { Button } from '@/components/ui/button';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { SchemaMarkup } from '@/components/seo/SchemaMarkup';
 import Hero from '../components/home/Hero';
+import HomeTrustBar from '../components/home/HomeTrustBar';
+import HomeQuickFind from '../components/home/HomeQuickFind';
+import HomeBestBarbers from '../components/home/HomeBestBarbers';
+import HomeTrustSpotlight from '../components/home/HomeTrustSpotlight';
 import Features from '../components/home/Features';
-import FeaturedBarbers from '../components/home/FeaturedBarbers';
-import Services from '../components/home/Services';
+import HomeRewardsStrip from '../components/home/HomeRewardsStrip';
+import HomeOffers from '../components/home/HomeOffers';
+import HomeMarketplacePreview from '../components/home/HomeMarketplacePreview';
 import Testimonials from '../components/home/Testimonials';
-import CTA from '../components/home/CTA';
+import HomeFinalCta from '../components/home/HomeFinalCta';
+import { siteOrigin } from '@/lib/seoUtils';
+
+function AuthenticatedHomeQuickStart() {
+  return (
+    <section className="py-10 bg-gradient-to-r from-primary/8 via-accent/50 to-chart-2/8 border-b border-border/60">
+      <div className="container mx-auto px-6 max-w-6xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <p className="stb-section-label mb-1">Welcome back</p>
+          <h2 className="text-xl font-bold text-foreground">Ready for your next appointment?</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild className="stb-btn-primary">
+            <Link to={createPageUrl('Explore')}>Book a barber</Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-xl bg-card/80">
+            <Link to={createPageUrl('Dashboard')}>Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="flex flex-col">
       <MetaTags
-        title="Home"
-        description="Discover and book the best barbers in your area. Professional grooming services, reviews, and easy scheduling."
+        title="Book Barbers Near You"
+        description="Book verified barbers in minutes. Season rankings, digital gift cards, protected payments, upfront pricing, and real reviews on ShopTheBarber."
+        keywords="barber booking, barbershop near me, mobile barber, men's grooming"
+        canonicalUrl={`${siteOrigin()}/`}
       />
       <SchemaMarkup
         type="WebSite"
         data={{
-          name: "ShopTheBarber",
+          name: 'ShopTheBarber',
           url: window.location.origin,
           potentialAction: {
             '@type': 'SearchAction',
             target: `${window.location.origin}/Explore?q={search_term_string}`,
-            'query-input': 'required name=search_term_string'
-          }
+            'query-input': 'required name=search_term_string',
+          },
         }}
       />
+
       <Hero />
+      <HomeTrustBar />
+
+      {isAuthenticated && <AuthenticatedHomeQuickStart />}
+
+      <HomeQuickFind />
+      <HomeBestBarbers />
+      <HomeTrustSpotlight />
       <Features />
-      <FeaturedBarbers />
-      <Services />
+      <HomeRewardsStrip />
+      <HomeOffers />
+      <HomeMarketplacePreview />
       <Testimonials />
-      <CTA />
-
-      {/* About & Contact Section */}
-      <section className="bg-card py-20 border-t border-border">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">About ShopTheBarber</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Connecting world-class grooming professionals with clients who value quality, convenience, and style.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-10 mb-16">
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Seamless Booking</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">Book appointments with real-time availability and instant confirmation.</p>
-            </div>
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Vetted Talent</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">A curated network of master barbers and stylists.</p>
-            </div>
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Guaranteed Quality</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">Secure payments, verified reviews, and satisfaction commitment.</p>
-            </div>
-          </div>
-
-          <div className="text-center text-muted-foreground text-sm border-t border-border pt-8">
-            <p>© {new Date().getFullYear()} ShopTheBarber.</p>
-          </div>
-        </div>
-      </section>
+      <HomeFinalCta />
     </div>
   );
 }

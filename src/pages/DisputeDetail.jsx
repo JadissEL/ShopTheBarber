@@ -1,20 +1,17 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { ArrowLeft, AlertCircle, CheckCircle2, MessageSquare, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { toast } from 'sonner';
 import ResolutionActions from '@/components/dispute/ResolutionActions';
+import { disputeStatusLabel } from '@/utils/disputeStatus';
 
 export default function DisputeDetail() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -26,9 +23,18 @@ export default function DisputeDetail() {
 
   const { data: dispute } = useQuery({
     queryKey: ['dispute', disputeId],
-    queryFn: () => sovereign.entities.Dispute.get(disputeId),
-    enabled: !!disputeId
+    queryFn: () => sovereign.providerStats.getAdminDispute(disputeId),
+    enabled: !!disputeId && user?.role === 'admin',
   });
+
+  const disputeForUi = dispute
+    ? {
+        ...dispute,
+        status: dispute.status_label || disputeStatusLabel(dispute.status),
+        amount: dispute.booking_amount,
+        booking_date: dispute.date_text,
+      }
+    : null;
 
   const { data: booking } = useQuery({
     queryKey: ['dispute-booking', dispute?.booking_id],
@@ -36,28 +42,9 @@ export default function DisputeDetail() {
     enabled: !!dispute?.booking_id
   });
 
-  const [internalNotes, setInternalNotes] = useState('');
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => sovereign.entities.Dispute.update(disputeId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dispute', disputeId] });
-      queryClient.invalidateQueries({ queryKey: ['all-disputes'] });
-      setInternalNotes('');
-      toast.success('Dispute updated');
-    }
-  });
-
-  const handleAddNotes = () => {
-    if (!internalNotes.trim()) return;
-    updateMutation.mutate({
-      notes: (dispute?.notes || '') + '\n[Admin: ' + new Date().toLocaleString() + ']\n' + internalNotes
-    });
-  };
-
   if (user?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Access Denied" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -69,9 +56,9 @@ export default function DisputeDetail() {
     );
   }
 
-  if (!dispute) {
+  if (!disputeForUi) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Dispute Not Found" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -91,13 +78,13 @@ export default function DisputeDetail() {
     'Resolved': { color: 'bg-green-50 text-green-700', icon: CheckCircle2 }
   };
 
-  const config = statusConfig[dispute.status] || statusConfig['Open'];
+  const config = statusConfig[disputeForUi.status] || statusConfig['Open'];
   const _Icon = config.icon;
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="stb-page pb-16">
       <MetaTags 
-        title={`Dispute: ${dispute.client_name} vs ${dispute.barber_name}`}
+        title={`Dispute: ${disputeForUi.client_name} vs ${disputeForUi.barber_name}`}
         description="Manage dispute resolution"
       />
 
@@ -110,11 +97,11 @@ export default function DisputeDetail() {
             </Button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{dispute.client_name} vs {dispute.barber_name}</h1>
-            <p className="text-muted-foreground text-sm mt-1">{dispute.booking_date}</p>
+            <h1 className="text-3xl font-bold tracking-tight">{disputeForUi.client_name} vs {disputeForUi.barber_name}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{disputeForUi.booking_date}</p>
           </div>
           <Badge className={config.color}>
-            {dispute.status}
+            {disputeForUi.status}
           </Badge>
         </div>
 
@@ -130,26 +117,32 @@ export default function DisputeDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Claimant</p>
-                    <p className="font-semibold">{dispute.client_name}</p>
+                    <p className="font-semibold">{disputeForUi.client_name}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Defendant</p>
-                    <p className="font-semibold">{dispute.barber_name}</p>
+                    <p className="font-semibold">{disputeForUi.barber_name}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Amount at Risk</p>
-                    <p className="text-2xl font-bold text-destructive">${dispute.amount}</p>
+                    <p className="text-2xl font-bold text-destructive">${disputeForUi.amount}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Date of Booking</p>
-                    <p className="font-semibold">{dispute.booking_date}</p>
+                    <p className="font-semibold">{disputeForUi.booking_date}</p>
                   </div>
                 </div>
 
                 <div className="border-t pt-4">
                   <p className="text-sm text-muted-foreground mb-2">Reason for Dispute</p>
-                  <p className="text-foreground">{dispute.reason || 'No reason provided'}</p>
+                  <p className="text-foreground">{disputeForUi.reason || 'No reason provided'}</p>
                 </div>
+                {disputeForUi.resolution_notes && (
+                  <div className="border-t pt-4">
+                    <p className="text-sm text-muted-foreground mb-2">Resolution Notes</p>
+                    <p className="text-foreground whitespace-pre-wrap">{disputeForUi.resolution_notes}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -181,42 +174,27 @@ export default function DisputeDetail() {
             )}
 
             {/* Admin Notes */}
+            {disputeForUi.resolution_notes && disputeForUi.status === 'Resolved' && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  Internal Notes
+                  Resolution Record
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {dispute.notes && (
-                  <div className="bg-muted/50 p-4 rounded-lg text-sm whitespace-pre-wrap">
-                    {dispute.notes}
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Add internal notes..."
-                    value={internalNotes}
-                    onChange={(e) => setInternalNotes(e.target.value)}
-                    className="min-h-24"
-                  />
-                  <Button
-                    onClick={handleAddNotes}
-                    disabled={!internalNotes.trim() || updateMutation.isPending}
-                    size="sm"
-                  >
-                    Add Note
-                  </Button>
+              <CardContent>
+                <div className="bg-muted/50 p-4 rounded-lg text-sm whitespace-pre-wrap">
+                  {disputeForUi.resolution_notes}
                 </div>
               </CardContent>
             </Card>
+            )}
           </div>
 
           {/* Resolution Panel */}
           <div>
             <ResolutionActions 
-              dispute={dispute}
+              dispute={disputeForUi}
               onResolved={() => navigate(createPageUrl('AdminDisputes'))}
             />
           </div>

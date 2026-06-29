@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://shop-the-barber.vercel.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/Explore</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/cities</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/Blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/Marketplace</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/About</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/HelpCenter</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/paris</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/lyon</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/marseille</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/brussels</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/london</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/athens</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/montreal</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://shop-the-barber.vercel.app/barbers-in/new-york</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+</urlset>

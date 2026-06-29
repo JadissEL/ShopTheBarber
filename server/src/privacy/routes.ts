@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
 
@@ -9,13 +9,13 @@ async function requireUser(request: any, reply: any) {
 }
 
 export async function privacyRoutes(fastify: FastifyInstance) {
-    /** GDPR data export — aggregates user-owned rows across core tables */
+    /** GDPR data export, aggregates user-owned rows across core tables */
     fastify.get('/api/privacy/export', async (request, reply) => {
         const user = await requireUser(request, reply);
         if (!user) return;
         const userId = user.id;
 
-        const [userRow, bookings, favorites, messages, notifications, loyaltyProfiles, wishlist, wallet] = await Promise.all([
+        const [userRow, bookings, favorites, messages, notifications, loyaltyProfiles, wishlist, wallet, productAnalyticsEvents] = await Promise.all([
             prisma.users.findMany({ where: { id: userId } }),
             prisma.bookings.findMany({ where: { client_id: userId } }),
             prisma.favorites.findMany({ where: { user_id: userId } }),
@@ -24,6 +24,7 @@ export async function privacyRoutes(fastify: FastifyInstance) {
             prisma.loyalty_profiles.findMany({ where: { user_id: userId } }),
             prisma.wishlist_items.findMany({ where: { user_id: userId } }),
             prisma.wallet_accounts.findMany({ where: { user_id: userId } }),
+            prisma.product_analytics_events.findMany({ where: { user_id: userId } }),
         ]);
 
         const exportData = {
@@ -39,6 +40,7 @@ export async function privacyRoutes(fastify: FastifyInstance) {
             loyalty_profiles: loyaltyProfiles,
             wishlist_items: wishlist,
             wallet_accounts: wallet,
+            product_analytics_events: productAnalyticsEvents,
         };
 
         reply.header('Content-Type', 'application/json');
@@ -46,7 +48,7 @@ export async function privacyRoutes(fastify: FastifyInstance) {
         return exportData;
     });
 
-    /** Account deletion — removes user-owned data and anonymizes profile */
+    /** Account deletion, removes user-owned data and anonymizes profile */
     fastify.post('/api/privacy/delete-account', async (request, reply) => {
         const user = await requireUser(request, reply);
         if (!user) return;
@@ -58,6 +60,7 @@ export async function privacyRoutes(fastify: FastifyInstance) {
         await prisma.wallet_transactions.deleteMany({ where: { user_id: userId } });
         await prisma.wallet_accounts.deleteMany({ where: { user_id: userId } });
         await prisma.referrals.deleteMany({ where: { referrer_id: userId } });
+        await prisma.product_analytics_events.deleteMany({ where: { user_id: userId } });
 
         await prisma.users.update({
             where: { id: userId },

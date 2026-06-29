@@ -14,13 +14,23 @@ model users {
   id                    String   @id @default(uuid())
   clerk_user_id         String?  @unique
   email                 String   @unique
-  password_hash         String?
   full_name             String?
   role                  String?  @default("client")
   avatar_url            String?
   phone                 String?
+  /// SMS appointment reminders via Twilio
+  sms_reminders_enabled Boolean? @default(true)
+  email_reminders_enabled Boolean? @default(true)
+  /// Smart SMS when client is usually due for another visit (habit-based rebook nudge)
+  sms_rebook_nudges_enabled Boolean? @default(true)
+  rebook_nudge_sent_at String?
+  /// Unique share code e.g. STB-A1B2C3
+  referral_code         String?  @unique
+  referred_by_user_id   String?
   stripe_account_id     String?
   stripe_connect_status String?  @default("unconnected")
+  /// Stripe Customer for saved cards & off-session charges
+  stripe_customer_id    String?  @unique
   created_at            String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
   updated_at            String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
 
@@ -43,14 +53,182 @@ model users {
   wallet_transactions   wallet_transactions[]
   referrals_made        referrals[] @relation("referrer")
   referrals_received    referrals[] @relation("referred")
+  referred_by           users?  @relation("user_referrals", fields: [referred_by_user_id], references: [id])
+  users_referred        users[] @relation("user_referrals")
   gift_cards_purchased  gift_cards[]
-  articles_authored     articles[]
+  articles_authored     articles[] @relation("article_author")
+  articles_reviewed     articles[] @relation("article_reviewer")
+  reviews_written       reviews[]  @relation("review_author")
+  products_created      products[] @relation("product_creator")
+  products_reviewed     products[] @relation("product_reviewer")
   inspiration_posts     inspiration_posts[]
   shop_members          shop_members[]
   shop_expenses_created shop_expenses[]
   jobs_created          jobs[]
+  jobs_reviewed         jobs[] @relation("job_reviewer")
   interviews_created    interview_schedules[]
+  tips_sent             booking_tips[] @relation("tip_client")
+  tips_received         booking_tips[] @relation("tip_recipient")
+  saved_addresses       saved_addresses[]
+  support_tickets       support_tickets[] @relation("support_requester")
+  support_assigned        support_tickets[] @relation("support_assignee")
+  draw_entries          draw_entries[]
+  draw_winner_claims    draw_winner_claims[]
+  draws_won             weekly_draws[] @relation("draw_winner")
+  events_created        platform_events[] @relation("event_creator")
+  event_registrations   event_registrations[]
   privacy_audits        privacy_audits[]
+  provider_fee_wallets  provider_fee_wallets[]
+  provider_fee_transactions provider_fee_transactions[]
+  language_programs_created language_programs[] @relation("language_program_creator")
+  language_program_waitlist language_program_waitlist[]
+  fixed_fee_plans           provider_fixed_fee_plans[]
+  client_payment_methods    client_payment_methods[]
+  product_analytics_events  product_analytics_events[]
+  marketplace_reservations marketplace_reservations[]
+  reputation_events     reputation_events[]
+  ad_credit_wallets     ad_credit_wallets?
+  dispute_appeals       dispute_appeals[]
+  financing_applications financing_applications[]
+  /// Phase 2 — client reputation & reliability
+  reputation_score      Int?     @default(0)
+  reputation_level      String?  @default("new")
+  reliability_index     Int?     @default(100)
+  reputation_updated_at String?
+  /// Phase 2 — optional provider wallet auto-recharge
+  auto_recharge_enabled   Boolean? @default(false)
+  auto_recharge_threshold Float?   @default(10)
+  auto_recharge_amount    Float?   @default(50)
+}
+
+model product_analytics_events {
+  id          String  @id @default(uuid())
+  event_name  String
+  user_id     String?
+  session_id  String?
+  /// JSON blob: barber_id, booking_id, step_name, etc.
+  properties  String?
+  page_path   String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user        users?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([event_name, created_at])
+  @@index([user_id, created_at])
+  @@index([session_id, created_at])
+  @@index([created_at])
+}
+
+model platform_events {
+  id                     String  @id @default(uuid())
+  title                  String
+  description            String?
+  event_type             String? @default("webinar")
+  format                 String? @default("online")
+  start_at               String
+  end_at                 String?
+  timezone               String? @default("UTC")
+  location               String?
+  meeting_url            String?
+  image_url              String?
+  max_capacity           Int?
+  status                 String? @default("draft")
+  target_audience        String? @default("all_providers")
+  registration_opens_at  String?
+  registration_closes_at String?
+  created_by             String?
+  created_at             String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at             String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  creator                users?  @relation("event_creator", fields: [created_by], references: [id], onDelete: SetNull)
+  registrations          event_registrations[]
+
+  @@index([status])
+  @@index([start_at])
+  @@index([target_audience])
+}
+
+model event_registrations {
+  id            String  @id @default(uuid())
+  event_id      String
+  user_id       String
+  status        String? @default("registered")
+  registered_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  cancelled_at  String?
+  attended_at   String?
+  notes         String?
+
+  event         platform_events @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  user          users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_id, user_id])
+  @@index([user_id])
+  @@index([event_id, status])
+}
+
+model weekly_draws {
+  id                  String  @id @default(uuid())
+  title               String
+  prize_title         String
+  prize_description   String?
+  week_start          String
+  week_end            String
+  draw_at             String
+  status              String? @default("open")
+  winner_user_id      String?
+  winner_display_name String?
+  total_tickets       Int?    @default(0)
+  participant_count   Int?    @default(0)
+  draw_seed           String?
+  draw_hash           String?
+  skill_question      String?
+  skill_answer        String?
+  completed_at        String?
+  created_at          String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at          String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  winner              users?  @relation("draw_winner", fields: [winner_user_id], references: [id], onDelete: SetNull)
+  entries             draw_entries[]
+  winner_claim        draw_winner_claims?
+
+  @@index([status])
+  @@index([draw_at])
+  @@index([week_start])
+}
+
+model draw_entries {
+  id               String  @id @default(uuid())
+  draw_id          String
+  user_id          String
+  participant_role String
+  entry_count      Int?    @default(1)
+  eligibility_json String?
+  is_free_entry    Boolean? @default(false)
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  draw             weekly_draws @relation(fields: [draw_id], references: [id], onDelete: Cascade)
+  user             users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([draw_id, user_id])
+  @@index([draw_id])
+  @@index([user_id])
+}
+
+model draw_winner_claims {
+  id           String  @id @default(uuid())
+  draw_id      String  @unique
+  user_id      String
+  skill_answer String?
+  skill_passed Boolean? @default(false)
+  status       String? @default("pending")
+  claimed_at   String?
+  created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  draw         weekly_draws @relation(fields: [draw_id], references: [id], onDelete: Cascade)
+  user         users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
 }
 
 model shops {
@@ -60,6 +238,15 @@ model shops {
   image_url   String?
   description String?
   owner_id    String?
+  rating      Float?   @default(0)
+  review_count Int?    @default(0)
+  /// Year the shop first opened (e.g. 2019)
+  founded_year  Int?
+  phone         String?
+  website_url   String?
+  instagram_handle String?
+  /// JSON array of highlight tags shown on public profile
+  profile_highlights String?
   created_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
   updated_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
 
@@ -73,6 +260,78 @@ model shops {
   jobs        jobs[]
   inventory   shop_inventory_items[]
   expenses    shop_expenses[]
+  service_bundles service_bundles[]
+  chairs      shop_chairs[]
+  accepts_cash_in_store Boolean? @default(false)
+  provider_fee_wallet   provider_fee_wallets? @relation("shop_fee_wallet")
+  fixed_fee_plans       provider_fixed_fee_plans[]
+  /// JSON array of ISO-style language codes spoken by staff, e.g. ["en","el"]
+  spoken_languages    String?
+  /// Shop welcomes children / offers kid-friendly services
+  children_friendly   Boolean? @default(false)
+  /// Self-declared: shop holds valid business / grooming license
+  attestation_licensed Boolean? @default(false)
+  /// Self-declared: shop carries liability insurance
+  attestation_insured  Boolean? @default(false)
+  /// Require card on file at booking (Booksy/Squire-style)
+  card_on_file_required Boolean? @default(false)
+  /// In-shop visits at this location (default true)
+  offers_shop_service   Boolean? @default(true)
+  /// At-home visits offered under this shop brand
+  offers_mobile_service Boolean? @default(false)
+  /// Collect partial deposit at booking
+  booking_deposit_enabled Boolean? @default(false)
+  booking_deposit_percent Float? @default(20)
+  booking_deposit_flat_amount Float?
+  /// Authorize full service amount (capture on completion)
+  booking_auth_hold_enabled Boolean? @default(false)
+  /// Charge no-show fee from card on file
+  no_show_protection_enabled Boolean? @default(false)
+  no_show_fee_percent Float?
+  no_show_fee_flat_amount Float?
+  /// Late cancellation tiers (hours before appointment)
+  late_cancel_protection_enabled Boolean? @default(true)
+  late_cancel_full_refund_hours Float? @default(24)
+  late_cancel_no_refund_hours Float? @default(2)
+  late_cancel_fee_percent Float? @default(50)
+  at_home_service_area at_home_service_areas?
+  career_entries       provider_career_entries[]
+}
+
+model at_home_service_areas {
+  id                  String   @id @default(uuid())
+  barber_id           String?  @unique
+  shop_id             String?  @unique
+  base_address        String?
+  base_latitude       Float?
+  base_longitude      Float?
+  /// Maximum travel distance from base (km)
+  service_radius_km   Float    @default(25)
+  travel_fees_enabled Boolean  @default(false)
+  created_at          String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at          String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber barbers? @relation(fields: [barber_id], references: [id], onDelete: Cascade)
+  shop   shops?   @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+  zones  at_home_travel_zones[]
+
+  @@index([barber_id])
+  @@index([shop_id])
+}
+
+model at_home_travel_zones {
+  id              String  @id @default(uuid())
+  area_id         String
+  label           String
+  min_distance_km Float   @default(0)
+  max_distance_km Float
+  fee_amount      Float   @default(0)
+  sort_order      Int     @default(0)
+  created_at      String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  area at_home_service_areas @relation(fields: [area_id], references: [id], onDelete: Cascade)
+
+  @@index([area_id, sort_order])
 }
 
 model barbers {
@@ -90,6 +349,18 @@ model barbers {
   longitude   Float?
   city        String?
   status      String?  @default("active")
+  /// JSON array of specialty tags, e.g. ["Fades","Beard","Color"]
+  skills      String?
+  years_experience Int?
+  /// First year working as a barber/grooming professional
+  career_started_year Int?
+  /// Year mobile / at-home / van service began
+  mobile_service_started_year Int?
+  instagram_handle String?
+  tiktok_handle    String?
+  website_url      String?
+  /// JSON array of highlight tags, e.g. ["Hot towel shaves","Kids welcome"]
+  profile_highlights String?
   created_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
   updated_at  String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
 
@@ -99,15 +370,64 @@ model barbers {
   bookings    bookings[]
   shifts      shifts[]
   time_blocks time_blocks[]
-  reviews     reviews[]
   payouts     payouts[]
   products    products[]
   videos      barber_videos[]
   waiting_list waiting_list_entries[]
   shop_members shop_members[]
+  service_bundles service_bundles[]
+  chair_assignments chair_assignments[]
+  capacity_settings barber_capacity_settings?
+  accepts_cash_in_store Boolean? @default(false)
+  /// JSON array of ISO-style language codes, e.g. ["en","fr","el"]
+  spoken_languages    String?
+  /// Barber welcomes children / offers kid-friendly cuts
+  children_friendly   Boolean? @default(false)
+  /// Self-declared: barber holds valid professional license
+  attestation_licensed Boolean? @default(false)
+  /// Self-declared: barber carries liability insurance
+  attestation_insured  Boolean? @default(false)
+  /// Offers mobile / at-home visits
+  offers_mobile_service Boolean? @default(false)
+  /// Accepts clients at shop / chair (default true for existing barbers)
+  offers_shop_service   Boolean? @default(true)
+  /// Platform VIP tier (admin-granted or earned via rating threshold)
+  is_vip                        Boolean? @default(false)
+  /// VIP barbers can accept group bookings (parties, weddings, groomsmen)
+  offers_group_booking          Boolean? @default(false)
+  group_booking_min_party       Int?     @default(2)
+  group_booking_max_party       Int?     @default(8)
+  /// Percent discount on group subtotal (e.g. 10 = 10% off)
+  group_booking_discount_percent Float?  @default(0)
+  /// Require card on file at booking
+  card_on_file_required Boolean? @default(false)
+  booking_deposit_enabled Boolean? @default(false)
+  booking_deposit_percent Float? @default(20)
+  booking_deposit_flat_amount Float?
+  booking_auth_hold_enabled Boolean? @default(false)
+  no_show_protection_enabled Boolean? @default(false)
+  no_show_fee_percent Float?
+  no_show_fee_flat_amount Float?
+  late_cancel_protection_enabled Boolean? @default(true)
+  late_cancel_full_refund_hours Float? @default(24)
+  late_cancel_no_refund_hours Float? @default(2)
+  late_cancel_fee_percent Float? @default(50)
+  /// Phase 2 — internal trust scores (not star rating)
+  trust_score            Float?   @default(50)
+  availability_score     Float?   @default(50)
+  trust_score_updated_at String?
+  language_program_waitlist language_program_waitlist[]
+  fixed_fee_plans           provider_fixed_fee_plans[]
+  at_home_service_area      at_home_service_areas?
+  career_entries            provider_career_entries[]
+  championship_scores       championship_scores[]
+  championship_hall_of_fame championship_hall_of_fame[]
 
   @@index([user_id])
   @@index([shop_id])
+  @@index([city])
+  @@index([is_vip])
+  @@index([offers_group_booking])
 }
 
 model services {
@@ -127,6 +447,7 @@ model services {
   barber           barbers? @relation(fields: [barber_id], references: [id])
   booking_services booking_services[]
   staff_configs    staff_service_configs[]
+  bundle_items     service_bundle_items[]
 
   @@index([shop_id])
   @@index([barber_id])
@@ -138,6 +459,12 @@ model bookings {
   barber_id          String
   shop_id            String?
   client_name        String?
+  client_phone       String?
+  client_email       String?
+  guest_access_token String? @unique
+  review_request_token String? @unique
+  review_request_sent_at String?
+  review_nudge_sent_at String?
   barber_name        String?
   service_name       String?
   service_snapshot   String?
@@ -146,10 +473,50 @@ model bookings {
   end_time           String
   status             String? @default("pending")
   payment_status     String? @default("unpaid")
+  payment_method     String? @default("online")
+  platform_fee_status String? @default("not_applicable")
+  platform_fee_amount Float?
   financial_breakdown String?
   price_at_booking   Float?
   notes              String?
   discount_code      String?
+  booking_type       String? @default("individual")
+  party_size         Int?
+  group_event_label  String?
+  group_notes        String?
+  visit_type         String? @default("shop")
+  location_text      String?
+  client_latitude    Float?
+  client_longitude   Float?
+  travel_distance_km Float?
+  travel_fee_amount  Float?
+  travel_zone_label  String?
+  date_text          String?
+  time_text          String?
+  sms_reminder_sent_at String?
+  email_reminder_sent_at String?
+  stripe_checkout_session_id String?
+  stripe_payment_intent_id String?
+  deposit_amount Float?
+  deposit_payment_status String? @default("none")
+  authorization_amount Float?
+  authorization_status String? @default("none")
+  balance_due Float?
+  saved_payment_method_id String?
+  no_show_fee_amount Float?
+  no_show_fee_status String? @default("none")
+  no_show_marked_at String?
+  no_show_marked_by String?
+  no_show_stripe_payment_intent_id String?
+  cancellation_fee_amount Float?
+  cancellation_fee_status String? @default("none")
+  cancellation_refund_amount Float?
+  cancellation_stripe_refund_id String?
+  cancellation_stripe_payment_intent_id String?
+  cancelled_by String?
+  cancellation_tier String?
+  chair_id           String?
+  qr_check_in_token  String? @unique
   created_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
   updated_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
@@ -157,13 +524,53 @@ model bookings {
   barber             barbers @relation(fields: [barber_id], references: [id])
   shop               shops?  @relation(fields: [shop_id], references: [id])
   booking_services   booking_services[]
+  group_guests       group_booking_guests[]
   disputes           disputes[]
   reviews            reviews[]
+  tip                booking_tips?
+  check_in           booking_check_ins?
+  chair              shop_chairs? @relation(fields: [chair_id], references: [id], onDelete: SetNull)
 
   @@index([client_id])
   @@index([barber_id, start_time])
   @@index([status])
+  @@index([chair_id, start_time])
   @@index([discount_code])
+  @@index([booking_type])
+  @@index([visit_type])
+  @@index([deposit_payment_status])
+  @@index([authorization_status])
+}
+
+model client_payment_methods {
+  id                       String  @id @default(uuid())
+  user_id                  String
+  stripe_payment_method_id String  @unique
+  card_brand               String?
+  card_last4               String?
+  card_exp_month           Int?
+  card_exp_year            Int?
+  is_default               Boolean? @default(false)
+  created_at               String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model group_booking_guests {
+  id          String  @id @default(uuid())
+  booking_id  String
+  guest_name  String
+  sort_order  Int?    @default(0)
+  /// JSON array of service IDs for this guest
+  service_ids String?
+  notes       String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  booking     bookings @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+
+  @@index([booking_id])
 }
 
 model booking_services {
@@ -175,26 +582,137 @@ model booking_services {
   service    services @relation(fields: [service_id], references: [id])
 }
 
-model products {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-  price       Float
-  image_url   String?
-  category    String?
-  seller_type String
-  barber_id   String?
-  shop_id     String?
-  vendor_name String?
-  brand_id    String?
-  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+model booking_tips {
+  id                         String  @id @default(uuid())
+  booking_id                 String  @unique
+  client_id                  String
+  recipient_user_id          String
+  barber_id                  String
+  shop_id                    String?
+  amount                     Float
+  currency                   String? @default("USD")
+  percent_of_service         Float?
+  message                    String?
+  status                     String? @default("pending")
+  stripe_checkout_session_id String?
+  stripe_payment_intent_id   String?
+  connect_transfer_id        String?
+  paid_at                    String?
+  created_at                 String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
-  barber      barbers? @relation(fields: [barber_id], references: [id])
-  shop        shops?   @relation(fields: [shop_id], references: [id])
-  brand       brands?  @relation(fields: [brand_id], references: [id])
-  cart_items  cart_items[]
-  order_items order_items[]
-  wishlist_items wishlist_items[]
+  booking   bookings @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  client    users    @relation("tip_client", fields: [client_id], references: [id], onDelete: Cascade)
+  recipient users    @relation("tip_recipient", fields: [recipient_user_id], references: [id], onDelete: Cascade)
+
+  @@index([recipient_user_id])
+  @@index([barber_id])
+  @@index([client_id])
+  @@index([status])
+}
+
+model products {
+  id               String  @id @default(uuid())
+  name             String
+  description      String?
+  price            Float
+  image_url        String?
+  category         String?
+  seller_type      String
+  barber_id        String?
+  shop_id          String?
+  vendor_name      String?
+  brand_id         String?
+  /// draft | pending_review | published | rejected
+  status           String? @default("draft")
+  published        Boolean? @default(false)
+  featured         Boolean? @default(false)
+  stock            Int?    @default(0)
+  rejection_reason String?
+  submitted_at     String?
+  reviewed_at      String?
+  reviewed_by      String?
+  created_by       String?
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber           barbers? @relation(fields: [barber_id], references: [id])
+  shop             shops?   @relation(fields: [shop_id], references: [id])
+  brand            brands?  @relation(fields: [brand_id], references: [id])
+  creator          users?   @relation("product_creator", fields: [created_by], references: [id])
+  reviewer         users?   @relation("product_reviewer", fields: [reviewed_by], references: [id])
+  cart_items       cart_items[]
+  order_items      order_items[]
+  wishlist_items   wishlist_items[]
+  reservations     marketplace_reservations[]
+
+  @@index([published])
+  @@index([status])
+  @@index([seller_type])
+  @@index([barber_id])
+  @@index([shop_id])
+  @@index([brand_id])
+}
+
+model saved_addresses {
+  id         String   @id @default(uuid())
+  user_id    String
+  label      String?  @default("Home")
+  full_name  String
+  street     String
+  city       String
+  state      String?
+  zip        String
+  country    String?  @default("US")
+  phone      String?
+  is_default Boolean? @default(false)
+  created_at String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model seller_shipping_profiles {
+  id                 String  @id @default(uuid())
+  owner_type         String
+  barber_id          String? @unique
+  shop_id            String? @unique
+  ship_from_name     String
+  ship_from_street   String
+  ship_from_city     String
+  ship_from_state    String?
+  ship_from_zip      String
+  ship_from_country  String? @default("US")
+  ship_from_phone    String?
+  processing_days    Int?    @default(2)
+  free_shipping_min  Float?
+  flat_shipping_rate Float?  @default(0)
+  return_policy      String?
+  created_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+}
+
+model order_fulfillments {
+  id                    String  @id @default(uuid())
+  order_id              String
+  seller_type           String
+  barber_id             String?
+  shop_id               String?
+  fulfillment_status    String? @default("confirmed")
+  tracking_number       String?
+  carrier               String?
+  estimated_delivery_at String?
+  shipped_at            String?
+  updated_by_user_id    String?
+  created_at            String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at            String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  order                 orders  @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([barber_id])
+  @@index([shop_id])
 }
 
 model orders {
@@ -208,17 +726,24 @@ model orders {
   shipping_full_name       String?
   shipping_street          String?
   shipping_city            String?
+  shipping_state           String?
   shipping_zip             String?
+  shipping_country         String? @default("US")
   shipping_phone           String?
+  saved_address_id         String?
   payment_status           String? @default("unpaid")
   stripe_checkout_session_id String?
   order_number             String?
   fulfillment_status       String? @default("confirmed")
   estimated_delivery_at    String?
+  tracking_number          String?
+  carrier                  String?
+  shipped_at               String?
   created_at               String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   user                     users   @relation(fields: [user_id], references: [id])
   order_items              order_items[]
+  fulfillments             order_fulfillments[]
 }
 
 model order_items {
@@ -229,12 +754,17 @@ model order_items {
   product_image_url String?
   price             Float
   quantity          Int
+  seller_type       String?
+  barber_id         String?
+  shop_id           String?
   created_at        String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   order             orders  @relation(fields: [order_id], references: [id])
   product           products @relation(fields: [product_id], references: [id])
 
   @@index([order_id])
+  @@index([barber_id])
+  @@index([shop_id])
 }
 
 model brands {
@@ -279,17 +809,42 @@ model brand_collections {
 }
 
 model promo_codes {
-  id             String  @id @default(uuid())
-  code           String  @unique
-  discount_type  String
-  discount_value Float
-  shop_id        String?
-  expiry_date    String?
-  is_active      Boolean? @default(true)
+  id                 String  @id @default(uuid())
+  code               String  @unique
+  discount_type      String
+  discount_value     Float
+  shop_id            String?
+  owner_user_id      String?
+  expiry_date        String?
+  is_active          Boolean? @default(true)
+  /** everyone | specific_users | all_shops | specific_shops | all_barbers | specific_barbers */
+  audience           String?  @default("everyone")
+  max_uses           Int?
+  max_uses_per_user  Int?     @default(1)
+  admin_note         String?
+  created_at         String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at         String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
 
-  shop           shops?  @relation(fields: [shop_id], references: [id])
+  shop               shops?  @relation(fields: [shop_id], references: [id])
+  targets            promo_code_targets[]
 
   @@index([shop_id])
+  @@index([owner_user_id])
+  @@index([audience])
+  @@index([is_active])
+}
+
+model promo_code_targets {
+  id            String @id @default(uuid())
+  promo_code_id String
+  target_type   String
+  target_id     String
+
+  promo_code    promo_codes @relation(fields: [promo_code_id], references: [id], onDelete: Cascade)
+
+  @@unique([promo_code_id, target_type, target_id])
+  @@index([promo_code_id])
+  @@index([target_type, target_id])
 }
 
 model loyalty_profiles {
@@ -304,28 +859,60 @@ model loyalty_profiles {
 }
 
 model loyalty_transactions {
-  id          String  @id @default(uuid())
-  user_id     String
-  points      Int
-  description String?
-  date_text   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  id                String  @id @default(uuid())
+  user_id           String
+  points            Int
+  type              String?
+  description       String?
+  related_entity_id String?
+  date_text         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  @@index([user_id, type, related_entity_id])
+}
+
+model support_tickets {
+  id              String  @id @default(uuid())
+  user_id         String
+  subject         String
+  category        String? @default("general")
+  status          String? @default("open")
+  priority        String? @default("normal")
+  assigned_to     String?
+  last_message_at String?
+  created_at      String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at      String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  closed_at       String?
+
+  user            users   @relation("support_requester", fields: [user_id], references: [id], onDelete: Cascade)
+  assignee        users?  @relation("support_assignee", fields: [assigned_to], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([status])
+  @@index([assigned_to])
+  @@index([last_message_at])
 }
 
 model messages {
-  id             String  @id @default(uuid())
-  sender_id      String
-  sender_email   String?
-  receiver_id    String
-  receiver_email String?
-  content        String
-  is_read        Boolean? @default(false)
-  created_at     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  id                String  @id @default(uuid())
+  sender_id         String
+  sender_email      String?
+  receiver_id       String
+  receiver_email    String?
+  content           String
+  booking_id        String?
+  support_ticket_id String?
+  message_type      String? @default("text")
+  metadata          String?
+  is_read           Boolean? @default(false)
+  created_at        String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
-  sender         users   @relation("msg_sender", fields: [sender_id], references: [id])
-  receiver       users   @relation("msg_receiver", fields: [receiver_id], references: [id])
+  sender            users   @relation("msg_sender", fields: [sender_id], references: [id])
+  receiver          users   @relation("msg_receiver", fields: [receiver_id], references: [id])
 
   @@index([sender_id])
   @@index([receiver_id, is_read])
+  @@index([booking_id])
+  @@index([support_ticket_id])
 }
 
 model notifications {
@@ -369,16 +956,20 @@ model cart_items {
 }
 
 model shifts {
-  id         String  @id @default(uuid())
-  barber_id  String
-  shop_id    String?
-  day        String
-  start_time String
-  end_time   String
+  id             String  @id @default(uuid())
+  barber_id      String
+  shop_id        String?
+  shop_member_id String?
+  day            String
+  start_time     String
+  end_time       String
+  is_active      Boolean? @default(true)
 
-  barber     barbers @relation(fields: [barber_id], references: [id])
+  barber      barbers       @relation(fields: [barber_id], references: [id])
+  shop_member shop_members? @relation(fields: [shop_member_id], references: [id])
 
   @@index([barber_id, day])
+  @@index([shop_member_id])
 }
 
 model time_blocks {
@@ -394,14 +985,22 @@ model time_blocks {
 }
 
 model disputes {
-  id         String  @id @default(uuid())
-  booking_id String
-  reason     String
-  status     String? @default("open")
-  evidence   String?
-  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  id                  String  @id @default(uuid())
+  booking_id          String
+  reason              String
+  status              String? @default("open")
+  evidence            String?
+  /// client_favored | provider_favored | partial | withdrawn | info_only
+  resolution_outcome  String?
+  refund_amount       Float?
+  resolution_notes    String?
+  resolved_at         String?
+  resolved_by         String?
+  created_at          String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   booking    bookings @relation(fields: [booking_id], references: [id])
+
+  @@index([resolution_outcome])
 }
 
 model audit_logs {
@@ -416,36 +1015,95 @@ model audit_logs {
 }
 
 model shop_members {
-  id          String  @id @default(uuid())
-  shop_id     String
-  user_id     String
-  role        String? @default("barber")
-  joined_date String? @default(dbgenerated("CURRENT_TIMESTAMP"))
-  barber_id   String?
+  id              String   @id @default(uuid())
+  shop_id         String
+  user_id         String?
+  role            String?  @default("barber")
+  status          String?  @default("active")
+  booking_enabled Boolean? @default(true)
+  joined_date     String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  barber_id       String?
 
   shop        shops   @relation(fields: [shop_id], references: [id])
-  user        users   @relation(fields: [user_id], references: [id])
+  user        users?  @relation(fields: [user_id], references: [id])
   barber      barbers? @relation(fields: [barber_id], references: [id])
   staff_configs staff_service_configs[]
+  shifts        shifts[]
+
+  @@index([shop_id])
 }
 
 model pricing_rules {
-  id                    String  @id @default(uuid())
-  name                  String?
-  commission_freelancer Float?  @default(0.10)
-  commission_shop       Float?  @default(0.05)
-  is_active             Boolean? @default(true)
+  id                         String  @id @default(uuid())
+  name                       String?
+  commission_freelancer      Float?  @default(0.10)
+  commission_shop            Float?  @default(0.05)
+  is_active                  Boolean? @default(true)
+  min_service_price          Float?  @default(5)
+  max_service_price          Float?  @default(500)
+  max_promo_percentage       Float?  @default(30)
+  max_promo_fixed            Float?  @default(75)
+  max_combo_discount_percent Float?  @default(35)
+  min_combo_services         Int?    @default(2)
+  fixed_fee_monthly_barber   Float?  @default(79)
+  fixed_fee_monthly_shop     Float?  @default(149)
+}
+
+model service_bundles {
+  id             String  @id @default(uuid())
+  shop_id        String?
+  barber_id      String?
+  name           String
+  description    String?
+  /// When set, client pays this fixed combo price (must be below sum of services).
+  bundle_price   Float?
+  discount_type  String?
+  discount_value Float?
+  is_active      Boolean? @default(true)
+  created_by     String?
+  created_at     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at     String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shop           shops?   @relation(fields: [shop_id], references: [id])
+  barber         barbers? @relation(fields: [barber_id], references: [id])
+  items          service_bundle_items[]
+
+  @@index([shop_id])
+  @@index([barber_id])
+  @@index([is_active])
+}
+
+model service_bundle_items {
+  id         String @id @default(uuid())
+  bundle_id  String
+  service_id String
+
+  bundle     service_bundles @relation(fields: [bundle_id], references: [id], onDelete: Cascade)
+  service    services        @relation(fields: [service_id], references: [id])
+
+  @@unique([bundle_id, service_id])
+  @@index([service_id])
 }
 
 model waiting_list_entries {
   id           String  @id @default(uuid())
   client_id    String?
   barber_id    String?
+  shop_id      String?
+  service_id   String?
+  service_ids_json String?
   request_date String?
+  slot_start   String?
+  preferred_time String?
+  position     Int?    @default(0)
   status       String? @default("pending")
   created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   barber       barbers? @relation(fields: [barber_id], references: [id])
+  offers       waitlist_offers[]
+
+  @@index([barber_id, slot_start])
+  @@index([client_id])
 }
 
 model staff_service_configs {
@@ -464,13 +1122,18 @@ model reviews {
   id          String  @id @default(uuid())
   booking_id  String?
   reviewer_id String?
-  target_id   String?
+  target_type String  @default("barber")
+  target_id   String
   rating      Int?
   content     String?
   created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   booking     bookings? @relation(fields: [booking_id], references: [id])
-  barber      barbers?  @relation(fields: [target_id], references: [id])
+  reviewer    users?    @relation("review_author", fields: [reviewer_id], references: [id])
+
+  @@index([target_type, target_id])
+  @@index([reviewer_id])
+  @@index([booking_id])
 }
 
 model payouts {
@@ -518,7 +1181,12 @@ model jobs {
   salary_currency          String? @default("USD")
   application_deadline     String?
   status                   String? @default("draft")
+  published                Boolean? @default(false)
   featured                 Boolean? @default(false)
+  rejection_reason         String?
+  submitted_at             String?
+  reviewed_at              String?
+  reviewed_by              String?
   image_url                String?
   created_by               String?
   created_at               String? @default(dbgenerated("CURRENT_TIMESTAMP"))
@@ -527,6 +1195,7 @@ model jobs {
   shop                     shops?    @relation(fields: [shop_id], references: [id])
   company                  companies? @relation(fields: [company_id], references: [id])
   creator                  users?    @relation(fields: [created_by], references: [id])
+  reviewer                 users?    @relation("job_reviewer", fields: [reviewed_by], references: [id])
   applications             job_applications[]
   saved_by                 saved_jobs[]
 }
@@ -634,24 +1303,33 @@ model inspiration_posts {
 }
 
 model articles {
-  id          String  @id @default(uuid())
-  title       String
-  slug        String? @unique
-  excerpt     String?
-  content     String?
-  category    String?
-  image_url   String?
-  author_id   String?
-  author_name String?
-  published   Boolean? @default(false)
-  featured    Boolean? @default(false)
-  views       Int?    @default(0)
-  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
-  updated_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  id               String  @id @default(uuid())
+  title            String
+  slug             String? @unique
+  excerpt          String?
+  content          String?
+  category         String?
+  image_url        String?
+  author_id        String?
+  author_name      String?
+  /// draft | pending_review | published | rejected
+  status           String? @default("draft")
+  published        Boolean? @default(false)
+  featured         Boolean? @default(false)
+  views            Int?    @default(0)
+  rejection_reason String?
+  submitted_at     String?
+  reviewed_at      String?
+  reviewed_by      String?
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
-  author      users?  @relation(fields: [author_id], references: [id])
+  author           users?  @relation("article_author", fields: [author_id], references: [id])
+  reviewer         users?  @relation("article_reviewer", fields: [reviewed_by], references: [id])
 
   @@index([published])
+  @@index([status])
+  @@index([author_id])
 }
 
 model gift_cards {
@@ -670,19 +1348,28 @@ model gift_cards {
 }
 
 model referrals {
-  id               String  @id @default(uuid())
-  referrer_id      String
-  referral_code    String
-  referred_user_id String?
-  reward_amount    Float?  @default(10)
-  status           String? @default("pending")
-  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  id                    String  @id @default(uuid())
+  referrer_id           String
+  referral_code         String
+  referred_user_id      String?
+  program_type          String? @default("client_b2c")
+  reward_amount         Float?  @default(10)
+  referrer_reward_amount Float?
+  referee_reward_amount Float?
+  referee_promo_code    String?
+  booking_id            String?
+  status                String? @default("pending")
+  qualified_at          String?
+  rewarded_at           String?
+  created_at            String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   referrer         users   @relation("referrer", fields: [referrer_id], references: [id])
   referred         users?  @relation("referred", fields: [referred_user_id], references: [id])
 
   @@index([referral_code])
   @@index([referrer_id])
+  @@index([referred_user_id])
+  @@index([status])
 }
 
 model wallet_accounts {
@@ -711,6 +1398,81 @@ model wallet_transactions {
   @@index([user_id])
 }
 
+model provider_fee_wallets {
+  id                    String  @id @default(uuid())
+  user_id               String
+  shop_id               String? @unique
+  balance               Float?  @default(0)
+  promotional_balance   Float?  @default(0)
+  purchased_balance     Float?  @default(0)
+  promotional_expires_at String?
+  health_status         String? @default("good")
+  currency              String? @default("EUR")
+  accepts_cash_in_store Boolean? @default(false)
+  minimum_balance       Float?  @default(5)
+  updated_at            String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user                  users   @relation(fields: [user_id], references: [id])
+  shop                  shops?  @relation("shop_fee_wallet", fields: [shop_id], references: [id], onDelete: SetNull)
+  transactions          provider_fee_transactions[]
+
+  @@unique([user_id, shop_id])
+  @@index([user_id])
+}
+
+model provider_fee_transactions {
+  id                         String  @id @default(uuid())
+  wallet_id                  String
+  user_id                    String
+  amount                     Float
+  type                       String
+  booking_id                 String?
+  stripe_checkout_session_id String?
+  description                String?
+  created_at                 String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  wallet                     provider_fee_wallets @relation(fields: [wallet_id], references: [id])
+  user                       users                @relation(fields: [user_id], references: [id])
+
+  @@index([wallet_id])
+  @@index([user_id])
+  @@index([booking_id])
+}
+
+model provider_fixed_fee_plans {
+  id                         String  @id @default(uuid())
+  user_id                    String
+  shop_id                    String?
+  barber_id                  String?
+  /// barber | shop
+  scope                      String
+  /// monthly | annual
+  billing_cycle              String
+  /// Calendar year this plan covers, e.g. 2026
+  coverage_year              Int
+  monthly_fee_amount         Float
+  total_paid                 Float?  @default(0)
+  discount_percent           Float?  @default(0)
+  /// pending_payment | active | expired | cancelled
+  status                     String? @default("pending_payment")
+  /// unpaid | paid
+  payment_status             String? @default("unpaid")
+  period_start               String?
+  period_end                 String?
+  stripe_checkout_session_id String?
+  enrolled_at                String?
+  created_at                 String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at                 String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user                       users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  shop                       shops?  @relation(fields: [shop_id], references: [id], onDelete: SetNull)
+  barber                     barbers? @relation(fields: [barber_id], references: [id], onDelete: SetNull)
+
+  @@unique([user_id, scope, coverage_year])
+  @@index([user_id, status])
+  @@index([coverage_year, status])
+}
+
 model wishlist_items {
   id         String  @id @default(uuid())
   user_id    String
@@ -736,6 +1498,32 @@ model barber_videos {
   barber        barbers @relation(fields: [barber_id], references: [id])
 
   @@index([barber_id])
+}
+
+/// Education, employment, certifications, milestones — shared career timeline for barbers & shops
+model provider_career_entries {
+  id            String  @id @default(uuid())
+  barber_id     String?
+  shop_id       String?
+  /// education | employment | certification | milestone | award
+  entry_type    String
+  title         String
+  organization  String?
+  location      String?
+  description   String?
+  /// Year (2019) or ISO date string
+  started_at    String?
+  ended_at      String?
+  is_current    Boolean? @default(false)
+  sort_order    Int?     @default(0)
+  created_at    String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at    String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  barber barbers? @relation(fields: [barber_id], references: [id], onDelete: Cascade)
+  shop   shops?   @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+
+  @@index([barber_id, sort_order])
+  @@index([shop_id, sort_order])
 }
 
 model feature_flags {
@@ -778,6 +1566,64 @@ model shop_expenses {
   @@index([shop_id])
 }
 
+model language_programs {
+  id                 String  @id @default(uuid())
+  title              String
+  description        String?
+  /// Target language code barbers aim to learn, e.g. "en"
+  language_code      String
+  total_price        Float
+  currency           String? @default("EUR")
+  max_waitlist       Int?
+  /// draft | open | closed | completed | cancelled
+  status             String? @default("draft")
+  estimated_start_at String?
+  duration_weeks     Int?
+  format             String? @default("online")
+  image_url          String?
+  created_by         String?
+  created_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  creator            users?  @relation("language_program_creator", fields: [created_by], references: [id], onDelete: SetNull)
+  waitlist_entries   language_program_waitlist[]
+
+  @@index([status])
+  @@index([language_code])
+}
+
+model language_program_waitlist {
+  id                         String  @id @default(uuid())
+  program_id                 String
+  user_id                    String
+  barber_id                  String?
+  target_language_code       String
+  /// pending_payment | waitlisted | enrolled | cancelled
+  status                     String? @default("pending_payment")
+  deposit_percent            Float?  @default(20)
+  deposit_amount             Float
+  total_program_price        Float
+  /// unpaid | paid | failed
+  payment_status             String? @default("unpaid")
+  stripe_checkout_session_id String?
+  stripe_payment_intent_id   String?
+  terms_accepted_at          String?
+  terms_version              String?
+  position                   Int?
+  enrolled_at                String?
+  cancelled_at               String?
+  created_at                 String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  updated_at                 String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  program                    language_programs @relation(fields: [program_id], references: [id], onDelete: Cascade)
+  user                       users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  barber                     barbers?          @relation(fields: [barber_id], references: [id], onDelete: SetNull)
+
+  @@unique([program_id, user_id])
+  @@index([user_id])
+  @@index([program_id, status])
+}
+
 model legal_documents {
   id         String  @id @default(uuid())
   slug       String  @unique
@@ -804,4 +1650,257 @@ model privacy_audits {
   user         users    @relation(fields: [user_id], references: [id])
 
   @@index([user_id, action_type])
+}
+
+// --- Financial & Trust Ecosystem Phase 1 ---
+
+model ledger_entries {
+  id           String  @id @default(uuid())
+  entity_type  String
+  entity_id    String
+  event_type   String
+  payload_json String?
+  actor_id     String?
+  created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  @@index([entity_type, entity_id])
+  @@index([event_type])
+}
+
+model shop_chairs {
+  id         String   @id @default(uuid())
+  shop_id    String
+  name       String
+  is_active  Boolean? @default(true)
+  sort_order Int?     @default(0)
+  created_at String?  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  shop        shops              @relation(fields: [shop_id], references: [id])
+  assignments chair_assignments[]
+  bookings    bookings[]
+
+  @@index([shop_id])
+}
+
+model chair_assignments {
+  id             String  @id @default(uuid())
+  chair_id       String
+  barber_id      String
+  day_of_week    String?
+  effective_from String?
+  effective_to   String?
+
+  chair  shop_chairs @relation(fields: [chair_id], references: [id], onDelete: Cascade)
+  barber barbers     @relation(fields: [barber_id], references: [id], onDelete: Cascade)
+
+  @@index([chair_id])
+  @@index([barber_id])
+}
+
+model barber_capacity_settings {
+  id                     String @id @default(uuid())
+  barber_id              String @unique
+  default_buffer_minutes Int?   @default(0)
+
+  barber barbers @relation(fields: [barber_id], references: [id], onDelete: Cascade)
+}
+
+model booking_check_ins {
+  id         String  @id @default(uuid())
+  booking_id String  @unique
+  qr_token   String  @unique
+  scanned_at String?
+  scanned_by String?
+  latitude   Float?
+  longitude  Float?
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  booking bookings @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+
+  @@index([qr_token])
+}
+
+model marketplace_reservations {
+  id         String  @id @default(uuid())
+  product_id String
+  user_id    String
+  quantity   Int?    @default(1)
+  status     String? @default("active")
+  expires_at String
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id, status])
+  @@index([user_id])
+}
+
+model waitlist_offers {
+  id                String  @id @default(uuid())
+  waitlist_entry_id String
+  slot_start        String
+  slot_end          String?
+  status            String? @default("pending")
+  offer_expires_at  String
+  created_at        String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  waitlist_entry waiting_list_entries @relation(fields: [waitlist_entry_id], references: [id], onDelete: Cascade)
+
+  @@index([waitlist_entry_id])
+  @@index([status, offer_expires_at])
+}
+
+// --- Financial & Trust Phase 2 / 3 ---
+
+model reputation_events {
+  id                String  @id @default(uuid())
+  user_id           String
+  event_type        String
+  points_delta      Int?    @default(0)
+  reliability_delta Int?    @default(0)
+  payload_json      String?
+  created_at        String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at])
+  @@index([event_type])
+}
+
+model championship_seasons {
+  id         String  @id @default(uuid())
+  name       String
+  season_key String  @unique
+  starts_at  String
+  ends_at    String
+  status     String? @default("active")
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  scores     championship_scores[]
+  hall_of_fame championship_hall_of_fame[]
+}
+
+model championship_scores {
+  id              String  @id @default(uuid())
+  season_id       String
+  barber_id       String
+  composite_score Float?  @default(0)
+  rank            Int?
+  country_code    String?
+  badges_json     String?
+  updated_at      String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  season championship_seasons @relation(fields: [season_id], references: [id], onDelete: Cascade)
+  barber barbers              @relation(fields: [barber_id], references: [id], onDelete: Cascade)
+
+  @@unique([season_id, barber_id])
+  @@index([season_id, rank])
+}
+
+model championship_hall_of_fame {
+  id         String  @id @default(uuid())
+  season_id  String
+  barber_id  String
+  rank       Int
+  badge      String?
+  inducted_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  season championship_seasons @relation(fields: [season_id], references: [id], onDelete: Cascade)
+  barber barbers              @relation(fields: [barber_id], references: [id], onDelete: Cascade)
+
+  @@unique([season_id, barber_id])
+}
+
+model fraud_alerts {
+  id          String  @id @default(uuid())
+  entity_type String
+  entity_id   String
+  rule_id     String
+  severity    String? @default("medium")
+  payload_json String?
+  status      String? @default("open")
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  resolved_at String?
+
+  @@index([status, created_at])
+  @@index([entity_type, entity_id])
+}
+
+model partner_api_keys {
+  id           String  @id @default(uuid())
+  name         String
+  api_key_hash String  @unique
+  scopes_json  String?
+  rate_limit   Int?    @default(1000)
+  is_active    Boolean? @default(true)
+  created_at   String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  last_used_at String?
+
+  @@index([is_active])
+}
+
+model ad_credit_wallets {
+  id         String  @id @default(uuid())
+  user_id    String  @unique
+  balance    Float?  @default(0)
+  currency   String? @default("EUR")
+  updated_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user         users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  transactions ad_credit_transactions[]
+}
+
+model ad_credit_transactions {
+  id          String  @id @default(uuid())
+  wallet_id   String
+  amount      Float
+  type        String
+  description String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  wallet ad_credit_wallets @relation(fields: [wallet_id], references: [id], onDelete: Cascade)
+
+  @@index([wallet_id])
+}
+
+model dispute_appeals {
+  id          String  @id @default(uuid())
+  dispute_id  String
+  appellant_id String
+  reason      String
+  status      String? @default("pending")
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  resolved_at String?
+
+  appellant users @relation(fields: [appellant_id], references: [id], onDelete: Cascade)
+
+  @@index([dispute_id])
+  @@index([status])
+}
+
+model wallet_reconciliation_runs {
+  id               String  @id @default(uuid())
+  wallet_id        String
+  wallet_kind      String
+  expected_balance Float
+  actual_balance   Float
+  delta            Float
+  status           String? @default("ok")
+  created_at       String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  @@index([wallet_id, created_at])
+}
+
+model financing_applications {
+  id         String  @id @default(uuid())
+  user_id    String
+  amount     Float
+  purpose    String?
+  status     String? @default("pending")
+  created_at String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, status])
 }

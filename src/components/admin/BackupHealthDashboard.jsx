@@ -16,23 +16,7 @@ export default function BackupHealthDashboard() {
   // Fetch backup verification status
   const { data: backupStatus, isLoading, refetch } = useQuery({
     queryKey: ['backup-status'],
-    queryFn: async () => {
-      try {
-        const result = await sovereign.integrations.Core.InvokeLLM({
-          prompt: 'Call verifyBackupIntegrity function to check database backup health',
-          // Note: In production, this would be a direct backend call
-          // For now, using LLM as a workaround to execute backend function
-        });
-        return result;
-      } catch (error) {
-        return {
-          status: 'UNKNOWN',
-          verified_at: new Date().toISOString(),
-          error: error.message,
-          checks: []
-        };
-      }
-    },
+    queryFn: () => sovereign.backup.verify(),
     refetchInterval: 3600000 // Refetch every hour
   });
 
@@ -69,7 +53,7 @@ export default function BackupHealthDashboard() {
       case 'HEALTHY': return 'bg-green-50 border-green-200';
       case 'WARNING': return 'bg-yellow-50 border-yellow-200';
       case 'FAILED': return 'bg-red-50 border-red-200';
-      default: return 'bg-gray-50 border-gray-200';
+      default: return 'bg-muted/50 border-border';
     }
   };
 
@@ -78,7 +62,7 @@ export default function BackupHealthDashboard() {
       case 'HEALTHY': return <CheckCircle2 className="w-6 h-6 text-green-600" />;
       case 'WARNING': return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
       case 'FAILED': return <XCircle className="w-6 h-6 text-red-600" />;
-      default: return <AlertCircle className="w-6 h-6 text-gray-600" />;
+      default: return <AlertCircle className="w-6 h-6 text-muted-foreground" />;
     }
   };
 
@@ -206,12 +190,12 @@ export default function BackupHealthDashboard() {
           <CardContent>
             <div className="space-y-4">
               {backupStatus.checks.map((check, idx) => (
-                <div key={idx} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
+                <div key={idx} className="flex items-start gap-4 p-3 bg-muted/50 rounded-lg">
                   <div className="mt-1">
                     {check.status === 'PASS' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
                     {check.status === 'WARNING' && <AlertTriangle className="w-5 h-5 text-yellow-600" />}
                     {check.status === 'FAIL' && <XCircle className="w-5 h-5 text-red-600" />}
-                    {check.status === 'SKIPPED' && <Info className="w-5 h-5 text-gray-600" />}
+                    {check.status === 'SKIPPED' && <Info className="w-5 h-5 text-muted-foreground" />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

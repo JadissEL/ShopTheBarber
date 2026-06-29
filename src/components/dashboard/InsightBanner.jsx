@@ -1,8 +1,33 @@
 import { motion } from 'framer-motion';
 import { Lightbulb, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
-export default function InsightBanner({ message, actionText, onAction, type: _type = 'info' }) {
+export default function InsightBanner({ message, actionText, onAction, actionHref, type: _type = 'info' }) {
+    const actionButton = actionText ? (
+        actionHref ? (
+            <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="text-primary hover:text-primary/80 hover:bg-primary/10 font-semibold text-xs shrink-0"
+            >
+                <Link to={actionHref}>
+                    {actionText} <ArrowRight className="w-3 h-3 ml-1 inline" />
+                </Link>
+            </Button>
+        ) : (
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={onAction}
+                className="text-primary hover:text-primary/80 hover:bg-primary/10 font-semibold text-xs shrink-0"
+            >
+                {actionText} <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+        )
+    ) : null;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -20,16 +45,7 @@ export default function InsightBanner({ message, actionText, onAction, type: _ty
                     </p>
                 </div>
             </div>
-            {actionText && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onAction}
-                    className="text-primary hover:text-primary/80 hover:bg-primary/10 font-semibold text-xs shrink-0"
-                >
-                    {actionText} <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-            )}
+            {actionButton}
         </motion.div>
     );
 }

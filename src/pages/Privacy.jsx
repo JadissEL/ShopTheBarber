@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function Privacy() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="stb-page">
       <MetaTags
         title="Privacy Policy"
         description="Privacy Policy for ShopTheBarber - how we collect, use, and protect your data"
@@ -265,7 +265,7 @@ export default function Privacy() {
               <p>
                 For questions or concerns about this Privacy Policy, contact:
               </p>
-              <div className="bg-gray-50 p-4 rounded-lg mt-3 space-y-2">
+              <div className="bg-muted/50 p-4 rounded-lg mt-3 space-y-2">
                 <p><strong>Email</strong>: privacy@shopthebarber.com</p>
                 <p><strong>Data Protection Officer</strong>: dpo@shopthebarber.com</p>
                 <p><strong>Mailing Address</strong>: ShopTheBarber, Privacy Team, 123 Grooming Blvd, San Francisco, CA 94103</p>

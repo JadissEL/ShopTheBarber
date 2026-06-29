@@ -21,7 +21,7 @@
 |---|------|-----|--------|
 | 1 | **Tracker: DB schema table** | PROJECT_TRACKER still shows all entities as "⏳ Pending" but schema is implemented and migrated. | Update the "DATABASE SCHEMA" table: set Status to ✅ for all entities that exist in `server/src/db/schema.ts` and are migrated. |
 | 2 | **Last remaining Sovereign API mention** | One comment in `src/api/apiClient.js`: "No-op shim for legacy Sovereign API logging." | Change to "No-op shim for legacy logging" (or remove) so codebase is 100% Sovereign API-free in wording. |
-| 3 | **`.env.example`** | No template for required env vars; onboarding and deployment are guesswork. | Add `server/.env.example` (and optional root `.env.example` for Vite) with placeholders: `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, etc. Document in README. |
+| 3 | **`.env.example`** | No template for required env vars; onboarding and deployment are guesswork. | Add `server/.env.example` (and optional root `.env.example` for Vite) with placeholders: `DATABASE_URL`, `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, etc. Document in README. |
 
 ---
 

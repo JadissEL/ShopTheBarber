@@ -1,0 +1,75 @@
+/**
+ * Shared nav active-state helper for sidebars and bottom nav.
+ * Segment-aware matching avoids partial path false positives.
+ */
+
+function normalizePage(page) {
+  if (!page) return '';
+  const raw = String(page).replace(/^\//, '').split('?')[0];
+  return raw.toLowerCase();
+}
+
+function pathSegments(pathname) {
+  return (pathname || '')
+    .split('?')[0]
+    .split('/')
+    .filter(Boolean)
+    .map((s) => s.toLowerCase());
+}
+
+/**
+ * @param {string} pathname - current location.pathname
+ * @param {string} page - nav item page key (e.g. "Dashboard", "BookingFlow")
+ * @param {{ exact?: boolean, aliases?: string[] }} [options]
+ */
+export function isNavActive(pathname, page, options = {}) {
+  const { exact = false, aliases = [] } = options;
+  const target = normalizePage(page);
+  if (!target) return false;
+
+  const segments = pathSegments(pathname);
+  const current = segments.join('/');
+
+  const candidates = [target, ...aliases.map(normalizePage)].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (exact) {
+      if (current === candidate || segments[segments.length - 1] === candidate) return true;
+      continue;
+    }
+
+    if (current === candidate) return true;
+    if (segments.includes(candidate)) return true;
+
+    if (candidate === 'careerhub' && segments[0] === 'careerhub') return true;
+    if (candidate === 'dashboard' && (segments[0] === 'dashboard' || current === '')) return true;
+    if (candidate === 'providerdashboard' && segments[0] === 'providerdashboard') return true;
+  }
+
+  return false;
+}
+
+export function navItemClassName(isActive, { compact = false } = {}) {
+  const base = compact
+    ? 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150'
+    : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-150';
+
+  return isActive
+    ? `${base} stb-nav-active border-l-2 border-primary pl-[10px]`
+    : `${base} text-muted-foreground hover:bg-muted hover:text-foreground`;
+}
+
+export function roleLabel(role) {
+  switch (role) {
+    case 'admin':
+      return 'Admin';
+    case 'shop_owner':
+      return 'Shop owner';
+    case 'barber':
+    case 'provider':
+      return 'Barber';
+    case 'client':
+    default:
+      return 'Client';
+  }
+}

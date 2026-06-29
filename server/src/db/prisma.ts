@@ -1,5 +1,5 @@
 /**
- * Prisma Client — the single runtime data layer for ShopTheBarber.
+ * Prisma Client, the single runtime data layer for ShopTheBarber.
  * Backed by Neon PostgreSQL (the only database). In tests (`NODE_ENV=test`)
  * it routes to the isolated Neon test branch via `TEST_DATABASE_URL` when set.
  */

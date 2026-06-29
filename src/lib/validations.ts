@@ -18,6 +18,7 @@ export const bookingPreferencesSchema = z.object({
     address: z.string().max(255, 'Address too long').optional().or(z.literal('')),
     minRating: z.number().min(0).max(5).optional(),
     locationType: z.enum(['any', 'shop', 'mobile']).optional(),
+    preferredLanguages: z.array(z.string()).max(8).optional(),
     providerType: z.enum(['all', 'freelancer', 'shop']).optional(),
     acceptanceType: z.enum(['all', 'auto', 'manual']).optional(),
     sortBy: z.enum(['global_score', 'price', 'distance', 'rating']).optional()
@@ -45,7 +46,9 @@ export const shopDetailsSchema = z.object({
     description: z.string().max(1000, 'Description too long').optional().or(z.literal('')),
     phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits').optional().or(z.literal('')),
     website: z.string().url('Invalid URL').optional().or(z.literal('')),
-    amenities: z.array(z.string()).optional()
+    amenities: z.array(z.string()).optional(),
+    spoken_languages: z.array(z.string()).max(8).optional(),
+    children_friendly: z.boolean().optional()
 });
 
 export const serviceSchema = z.object({
@@ -93,7 +96,8 @@ export const barberProfileSchema = z.object({
     years_experience: z.number().min(0).max(70).optional(),
     instagram_handle: z.string().max(30, 'Instagram handle too long').optional().or(z.literal('')),
     image_url: z.string().url('Invalid image URL').optional().or(z.literal('')),
-    offers_mobile_service: z.boolean().optional()
+    offers_mobile_service: z.boolean().optional(),
+    spoken_languages: z.array(z.string()).max(8).optional()
 });
 
 /**

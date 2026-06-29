@@ -1,5 +1,7 @@
 # 🚀 Deploy Clerk to Vercel (Production)
 
+> **⚠️ Superseded in part:** Full production deploy (Vercel + Render + Neon env vars, CI, health checks) is documented in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. Use this file only for Clerk-specific Vercel dashboard steps below.
+
 ## ✅ Code Deployed!
 
 I've just pushed all Clerk changes to the `main` branch. Vercel is now building your new version!
@@ -22,7 +24,7 @@ VITE_CLERK_PUBLISHABLE_KEY
 
 **Value:**
 ```
-pk_test_b3V0Z29pbmctYmVldGxlLTIzLmNsZXJrLmFjY291bnRzLmRldiQ
+pk_test_your_publishable_key_here
 ```
 
 5. Select: **Production**, **Preview**, and **Development**
@@ -43,7 +45,7 @@ CLERK_SECRET_KEY
 ```
 **Value:**
 ```
-sk_test_uNUX1evmC8p9tZg2JX2G5U5PvJQH66iHiFEzimBqfQ
+sk_test_your_secret_key_here
 ```
 
 **Variable 2:**
@@ -52,7 +54,7 @@ CLERK_PUBLISHABLE_KEY
 ```
 **Value:**
 ```
-pk_test_b3V0Z29pbmctYmVldGxlLTIzLmNsZXJrLmFjY291bnRzLmRldiQ
+pk_test_your_publishable_key_here
 ```
 
 5. Click **Save Changes**

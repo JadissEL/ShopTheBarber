@@ -35,7 +35,7 @@ export function getStripeApiKey(): string {
     return (fromFile && typeof fromFile === 'string' ? fromFile : '').trim();
 }
 
-/** Publishable (public) key for frontend / Stripe.js — safe to expose. Use pk_test_... in test mode. */
+/** Publishable (public) key for frontend / Stripe.js, safe to expose. Use pk_test_... in test mode. */
 export function getStripePublishableKey(): string {
     const fromEnv = (process.env.STRIPE_PUBLISHABLE_KEY || '').trim();
     if (fromEnv) return fromEnv;

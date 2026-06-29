@@ -1,20 +1,54 @@
 {
     "name": "Shop The Barber",
     "short_name": "ShopTheBarber",
+    "description": "Book top barbers, shop deals, and at-home grooming — fast.",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
+    "orientation": "any",
     "background_color": "#ffffff",
-    "theme_color": "#000000",
+    "theme_color": "#0f0f0f",
+    "categories": ["lifestyle", "shopping"],
+    "lang": "en",
+    "dir": "ltr",
     "icons": [
         {
-            "src": "/icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
+            "src": "/icons/icon-144x144.svg",
+            "sizes": "144x144",
+            "type": "image/svg+xml",
+            "purpose": "any"
         },
         {
-            "src": "/icons/icon-512x512.png",
+            "src": "/icons/icon-512x512.svg",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-512x512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Explore barbers",
+            "short_name": "Explore",
+            "url": "/Explore",
+            "icons": [{ "src": "/icons/icon-144x144.svg", "sizes": "144x144", "type": "image/svg+xml" }]
+        },
+        {
+            "name": "My bookings",
+            "short_name": "Bookings",
+            "url": "/UserBookings",
+            "icons": [{ "src": "/icons/icon-144x144.svg", "sizes": "144x144", "type": "image/svg+xml" }]
+        },
+        {
+            "name": "Refer a friend",
+            "short_name": "Refer",
+            "url": "/Referral",
+            "icons": [{ "src": "/icons/icon-144x144.svg", "sizes": "144x144", "type": "image/svg+xml" }]
         }
     ]
 }

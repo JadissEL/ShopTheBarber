@@ -174,14 +174,14 @@ HAVING COUNT(*) > 10
 
 ---
 
-## Future Enhancements
+### Redis / Upstash integration (implemented)
+- IP throttling uses **Upstash Redis** (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) via `@upstash/ratelimit` sliding windows
+- Shared across all server instances; automatic TTL expiration
+- Booking Layer 3: 3 requests/second/IP on `POST /api/bookings`
+- Public endpoints: availability (30/min), promo validate (20/min), geocode/reverse-geocode (20/min), travel quote (40/min)
+- Local dev falls back to in-process store when Upstash is unset (production requires env vars)
 
-### Redis Integration (if scaling)
-- Replace RateLimitLog entity queries with Redis
-- Sub-millisecond accuracy
-- Automatic TTL expiration (no cleanup needed)
-
-### Adaptive Rate Limiting
+### Future enhancements
 - Increase limits for verified/established users
 - Stricter limits for new accounts
 - IP reputation scoring

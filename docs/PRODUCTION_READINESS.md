@@ -60,7 +60,7 @@
 |---|------|--------|-------|
 | 4.1 | Frontend uses relative `/api` (Vite proxy) so backend is reachable | Done | apiClient BASE_URL. |
 | 4.2 | CORS enabled on backend for frontend origin | Done | fastify.register(cors). |
-| 4.3 | `.env.example` in server (and optional root) with JWT_SECRET, DB, Stripe, Resend | Done | server/.env.example + root .env.example; !.env.example in .gitignore. |
+| 4.3 | `.env.example` in server (and optional root) with Clerk, DB, Stripe, Resend | Done | server/.env.example + root .env.example; !.env.example in .gitignore. |
 | 4.4 | No secrets in repo; README or deploy doc references env | Done | README "Environment variables" section; .env in .gitignore. |
 
 ---
@@ -98,6 +98,33 @@
 
 ---
 
+## 8. Launch policy (founder Q&A)
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 8.1 | Wallet, credits, deposits, disputes — policy questionnaire | **Done (Phase 1 core)** | [`docs/LAUNCH_POLICY_QUESTIONNAIRE.md`](./LAUNCH_POLICY_QUESTIONNAIRE.md) — C1–C3, DS1–DS3, P2–P3 decided; F1–F2 and admin P0 dashboards remain draft/Phase 2. |
+| 8.2 | Finalized policies logged in `.cursor_memory/decisions.md` | **Done** | 2026-06-28 Financial & Trust Ecosystem Phase 1 entry. |
+| 8.3 | Admin / barber / client dashboard metrics defined | **Done (Phase 1)** | Public barber stats, provider wallet burn-rate (`bookings_until_empty`), admin global ledger UI + CSV export. Admin intelligence dashboard remains Phase 2. |
+| 8.4 | Financial Trust Phase 1–3 engines | **Done** | Migrations through `20260628140000`; Phases 1–3 domain modules, routes in `financialTrustRoutes.ts`, UI dashboards. Ops: run `prisma migrate deploy`. |
+| 8.5 | Phase 1 cron secrets (`CRON_SECRET`, `PRODUCTION_API_URL`) | **Todo (ops)** | Set on Render + GitHub; workflow fails loudly if missing. **DB migrations through `20260628140000` applied** on dev Neon (2026-06-28). |
+| 8.6 | Payment & webhook hardening (2026-06-28) | **Done (code)** | Stripe webhook raw body; gift cards via Stripe Checkout + webhook; real Connect Express onboarding; Twilio signature validation; prod fail-fast for Stripe/CORS/CRON; CSP expanded; schema verify for Financial Trust tables. |
+
+---
+
+## 9. Pre-launch ops (you must do manually)
+
+| # | Item | Status |
+|---|------|--------|
+| 9.1 | Set all Render env vars (`STRIPE_*`, `CRON_SECRET`, `FRONTEND_URL`, `RESEND_*`, Twilio if SMS) | **Todo** |
+| 9.2 | Set Vercel `VITE_API_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_SITE_URL` | **Todo** |
+| 9.3 | GitHub secrets `CRON_SECRET` + `PRODUCTION_API_URL` | **Todo** |
+| 9.4 | `prisma migrate deploy` on **production** Neon | **Todo** |
+| 9.5 | Stripe Dashboard: webhook endpoint → `/api/webhooks/stripe` with correct events | **Todo** |
+| 9.6 | Rotate Clerk keys if old test keys were ever committed (see `CLERK_CONFIGURATION_COMPLETE.md`) | **Todo** |
+| 9.7 | Run `npm run verify:secrets` before cutover | **Todo** |
+
+---
+
 ## Order of execution (for the loop)
 
 Process sections in order; within each section, process **Todo** items in row order. Skip **Done** and **Skipped**. Mark **In progress** when starting an item, then **Done** when verified (or **Skipped** with reason).
@@ -109,6 +136,13 @@ Process sections in order; within each section, process **Todo** items in row or
 ## ✅ Checklist status
 
 **Sections 1–6**: All items **Done**. Section 7 (Optional) is **Skipped**. The production checklist is complete for current scope. To verify: run `npm run lint`, `npm run test`, `npm run build` (frontend) and `cd server && npm run test` (server).
+
+### §8.5 ops checklist (manual)
+
+1. **Render** — set `CRON_SECRET` (random 32+ chars), `RESEND_API_KEY`, `EMAIL_FROM`, `BACKEND_URL` on the API service.
+2. **GitHub** — repository secrets `CRON_SECRET` (same value) and `PRODUCTION_API_URL` (Render API base URL, no trailing slash).
+3. **Deploy migrations** — `cd server && npx prisma migrate deploy` on production DB.
+4. **Verify** — `npm run verify:secrets` locally (with secrets in `server/.env`) or trigger `.github/workflows/financial-trust-cron.yml` via workflow_dispatch.
 
 ---
 

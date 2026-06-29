@@ -1,10 +1,12 @@
 import './loadEnv';
+import { initSentry, captureException } from './observability/sentry';
+initSentry();
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { Prisma } from '@prisma/client';
 import { prisma } from './db/prisma';
-import { z } from 'zod';
 
 // Fail-fast environment validation. Neon (DATABASE_URL) and Clerk (CLERK_SECRET_KEY)
 // are mandatory in production; missing config must not start a half-working server.
@@ -15,6 +17,17 @@ import { z } from 'zod';
     const missing: string[] = [];
     if (!dbUrl) missing.push('DATABASE_URL');
     if (isProd && !process.env.CLERK_SECRET_KEY) missing.push('CLERK_SECRET_KEY');
+    if (isProd && !process.env.STRIPE_API_KEY) missing.push('STRIPE_API_KEY');
+    if (isProd && !process.env.STRIPE_WEBHOOK_SECRET) missing.push('STRIPE_WEBHOOK_SECRET');
+    if (isProd && !process.env.STRIPE_PUBLISHABLE_KEY) missing.push('STRIPE_PUBLISHABLE_KEY');
+    if (isProd && !process.env.FRONTEND_URL) missing.push('FRONTEND_URL');
+    if (isProd && !process.env.CRON_SECRET) missing.push('CRON_SECRET');
+    if (isProd && (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)) {
+        missing.push('UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN');
+    }
+    if (isProd && !isProductionGeocodingConfigured()) {
+        missing.push('MAPBOX_ACCESS_TOKEN or GOOGLE_MAPS_API_KEY');
+    }
     if (missing.length) {
         const msg = `FATAL: missing required environment variable(s): ${missing.join(', ')}. See server/.env.example.`;
         if (isProd || !dbUrl) {
@@ -27,26 +40,110 @@ import { z } from 'zod';
 })();
 
 import { validateBooking, createBookingLogic } from './logic/booking';
+import { listBarberDaySlots } from './logic/slotAvailability';
+import { assertNoPostConfirmPriceChange } from './domain/booking/priceLock';
+import { validateGuestContact, normalizeGuestContact } from './logic/guestBookingValidation';
+import {
+    findGuestBookingByToken,
+    getGuestCancellationPreview,
+    cancelGuestBooking,
+    claimGuestBookingForUser,
+    claimPendingGuestBookingsForUser,
+    claimGuestBookingsByTokens,
+} from './logic/guestBooking';
+import crypto from 'crypto';
 import { handleStripeWebhook } from './webhooks/stripe';
+import { checkStripeConnectStatusForUser, initiateStripeConnectForUser } from './stripe/connect';
 import { rateLimitMiddleware } from './middleware/rateLimit';
+import { isIpRateLimitAllowed } from './lib/ipRateLimit';
+import { isProductionGeocodingConfigured } from './lib/geocoding';
+import { enrichBarberLocationFields } from './lib/geocoding/barberLocation';
 import { validatePromoCode } from './logic/promoCode';
 import { notifyUserOfModerationAction } from './logic/moderation';
 import { verifyBackupIntegrity } from './admin/backup';
 import { sendEmail } from './logic/email';
-import { askLocalAI } from './logic/ai';
 import { createEntityScopeCache, getEntityScopeCondition, getManagedShopIdsForUser, rowInScope } from './entityScope';
 import { authenticateRequest } from './auth/requestUser';
+import { runHealthCheck } from './observability/health';
+import { serializeBookingRow, serializeBookingRows } from './logic/bookingSerialize';
+import {
+    assertAtLeastOneServiceLocation,
+    offersMobileService,
+    offersShopService,
+} from './lib/serviceLocation';
 
 const fastify = Fastify({
     logger: true
 });
 
+declare module 'fastify' {
+    interface FastifyRequest {
+        rawBody?: string;
+    }
+}
+
+fastify.addHook('preParsing', async (request, _reply, payload) => {
+    if (request.method === 'POST' && request.url.startsWith('/api/webhooks/stripe')) {
+        const chunks: Buffer[] = [];
+        for await (const chunk of payload as AsyncIterable<Buffer | string>) {
+            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+        }
+        const raw = Buffer.concat(chunks);
+        request.rawBody = raw.toString('utf8');
+        const { Readable } = await import('stream');
+        return Readable.from(raw);
+    }
+    return payload;
+});
+
+const isProdRuntime = process.env.NODE_ENV === 'production';
+const frontendOrigin = process.env.FRONTEND_URL?.replace(/\/$/, '');
+
 fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || true,
+    origin: isProdRuntime
+        ? (frontendOrigin ? [frontendOrigin] : false)
+        : (process.env.FRONTEND_URL || true),
     credentials: true
 });
 // Security headers. CSP disabled here (API serves JSON, not HTML); the frontend host sets its own CSP.
 fastify.register(helmet, { contentSecurityPolicy: false });
+
+/** Entities managed only via dedicated API routes, block generic entity CRUD writes. */
+const DEDICATED_API_ENTITIES = new Set([
+    'loyalty_profile',
+    'loyalty_transaction',
+    'product',
+    'referral',
+    'wallet_account',
+    'wallet_transaction',
+    'message',
+    'booking_tip',
+    'saved_address',
+    'seller_shipping_profile',
+    'order_fulfillment',
+    'support_ticket',
+    'weekly_draw',
+    'draw_entry',
+    'platform_event',
+    'event_registration',
+    'provider_fee_wallet',
+    'provider_fee_transaction',
+]);
+
+const LOYALTY_WRITE_MESSAGE =
+    'Loyalty balances are managed by the platform. Use GET/POST /api/loyalty/* instead.';
+
+const REFERRAL_WRITE_MESSAGE =
+    'Referrals are managed by the platform. Use GET/POST /api/referral/* instead.';
+
+const WALLET_WRITE_MESSAGE =
+    'Wallet balances are managed by the platform. Use GET /api/wallet/me instead.';
+
+const MESSAGE_WRITE_MESSAGE =
+    'Messages are managed via GET/POST /api/messages/* (chat, reschedule actions).';
+
+const TIP_WRITE_MESSAGE =
+    'Tips are managed via GET/POST /api/tips/* (post-service pourboires).';
 
 /** Entities that require auth for all access (list/get/create/update/delete). */
 const AUTH_REQUIRED_ENTITIES = new Set([
@@ -70,9 +167,35 @@ const AUTH_REQUIRED_ENTITIES = new Set([
 
 /** Entities that allow public READ but require auth for write operations (create/update/delete). */
 const AUTH_WRITE_ENTITIES = new Set([
-    'barber', 'shop', 'service', 'shift', 'time_block', 'shop_member', 'pricing_rule', 'product', 'staff_service_config', 'review',
-    'shop_inventory_item', 'shop_expense', 'barber_video', 'article', 'inspiration_post', 'legal_document', 'feature_flag',
+    'barber', 'shop', 'service', 'shift', 'time_block', 'shop_member', 'staff_service_config', 'review',
+    'shop_inventory_item', 'shop_expense', 'barber_video', 'inspiration_post', 'legal_document',
 ]);
+
+/** Generic entity writes blocked, use dedicated routes instead. */
+const GENERIC_WRITE_BLOCKED_ENTITIES = new Set(['booking', 'feature_flag']);
+
+/** Admin-only generic entity writes. */
+const ADMIN_ONLY_WRITE_ENTITIES = new Set(['pricing_rule']);
+
+function blockGenericEntityWrite(
+    entity: string,
+    reply: { status: (code: number) => { send: (body: unknown) => void } },
+    user?: { role?: string }
+): boolean {
+    if (GENERIC_WRITE_BLOCKED_ENTITIES.has(entity)) {
+        if (entity === 'booking') {
+            reply.status(403).send({ error: 'Use POST /api/bookings and payment protection routes for bookings' });
+        } else {
+            reply.status(403).send({ error: 'Use /api/admin/feature-flags for feature toggles' });
+        }
+        return true;
+    }
+    if (ADMIN_ONLY_WRITE_ENTITIES.has(entity) && user?.role !== 'admin') {
+        reply.status(403).send({ error: 'Admin access required for this resource' });
+        return true;
+    }
+    return false;
+}
 
 /** Maps the public entity name (singular) to its Prisma model / table name. */
 const ENTITY_TABLE: Record<string, string> = {
@@ -81,9 +204,9 @@ const ENTITY_TABLE: Record<string, string> = {
     message: 'messages', notification: 'notifications', dispute: 'disputes', audit_log: 'audit_logs',
     shop_member: 'shop_members', pricing_rule: 'pricing_rules', waiting_list_entry: 'waiting_list_entries',
     staff_service_config: 'staff_service_configs', review: 'reviews', payout: 'payouts', shift: 'shifts',
-    time_block: 'time_blocks', favorite: 'favorites', product: 'products', brand: 'brands',
+    time_block: 'time_blocks', favorite: 'favorites', brand: 'brands',
     brand_accolade: 'brand_accolades', brand_collection: 'brand_collections', promo_code: 'promo_codes',
-    inspiration_post: 'inspiration_posts', article: 'articles', gift_card: 'gift_cards', referral: 'referrals',
+    inspiration_post: 'inspiration_posts', gift_card: 'gift_cards', referral: 'referrals',
     wallet_account: 'wallet_accounts', wallet_transaction: 'wallet_transactions', wishlist_item: 'wishlist_items',
     barber_video: 'barber_videos', feature_flag: 'feature_flags', shop_inventory_item: 'shop_inventory_items',
     shop_expense: 'shop_expenses', legal_document: 'legal_documents',
@@ -109,7 +232,7 @@ function isUniqueViolation(e: any): boolean {
     return e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 }
 
-// Sovereign auth: Clerk session JWT → DB users.id for FK scope.
+// Sovereign auth: Clerk session JWT DB users.id for FK scope.
 async function requireAuthPreHandler(request: any, reply: any) {
     const ok = await authenticateRequest(request, reply);
     if (!ok) return;
@@ -127,19 +250,36 @@ async function requireAdminPreHandler(request: any, reply: any) {
 
 // --- ROUTES ---
 
-// Health check (no auth) — confirms DB is reachable
-fastify.get('/api/health', async (_request, reply) => {
-    try {
-        await prisma.users.findFirst({ select: { id: true } });
-        return { ok: true, db: 'ok' };
-    } catch (e: any) {
-        fastify.log.error(e);
-        return reply.status(503).send({
-            ok: false,
-            error: 'Database unavailable',
-            hint: "Run 'npm run migrate' (Neon) in the server folder."
-        });
+// Health checks (no auth), wire uptime monitors to /api/health/live and /api/health/ready
+fastify.get('/api/health/live', async () => ({ ok: true, status: 'alive' }));
+
+fastify.get('/api/health/ready', async (_request, reply) => {
+    const result = await runHealthCheck(true);
+    if (!result.ok) {
+        return reply.status(503).send(result);
     }
+    return result;
+});
+
+fastify.get('/api/health', async (_request, reply) => {
+    const deep = process.env.NODE_ENV === 'production';
+    const result = await runHealthCheck(deep);
+    if (!result.ok) {
+        return reply.status(503).send(result);
+    }
+    return result;
+});
+
+import { getPublicStatusPage } from './observability/statusPublic';
+fastify.get('/api/status/public', async (_request, reply) => {
+    const status = await getPublicStatusPage();
+    const code = status.overall_status === 'outage' ? 503 : 200;
+    return reply.status(code).send(status);
+});
+
+import { getConfigReadiness } from './admin/configReadiness';
+fastify.get('/api/admin/config-readiness', { preHandler: [requireAdminPreHandler] }, async (_request, reply) => {
+    return getConfigReadiness();
 });
 
 // 0. Auth Routes (Clerk-only: /me, /logout)
@@ -170,13 +310,94 @@ fastify.register(jobsRoutes);
 import { applicantsRoutes } from './applicants/routes';
 fastify.register(applicantsRoutes);
 
+import { articlesRoutes } from './articles/routes';
+fastify.register(articlesRoutes);
+
+import { marketplaceRoutes } from './marketplace/routes';
+fastify.register(marketplaceRoutes);
+
+import { pricingRoutes } from './pricing/routes';
+import { loyaltyRoutes } from './loyalty/routes';
+import { referralRoutes } from './referral/routes';
+import { walletRoutes } from './wallet/routes';
+import { messageRoutes } from './messages/routes';
+import { tipRoutes } from './tips/routes';
+import { shippingRoutes } from './shipping/routes';
+import { supportRoutes } from './support/routes';
+import { tombolaRoutes } from './tombola/routes';
+import { eventsRoutes } from './events/routes';
+import { providerWalletRoutes } from './providerWallet/routes';
+import { languagesRoutes } from './languages/routes';
+import { languageProgramsRoutes } from './languagePrograms/routes';
+import { childrenFriendlyRoutes } from './childrenFriendly/routes';
+import { providerAttestationRoutes } from './providerAttestation/routes';
+import { productAnalyticsRoutes } from './productAnalytics/routes';
+import { fixedFeeRoutes } from './fixedFee/routes';
+import { promotionsRoutes } from './promotions/routes';
+import { homeRoutes } from './home/routes';
+import { mobileServiceRoutes } from './mobileService/routes';
+import { serviceLocationRoutes } from './serviceLocation/routes';
+import { atHomeServiceRoutes } from './atHomeService/routes';
+import { geocodingRoutes } from './geocoding/routes';
+import { providerStatsRoutes } from './providerStats/routes';
+import { providerShowcaseRoutes } from './providerShowcase/routes';
+import { groupBookingRoutes } from './groupBooking/routes';
+import { seoRoutes } from './seo/routes';
+import { reminderRoutes } from './reminders/routes';
+import { paymentProtectionRoutes } from './paymentProtection/routes';
+import { capacityRoutes } from './domain/capacity/routes';
+import { domainBookingRoutes, waitlistRoutes } from './domain/routes';
+import { financialTrustRoutes } from './financialTrustRoutes';
+import { promoAppliesToBarberContext, resolveAudience } from './promotions/targeting';
+import { shouldWaiveCommissionForBooking, runFixedFeeMaintenance } from './fixedFee/logic';
+import { getActivePricingPolicy } from './pricing/logic';
+import { shopRoutes } from './shop/routes';
+fastify.register(pricingRoutes);
+fastify.register(loyaltyRoutes);
+fastify.register(referralRoutes);
+fastify.register(walletRoutes);
+fastify.register(messageRoutes);
+fastify.register(tipRoutes);
+fastify.register(shippingRoutes);
+fastify.register(supportRoutes);
+fastify.register(tombolaRoutes);
+fastify.register(eventsRoutes);
+fastify.register(providerWalletRoutes);
+fastify.register(languagesRoutes);
+fastify.register(languageProgramsRoutes);
+fastify.register(childrenFriendlyRoutes);
+fastify.register(providerAttestationRoutes);
+fastify.register(productAnalyticsRoutes);
+fastify.register(fixedFeeRoutes);
+fastify.register(promotionsRoutes);
+fastify.register(homeRoutes);
+fastify.register(mobileServiceRoutes);
+fastify.register(serviceLocationRoutes);
+fastify.register(atHomeServiceRoutes);
+fastify.register(geocodingRoutes);
+fastify.register(providerStatsRoutes);
+fastify.register(providerShowcaseRoutes);
+fastify.register(groupBookingRoutes);
+fastify.register(seoRoutes);
+fastify.register(reminderRoutes);
+fastify.register(paymentProtectionRoutes);
+fastify.register(capacityRoutes);
+fastify.register(domainBookingRoutes);
+fastify.register(waitlistRoutes);
+fastify.register(financialTrustRoutes);
+import { featureFlagRoutes } from './featureFlags/routes';
+fastify.register(featureFlagRoutes);
+fastify.register(shopRoutes);
+
+import { enforcePromoOnWrite, enforceServicePriceOnWrite } from './pricing/enforce';
+
 import { privacyRoutes } from './privacy/routes';
 fastify.register(privacyRoutes);
 
 // 1. Validate Booking Availability (rate-limited: 30 per minute per IP)
 fastify.post('/api/functions/validate-availability', async (request, reply) => {
     const ip = request.ip || 'unknown';
-    if (!checkIpRateLimit(`avail:${ip}`, 30, 60_000)) {
+    if (!(await isIpRateLimitAllowed('avail', ip, 30, 60_000))) {
         return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
     }
     const params = request.body as any;
@@ -195,31 +416,32 @@ fastify.post('/api/functions/validate-availability', async (request, reply) => {
     };
 });
 
-// Simple in-memory rate limiter for public function endpoints
-const ipRateLimits = new Map<string, { count: number; resetAt: number }>();
-function checkIpRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
-    const now = Date.now();
-    const entry = ipRateLimits.get(ip);
-    if (!entry || now > entry.resetAt) {
-        ipRateLimits.set(ip, { count: 1, resetAt: now + windowMs });
-        return true;
+fastify.get<{ Params: { barberId: string }; Querystring: { date?: string; duration?: string; shop_id?: string; context_type?: string } }>(
+    '/api/barbers/:barberId/day-slots',
+    async (request, reply) => {
+        const ip = request.ip || 'unknown';
+        if (!(await isIpRateLimitAllowed('day-slots', ip, 60, 60_000))) {
+            return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
+        }
+        const { barberId } = request.params;
+        const { date, duration, shop_id, context_type } = request.query;
+        if (!date) {
+            return reply.status(400).send({ error: 'date query param is required (YYYY-MM-DD)' });
+        }
+        try {
+            return await listBarberDaySlots({
+                barberId,
+                shopId: shop_id ?? null,
+                date,
+                durationMinutes: duration ? parseInt(duration, 10) : 30,
+                contextType: context_type,
+            });
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : 'Failed to load slots';
+            return reply.status(400).send({ error: msg });
+        }
     }
-    if (entry.count >= maxRequests) return false;
-    entry.count++;
-    return true;
-}
-
-// 1.1 AI Style Advisor (rate-limited: 10 requests per minute per IP)
-fastify.post('/api/functions/ai-advisor', async (request, reply) => {
-    const ip = request.ip || 'unknown';
-    if (!checkIpRateLimit(`ai:${ip}`, 10, 60_000)) {
-        return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
-    }
-    const { prompt, context } = request.body as { prompt: string, context?: string };
-    if (!prompt) return reply.status(400).send({ error: 'Prompt is required' });
-    const response = await askLocalAI(prompt, context);
-    return { response };
-});
+);
 
 // 2. Calculate Taxes
 fastify.post('/api/functions/calculate-taxes', async (request, reply) => {
@@ -272,8 +494,8 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
 
     const ensureBookingScope = async (bid: string) => {
         const booking = await prisma.bookings.findUnique({ where: { id: bid } });
-        if (!booking || !(await rowInScope('booking', booking as Record<string, unknown>, currentUser, request.entityScopeCache)))
-            return reply.status(403).send({ error: 'Forbidden' });
+        if (!booking || !(await rowInScope('booking', booking, currentUser, request.entityScopeCache)))
+            {return reply.status(403).send({ error: 'Forbidden' });}
     };
 
     const bid = (context?.booking_id ?? booking_id) as string | undefined;
@@ -287,7 +509,13 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
         if (!booking_id || base_price === undefined || !barber_id || !context_type) {
             return reply.status(400).send({ error: 'Missing required fields' });
         }
-        const effectiveFeeRate = context_type === 'shop' ? 0.20 : 0.15;
+        const policy = await getActivePricingPolicy();
+        const effectiveFeeRate =
+            (await shouldWaiveCommissionForBooking(barber_id, shop_id ?? null))
+                ? 0
+                : context_type === 'shop'
+                  ? policy.commission_shop
+                  : policy.commission_freelancer;
         const final_price = base_price - discount_amount;
         const platform_fee = Math.round(final_price * effectiveFeeRate * 100) / 100;
         const subtotal_after_platform_fee = final_price - platform_fee;
@@ -300,7 +528,7 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
             commission_rate_snapshot: effectiveFeeRate,
             tax_amount: Math.round(tax_amount * 100) / 100,
             provider_payout: Math.round(provider_payout * 100) / 100,
-            currency: 'USD',
+            currency: 'EUR',
             calculated_at: new Date().toISOString(),
             calculated_by: 'sovereign-backend'
         };
@@ -309,9 +537,20 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
         if (existing?.financial_breakdown && existing.status === 'confirmed') {
             return {
                 status: 'ALREADY_CALCULATED',
-                financial_breakdown: JSON.parse(existing.financial_breakdown as string),
+                financial_breakdown: JSON.parse(existing.financial_breakdown),
                 message: 'Fees already locked for this booking'
             };
+        }
+
+        if (
+            existing &&
+            ['confirmed', 'completed'].includes(existing.status || '') &&
+            existing.price_at_booking != null
+        ) {
+            assertNoPostConfirmPriceChange({
+                lockedPrice: existing.price_at_booking,
+                newPrice: final_price,
+            });
         }
 
         await prisma.bookings.update({
@@ -326,7 +565,7 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
                 resource_id: booking_id,
                 actor_id: 'system',
                 changes: JSON.stringify({ financial_breakdown, locked: true }),
-                details: JSON.stringify({ barber_id, shop_id, context_type, fee_rate: effectiveFeeRate })
+                details: JSON.stringify({ barber_id, shop_id, context_type, fee_rate: effectiveFeeRate, fixed_fee_waived: effectiveFeeRate === 0 }),
             },
         });
 
@@ -338,7 +577,7 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
         if (!booking?.financial_breakdown) {
             return reply.status(400).send({ error: 'Cannot refund: no financial breakdown found' });
         }
-        const financial_breakdown = JSON.parse(booking.financial_breakdown as string);
+        const financial_breakdown = JSON.parse(booking.financial_breakdown);
         const bookingDate = new Date(booking.start_time);
         const now = new Date();
         const hoursBefore = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -356,7 +595,7 @@ fastify.post('/api/functions/calculate-fees', { preHandler: [requireAuthPreHandl
         if (!booking?.financial_breakdown) {
             return reply.status(400).send({ error: `Booking ${booking_id} has no financial breakdown locked` });
         }
-        return { locked: true, breakdown: JSON.parse(booking.financial_breakdown as string), cannot_modify: true };
+        return { locked: true, breakdown: JSON.parse(booking.financial_breakdown), cannot_modify: true };
     }
 
     return reply.status(400).send({ error: 'Invalid action' });
@@ -399,44 +638,60 @@ fastify.post('/api/functions/send-booking-email', { preHandler: [requireAuthPreH
 // 5. Check Stripe Connect Status (auth + self only)
 fastify.post('/api/functions/checkStripeConnectStatus', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
     const currentUser = request.user as { id: string };
-    const { userId } = request.body as any;
+    const { userId } = request.body as { userId?: string };
     const uid = userId ?? currentUser.id;
     if (uid !== currentUser.id) return reply.status(403).send({ error: 'Forbidden' });
-    const user = await prisma.users.findUnique({ where: { id: uid } });
-    return {
-        data: {
-            isConnected: user?.stripe_connect_status === 'active',
-            status: user?.stripe_connect_status || 'unconnected',
-            accountId: user?.stripe_account_id || null
-        }
-    };
+    try {
+        const data = await checkStripeConnectStatusForUser(uid);
+        return { data };
+    } catch (err: unknown) {
+        fastify.log.error(err);
+        return reply.status(500).send({ error: err instanceof Error ? err.message : 'Stripe status check failed' });
+    }
 });
 
 // 6. Initiate Stripe Connect (auth + self only)
 fastify.post('/api/functions/initiateStripeConnect', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
     const currentUser = request.user as { id: string };
-    const { userId } = request.body as any;
+    const { userId } = request.body as { userId?: string };
     const uid = userId ?? currentUser.id;
     if (uid !== currentUser.id) return reply.status(403).send({ error: 'Forbidden' });
-    const accountId = `acct_mock_${Math.random().toString(36).substring(7)}`;
-    await prisma.users.update({
-        where: { id: uid },
-        data: { stripe_account_id: accountId, stripe_connect_status: 'pending' },
-    });
-    return { data: { url: `https://connect.stripe.com/express/onboarding/mock?account=${accountId}`, accountId } };
+    try {
+        const data = await initiateStripeConnectForUser(uid);
+        return { data };
+    } catch (err: unknown) {
+        fastify.log.error(err);
+        return reply.status(500).send({ error: err instanceof Error ? err.message : 'Stripe Connect onboarding failed' });
+    }
 });
 
 // 7. Stripe Webhook Handler
 fastify.post('/api/webhooks/stripe', async (request, reply) => {
     try {
         const signature = request.headers['stripe-signature'] as string;
-        const rawBody = JSON.stringify(request.body);
+        const rawBody = request.rawBody;
+        if (!rawBody) {
+            return reply.status(400).send({ error: 'Missing raw request body for signature verification' });
+        }
         const result = await handleStripeWebhook(rawBody, signature);
         return result;
-    } catch (e: any) {
-        return reply.status(400).send({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Webhook error';
+        fastify.log.error(e);
+        return reply.status(400).send({ error: message });
     }
 });
+
+function isPromoNotExpired(expiry_date: string | null | undefined): boolean {
+    if (!expiry_date) return true;
+    const exp = new Date(expiry_date).getTime();
+    return Number.isNaN(exp) || exp >= Date.now();
+}
+
+function promoDiscountTextPublic(discount_type: string, discount_value: number): string {
+    if (discount_type === 'percentage') return `${discount_value}% off`;
+    return `€${discount_value} off`;
+}
 
 // 8. Public active promotions (anonymous-friendly)
 fastify.get('/api/public/active-promotions', async (request, reply) => {
@@ -446,25 +701,55 @@ fastify.get('/api/public/active-promotions', async (request, reply) => {
         if (barberId) {
             const barber = await prisma.barbers.findUnique({ where: { id: barberId }, select: { shop_id: true } });
             const shopId = barber?.shop_id ?? null;
-            const scope = shopId ? { OR: [{ shop_id: shopId }, { shop_id: null }] } : { shop_id: null };
-            const rows = await prisma.promo_codes.findMany({ where: { AND: [{ is_active: true }, scope] } });
-            return rows.map((r) => ({
-                id: r.id, code: r.code, shop_id: r.shop_id, discount_type: r.discount_type, discount_value: r.discount_value,
-                type: r.shop_id ? 'shop' : 'general',
-                discount_text: r.discount_type === 'percentage' ? `${r.discount_value}% off` : `$${r.discount_value} off`,
-                title: r.shop_id ? 'Shop offer' : 'Platform offer',
-                description: 'Limited time offer',
-            }));
+            const rows = await prisma.promo_codes.findMany({
+                where: { is_active: true },
+                include: { targets: true },
+            });
+            return rows
+                .filter((r) => isPromoNotExpired(r.expiry_date))
+                .filter((r) => resolveAudience(r) !== 'specific_users')
+                .filter((r) => promoAppliesToBarberContext(r, barberId, shopId))
+                .map((r) => ({
+                    id: r.id,
+                    code: r.code,
+                    shop_id: r.shop_id,
+                    discount_type: r.discount_type,
+                    discount_value: r.discount_value,
+                    type: r.shop_id ? 'shop' : 'general',
+                    audience: resolveAudience(r),
+                    discount_text: promoDiscountTextPublic(r.discount_type, r.discount_value),
+                    title: r.shop_id ? 'Shop offer' : 'Platform offer',
+                    description: 'Limited time offer',
+                }));
         }
 
-        const platform = await prisma.promo_codes.findMany({ where: { is_active: true, shop_id: null }, select: { id: true } });
-        const shopRows = await prisma.promo_codes.findMany({
-            where: { is_active: true, shop_id: { not: null } },
-            select: { shop_id: true },
-            distinct: ['shop_id'],
+        const allActive = await prisma.promo_codes.findMany({
+            where: { is_active: true },
+            include: { targets: true },
         });
+        const active = allActive.filter((r) => isPromoNotExpired(r.expiry_date));
+        const platform = active.filter((p) => {
+            const aud = resolveAudience(p);
+            return aud === 'everyone' || aud === 'all_barbers' || aud === 'all_shops';
+        });
+        const shopRows = active.filter((p) => {
+            const aud = resolveAudience(p);
+            return aud === 'specific_shops' || aud === 'all_shops';
+        });
+        const shopIds = new Set<string>();
+        const hasAllShopsPromo = shopRows.some((row) => resolveAudience(row) === 'all_shops');
+        if (hasAllShopsPromo) {
+            const shops = await prisma.shops.findMany({ select: { id: true }, take: 500 });
+            shops.forEach((s) => shopIds.add(s.id));
+        }
+        for (const row of shopRows) {
+            if (resolveAudience(row) === 'all_shops') continue;
+            const ids = row.targets?.filter((t) => t.target_type === 'shop').map((t) => t.target_id) ?? [];
+            if (row.shop_id) ids.push(row.shop_id);
+            ids.forEach((id) => shopIds.add(id));
+        }
         return {
-            shop_ids: shopRows.map((r) => r.shop_id).filter(Boolean) as string[],
+            shop_ids: [...shopIds],
             has_platform_promos: platform.length > 0,
         };
     } catch (e: any) {
@@ -475,7 +760,7 @@ fastify.get('/api/public/active-promotions', async (request, reply) => {
 
 fastify.post('/api/functions/validate-promo-code', async (request, reply) => {
     const ip = request.ip || 'unknown';
-    if (!checkIpRateLimit(`promo:${ip}`, 20, 60_000)) {
+    if (!(await isIpRateLimitAllowed('promo', ip, 20, 60_000))) {
         return reply.status(429).send({ error: 'Too many requests. Please try again later.' });
     }
     try {
@@ -538,29 +823,18 @@ fastify.post('/api/functions/provider-analytics', { preHandler: [requireAuthPreH
 import { getPlatformFinancials } from './admin/analytics';
 fastify.post('/api/functions/financial-analytics', { preHandler: [requireAdminPreHandler] }, async (request, reply) => {
     try {
-        const result = await getPlatformFinancials();
+        const body = (request.body ?? {}) as { days?: number };
+        const days = body.days
+            ? Math.min(365, Math.max(1, Number(body.days) || 30))
+            : 30;
+        const result = await getPlatformFinancials({ days });
         return result;
     } catch (e: any) {
         return reply.status(500).send({ error: e.message });
     }
 });
 
-// 13. Chat / Conversations (auth required: own conversations only)
-fastify.get('/api/conversations/:userId', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
-    const { userId } = request.params as any;
-    const currentUser = request.user as { id: string };
-    if (currentUser?.id !== userId) return reply.status(403).send({ error: 'Forbidden' });
-
-    const received = await prisma.messages.findMany({ where: { receiver_id: userId }, select: { sender_id: true } });
-    const sent = await prisma.messages.findMany({ where: { sender_id: userId }, select: { receiver_id: true } });
-    const contactIds = Array.from(new Set([
-        ...received.map(r => r.sender_id),
-        ...sent.map(r => r.receiver_id),
-    ].filter(Boolean) as string[]));
-
-    if (contactIds.length === 0) return [];
-    return prisma.users.findMany({ where: { id: { in: contactIds } } });
-});
+// 13. Chat / Conversations, see messageRoutes (/api/messages/*)
 
 // Custom Booking Creation (auth required: client_id forced to current user)
 fastify.post('/api/bookings', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
@@ -579,19 +853,216 @@ fastify.post('/api/bookings', { preHandler: [requireAuthPreHandler] }, async (re
     }
 });
 
-// 14. Reviews (auth required: reviewer_id must be current user)
-import { submitReview } from './logic/review';
-fastify.post('/api/reviews', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+// Guest booking, no account required (pay-at-shop MVP)
+fastify.post('/api/bookings/guest', async (request, reply) => {
     try {
-        const currentUser = request.user as { id: string };
-        const body = request.body as any;
-        if (body.reviewer_id && body.reviewer_id !== currentUser.id) return reply.status(403).send({ error: 'Forbidden' });
-        const result = await submitReview({ ...body, reviewer_id: currentUser.id });
-        return result;
+        await rateLimitMiddleware(request, reply);
+        if (reply.sent) return;
+
+        const body = request.body as Record<string, unknown>;
+        const contactError = validateGuestContact({
+            guest_name: typeof body.guest_name === 'string' ? body.guest_name : undefined,
+            guest_phone: typeof body.guest_phone === 'string' ? body.guest_phone : undefined,
+            guest_email: typeof body.guest_email === 'string' ? body.guest_email : undefined,
+        });
+        if (contactError) {
+            return reply.status(400).send({ error: contactError });
+        }
+
+        const paymentMethod = body.payment_method === 'cash_at_store' ? 'cash_at_store' : 'online';
+        if (paymentMethod !== 'cash_at_store') {
+            return reply.status(400).send({
+                error: 'Guest bookings require pay-at-shop. Sign in for online payment and card protection.',
+            });
+        }
+
+        const guest = normalizeGuestContact({
+            guest_name: body.guest_name as string,
+            guest_phone: body.guest_phone as string,
+            guest_email: body.guest_email as string | undefined,
+        });
+
+        const guestAccessToken = crypto.randomUUID();
+
+        const booking = await createBookingLogic({
+            ...body,
+            client_id: null,
+            client_name: guest.guest_name,
+            client_phone: guest.guest_phone,
+            client_email: guest.guest_email,
+            guest_access_token: guestAccessToken,
+            payment_method: 'cash_at_store',
+        });
+
+        return {
+            ...booking,
+            guest_access_token: guestAccessToken,
+        };
     } catch (e: any) {
-        return reply.status(400).send({ error: e.message });
+        const message = (e && e.message) || 'Guest booking failed';
+        fastify.log.warn({ err: e, message }, 'POST /api/bookings/guest error');
+        return reply.status(400).send({ error: message });
     }
 });
+
+fastify.post('/api/bookings/guest/claim-pending', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+    try {
+        const user = request.user as { id: string };
+        const body = (request.body as { tokens?: string[] }) ?? {};
+        const byTokens = Array.isArray(body.tokens)
+            ? await claimGuestBookingsByTokens(user.id, body.tokens)
+            : { linked_count: 0, booking_ids: [] as string[] };
+        const byContact = await claimPendingGuestBookingsForUser(user.id);
+        const bookingIds = [...new Set([...byTokens.booking_ids, ...byContact.booking_ids])];
+        return {
+            linked_count: bookingIds.length,
+            booking_ids: bookingIds,
+        };
+    } catch (e: any) {
+        const message = (e && e.message) || 'Failed to link guest bookings';
+        return reply.status(400).send({ error: message });
+    }
+});
+
+fastify.get('/api/bookings/guest/:token', async (request, reply) => {
+    try {
+        const { token } = request.params as { token: string };
+        if (!token || token.length < 20) {
+            return reply.status(400).send({ error: 'Invalid token' });
+        }
+
+        const booking = await findGuestBookingByToken(token);
+        if (!booking) {
+            return reply.status(404).send({ error: 'Booking not found' });
+        }
+
+        const serialized = serializeBookingRow(booking);
+        return {
+            ...serialized,
+            barber: booking.barber
+                ? {
+                      id: booking.barber.id,
+                      name: booking.barber.name,
+                      image_url: booking.barber.image_url,
+                      location: booking.barber.location,
+                  }
+                : null,
+            group_guests: booking.group_guests.map((g) => ({
+                id: g.id,
+                display_name: g.display_name,
+                sort_order: g.sort_order,
+            })),
+        };
+    } catch (e: any) {
+        const message = (e && e.message) || 'Failed to load booking';
+        return reply.status(500).send({ error: message });
+    }
+});
+
+fastify.get('/api/bookings/guest/:token/cancel-preview', async (request, reply) => {
+    try {
+        await rateLimitMiddleware(request, reply);
+        if (reply.sent) return;
+        const { token } = request.params as { token: string };
+        return await getGuestCancellationPreview(token);
+    } catch (e: any) {
+        const message = (e && e.message) || 'Failed to load cancellation preview';
+        const status = /not found/i.test(message) ? 404 : 400;
+        return reply.status(status).send({ error: message });
+    }
+});
+
+fastify.post('/api/bookings/guest/:token/cancel', async (request, reply) => {
+    try {
+        await rateLimitMiddleware(request, reply);
+        if (reply.sent) return;
+        const { token } = request.params as { token: string };
+        return await cancelGuestBooking(token);
+    } catch (e: any) {
+        const message = (e && e.message) || 'Failed to cancel booking';
+        const status = /not found/i.test(message) ? 404 : 400;
+        return reply.status(status).send({ error: message });
+    }
+});
+
+fastify.post('/api/bookings/guest/:token/claim', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+    try {
+        const { token } = request.params as { token: string };
+        const user = request.user as { id: string };
+        return await claimGuestBookingForUser(token, user.id);
+    } catch (e: any) {
+        const message = (e && e.message) || 'Failed to link booking';
+        const status = /not found/i.test(message) ? 404 : 400;
+        return reply.status(status).send({ error: message });
+    }
+});
+
+fastify.get('/api/bookings/:id/details', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+    try {
+        const { id } = request.params as { id: string };
+        const booking = await prisma.bookings.findUnique({
+            where: { id },
+            include: {
+                group_guests: { orderBy: { sort_order: 'asc' } },
+                barber: { select: { id: true, name: true, user_id: true, offers_mobile_service: true, offers_shop_service: true } },
+                client: { select: { id: true, full_name: true, email: true, phone: true } },
+            },
+        });
+        if (!booking) return reply.status(404).send({ error: 'Booking not found' });
+        if (!(await rowInScope('booking', booking, request.user as any, request.entityScopeCache))) {
+            return reply.status(404).send({ error: 'Not found' });
+        }
+        const serialized = serializeBookingRow(booking);
+        return {
+            ...serialized,
+            group_guests: booking.group_guests.map((g) => {
+                let serviceIds: string[] = [];
+                if (g.service_ids) {
+                    try {
+                        const parsed = JSON.parse(g.service_ids);
+                        serviceIds = Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        serviceIds = [];
+                    }
+                }
+                return {
+                    id: g.id,
+                    guest_name: g.guest_name,
+                    service_ids: serviceIds,
+                    notes: g.notes,
+                };
+            }),
+            barber: booking.barber,
+            client: booking.client,
+        };
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Failed to load booking details';
+        return reply.status(500).send({ error: message });
+    }
+});
+
+import { buildRebookPayloadForBooking } from './logic/rebookPayload';
+fastify.get('/api/bookings/:id/rebook', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+    try {
+        const { id } = request.params as { id: string };
+        const booking = await prisma.bookings.findUnique({ where: { id } });
+        if (!booking) return reply.status(404).send({ error: 'Booking not found' });
+        if (!(await rowInScope('booking', booking, request.user as any, request.entityScopeCache))) {
+            return reply.status(404).send({ error: 'Not found' });
+        }
+        const payload = await buildRebookPayloadForBooking(id);
+        if (!payload) return reply.status(404).send({ error: 'Booking not found' });
+        return payload;
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Failed to load rebook payload';
+        return reply.status(500).send({ error: message });
+    }
+});
+
+// 14. Reviews (barber + shop)
+import { reviewRoutes, reviewCronRoutes } from './reviews/routes';
+fastify.register(reviewRoutes);
+fastify.register(reviewCronRoutes);
 
 // Generic entity routes (Prisma)
 const entities = Object.keys(ENTITY_TABLE);
@@ -626,7 +1097,8 @@ entities.forEach(entity => {
                 }
             }
             const rows = await model().findMany(args);
-            return Array.isArray(rows) ? rows : [];
+            const list = Array.isArray(rows) ? rows : [];
+            return entity === 'booking' ? serializeBookingRows(list) : list;
         } catch (e: any) {
             fastify.log.error(`Error listing ${entity}: ${e.message}`);
             if (isDbSchemaError(e)) {
@@ -643,8 +1115,8 @@ entities.forEach(entity => {
             const row = await model().findUnique({ where: { id } });
             if (!row) return reply.status(404).send({ error: 'Not found' });
             if (requireAuth && !(await rowInScope(entity, row as Record<string, unknown>, request.user as any, request.entityScopeCache)))
-                return reply.status(404).send({ error: 'Not found' });
-            return row;
+                {return reply.status(404).send({ error: 'Not found' });}
+            return entity === 'booking' ? serializeBookingRow(row as Record<string, unknown>) : row;
         } catch (e: any) {
             fastify.log.error(`Error getting ${entity}: ${e.message}`);
             if (isDbSchemaError(e)) {
@@ -698,7 +1170,8 @@ entities.forEach(entity => {
         }
 
         try {
-            return await model().findMany(args);
+            const rows = await model().findMany(args);
+            return entity === 'booking' ? serializeBookingRows(rows) : rows;
         } catch (e: any) {
             fastify.log.error(`Error filtering ${entity}: ${e.message}`);
             if (isDbSchemaError(e)) {
@@ -729,8 +1202,38 @@ entities.forEach(entity => {
     if (entity !== 'booking' && entity !== 'review' && entity !== 'promo_code') {
         const writeOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
         fastify.post(routeBase, writeOpts, async (request, reply) => {
+            if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+        if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
+                return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
+            }
+            if (entity === 'referral') {
+                return reply.status(403).send({ error: REFERRAL_WRITE_MESSAGE });
+            }
+            if (entity === 'wallet_account' || entity === 'wallet_transaction') {
+                return reply.status(403).send({ error: WALLET_WRITE_MESSAGE });
+            }
+            if (entity === 'message') {
+                return reply.status(403).send({ error: MESSAGE_WRITE_MESSAGE });
+            }
+            if (entity === 'review') {
+                return reply.status(403).send({ error: 'Use POST /api/reviews to submit a review' });
+            }
+            if (DEDICATED_API_ENTITIES.has(entity)) {
+                return reply.status(403).send({ error: 'Use the dedicated API for this resource' });
+            }
             const data = validateEntityBody(request.body, reply);
             if (!data) return;
+            if (entity === 'service') {
+                try {
+                    await enforceServicePriceOnWrite(data);
+                } catch (e: unknown) {
+                    const msg = e instanceof Error ? e.message : 'Invalid service price';
+                    return reply.status(400).send({ error: msg });
+                }
+            }
+            if (entity === 'barber' && typeof data.location === 'string') {
+                Object.assign(data, await enrichBarberLocationFields(data));
+            }
             try {
                 return await model().create({ data });
             } catch (e: any) {
@@ -753,7 +1256,7 @@ entities.forEach(entity => {
             if (!cleaned.code || typeof cleaned.code !== 'string' || !cleaned.code.trim()) {
                 return reply.status(400).send({ error: 'code is required' });
             }
-            cleaned.code = (cleaned.code as string).trim().toUpperCase();
+            cleaned.code = (cleaned.code).trim().toUpperCase();
             if (cleaned.discount_type !== 'percentage' && cleaned.discount_type !== 'fixed') {
                 return reply.status(400).send({ error: 'discount_type must be percentage or fixed' });
             }
@@ -763,13 +1266,20 @@ entities.forEach(entity => {
             }
             cleaned.discount_value = dv;
 
+            try {
+                await enforcePromoOnWrite(cleaned);
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Invalid promo values';
+                return reply.status(400).send({ error: msg });
+            }
+
             const user = request.user as { id: string; role?: string };
             const shopReq = cleaned.shop_id;
             if (user?.role !== 'admin') {
                 if (shopReq == null || shopReq === '') {
                     return reply.status(400).send({ error: 'shop_id is required unless you are an admin' });
                 }
-                const ids = await getManagedShopIdsForUser(user!.id, request.entityScopeCache);
+                const ids = await getManagedShopIdsForUser(user.id, request.entityScopeCache);
                 if (!ids.includes(String(shopReq))) return reply.status(403).send({ error: 'Forbidden' });
             }
             try {
@@ -781,11 +1291,27 @@ entities.forEach(entity => {
         });
     }
 
-    // UPDATE — ownership check for AUTH_REQUIRED and AUTH_WRITE entities
+    // UPDATE, ownership check for AUTH_REQUIRED and AUTH_WRITE entities
     const writeRouteOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
     const needsOwnershipCheck = requireAuth || AUTH_WRITE_ENTITIES.has(entity);
     fastify.patch(`${routeBase}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
+        if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+        if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
+            return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
+        }
+        if (entity === 'referral') {
+            return reply.status(403).send({ error: REFERRAL_WRITE_MESSAGE });
+        }
+        if (entity === 'wallet_account' || entity === 'wallet_transaction') {
+            return reply.status(403).send({ error: WALLET_WRITE_MESSAGE });
+        }
+        if (entity === 'message') {
+            return reply.status(403).send({ error: MESSAGE_WRITE_MESSAGE });
+        }
+        if (entity === 'review') {
+            return reply.status(403).send({ error: 'Use POST /api/reviews to submit a review' });
+        }
         const data = validateEntityBody(request.body, reply);
         if (!data) return;
         if (entity === 'promo_code' && data.shop_id !== undefined && needsOwnershipCheck) {
@@ -802,10 +1328,107 @@ entities.forEach(entity => {
         if (needsOwnershipCheck) {
             const existing = await model().findUnique({ where: { id } });
             if (!existing || !(await rowInScope(entity, existing as Record<string, unknown>, request.user as any, request.entityScopeCache)))
-                return reply.status(404).send({ error: 'Not found' });
+                {return reply.status(404).send({ error: 'Not found' });}
+        }
+        if (entity === 'service' && data.price !== undefined) {
+            try {
+                await enforceServicePriceOnWrite(data);
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Invalid service price';
+                return reply.status(400).send({ error: msg });
+            }
+        }
+        if (entity === 'promo_code' && (data.discount_type !== undefined || data.discount_value !== undefined)) {
+            try {
+                await enforcePromoOnWrite(data);
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Invalid promo values';
+                return reply.status(400).send({ error: msg });
+            }
+        }
+        if (entity === 'barber' && typeof data.location === 'string') {
+            Object.assign(data, await enrichBarberLocationFields(data, id));
+        }
+        if (
+            entity === 'barber' &&
+            (data.offers_shop_service !== undefined || data.offers_mobile_service !== undefined)
+        ) {
+            const existingBarber = (needsOwnershipCheck
+                ? await model().findUnique({ where: { id } })
+                : null) as { offers_shop_service?: boolean | null; offers_mobile_service?: boolean | null } | null;
+            const nextShop =
+                data.offers_shop_service !== undefined
+                    ? data.offers_shop_service !== false
+                    : offersShopService(existingBarber ?? {});
+            const nextMobile =
+                data.offers_mobile_service !== undefined
+                    ? data.offers_mobile_service === true
+                    : offersMobileService(existingBarber ?? {});
+            try {
+                assertAtLeastOneServiceLocation(nextShop, nextMobile);
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Invalid service location settings';
+                return reply.status(400).send({
+                    error: `${msg}. Use PUT /api/provider/barber/service-locations instead.`,
+                });
+            }
+        }
+        if (
+            entity === 'shop' &&
+            (data.offers_shop_service !== undefined || data.offers_mobile_service !== undefined)
+        ) {
+            const existingShop = (needsOwnershipCheck
+                ? await model().findUnique({ where: { id } })
+                : null) as { offers_shop_service?: boolean | null; offers_mobile_service?: boolean | null } | null;
+            const nextShop =
+                data.offers_shop_service !== undefined
+                    ? data.offers_shop_service !== false
+                    : offersShopService(existingShop ?? {});
+            const nextMobile =
+                data.offers_mobile_service !== undefined
+                    ? data.offers_mobile_service === true
+                    : offersMobileService(existingShop ?? {});
+            try {
+                assertAtLeastOneServiceLocation(nextShop, nextMobile);
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Invalid service location settings';
+                return reply.status(400).send({
+                    error: `${msg}. Use PUT /api/provider/shop/:shopId/service-locations instead.`,
+                });
+            }
+        }
+        let bookingExisting: { status?: string | null; client_id?: string | null } | null = null;
+        if (entity === 'booking' && data.status !== undefined) {
+            bookingExisting = await model().findUnique({
+                where: { id },
+                select: { status: true, client_id: true, barber_id: true },
+            });
         }
         try {
-            return await model().update({ where: { id }, data });
+            const updated = await model().update({ where: { id }, data });
+            if (
+                entity === 'booking' &&
+                data.status === 'completed' &&
+                bookingExisting?.status !== 'completed' &&
+                updated?.id
+            ) {
+                const { awardPointsForCompletedBooking } = await import('./loyalty/logic');
+                await awardPointsForCompletedBooking(String(updated.id));
+                const { processReferralOnCompletedBooking } = await import('./referral/logic');
+                await processReferralOnCompletedBooking(String(updated.id));
+                const { onBookingCompleted } = await import('./domain/hooks/lifecycle');
+                await onBookingCompleted(
+                    bookingExisting?.client_id ?? updated.client_id ?? null,
+                    updated.barber_id ?? null
+                );
+                const { maybeTriggerReviewRequestOnCompletion } = await import('./reviews/requestLogic');
+                await maybeTriggerReviewRequestOnCompletion(
+                    String(updated.id),
+                    bookingExisting?.status,
+                    data.status
+                );
+            }
+            return updated;
         } catch (e: any) {
             if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
                 return reply.status(404).send({ error: 'Not found' });
@@ -814,13 +1437,29 @@ entities.forEach(entity => {
         }
     });
 
-    // DELETE — ownership check for AUTH_REQUIRED and AUTH_WRITE entities
+    // DELETE, ownership check for AUTH_REQUIRED and AUTH_WRITE entities
     fastify.delete(`${routeBase}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
+        if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+        if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
+            return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
+        }
+        if (entity === 'referral') {
+            return reply.status(403).send({ error: REFERRAL_WRITE_MESSAGE });
+        }
+        if (entity === 'wallet_account' || entity === 'wallet_transaction') {
+            return reply.status(403).send({ error: WALLET_WRITE_MESSAGE });
+        }
+        if (entity === 'message') {
+            return reply.status(403).send({ error: MESSAGE_WRITE_MESSAGE });
+        }
+        if (entity === 'review') {
+            return reply.status(403).send({ error: 'Reviews cannot be deleted via entity API' });
+        }
         if (needsOwnershipCheck) {
             const existing = await model().findUnique({ where: { id } });
             if (!existing || !(await rowInScope(entity, existing as Record<string, unknown>, request.user as any, request.entityScopeCache)))
-                return reply.status(404).send({ error: 'Not found' });
+                {return reply.status(404).send({ error: 'Not found' });}
         }
         try {
             return await model().delete({ where: { id } });
@@ -837,6 +1476,13 @@ entities.forEach(entity => {
 fastify.setErrorHandler((err: any, request, reply) => {
     fastify.log.error({ err, message: err?.message, code: err?.code, stack: err?.stack, url: request?.url }, 'UNHANDLED_ERROR');
     const status = err.statusCode ?? 500;
+    if (status >= 500) {
+        captureException(err, {
+            url: request?.url,
+            method: request?.method,
+            status,
+        });
+    }
     const body = {
         error: err.message || 'Internal Server Error',
         hint: status === 500 ? 'Check server logs.' : undefined
@@ -849,7 +1495,7 @@ async function autoSeedIfEmpty() {
     try {
         const barber = await prisma.barbers.findFirst({ select: { id: true } });
         if (!barber) {
-            fastify.log.info('No barbers found — seeding sample data...');
+            fastify.log.info('No barbers found, seeding sample data...');
             const { execSync } = await import('child_process');
             try {
                 execSync('node --import tsx src/db/seed.ts', { cwd: process.cwd(), stdio: 'inherit', timeout: 60000 });
@@ -870,6 +1516,24 @@ const start = async () => {
         const port = Number(process.env.PORT) || 3001;
         await fastify.listen({ port, host: '0.0.0.0' });
         fastify.log.info(`Sovereign Backend running on port ${port}`);
+
+        process.on('unhandledRejection', (reason) => {
+            fastify.log.error({ reason }, 'UNHANDLED_REJECTION');
+            captureException(reason);
+        });
+        process.on('uncaughtException', (err) => {
+            fastify.log.error({ err }, 'UNCAUGHT_EXCEPTION');
+            captureException(err);
+        });
+
+        void runFixedFeeMaintenance().catch((err) =>
+            fastify.log.warn({ err }, 'Fixed-fee maintenance failed on startup')
+        );
+        setInterval(() => {
+            void runFixedFeeMaintenance().catch((err) =>
+                fastify.log.warn({ err }, 'Fixed-fee maintenance failed')
+            );
+        }, 6 * 60 * 60 * 1000);
     } catch (err) {
         fastify.log.error(err);
         process.exit(1);

@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma';
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, startOfWeek, endOfWeek, subDays, isSameDay } from 'date-fns';
+import { startOfMonth, format, subDays, isSameDay } from 'date-fns';
 
 export async function getProviderAnalytics(shopId: string, barberId?: string) {
     // 1. Fetch all relevant bookings
@@ -16,13 +16,16 @@ export async function getProviderAnalytics(shopId: string, barberId?: string) {
     const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.price_at_booking || 0), 0);
     const revenueForecast = upcomingBookings.reduce((sum, b) => sum + (b.price_at_booking || 0), 0);
 
-    // 3. Client Retention (MOCK logic based on email frequency in history)
-    const clientEmails = confirmedBookings.map(b => b.created_by).filter(Boolean);
-    const emailCounts: Record<string, number> = {};
-    clientEmails.forEach(email => emailCounts[email!] = (emailCounts[email!] || 0) + 1);
+    // 3. Client retention, repeat bookings by client_id
+    const clientCounts: Record<string, number> = {};
+    for (const b of confirmedBookings) {
+        const clientId = b.client_id;
+        if (!clientId) continue;
+        clientCounts[clientId] = (clientCounts[clientId] || 0) + 1;
+    }
 
-    const recurringClients = Object.values(emailCounts).filter(count => count > 1).length;
-    const totalClients = Object.keys(emailCounts).length;
+    const recurringClients = Object.values(clientCounts).filter((count) => count > 1).length;
+    const totalClients = Object.keys(clientCounts).length;
     const retentionRate = totalClients > 0 ? (recurringClients / totalClients) * 100 : 0;
 
     // 4. Staff Performance (if shopId)
@@ -56,13 +59,32 @@ export async function getProviderAnalytics(shopId: string, barberId?: string) {
         };
     });
 
+    // 6. Tips received (post-service pourboires)
+    const tipWhere = shopId
+        ? { shop_id: shopId, status: 'paid' as const }
+        : barberId
+          ? { barber_id: barberId, status: 'paid' as const }
+          : null;
+    let totalTips = 0;
+    let tipsThisMonth = 0;
+    if (tipWhere) {
+        const paidTips = await prisma.booking_tips.findMany({ where: tipWhere });
+        totalTips = paidTips.reduce((sum, t) => sum + t.amount, 0);
+        const monthStart = startOfMonth(now);
+        tipsThisMonth = paidTips
+            .filter((t) => t.paid_at && new Date(t.paid_at) >= monthStart)
+            .reduce((sum, t) => sum + t.amount, 0);
+    }
+
     return {
         summary: {
             totalRevenue,
             revenueForecast,
             retentionRate,
             totalAppointments: confirmedBookings.length,
-            upcomingAppointments: upcomingBookings.length
+            upcomingAppointments: upcomingBookings.length,
+            totalTips: Math.round(totalTips * 100) / 100,
+            tipsThisMonth: Math.round(tipsThisMonth * 100) / 100,
         },
         revenueChart,
         staffPerformance,

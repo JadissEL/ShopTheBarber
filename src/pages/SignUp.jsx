@@ -1,104 +1,99 @@
-import { SignUp as ClerkSignUp } from '@clerk/react';
+import { SignUp as ClerkSignUp, ClerkLoaded, ClerkLoading } from '@clerk/react';
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { PageLoading } from '@/components/ui/page-loading';
 import { createPageUrl } from '@/utils';
+import { setProviderIntent } from '@/lib/bootstrapProvider';
+import {
+  clerkAuthAppearance,
+  clerkSignUpLocalization,
+} from '@/lib/clerkAppearance';
 
-/**
- * Sign Up Page with Clerk
- * 
- * Clerk handles:
- * - Email/password registration
- * - Social sign up (Google, Apple, etc.)
- * - Email verification
- * - User profile creation
- */
+const REF_STORAGE_KEY = 'stb_referral_code';
+
+function getPostAuthUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect') || params.get('return');
+    if (redirect && redirect.startsWith('/')) return redirect;
+    return '/SetupGuide';
+}
+
 export default function SignUp() {
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref');
+        if (ref) localStorage.setItem(REF_STORAGE_KEY, ref.trim().toUpperCase());
+        const type = params.get('type');
+        if (type === 'barber' || type === 'shop') setProviderIntent(type);
+    }, []);
+
+    const afterSignUp = getPostAuthUrl();
+
     return (
-        <div className="min-h-screen bg-background text-foreground flex">
+        <div className="stb-page flex">
             <MetaTags
                 title="Join the Platform"
                 description="Create an account to book appointments and manage your style."
             />
 
-            {/* Left Side - Brand (Rich Visuals) */}
-            <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-muted">
+            <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden">
                 <OptimizedImage
                     src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=2000&auto=format&fit=crop"
                     alt="Barber Shop Atmosphere"
                     fill
-                    className="opacity-50 object-cover"
+                    className="object-cover scale-105"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
-                <div className="relative z-10 flex flex-col justify-end p-20 h-full">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-chart-2/80 to-navy/95 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-transparent to-primary/20" />
+                <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 h-full">
+                    <Link to={createPageUrl('Home')} className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-semibold no-underline">
+                        <ArrowLeft className="w-4 h-4" /> Back to home
+                    </Link>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <div className="text-primary font-bold mb-4 tracking-widest text-sm">PREMIUM GROOMING</div>
-                        <h2 className="text-5xl font-bold text-foreground mb-6 leading-tight">Elevate Your<br />Standard.</h2>
-                        <p className="text-xl text-muted-foreground max-w-sm leading-relaxed">
-                            Join thousands of professionals and clients setting the new gold standard in personal style.
+                        <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-4 py-1.5 text-white/90 text-xs font-bold uppercase tracking-widest mb-6 border border-white/20">
+                            Join the platform
+                        </div>
+                        <h2 className="text-4xl xl:text-5xl font-extrabold text-white mb-5 leading-[1.08] tracking-tight">
+                            Elevate your<br />standard.
+                        </h2>
+                        <p className="text-lg text-white/80 max-w-sm leading-relaxed">
+                            Book elite barbers, manage your chair, and earn rewards — all in one sharp platform.
                         </p>
                     </motion.div>
                 </div>
             </div>
 
-            {/* Right Side - Clerk Sign Up Component */}
-            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 bg-background relative overflow-y-auto">
-                <div className="absolute top-8 right-8">
-                    <Button variant="ghost" onClick={() => window.location.href = createPageUrl('Home')} className="text-muted-foreground hover:text-foreground transition-colors">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Back
-                    </Button>
-                </div>
+            <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-8 bg-background relative overflow-y-auto">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(var(--primary)/0.06),transparent)] pointer-events-none" aria-hidden />
 
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-md py-12"
+                    className="w-full max-w-md py-12 relative"
                 >
-                    <ClerkSignUp
-                        appearance={{
-                            elements: {
-                                rootBox: "mx-auto",
-                                card: "bg-card border-border shadow-lg rounded-2xl",
-                                headerTitle: "text-foreground text-2xl font-bold",
-                                headerSubtitle: "text-muted-foreground",
-                                socialButtonsBlockButton: "border-border hover:bg-muted text-foreground rounded-xl h-12",
-                                socialButtonsBlockButtonText: "font-medium",
-                                formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-12 font-bold",
-                                formFieldInput: "bg-card border-border text-foreground rounded-xl",
-                                formFieldLabel: "text-muted-foreground font-medium",
-                                footerActionLink: "text-primary hover:text-primary/90 font-semibold",
-                                footerActionText: "text-muted-foreground",
-                                footerAction: "pt-6 pb-2", // Show sign-in link with spacing
-                                footer__logo: "hidden", // Hide Clerk logo in footer
-                                footer__logoImage: "hidden", // Hide Clerk logo image
-                                footer__text: "hidden", // Hide "Secured by Clerk" text
-                                footerPages: "hidden", // Hide terms/privacy links
-                                dividerLine: "bg-border",
-                                dividerText: "text-muted-foreground text-xs",
-                                identityPreviewText: "text-foreground",
-                                identityPreviewEditButton: "text-primary",
-                                formFieldInputShowPasswordButton: "text-muted-foreground hover:text-foreground",
-                                otpCodeFieldInput: "border-border text-foreground rounded-xl",
-                                formResendCodeLink: "text-primary hover:text-primary/90",
-                                alertText: "text-foreground",
-                                badge: "hidden", // Hide "Development mode" badge
-                            },
-                            layout: {
-                                logoPlacement: "none", // Hide Clerk logo
-                            },
-                        }}
-                        routing="virtual"
-                        signInUrl="/signin"
-                        redirectUrl="/dashboard"
-                        afterSignUpUrl="/dashboard"
-                    />
+                    <ClerkLoading>
+                        <PageLoading message="Loading sign up…" />
+                    </ClerkLoading>
+                    <ClerkLoaded>
+                        <ClerkSignUp
+                            routing="path"
+                            path="/register"
+                            signInUrl={createPageUrl('SignIn')}
+                            fallbackRedirectUrl={afterSignUp}
+                            signInFallbackRedirectUrl="/login"
+                            appearance={clerkAuthAppearance}
+                            localization={clerkSignUpLocalization}
+                        />
+                    </ClerkLoaded>
 
                     <p className="text-[10px] text-center text-muted-foreground mt-10 max-w-xs mx-auto leading-relaxed uppercase tracking-widest opacity-70">
                         Encrypted for your protection. 256-bit SSL secure.

@@ -1,0 +1,119 @@
+[
+  {
+    "id": "qa-admin",
+    "email": "qa.admin@shopthebarber.com",
+    "password": "Stb!Admin2026",
+    "full_name": "Alex Rivera",
+    "role": "admin",
+    "label": "Platform Admin"
+  },
+  {
+    "id": "qa-c1",
+    "email": "qa.marcus.client@shopthebarber.com",
+    "password": "Stb!Client2026a",
+    "full_name": "Marcus Chen",
+    "role": "client",
+    "label": "Client — frequent booker"
+  },
+  {
+    "id": "qa-c2",
+    "email": "qa.diego.client@shopthebarber.com",
+    "password": "Stb!Client2026b",
+    "full_name": "Diego Alvarez",
+    "role": "client",
+    "label": "Client — first-time user"
+  },
+  {
+    "id": "qa-b1",
+    "email": "qa.alex.barber@shopthebarber.com",
+    "password": "Stb!Barber2026a",
+    "full_name": "Alex Thompson",
+    "role": "barber",
+    "label": "Barber — independent",
+    "barber_id": "qa-b1-profile",
+    "shop_id": "qa-shop-1",
+    "title": "Precision Fade Specialist",
+    "location": "New York, Manhattan",
+    "is_vip": false
+  },
+  {
+    "id": "qa-b2",
+    "email": "qa.jordan.barber@shopthebarber.com",
+    "password": "Stb!Barber2026b",
+    "full_name": "Jordan Blake",
+    "role": "barber",
+    "label": "Barber — shop stylist",
+    "barber_id": "qa-b2-profile",
+    "shop_id": "qa-shop-1",
+    "title": "Senior Stylist",
+    "location": "New York, Brooklyn",
+    "is_vip": false
+  },
+  {
+    "id": "qa-vip",
+    "email": "qa.marcus.vip@shopthebarber.com",
+    "password": "Stb!VipBarber2026",
+    "full_name": "Marcus Sterling",
+    "role": "barber",
+    "label": "VIP Barber — group & mobile",
+    "barber_id": "qa-vip-profile",
+    "shop_id": "qa-shop-2",
+    "title": "VIP Master Barber",
+    "location": "Miami, South Beach",
+    "is_vip": true,
+    "offers_group_booking": true,
+    "offers_mobile_service": true
+  },
+  {
+    "id": "qa-o1",
+    "email": "qa.elena.owner@shopthebarber.com",
+    "password": "Stb!Owner2026a",
+    "full_name": "Elena Kostas",
+    "role": "shop_owner",
+    "label": "Shop Owner — The Gentlemen's Studio",
+    "barber_id": "qa-o1-profile",
+    "shop_id": "qa-shop-1",
+    "shop_name": "The Gentlemen's Studio",
+    "shop_location": "New York, SoHo",
+    "title": "Owner & Master Barber",
+    "location": "New York, SoHo",
+    "is_vip": false
+  },
+  {
+    "id": "qa-o2",
+    "email": "qa.nikos.owner@shopthebarber.com",
+    "password": "Stb!Owner2026b",
+    "full_name": "Nikos Papadakis",
+    "role": "shop_owner",
+    "label": "Shop Owner — Coastal Cuts",
+    "barber_id": "qa-o2-profile",
+    "shop_id": "qa-shop-2",
+    "shop_name": "Coastal Cuts",
+    "shop_location": "Miami, Brickell",
+    "title": "Owner & Grooming Director",
+    "location": "Miami, Brickell",
+    "is_vip": false
+  },
+  {
+    "id": "qa-c3",
+    "email": "qa.sofia.client@shopthebarber.com",
+    "password": "Stb!Client2026c",
+    "full_name": "Sofia Martinez",
+    "role": "client",
+    "label": "Client — marketplace shopper"
+  },
+  {
+    "id": "qa-b3",
+    "email": "qa.leo.barber@shopthebarber.com",
+    "password": "Stb!Barber2026c",
+    "full_name": "Leo Fernandez",
+    "role": "barber",
+    "label": "Barber — at-home specialist",
+    "barber_id": "qa-b3-profile",
+    "shop_id": "qa-shop-2",
+    "title": "Mobile Grooming Pro",
+    "location": "Miami, Wynwood",
+    "is_vip": false,
+    "offers_mobile_service": true
+  }
+]

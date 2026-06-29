@@ -34,7 +34,7 @@ export default function Wishlist() {
     queryKey: ['wishlist-products', wishlistItems],
     queryFn: async () => {
       if (wishlistItems.length === 0) return [];
-      const allProducts = await sovereign.entities.Product.list();
+      const allProducts = await sovereign.products.listPublic();
       return allProducts.filter(p => wishlistItems.some(w => w.product_id === p.id));
     },
     enabled: wishlistItems.length > 0
@@ -80,9 +80,9 @@ export default function Wishlist() {
         <Card className="max-w-md w-full mx-4 rounded-[12px]">
           <CardContent className="p-12 text-center">
             <Heart className="w-20 h-20 text-slate-300 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-[#0B2545] mb-4">Connectez-vous pour voir votre wishlist</h2>
-            <p className="text-[#4B5563] mb-8">Sauvegardez vos produits favoris et recevez des alertes de prix</p>
-            <Button onClick={() => sovereign.auth.redirectToLogin(window.location.href)} className="bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]">Se connecter</Button>
+            <h2 className="text-2xl font-bold text-[#0B2545] mb-4">Sign in to view your wishlist</h2>
+            <p className="text-[#4B5563] mb-8">Save your favorite products and get price alerts</p>
+            <Button onClick={() => sovereign.auth.redirectToLogin(window.location.href)} className="bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]">Sign in</Button>
           </CardContent>
         </Card>
       </div>
@@ -95,18 +95,18 @@ export default function Wishlist() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-[#0B2545] mb-2">Ma Liste de Souhaits</h1>
-              <p className="text-[#4B5563]">{filteredProducts.length} produit(s) • Valeur totale: {totalValue.toFixed(2)}€</p>
+              <h1 className="text-4xl font-bold text-[#0B2545] mb-2">My Wishlist</h1>
+              <p className="text-[#4B5563]">{filteredProducts.length} item(s) • Total value: ${totalValue.toFixed(2)}</p>
             </div>
             <div className="flex gap-3 flex-wrap">
               <Button onClick={() => setShowCollectionManager(true)} variant="outline" className="border-slate-200 rounded-[10px] min-h-[44px]"><FolderPlus className="w-4 h-4 mr-2" />Collections</Button>
-              <Button onClick={() => setShowShareDialog(true)} variant="outline" className="border-slate-200 rounded-[10px] min-h-[44px]" disabled={filteredProducts.length === 0}><Share2 className="w-4 h-4 mr-2" />Partager</Button>
-              <Button onClick={handleCompare} variant="outline" className="border-slate-200 rounded-[10px] min-h-[44px]" disabled={selectedProducts.length < 2}><ArrowUpDown className="w-4 h-4 mr-2" />Comparer ({selectedProducts.length})</Button>
+              <Button onClick={() => setShowShareDialog(true)} variant="outline" className="border-slate-200 rounded-[10px] min-h-[44px]" disabled={filteredProducts.length === 0}><Share2 className="w-4 h-4 mr-2" />Share</Button>
+              <Button onClick={handleCompare} variant="outline" className="border-slate-200 rounded-[10px] min-h-[44px]" disabled={selectedProducts.length < 2}><ArrowUpDown className="w-4 h-4 mr-2" />Compare ({selectedProducts.length})</Button>
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[{ icon: Heart, label: "Produits", value: filteredProducts.length, color: "bg-[#D08B3D]" }, { icon: TrendingDown, label: "Baisses de prix", value: priceDropCount, color: "bg-[#1E7A4B]" }, { icon: Package, label: "Valeur totale", value: `${totalValue.toFixed(0)}€`, color: "bg-[#0B2545]" }, { icon: Bell, label: "Alertes actives", value: priceAlerts.length, color: "bg-[#4B5563]" }].map((stat, i) => (
+            {[{ icon: Heart, label: "Products", value: filteredProducts.length, color: "bg-[#D08B3D]" }, { icon: TrendingDown, label: "Price drops", value: priceDropCount, color: "bg-[#1E7A4B]" }, { icon: Package, label: "Total value", value: `$${totalValue.toFixed(0)}`, color: "bg-[#0B2545]" }, { icon: Bell, label: "Active alerts", value: priceAlerts.length, color: "bg-[#4B5563]" }].map((stat, i) => (
               <Card key={i} className="rounded-[12px] border-2 border-slate-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -119,27 +119,27 @@ export default function Wishlist() {
           </div>
         </motion.div>
 
-        <div className="bg-white rounded-[12px] p-6 mb-8 shadow-lg border border-slate-200">
+        <div className="bg-card rounded-[12px] p-6 mb-8 shadow-lg border border-slate-200">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#4B5563] w-5 h-5" />
-              <Input placeholder="Rechercher dans la wishlist..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-12 h-12 border-slate-200 rounded-[10px] focus:ring-[#D08B3D] focus:border-[#D08B3D]" />
+              <Input placeholder="Search wishlist..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-12 h-12 border-slate-200 rounded-[10px] focus:ring-[#D08B3D] focus:border-[#D08B3D]" />
             </div>
             <Select value={selectedCollection} onValueChange={setSelectedCollection}>
               <SelectTrigger className="w-full lg:w-48 h-12 border-slate-200 rounded-[10px]"><SelectValue placeholder="Collection" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les collections</SelectItem>
+                <SelectItem value="all">All collections</SelectItem>
                 {collections.map((collection) => <SelectItem key={collection.id} value={collection.id}>{collection.icon} {collection.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full lg:w-48 h-12 border-slate-200 rounded-[10px]"><SelectValue placeholder="Trier par" /></SelectTrigger>
+              <SelectTrigger className="w-full lg:w-48 h-12 border-slate-200 rounded-[10px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Plus Récents</SelectItem>
-                <SelectItem value="name">Nom A-Z</SelectItem>
-                <SelectItem value="price_asc">Prix Croissant</SelectItem>
-                <SelectItem value="price_desc">Prix Décroissant</SelectItem>
-                <SelectItem value="discount">Meilleures Promos</SelectItem>
+                <SelectItem value="recent">Most recent</SelectItem>
+                <SelectItem value="name">Name A-Z</SelectItem>
+                <SelectItem value="price_asc">Price: low to high</SelectItem>
+                <SelectItem value="price_desc">Price: high to low</SelectItem>
+                <SelectItem value="discount">Best deals</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex gap-2">
@@ -156,9 +156,9 @@ export default function Wishlist() {
         ) : filteredProducts.length === 0 ? (
           <Card className="rounded-[12px] border-2 border-slate-200 p-12 text-center">
             <Heart className="w-20 h-20 text-slate-300 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-[#0B2545] mb-3">Votre wishlist est vide</h3>
-            <p className="text-[#4B5563] mb-8">Explorez nos produits et ajoutez vos favoris</p>
-            <Link to={createPageUrl('Marketplace')}><Button className="bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]">Découvrir les Produits</Button></Link>
+            <h3 className="text-2xl font-bold text-[#0B2545] mb-3">Your wishlist is empty</h3>
+            <p className="text-[#4B5563] mb-8">Browse products and save your favorites</p>
+            <Link to={createPageUrl('Marketplace')}><Button className="bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]">Browse products</Button></Link>
           </Card>
         ) : (
           <motion.div layout className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
@@ -166,7 +166,7 @@ export default function Wishlist() {
               {filteredProducts.map((product, index) => (
                 <motion.div key={product.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: index * 0.03 }}>
                   <Card className={`group rounded-[12px] border-2 overflow-hidden hover:shadow-2xl transition-all ${selectedProducts.includes(product.id) ? 'border-[#D08B3D] bg-[#D08B3D]/5' : 'border-slate-200 hover:border-[#D08B3D]'}`}>
-                    <div className="relative aspect-square overflow-hidden bg-slate-100">
+                    <div className="relative aspect-square overflow-hidden bg-muted">
                       {product.image_url ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" /> : <div className="w-full h-full bg-gradient-to-br from-[#D08B3D]/20 to-[#D08B3D]/5 flex items-center justify-center"><Package className="w-16 h-16 text-slate-300" /></div>}
                       {product.priceDrop && <Badge className="absolute top-3 left-3 bg-[#1E7A4B] border-0 text-white text-xs px-2 py-1 shadow-lg"><TrendingDown className="w-3 h-3 mr-1" />-{product.dropPercentage}%</Badge>}
                       <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -174,17 +174,17 @@ export default function Wishlist() {
                         <Button size="icon" className="w-9 h-9 rounded-full bg-[#D6454A] hover:bg-[#D6454A]/90 text-white shadow-lg min-h-[44px] min-w-[44px]" onClick={() => removeFromWishlist(product.id)}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
-                    <div className="p-5 bg-white">
+                    <div className="p-5 bg-card">
                       <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}><h3 className="font-bold text-[#0B2545] mb-2 line-clamp-2 group-hover:text-[#D08B3D] transition-colors">{product.name}</h3></Link>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex items-center">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < Math.floor(product.rating || 5) ? 'text-[#D08B3D] fill-current' : 'text-slate-200'}`} />)}</div>
                         <span className="text-xs text-[#4B5563]">({product.total_reviews || 0})</span>
                       </div>
                       <div className="space-y-2 mb-4">
-                        {product.priceDrop ? (<div><div className="flex items-center gap-2"><span className="text-2xl font-bold text-[#1E7A4B]">{product.price}€</span><span className="text-lg text-[#4B5563] line-through">{product.originalPrice}€</span></div><p className="text-xs text-[#1E7A4B] font-semibold">Économisez {(product.originalPrice - product.price).toFixed(2)}€</p></div>) : (<span className="text-2xl font-bold text-[#0B2545]">{product.price}€</span>)}
+                        {product.priceDrop ? (<div><div className="flex items-center gap-2"><span className="text-2xl font-bold text-[#1E7A4B]">${product.price}</span><span className="text-lg text-[#4B5563] line-through">${product.originalPrice}</span></div><p className="text-xs text-[#1E7A4B] font-semibold">Save ${(product.originalPrice - product.price).toFixed(2)}</p></div>) : (<span className="text-2xl font-bold text-[#0B2545]">${product.price}</span>)}
                       </div>
                       <div className="flex gap-2">
-                        <Link to={createPageUrl(`ProductDetail?id=${product.id}`)} className="flex-1"><Button variant="outline" size="sm" className="w-full border-slate-200 rounded-[8px] min-h-[44px]"><Eye className="w-4 h-4 mr-2" />Voir</Button></Link>
+                        <Link to={createPageUrl(`ProductDetail?id=${product.id}`)} className="flex-1"><Button variant="outline" size="sm" className="w-full border-slate-200 rounded-[8px] min-h-[44px]"><Eye className="w-4 h-4 mr-2" />View</Button></Link>
                         <PriceAlertConfig product={product} trigger={<Button size="icon" variant="outline" className={`border-slate-200 rounded-[8px] min-h-[44px] min-w-[44px] ${product.hasPriceAlert ? 'bg-[#0B2545]/10 border-[#0B2545] text-[#0B2545]' : ''}`}><Bell className="w-4 h-4" /></Button>} />
                       </div>
                     </div>

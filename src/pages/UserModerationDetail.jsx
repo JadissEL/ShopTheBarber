@@ -36,7 +36,7 @@ export default function UserModerationDetail() {
 
   if (currentUser?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Access Denied" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -50,7 +50,7 @@ export default function UserModerationDetail() {
 
   if (!targetUser) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="User Not Found" />
         <Card>
           <CardContent className="py-8 text-center">
@@ -65,7 +65,7 @@ export default function UserModerationDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="stb-page pb-16">
       <MetaTags 
         title={`Moderation: ${targetUser.full_name}`}
         description="User moderation details"

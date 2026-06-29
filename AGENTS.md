@@ -2,71 +2,66 @@
 
 ## Cursor Cloud specific instructions
 
-**ShopTheBarber** is a barbershop booking SaaS platform with a React/Vite frontend (port 3000) and Fastify/SQLite backend (port 3001).
+**ShopTheBarber** is a barbershop booking SaaS: **React/Vite** frontend (port 3000) and **Fastify + Prisma + Neon PostgreSQL** backend (port 3001).
+
+> **Doc drift:** If another file mentions SQLite, Drizzle, `JWT_SECRET`, or `DRIZZLE_BOOTSTRAP`, treat **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** and **[docs/NEON_PRISMA.md](docs/NEON_PRISMA.md)** as canonical for production.
+
+### Documentation (single source of truth)
+
+| Topic | Canonical doc |
+|-------|----------------|
+| Deploy & production env | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Database, Prisma, Neon, migrations | [docs/NEON_PRISMA.md](docs/NEON_PRISMA.md) |
+| Tracker & architecture history | [PROJECT_TRACKER.md](PROJECT_TRACKER.md) |
+| Repo layout | [PROJECT_SCHEMA.md](PROJECT_SCHEMA.md) |
+| GTM: ICP, pricing, pilot, partners | [docs/ICP.md](docs/ICP.md), [docs/GTM_PRICING.md](docs/GTM_PRICING.md), `/pricing` |
+| Marketplace legal (VAT, seller/buyer terms) | [docs/MARKETPLACE_LEGAL.md](docs/MARKETPLACE_LEGAL.md) |
+
+**Schema source of truth:** `server/prisma/schema.prisma` and `server/prisma/migrations/`.
 
 ### Services
 
 | Service | Command | Port | Notes |
 |---------|---------|------|-------|
-| Frontend | `npm run dev` (root) | 3000 | Proxies `/api` to backend via Vite config |
-| Backend | `npm run dev` (`server/`) | 3001 | Fastify + SQLite (embedded, no external DB) |
+| Frontend | `npm run dev` (root) | 3000 | Proxies `/api` → backend via Vite |
+| Backend | `npm run dev` (`server/`) | 3001 | Requires `DATABASE_URL` + `CLERK_SECRET_KEY` in `server/.env` |
 
 ### First-time database setup
 
-If `server/sovereign.sqlite` does not exist or is corrupted, recreate it:
-
 ```bash
 cd server
-npm run push   # applies Drizzle schema to SQLite
-npm run seed   # populates sample barbers, shops, services, shifts
+cp .env.example .env
+# Set DATABASE_URL (Neon pooled URL) and CLERK_SECRET_KEY
+
+npm run generate
+npx prisma migrate deploy
+npm run seed    # optional — barbers, shops, promos for E2E
 ```
 
-If `npm run push` fails with "index already exists", delete `server/sovereign.sqlite` and re-run.
+There is no local SQLite database in the current server package.
+
+### Lint & typecheck
+
+```bash
+npm run lint          # ESLint (frontend + server)
+npm run lint:fix
+npm run typecheck     # Frontend (jsconfig)
+npm run typecheck:server  # Backend strict TypeScript
+```
 
 ### Environment
 
-Backend requires `server/.env` with at least `JWT_SECRET`. Copy from `server/.env.example`. Stripe, Resend, and AI keys are optional; the app gracefully degrades without them.
+- **Frontend:** copy [`.env.example`](.env.example) → `.env.local` — **`VITE_CLERK_PUBLISHABLE_KEY`** required.
+- **Backend:** copy [`server/.env.example`](server/.env.example) → `server/.env` — **`DATABASE_URL`**, **`CLERK_SECRET_KEY`** required for normal dev.
 
-### Clerk + database user id (SQLite)
-
-After pulling schema changes that add `users.clerk_user_id`, apply the **non-destructive** column migration (avoid `drizzle-kit push` if it prompts to drop tables):
-
-```bash
-cd server && node scripts/add-clerk-user-id-column.js
-```
-
-**PostgreSQL:** with `DATABASE_URL` set, apply versioned migrations (never rely on interactive `drizzle-kit push` in production):
-
-```bash
-cd server && npm run migrate
-```
-
-The first checked-in migration adds `users.clerk_user_id` idempotently ([`server/drizzle/0000_clerk_user_id.sql`](server/drizzle/0000_clerk_user_id.sql)). Local SQLite continues to use `npm run push` / `db:add-clerk-column` as above.
-
-**Promo codes + bookings discount (SQLite):** after pulls that add `promo_codes.shop_id` / `bookings.discount_code`, run the additive script so local DB matches schema (skipped if DB or tables missing):
-
-```bash
-cd server && npm run db:add-promo-columns
-```
-
-**PostgreSQL:** those columns are applied by [`server/drizzle/0001_promo_shop_discount.sql`](server/drizzle/0001_promo_shop_discount.sql) via `npm run migrate`.
-
-`npm run test` in `server/` runs `db:add-promo-columns` first so Vitest stays aligned with Drizzle schema.
-
-### Native SQLite driver (server tests / local Node upgrades)
-
-If Vitest fails loading `better-sqlite3` with `NODE_MODULE_VERSION` mismatch, rebuild the binary for your Node version:
-
-```bash
-cd server && npm rebuild better-sqlite3
-```
+Production also requires Upstash Redis and Mapbox/Google geocoding on Render (see `server/src/index.ts` fail-fast).
 
 ### Optional Playwright API checks
 
 **Staging health (no JWT):**
 
 ```bash
-npx playwright install chromium   # once per machine / CI image
+npx playwright install chromium
 E2E_API_BASE_URL=https://your-api.example.com npm run test:e2e:health
 ```
 
@@ -76,49 +71,90 @@ E2E_API_BASE_URL=https://your-api.example.com npm run test:e2e:health
 E2E_API_BASE_URL=https://your-api.example.com E2E_CLERK_JWT="<token_body>" npm run test:e2e -- e2e/clerk-bearer-api.spec.ts
 ```
 
-Without env vars, specs **skip** (exit 0). GitHub Actions: **Playwright API checks** (manual `workflow_dispatch`) runs health against an input URL; optional Clerk Bearer step uses `E2E_CLERK_JWT`; optional **browser** step uses `@clerk/testing` (repo secrets `CLERK_SECRET_KEY`, `E2E_CLERK_USER_EMAIL`, input `frontend_base_url`).
+Without env vars, specs **skip** (exit 0). GitHub Actions: **Playwright API checks** (`workflow_dispatch`) — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-**Clerk browser (@clerk/testing)** — frontend must be reachable and use the same Clerk app as `CLERK_SECRET_KEY`. Start locally: `npm run dev` + `cd server && npm run dev`, then:
+**Clerk browser (@clerk/testing)** — frontend + API must be running; seed Neon (`npm run seed`):
 
 ```bash
 npx playwright install chromium
 set E2E_FRONTEND_URL=http://localhost:3000
-set CLERK_SECRET_KEY=sk_test_...   # server key, same as server/.env — do not commit
-set E2E_CLERK_USER_EMAIL=your-test-user@example.com
+set E2E_API_BASE_URL=http://localhost:3001
+set CLERK_SECRET_KEY=sk_test_...
+set E2E_CLERK_USER_EMAIL=your-client@example.com
+set E2E_CLERK_PROVIDER_EMAIL=your-provider@example.com
+set E2E_CLERK_ADMIN_EMAIL=admin@example.com
 npm run test:e2e:clerk-browser
 ```
 
-(PowerShell: ` $env:VAR="value" ` per line.)
+**Auto-start servers:** `E2E_START_SERVERS=1 npm run test:e2e:public` — Playwright boots `npm run dev` + `npm run dev:server`.
 
-### Postgres first deploy (`DATABASE_URL`)
+**Focused suites:**
 
-If Postgres is empty, either run **`npx drizzle-kit push`** once from your machine against `DATABASE_URL`, or temporarily set **`DRIZZLE_BOOTSTRAP=push`** on Render for a single deploy (**remove immediately after** — can be destructive), then rely on **`migrate`** builds.
+| Script | Covers |
+|--------|--------|
+| `npm run test:e2e:health` | Public API smoke |
+| `npm run test:e2e:api` | Booking checkout + promotions REST |
+| `npm run test:e2e:booking` | Booking API + browser |
+| `npm run test:e2e:promotions` | Provider/admin promo API + browser |
+| `npm run test:e2e:geocoding` | Geocoding config + suggest |
+| `npm run test:e2e:public` | Public routes, iPhone viewport (no Clerk) |
+| `npm run test:e2e:mobile` | Public + authenticated mobile nav |
+| `npm run test:e2e:clerk-browser` | All `*.browser.spec.ts` |
+
+**Frontend unit tests:** `npm run test` — 64 Vitest tests (mobile nav, Explore critical path, onboarding, feature flags, GlobalFinancials, apiClient, libs).
+
+Browser specs use seeded IDs from `e2e/fixtures/seed-data.ts` (`gb1`, `s1`, `DOWNTOWN10`, …).
+
+(PowerShell: `$env:VAR="value"` per line.)
+
+### Geolocation (Mapbox / Google Maps)
+
+Production requires **either** `MAPBOX_ACCESS_TOKEN` **or** `GOOGLE_MAPS_API_KEY` on the API host.
+
+| Variable | Where | Purpose |
+|----------|-------|---------|
+| `MAPBOX_ACCESS_TOKEN` | Render / `server/.env` | Geocode, reverse geocode, autocomplete |
+| `GOOGLE_MAPS_API_KEY` | Render / `server/.env` | Alternative provider |
+| `VITE_MAPBOX_ACCESS_TOKEN` | Vercel / root `.env` | Map tiles (OSM fallback) |
+
+**Public endpoints:** `GET /api/geocoding/config`, `GET /api/at-home-service/suggest`, `POST /api/at-home-service/geocode`, `POST /api/at-home-service/reverse-geocode`.
+
+Deploy backfills: barber coordinates and at-home areas (via `build-database.mjs`).
 
 ### Key commands
 
-See `README.md` for the full list. Quick reference:
-
-- **Lint**: `npm run lint` (root)
-- **Frontend tests**: `npm run test` (root, Vitest + jsdom)
-- **Backend tests**: `npm run test` (`server/`, Vitest)
-- **Build**: `npm run build` (root, Vite production build)
+| Task | Command |
+|------|---------|
+| Frontend dev | `npm run dev` |
+| Backend dev | `cd server && npm run dev` |
+| Frontend tests | `npm run test` |
+| Backend tests | `cd server && npm run test` (needs `TEST_DATABASE_URL` or skips DB tests in CI) |
+| Production build | `npm run build` |
+| DB migrate (local) | `cd server && npx prisma migrate deploy` |
+| New migration (dev) | `cd server && npx prisma migrate dev --name describe_change` |
+| DB seed | `cd server && npm run seed` |
+| Schema verify | `cd server && npm run verify:schema` |
 
 ### Production deployment
 
-- **Frontend**: Vercel at `https://shop-the-barber.vercel.app` — env var `VITE_API_URL` points to backend
-- **Backend**: Render at `https://shopthebarber.onrender.com` — env vars: `JWT_SECRET`, `FRONTEND_URL`, `STRIPE_API_KEY`, `STRIPE_PUBLISHABLE_KEY`
-- **Database**: Auto-initializes on first boot — schema pushed during build, seed runs if barbers table is empty
-- **Build command** (Render): `npm install --include=dev && node scripts/build-database.mjs` ([`render.yaml`](render.yaml)). With **`DATABASE_URL`** (Postgres), runs `drizzle-kit migrate` (additive). Without it, resets SQLite then `push` as before.
-- **Start command** (Render): `npm run start`
-- Render free tier: server spins down after inactivity; first request takes ~30s to cold-start
-- SQLite on free tier is ephemeral (resets on redeploy). For persistent data, upgrade Render plan or migrate to PostgreSQL.
+| Layer | Host | URL (prod) |
+|-------|------|------------|
+| Frontend | Vercel | `https://shop-the-barber.vercel.app` |
+| API | Render | `https://shopthebarber.onrender.com` |
+| Database | Neon | via `DATABASE_URL` |
+
+**Full checklist:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · **Env vars:** [`server/.env.example`](server/.env.example) · **Blueprint:** [`render.yaml`](render.yaml)
+
+- **Render build:** `npm install --include=dev && node scripts/build-database.mjs` → Prisma migrate + schema verify + backfills
+- **Render start:** `npm run start`
+- **Health check:** `/api/health/ready`
+- Render free tier cold-starts (~30s) after idle
 
 ### Gotchas
 
-- The auth registration endpoint is `/api/auth/register` and expects `full_name` (not `name`).
-- Booking creation (`POST /api/bookings`) expects `date_text` in PPP format (e.g. "March 10, 2026") and `time_text` in "h:mm a" format (e.g. "10:00 AM"), not ISO date/time.
-- The SQLite DB file is `server/sovereign.sqlite`. It is git-ignored and must be created locally via `npm run push` + `npm run seed`.
-- Frontend proxy config lives in `vite.config.js` — all `/api` requests forward to `localhost:3001`.
-- Zod v4 is used on the backend — use `.issues` (not `.errors`) for validation error handling.
-- Server refuses to start in production without `JWT_SECRET` set.
-- All entity write operations (CREATE/PATCH/DELETE) require JWT auth and ownership checks.
+- Auth is **Clerk-only** on the API (`authenticateRequest`); no `JWT_SECRET` in current server.
+- **Never** use `drizzle-kit`, SQLite files, or manual prod SQL without a Prisma migration.
+- Booking `POST /api/bookings` expects `date_text` (PPP) and `time_text` (`h:mm a`), not raw ISO.
+- Frontend proxy: `vite.config.js` forwards `/api` → `localhost:3001`.
+- Zod v4 on backend — use `.issues` for validation errors.
+- Entity writes require authenticated Clerk user + ownership checks.

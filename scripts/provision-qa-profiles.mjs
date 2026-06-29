@@ -1,0 +1,112 @@
+/**
+ * Provision QA test profiles in Clerk (login credentials) and sync DB rows.
+ *
+ * Usage:
+ *   node scripts/provision-qa-profiles.mjs           # Clerk + DB upsert
+ *   node scripts/provision-qa-profiles.mjs --db-only # DB only (no Clerk API)
+ */
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createClerkClient } from '@clerk/backend';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, '..');
+
+function loadEnv(relPath) {
+  const p = resolve(root, relPath);
+  if (!existsSync(p)) return {};
+  const out = {};
+  for (const line of readFileSync(p, 'utf8').split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const eq = t.indexOf('=');
+    if (eq === -1) continue;
+    const key = t.slice(0, eq).trim();
+    let val = t.slice(eq + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    out[key] = val;
+  }
+  return out;
+}
+
+const env = { ...loadEnv('server/.env'), ...loadEnv('.env.local'), ...process.env };
+const secretKey = env.CLERK_SECRET_KEY;
+const dbOnly = process.argv.includes('--db-only');
+
+const profiles = JSON.parse(readFileSync(resolve(__dirname, 'qa-profiles.json'), 'utf8'));
+
+async function seedDbOnly() {
+  const { spawnSync } = await import('node:child_process');
+  const result = spawnSync('npx', ['tsx', 'src/db/seedQaProfilesOnly.ts'], {
+    cwd: resolve(root, 'server'),
+    stdio: 'inherit',
+    shell: true,
+    env: { ...process.env, ...env },
+  });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+async function provisionClerk() {
+  if (!secretKey) {
+    console.error('Missing CLERK_SECRET_KEY in server/.env');
+    process.exit(1);
+  }
+
+  const clerk = createClerkClient({ secretKey });
+  const results = [];
+
+  for (const p of profiles) {
+    const existing = await clerk.users.getUserList({ emailAddress: [p.email], limit: 1 });
+    let user = existing.data[0];
+
+    if (user) {
+      user = await clerk.users.updateUser(user.id, {
+        password: p.password,
+        publicMetadata: { role: p.role },
+        firstName: p.full_name.split(' ')[0],
+        lastName: p.full_name.split(' ').slice(1).join(' ') || undefined,
+      });
+      results.push({ email: p.email, action: 'updated', clerkId: user.id, role: p.role });
+    } else {
+      user = await clerk.users.createUser({
+        emailAddress: [p.email],
+        password: p.password,
+        skipPasswordChecks: true,
+        publicMetadata: { role: p.role },
+        firstName: p.full_name.split(' ')[0],
+        lastName: p.full_name.split(' ').slice(1).join(' ') || undefined,
+      });
+      results.push({ email: p.email, action: 'created', clerkId: user.id, role: p.role });
+    }
+  }
+
+  return results;
+}
+
+console.log('\n=== ShopTheBarber QA Profile Provisioning ===\n');
+console.log(`Profiles: ${profiles.length}\n`);
+
+await seedDbOnly();
+
+if (!dbOnly) {
+  console.log('\nProvisioning Clerk accounts…\n');
+  const clerkResults = await provisionClerk();
+  for (const r of clerkResults) {
+    console.log(`  [${r.action}] ${r.email} (${r.role}) → ${r.clerkId}`);
+  }
+}
+
+console.log('\n--- Login credentials ---\n');
+for (const p of profiles) {
+  console.log(`${p.label ?? p.role}`);
+  console.log(`  Email:    ${p.email}`);
+  console.log(`  Password: ${p.password}`);
+  console.log(`  Role:     ${p.role}${p.is_vip ? ' (VIP barber)' : ''}`);
+  console.log('');
+}
+
+console.log('Sign in at: http://localhost:3000/SignIn\n');
+console.log('Done.\n');

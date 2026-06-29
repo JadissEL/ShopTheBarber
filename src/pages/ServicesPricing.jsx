@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function ServicesPricing() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="stb-page">
       <MetaTags title="Services & Pricing" description="View our services and pricing at ShopTheBarber" />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link to={createPageUrl('Home')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
@@ -24,8 +24,12 @@ export default function ServicesPricing() {
             <p className="text-muted-foreground mb-6">
               Each barber and shop sets their own prices. To see exact service costs and availability, go to Explore, pick a barber or shop, and start a booking.
             </p>
+            <p className="text-sm text-muted-foreground mb-6 border-t border-border pt-6">
+              <strong className="text-foreground">Barbers & shop owners:</strong> platform pricing (flat fee, 0% commission on direct bookings) is on{' '}
+              <Link to="/pricing" className="text-primary font-semibold hover:underline">our pricing page</Link>.
+            </p>
             <Link to={createPageUrl('Explore')}>
-              <span className="text-primary font-semibold hover:underline">Browse barbers and book →</span>
+              <span className="text-primary font-semibold hover:underline">Browse barbers and book</span>
             </Link>
           </CardContent>
         </Card>

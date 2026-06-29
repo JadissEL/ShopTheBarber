@@ -49,7 +49,7 @@ export default function PageNotFound({}) {
                                 <div className="text-left space-y-1">
                                     <p className="text-sm font-medium text-foreground">Admin Note</p>
                                     <p className="text-sm text-muted-foreground leading-relaxed">
-                                        This could mean that the AI hasn't implemented this page yet. Ask it to implement it in the chat.
+                                        This route is not registered in the app. Add it to the router or remove links pointing here.
                                     </p>
                                 </div>
                             </div>

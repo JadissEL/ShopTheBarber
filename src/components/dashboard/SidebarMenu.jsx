@@ -17,7 +17,7 @@ export default function SidebarMenu({ isOpen, onClose, user }) {
     { icon: Wallet, label: 'Wallet & Loyalty', link: 'Loyalty' },
     { icon: Heart, label: 'Favorites', link: 'Favorites' },
     { icon: Bell, label: 'Notification preferences', link: 'NotificationSettings' },
-    { icon: HelpCircle, label: 'Help & Support', link: 'HelpCenter' },
+    { icon: HelpCircle, label: 'Help & Support', link: 'SupportChat' },
   ];
 
   const handleLogout = async () => {
@@ -41,7 +41,7 @@ export default function SidebarMenu({ isOpen, onClose, user }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-white border-l border-slate-200 z-50 flex flex-col shadow-2xl"
+            className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-card border-l border-slate-200 z-50 flex flex-col shadow-2xl"
           >
             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">Menu</h2>
@@ -50,12 +50,12 @@ export default function SidebarMenu({ isOpen, onClose, user }) {
               </Button>
             </div>
 
-            <div className="p-6 border-b border-slate-200 bg-slate-50/50">
+            <div className="p-6 border-b border-slate-200 bg-muted/50/50">
               <div className="flex items-center gap-4 mb-4">
                 <UserAvatar src={user?.image_url} name={user?.full_name || 'Guest'} className="w-14 h-14 border-2 border-primary/30" />
                 <div>
                   <h3 className="font-bold text-foreground text-lg leading-tight">{user?.full_name || 'Guest User'}</h3>
-                  <p className="text-sm text-slate-500">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
               <Link to={createPageUrl('AccountSettings')} onClick={onClose}>
@@ -65,23 +65,23 @@ export default function SidebarMenu({ isOpen, onClose, user }) {
               </Link>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 bg-white">
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 bg-card">
               {menuItems.map((item, idx) => (
                 <Link key={idx} to={createPageUrl(item.link)} onClick={onClose}>
-                  <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-foreground transition-all group cursor-pointer">
+                  <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all group cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-slate-100 border border-slate-200 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
-                        <item.icon className="w-5 h-5 text-slate-600 group-hover:text-primary transition-colors" />
+                      <div className="p-2 rounded-lg bg-muted border border-slate-200 group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
+                        <item.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
                       <span className="font-medium">{item.label}</span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-muted-foreground" />
                   </div>
                 </Link>
               ))}
             </div>
 
-            <div className="p-6 border-t border-slate-200 bg-white">
+            <div className="p-6 border-t border-slate-200 bg-card">
               <Button
                 variant="ghost"
                 className="w-full justify-start text-rose-600 hover:text-rose-700 hover:bg-rose-50 gap-3 px-4"

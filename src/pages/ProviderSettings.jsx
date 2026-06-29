@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,12 +13,44 @@ import { toast } from 'sonner';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Plus, AlertCircle, CheckCircle, Trash2, Edit3 } from 'lucide-react';
 import ShopHoursEditor from '@/components/scheduling/ShopHoursEditor';
+import AvailabilityManager from '@/components/provider-settings/AvailabilityManager';
+import SellerShippingProfile from '@/components/shipping/SellerShippingProfile';
+import ProviderPricingPanel from '@/components/provider/ProviderPricingPanel';
+import ProviderFeeWalletPanel from '@/components/provider/ProviderFeeWalletPanel';
+import ProviderPaymentProtectionPanel from '@/components/provider/ProviderPaymentProtectionPanel';
+import ProviderAutoRechargePanel from '@/components/provider/ProviderAutoRechargePanel';
+import ProviderAdCreditsPanel from '@/components/provider/ProviderAdCreditsPanel';
+import { ProviderLanguagesPanel } from '@/components/languages/SpokenLanguagesEditor';
+import { ProviderChildrenFriendlyPanel } from '@/components/childrenFriendly/ChildrenFriendlyEditor';
+import { ProviderAttestationPanel } from '@/components/providerAttestation/ProviderAttestationPanel';
+import { ProviderServiceLocationPanel } from '@/components/serviceLocation/ProviderServiceLocationPanel';
+import { ProviderAtHomeServicePanel } from '@/components/atHomeService/ProviderAtHomeServicePanel';
+import { ProviderGroupBookingPanel } from '@/components/groupBooking/GroupBookingEditor';
+import ProviderSeoLocationPanel from '@/components/provider/ProviderSeoLocationPanel';
+import ProviderShowcaseEditor from '@/components/providerShowcase/ProviderShowcaseEditor';
+import ShopChairsPanel from '@/components/provider/ShopChairsPanel';
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import { ReplaySetupGuideLink } from '@/components/onboarding/ReplaySetupGuideLink';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { shopDetailsSchema, serviceSchema, clientProfileSchema } from '@/lib/validations';
 
 export default function ProviderSettings() {
     const queryClient = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabFromUrl = searchParams.get('tab') || 'general';
+    const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+    useEffect(() => {
+        const t = searchParams.get('tab');
+        if (t) setActiveTab(t);
+    }, [searchParams]);
+
+    const handleTabChange = (value) => {
+        setActiveTab(value);
+        setSearchParams({ tab: value }, { replace: true });
+    };
+
     const { data: user } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
 
     // 1. Resolve Barber & Shop Context
@@ -65,6 +98,30 @@ export default function ProviderSettings() {
         enabled: !!shopId
     });
 
+    const { data: providerLanguages } = useQuery({
+        queryKey: ['provider-languages'],
+        queryFn: () => sovereign.languages.getMyLanguages(),
+        enabled: !!user && ['barber', 'shop_owner', 'admin'].includes(user?.role),
+    });
+
+    const { data: childrenFriendlySettings } = useQuery({
+        queryKey: ['provider-children-friendly'],
+        queryFn: () => sovereign.childrenFriendly.getMySettings(),
+        enabled: !!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role),
+    });
+
+    const { data: attestationSettings } = useQuery({
+        queryKey: ['provider-attestation'],
+        queryFn: () => sovereign.providerAttestation.getMySettings(),
+        enabled: !!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role),
+    });
+
+    const { data: _groupBookingSettings } = useQuery({
+        queryKey: ['provider-group-booking'],
+        queryFn: () => sovereign.groupBooking.getMySettings(),
+        enabled: !!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role),
+    });
+
     // 2. Form States
     const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
     const [selectedService, setSelectedService] = useState(null);
@@ -89,12 +146,12 @@ export default function ProviderSettings() {
     }, [user, profileForm]);
 
     useEffect(() => {
-        if (myShop) businessForm.reset({
+        if (myShop) {businessForm.reset({
             name: myShop.name || '',
             location: myShop.location || '',
             description: myShop.description || '',
             phone: myShop.phone || ''
-        });
+        });}
     }, [myShop, businessForm]);
 
     // 3. Mutations
@@ -115,7 +172,18 @@ export default function ProviderSettings() {
     });
 
     const saveServiceMutation = useMutation({
-        mutationFn: (data) => selectedService ? sovereign.entities.Service.update(selectedService.id, data) : sovereign.entities.Service.create({ ...data, shop_id: shopId }),
+        mutationFn: (data) => {
+            const payload = {
+                name: data.name,
+                category: data.category,
+                price: data.price,
+                duration_minutes: data.duration_min,
+                description: data.description || '',
+            };
+            return selectedService
+                ? sovereign.entities.Service.update(selectedService.id, payload)
+                : sovereign.entities.Service.create({ ...payload, shop_id: shopId });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['my-shop-services'] });
             setIsServiceDialogOpen(false);
@@ -149,7 +217,7 @@ export default function ProviderSettings() {
             name: svc.name,
             category: svc.category,
             price: svc.price,
-            duration_min: svc.duration_min,
+            duration_min: svc.duration_minutes || svc.duration_min,
             description: svc.description || ''
         });
         setIsServiceDialogOpen(true);
@@ -159,27 +227,34 @@ export default function ProviderSettings() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
             <MetaTags title="Provider Settings" description="Manage your professional shop profile and account." />
 
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-8 gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-foreground tracking-tight">Console Settings</h1>
                     <p className="text-muted-foreground font-medium">Configure your professional presence and financial rails.</p>
                 </div>
-                <UserAvatar src={user?.avatar_url} name={user?.full_name} className="w-12 h-12 border-2 border-slate-100 shadow-sm" />
+                <div className="flex items-center gap-3 shrink-0">
+                    <ReplaySetupGuideLink />
+                    <UserAvatar src={user?.avatar_url} name={user?.full_name} className="w-12 h-12 border-2 border-border shadow-sm" />
+                </div>
             </div>
 
-            <Tabs defaultValue="general" className="w-full">
-                <TabsList className="bg-slate-100/50 p-1.5 rounded-2xl mb-8 flex-wrap">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                <TabsList className="bg-muted/50 p-1.5 rounded-2xl mb-8 flex-wrap">
                     <TabsTrigger value="general" className="rounded-xl px-5">General</TabsTrigger>
+                    <TabsTrigger value="story" className="rounded-xl px-5">Profile Story</TabsTrigger>
                     <TabsTrigger value="business" className="rounded-xl px-5">Business</TabsTrigger>
                     <TabsTrigger value="services" className="rounded-xl px-5">Services</TabsTrigger>
+                    <TabsTrigger value="pricing" className="rounded-xl px-5">Pricing</TabsTrigger>
                     <TabsTrigger value="hours" className="rounded-xl px-5">Hours</TabsTrigger>
+                    <TabsTrigger value="capacity" className="rounded-xl px-5">Chairs</TabsTrigger>
                     <TabsTrigger value="payments" className="rounded-xl px-5">Payments</TabsTrigger>
+                    <TabsTrigger value="shipping" className="rounded-xl px-5">Shipping</TabsTrigger>
                     <TabsTrigger value="notifications" className="rounded-xl px-5">Alerts</TabsTrigger>
                 </TabsList>
 
                 {/* GENERAL PROFILE */}
                 <TabsContent value="general">
-                    <Card className="border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white">
+                    <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card">
                         <CardHeader className="border-b border-border">
                             <CardTitle className="text-xl font-bold">Personal Profile</CardTitle>
                         </CardHeader>
@@ -187,17 +262,17 @@ export default function ProviderSettings() {
                             <form onSubmit={profileForm.handleSubmit((d) => updateProfileMutation.mutate(d))} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Display Name</Label>
-                                        <Input {...profileForm.register('full_name')} className="rounded-xl border-slate-200 hover:border-slate-300 transition-colors" />
+                                        <Label className="font-bold text-foreground/90">Display Name</Label>
+                                        <Input {...profileForm.register('full_name')} className="rounded-xl border-border hover:border-slate-300 transition-colors" />
                                         {profileForm.formState.errors.full_name && <p className="text-red-500 text-xs mt-1">{profileForm.formState.errors.full_name.message}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Email Address</Label>
-                                        <Input {...profileForm.register('email')} className="rounded-xl border-slate-200" disabled />
+                                        <Label className="font-bold text-foreground/90">Email Address</Label>
+                                        <Input {...profileForm.register('email')} className="rounded-xl border-border" disabled />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Phone</Label>
-                                        <Input {...profileForm.register('phone')} className="rounded-xl border-slate-200" placeholder="10 digits number" />
+                                        <Label className="font-bold text-foreground/90">Phone</Label>
+                                        <Input {...profileForm.register('phone')} className="rounded-xl border-border" placeholder="10 digits number" />
                                     </div>
                                 </div>
                                 <div className="pt-4 border-t border-border flex justify-end">
@@ -208,11 +283,90 @@ export default function ProviderSettings() {
                             </form>
                         </CardContent>
                     </Card>
+
+                    {(barber || shopId || providerLanguages?.shop) && (
+                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                            <CardContent className="p-8">
+                                <ProviderLanguagesPanel
+                                    barberLanguages={providerLanguages?.barber?.spoken_languages ?? []}
+                                    shopLanguages={providerLanguages?.shop?.spoken_languages ?? []}
+                                    shopId={providerLanguages?.shop?.id || shopId}
+                                    shopName={providerLanguages?.shop?.name || myShop?.name}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {(barber || shopId || childrenFriendlySettings?.shop) && (
+                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                            <CardContent className="p-8">
+                                <ProviderChildrenFriendlyPanel
+                                    barberFriendly={childrenFriendlySettings?.barber?.children_friendly ?? false}
+                                    shopFriendly={childrenFriendlySettings?.shop?.children_friendly ?? false}
+                                    shopId={childrenFriendlySettings?.shop?.id || shopId}
+                                    shopName={childrenFriendlySettings?.shop?.name || myShop?.name}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {(barber || shopId || attestationSettings?.shop) && (
+                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                            <CardContent className="p-8">
+                                <ProviderAttestationPanel
+                                    barberLicensed={attestationSettings?.barber?.licensed ?? false}
+                                    barberInsured={attestationSettings?.barber?.insured ?? false}
+                                    shopLicensed={attestationSettings?.shop?.licensed ?? false}
+                                    shopInsured={attestationSettings?.shop?.insured ?? false}
+                                    shopId={attestationSettings?.shop?.id || shopId}
+                                    shopName={attestationSettings?.shop?.name || myShop?.name}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
+                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                            <CardContent className="p-8">
+                                <ProviderServiceLocationPanel />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
+                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                            <CardContent className="p-8">
+                                <ProviderAtHomeServicePanel />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
+                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                            <CardContent className="p-8">
+                                <ProviderGroupBookingPanel />
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="story">
+                    <ProviderShowcaseEditor />
                 </TabsContent>
 
                 {/* BUSINESS INFO */}
                 <TabsContent value="business">
-                    <Card className="border-slate-200 shadow-sm rounded-3xl bg-white">
+                    {barber && (
+                        <Card className="border-border shadow-sm rounded-3xl bg-card mb-6">
+                            <CardHeader className="border-b border-border">
+                                <CardTitle className="text-xl font-bold">Barber location & SEO</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-8">
+                                <ProviderSeoLocationPanel barber={barber} />
+                            </CardContent>
+                        </Card>
+                    )}
+                    <Card className="border-border shadow-sm rounded-3xl bg-card">
                         <CardHeader className="border-b border-border">
                             <CardTitle className="text-xl font-bold">Shop Identity</CardTitle>
                         </CardHeader>
@@ -220,16 +374,22 @@ export default function ProviderSettings() {
                             <form onSubmit={businessForm.handleSubmit((d) => updateShopMutation.mutate(d))} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Shop Name</Label>
-                                        <Input {...businessForm.register('name')} className="rounded-xl border-slate-200" />
+                                        <Label className="font-bold text-foreground/90">Shop Name</Label>
+                                        <Input {...businessForm.register('name')} className="rounded-xl border-border" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Physical Address</Label>
-                                        <Input {...businessForm.register('location')} className="rounded-xl border-slate-200" />
+                                        <Label className="font-bold text-foreground/90">Physical Address</Label>
+                                        <AddressAutocomplete
+                                            value={businessForm.watch('location') || ''}
+                                            onChange={(value) => businessForm.setValue('location', value)}
+                                            onSelect={(item) => businessForm.setValue('location', item.formatted_address)}
+                                            placeholder="Shop street address"
+                                            inputClassName="rounded-xl h-11"
+                                        />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="font-bold text-slate-700">Public Description</Label>
+                                    <Label className="font-bold text-foreground/90">Public Description</Label>
                                     <textarea {...businessForm.register('description')} className="w-full min-h-[120px] rounded-2xl border-border border p-4 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Tell your clients about your vibe..." />
                                 </div>
                                 <div className="flex justify-end pt-4">
@@ -244,7 +404,7 @@ export default function ProviderSettings() {
 
                 {/* SERVICES MENU */}
                 <TabsContent value="services">
-                    <Card className="border-slate-200 shadow-sm rounded-3xl bg-white">
+                    <Card className="border-border shadow-sm rounded-3xl bg-card">
                         <CardHeader className="flex flex-row items-center justify-between p-8">
                             <div>
                                 <CardTitle className="text-xl font-bold">Service Menu</CardTitle>
@@ -268,7 +428,7 @@ export default function ProviderSettings() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" onClick={() => handleServiceEdit(svc)} className="h-9 w-9 rounded-full hover:bg-white border border-transparent hover:border-slate-100">
+                                            <Button variant="ghost" size="icon" onClick={() => handleServiceEdit(svc)} className="h-9 w-9 rounded-full hover:bg-card border border-transparent hover:border-slate-100">
                                                 <Edit3 className="w-4 h-4 text-muted-foreground" />
                                             </Button>
                                             <Button variant="ghost" size="icon" onClick={() => deleteServiceMutation.mutate(svc.id)} className="h-9 w-9 rounded-full hover:bg-red-50 border border-transparent hover:border-red-100">
@@ -291,24 +451,24 @@ export default function ProviderSettings() {
                                 <h2 className="text-2xl font-black">{selectedService ? 'Update' : 'Add'} Service</h2>
                                 <p className="text-slate-400 text-sm">Define pricing and duration for this offering.</p>
                             </div>
-                            <form onSubmit={serviceForm.handleSubmit((d) => saveServiceMutation.mutate(d))} className="p-8 space-y-5 bg-white">
+                            <form onSubmit={serviceForm.handleSubmit((d) => saveServiceMutation.mutate(d))} className="p-8 space-y-5 bg-card">
                                 <div className="space-y-2">
-                                    <Label className="font-bold text-slate-700">Display Name</Label>
+                                    <Label className="font-bold text-foreground/90">Display Name</Label>
                                     <Input {...serviceForm.register('name')} placeholder="e.g. Sharp Cut" className="rounded-xl" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Price ($)</Label>
+                                        <Label className="font-bold text-foreground/90">Price ($)</Label>
                                         <Input {...serviceForm.register('price', { valueAsNumber: true })} type="number" className="rounded-xl" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Duration (Min)</Label>
+                                        <Label className="font-bold text-foreground/90">Duration (Min)</Label>
                                         <Input {...serviceForm.register('duration_min', { valueAsNumber: true })} type="number" className="rounded-xl" />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="font-bold text-slate-700">Category</Label>
-                                    <select {...serviceForm.register('category')} className="w-full rounded-xl border-slate-200 border p-2 text-sm outline-none">
+                                    <Label className="font-bold text-foreground/90">Category</Label>
+                                    <select {...serviceForm.register('category')} className="w-full rounded-xl border-border border p-2 text-sm outline-none">
                                         <option value="Hair">Hair</option>
                                         <option value="Beard">Beard</option>
                                         <option value="Shave">Shave</option>
@@ -323,13 +483,27 @@ export default function ProviderSettings() {
                     </Dialog>
                 </TabsContent>
 
+                <TabsContent value="pricing">
+                    <ProviderPricingPanel shopId={shopId} services={services} />
+                </TabsContent>
+
                 {/* PAYMENTS & STRIPE */}
                 <TabsContent value="payments">
-                    <Card className="border-slate-200 shadow-sm rounded-3xl bg-white">
+                    <Card className="border-border shadow-sm rounded-3xl bg-card">
                         <CardHeader className="p-8 pb-4">
                             <CardTitle className="text-xl font-bold">Financial Rails</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-8 pt-0">
+                        <CardContent className="p-8 pt-0 space-y-8">
+                            <ProviderFeeWalletPanel
+                                shopId={shopId}
+                                isShopOwner={myShopMembership?.role === 'owner'}
+                            />
+                            <ProviderAutoRechargePanel />
+                            <ProviderAdCreditsPanel />
+                            <ProviderPaymentProtectionPanel
+                                shopId={shopId}
+                                isShopOwner={myShopMembership?.role === 'owner'}
+                            />
                             {user?.stripe_account_id ? (
                                 <div className={`p-6 rounded-2xl border transition-colors ${user.stripe_connect_status === 'active' ? 'bg-primary/5 border-primary/20' : 'bg-amber-50/50 border-amber-100'}`}>
                                     <div className="flex items-start gap-4">
@@ -367,17 +541,40 @@ export default function ProviderSettings() {
                     </Card>
                 </TabsContent>
 
-                {/* OPENING HOURS */}
+                <TabsContent value="shipping">
+                    {barber || shopId ? (
+                        <SellerShippingProfile
+                            ownerType={shopId && myShopMembership?.role === 'owner' ? 'shop' : 'barber'}
+                            barberId={!shopId || myShopMembership?.role !== 'owner' ? barber?.id : undefined}
+                            shopId={shopId && myShopMembership?.role === 'owner' ? shopId : undefined}
+                        />
+                    ) : (
+                        <Card className="border-border shadow-sm rounded-3xl bg-card p-8">
+                            <p className="text-muted-foreground">Complete your provider profile to configure shipping.</p>
+                        </Card>
+                    )}
+                </TabsContent>
+
+                {/* OPENING HOURS & AVAILABILITY */}
                 <TabsContent value="hours">
-                    <Card className="border-slate-200 shadow-sm rounded-3xl bg-white">
-                        <CardHeader className="p-8">
-                            <CardTitle className="text-xl font-bold">Standard Availability</CardTitle>
-                            <p className="text-muted-foreground text-sm mt-1">Define your weekly operating routine.</p>
-                        </CardHeader>
-                        <CardContent className="px-8 pb-8">
-                            {shopId && barber?.id && <ShopHoursEditor shopId={shopId} barberId={barber.id} />}
-                        </CardContent>
-                    </Card>
+                    {shopId && myShopMembership && ['owner', 'manager'].includes(myShopMembership.role) ? (
+                        <AvailabilityManager barber={barber} shopId={shopId} />
+                    ) : (
+                        <Card className="border-border shadow-sm rounded-3xl bg-card">
+                            <CardHeader className="p-8">
+                                <CardTitle className="text-xl font-bold">Standard Availability</CardTitle>
+                                <p className="text-muted-foreground text-sm mt-1">Define your weekly operating routine.</p>
+                            </CardHeader>
+                            <CardContent className="px-8 pb-8">
+                                {shopId && barber?.id && <ShopHoursEditor shopId={shopId} barberId={barber.id} />}
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+
+                {/* CHAIRS & CAPACITY */}
+                <TabsContent value="capacity">
+                    <ShopChairsPanel shopId={shopId} barberId={barber?.id} />
                 </TabsContent>
             </Tabs>
         </div>

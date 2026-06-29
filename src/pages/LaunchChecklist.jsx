@@ -180,10 +180,10 @@ export default function LaunchChecklist() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">ShopTheBarber Launch Checklist 🚀</h1>
-          <p className="text-slate-600">Target Launch: TBD | Status: MVP Phase</p>
+          <p className="text-muted-foreground">Target Launch: TBD | Status: MVP Phase</p>
 
           {/* Overall Progress */}
-          <div className="mt-6 bg-white rounded-xl p-6 border border-slate-200">
+          <div className="mt-6 bg-card rounded-xl p-6 border border-slate-200">
             <div className="flex justify-between items-center mb-3">
               <span className="font-semibold text-foreground">Overall Progress</span>
               <span className="text-2xl font-bold text-blue-600">{getTotalProgress()}%</span>
@@ -216,7 +216,7 @@ export default function LaunchChecklist() {
                       <Icon className="w-6 h-6" />
                       <div>
                         <CardTitle className="text-lg">{sectionName}</CardTitle>
-                        <p className="text-sm text-slate-600 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {items.filter(i => checkedItems[i.id]).length} of {items.length} completed
                         </p>
                       </div>
@@ -260,7 +260,7 @@ export default function LaunchChecklist() {
                               <HelpCircle className="w-4 h-4 text-amber-500" title="Partially built or unclear implementation" />
                             )}
                           </div>
-                          <p className="text-xs text-slate-600 mt-1">{item.category}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{item.category}</p>
                           {item.prerequisite && (
                             <p className="text-xs text-red-600 mt-2 font-semibold">🔴 BLOCKED: {item.prerequisite}</p>
                           )}
@@ -290,7 +290,7 @@ export default function LaunchChecklist() {
         </div>
 
         {/* Go/No-Go Criteria */}
-        <Card className="mt-8 bg-white border-slate-200">
+        <Card className="mt-8 bg-card border-slate-200">
           <CardHeader>
             <CardTitle>Launch Go/No-Go Criteria</CardTitle>
           </CardHeader>
@@ -318,7 +318,7 @@ export default function LaunchChecklist() {
         </Card>
 
         {/* Timeline */}
-        <Card className="mt-8 bg-white border-slate-200">
+        <Card className="mt-8 bg-card border-slate-200">
           <CardHeader>
             <CardTitle>Suggested Timeline</CardTitle>
           </CardHeader>
@@ -334,13 +334,13 @@ export default function LaunchChecklist() {
                 <div key={i} className="flex gap-4 pb-3 border-b last:border-0">
                   <div className="w-40 font-semibold text-foreground">{item.phase}</div>
                   <div className="flex-1">
-                    <p className="text-sm text-slate-600">{item.duration}</p>
+                    <p className="text-sm text-muted-foreground">{item.duration}</p>
                     <p className="text-sm text-foreground mt-1">{item.activities}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-center text-sm text-slate-600 mt-4 font-semibold">
+            <p className="text-center text-sm text-muted-foreground mt-4 font-semibold">
               Total: ~4 weeks to public launch
             </p>
           </CardContent>
@@ -351,14 +351,14 @@ export default function LaunchChecklist() {
           <Button
             className="bg-blue-600 hover:bg-blue-700"
             onClick={() => {
-              const text = 'ShopTheBarber Launch Checklist\n\n' +
+              const text = `ShopTheBarber Launch Checklist\n\n${ 
                 Object.entries(CHECKLIST_DATA).map(([section, data]) => {
-                  return `${section} (${calculateProgress(data.items)}%)\n` +
-                    data.items.map(item => `${checkedItems[item.id] ? '✓' : '☐'} ${item.text}`).join('\n');
-                }).join('\n\n');
+                  return `${section} (${calculateProgress(data.items)}%)\n${ 
+                    data.items.map(item => `${checkedItems[item.id] ? '✓' : '☐'} ${item.text}`).join('\n')}`;
+                }).join('\n\n')}`;
 
               const element = document.createElement('a');
-              element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+              element.setAttribute('href', `data:text/plain;charset=utf-8,${  encodeURIComponent(text)}`);
               element.setAttribute('download', 'ShopTheBarber_LaunchChecklist.txt');
               element.style.display = 'none';
               document.body.appendChild(element);

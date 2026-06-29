@@ -1,0 +1,196 @@
+{
+  "passed": [
+    {
+      "journey": "client",
+      "step": "1. Home loads after auth",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "2. Explore shows barbers",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "3. Open first barber profile",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "4. Full booking — services → datetime → confirm",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "5. Confirm booking succeeds",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "6. Booking appears in My Bookings",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "7. Dashboard accessible",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "8. Favorites page loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "client",
+      "step": "9. Marketplace browse",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-admin",
+      "step": "Sign-in → /GlobalFinancials",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-c2",
+      "step": "Sign-in → /Dashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-b1",
+      "step": "Sign-in → /ProviderDashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-b2",
+      "step": "Sign-in → /ProviderDashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-vip",
+      "step": "Sign-in → /ProviderDashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-o1",
+      "step": "Sign-in → /ProviderDashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-o2",
+      "step": "Sign-in → /ProviderDashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-c3",
+      "step": "Sign-in → /Dashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "qa-b3",
+      "step": "Sign-in → /ProviderDashboard",
+      "status": "PASS"
+    },
+    {
+      "journey": "barber",
+      "step": "1. Provider dashboard loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "barber",
+      "step": "2. Provider bookings page",
+      "status": "PASS"
+    },
+    {
+      "journey": "barber",
+      "step": "3. Provider settings — services tab",
+      "status": "PASS"
+    },
+    {
+      "journey": "barber2",
+      "step": "1. Provider dashboard loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "barber2",
+      "step": "2. Provider bookings page",
+      "status": "PASS"
+    },
+    {
+      "journey": "barber2",
+      "step": "3. Provider settings — services tab",
+      "status": "PASS"
+    },
+    {
+      "journey": "vip",
+      "step": "1. Provider dashboard loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "vip",
+      "step": "2. Provider bookings page",
+      "status": "PASS"
+    },
+    {
+      "journey": "vip",
+      "step": "3. Provider settings — services tab",
+      "status": "PASS"
+    },
+    {
+      "journey": "vip",
+      "step": "4. VIP group booking settings visible",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner",
+      "step": "1. Provider dashboard loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner",
+      "step": "2. Provider bookings page",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner",
+      "step": "3. Provider settings — services tab",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner",
+      "step": "4. Staff schedule accessible",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner2",
+      "step": "1. Provider dashboard loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner2",
+      "step": "2. Provider bookings page",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner2",
+      "step": "3. Provider settings — services tab",
+      "status": "PASS"
+    },
+    {
+      "journey": "owner2",
+      "step": "4. Staff schedule accessible",
+      "status": "PASS"
+    },
+    {
+      "journey": "admin",
+      "step": "1. Global financials loads",
+      "status": "PASS"
+    },
+    {
+      "journey": "admin",
+      "step": "2. User moderation page",
+      "status": "PASS"
+    }
+  ],
+  "failed": [],
+  "at": "2026-06-29T00:36:33.988Z"
+}

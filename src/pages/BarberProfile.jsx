@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Star, Heart, MapPin, Share2, CheckCircle2, ShieldCheck, CalendarDays, Instagram, Scissors } from 'lucide-react';
+import { Star, Heart, MapPin, Share2, CheckCircle2, CalendarDays, Instagram, Scissors } from 'lucide-react';
 import { useBooking } from '@/components/context/BookingContext';
 import { Button } from '@/components/ui/button';
-import { createPageUrl } from '@/utils';
+import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import ReviewCard from '@/components/ui/review-card';
 import PromotionList from '@/components/promotions/PromotionList';
 import ServiceSelection from '@/components/barber/ServiceSelection';
+import ProviderPublicStats from '@/components/providerStats/ProviderPublicStats';
 import {
     Dialog,
     DialogContent,
@@ -153,21 +154,12 @@ export default function BarberProfile() {
     const primaryMembership = memberships[0]; // For now, default to first shop found if multiple
     const _barberShop = primaryMembership?.shop;
 
-    const displayBarber = barber || {
-        name: "Ethan Carter",
-        title: "Master Barber",
-        rating: 4.9,
-        review_count: 124,
-        location: "San Francisco, CA",
-        experience: "8 Years Exp",
-        image_url: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop"
-    };
-
     const { data: reviews = [], isFetching: isReviewsFetching } = useQuery({
-        queryKey: ['reviews', displayBarber.name],
-        queryFn: () => sovereign.entities.Review.filter({ target_name: displayBarber.name }),
+        queryKey: ['reviews', 'barber', barberId],
+        queryFn: () => (barberId ? sovereign.entities.Review.filter({ barber_id: barberId }, '-created_at', 20) : []),
         initialData: [],
-        staleTime: 1000 * 60 * 1,
+        enabled: !!barberId && !!barber,
+        staleTime: 1000 * 60 * 5,
     });
 
     const _isRefreshing = isBarberFetching || isReviewsFetching;
@@ -184,7 +176,7 @@ export default function BarberProfile() {
         mutationFn: async () => {
             if (!user) {
                 toast.error("Please login first");
-                navigate(createPageUrl('SignIn'));
+                navigate(signInUrlWithReturn(window.location.pathname + window.location.search));
                 return;
             }
             if (isFavorited) {
@@ -208,18 +200,14 @@ export default function BarberProfile() {
     const initiateChat = () => {
         if (!user) {
             toast.error("Please login to send messages");
-            navigate(createPageUrl('SignIn'));
+            navigate(signInUrlWithReturn(window.location.pathname + window.location.search));
             return;
         }
         // Redirect to chat with the barber
         navigate(createPageUrl(`Chat?contactId=${barberId}`));
     };
 
-    const displayReviews = reviews.length > 0 ? reviews : [
-        { author_name: "Liam Harper", date_text: "2 months ago", rating: 5, text: "Ethan is hands down the best barber in the city. The attention to detail is unmatched." },
-        { author_name: "Noah Jackson", date_text: "3 weeks ago", rating: 5, text: "Great vibes and an even better cut. Highly recommend the hot towel shave." },
-        { author_name: "Oliver Smith", date_text: "1 week ago", rating: 4.5, text: "Very professional and punctual. Will be back." }
-    ];
+    const displayReviews = reviews;
 
     const proceedToBooking = (shopId, type) => {
         // Analytics: Track Context Selection
@@ -294,33 +282,54 @@ export default function BarberProfile() {
         );
     }
 
+    if (isBarberFetching && !barber) {
+        return (
+            <div className="bg-background min-h-screen flex items-center justify-center p-8">
+                <p className="text-muted-foreground">Loading profile…</p>
+            </div>
+        );
+    }
+
+    if (!barber) {
+        return (
+            <div className="bg-background min-h-screen flex items-center justify-center p-8">
+                <div className="text-center max-w-md">
+                    <h2 className="text-xl font-bold mb-2">Professional not found</h2>
+                    <p className="text-muted-foreground mb-4">This profile may have been removed or the link is incorrect.</p>
+                    <Link to={createPageUrl('Explore')}><Button variant="default">Find a Barber</Button></Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="bg-background min-h-screen text-foreground pb-24 lg:pb-8 font-sans transition-colors duration-300">
+        <div className="bg-background min-h-screen text-foreground pb-24 lg:pb-8 font-sans transition-colors duration-300 stb-site-bg">
             <MetaTags
-                title={displayBarber.name}
-                description={`${displayBarber.title}. Rated ${displayBarber.rating} stars. Book an appointment now.`}
-                image={displayBarber.image_url}
+                title={barber.name}
+                description={`${barber.title}. Rated ${barber.rating} stars. Book an appointment now.`}
+                image={barber.image_url}
             />
             <LocalBusinessSchema
-                name={displayBarber.name}
-                image={displayBarber.image_url}
-                address={displayBarber.location}
-                rating={displayBarber.rating}
-                reviewCount={displayBarber.review_count}
+                name={barber.name}
+                image={barber.image_url}
+                address={barber.location}
+                rating={barber.rating}
+                reviewCount={barber.review_count}
                 priceRange="$$"
             />
 
             {/* Immersive Hero Section */}
-            <div className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
+            <div className="relative h-[42vh] md:h-[52vh] w-full overflow-hidden">
                 <OptimizedImage
-                    src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&auto=format&fit=crop"
+                    src={barber.image_url || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&auto=format&fit=crop"}
                     className="w-full h-full"
                     fill
                     alt="Cover"
                     priority
                     imgClassName="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--navy))] via-[hsl(var(--navy)/0.55)] to-[hsl(var(--primary)/0.15)]"></div>
+                <div className="absolute inset-0 stb-mesh-bg opacity-30 pointer-events-none" aria-hidden />
 
                 {/* Navigation / Actions Overlay */}
                 <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-20">
@@ -346,11 +355,11 @@ export default function BarberProfile() {
 
                     {/* Left Column: Profile Card */}
                     <div className="w-full md:w-1/3 lg:w-1/4">
-                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm relative overflow-hidden group">
+                        <div className="bg-card rounded-3xl p-6 border border-border/80 shadow-lg shadow-primary/5 relative overflow-hidden group stb-card-lift">
                             <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white overflow-hidden shadow-xl mx-auto md:mx-0 mb-4">
                                 <OptimizedImage
-                                    src={displayBarber.image_url}
-                                    alt={displayBarber.name}
+                                    src={barber.image_url}
+                                    alt={barber.name}
                                     fill
                                     width={300}
                                     imgClassName="group-hover:scale-110 transition-transform duration-500"
@@ -359,17 +368,17 @@ export default function BarberProfile() {
 
                             <div className="text-center md:text-left">
                                 <h1 className="text-2xl font-bold text-foreground mb-1 flex items-center justify-center md:justify-start gap-2">
-                                    {displayBarber.name}
+                                    {barber.name}
                                     <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-500/10" />
                                 </h1>
-                                <p className="text-muted-foreground font-medium mb-1">{displayBarber.title}</p>
+                                <p className="text-muted-foreground font-medium mb-1">{barber.title}</p>
 
                                 {/* Works at Shop Badge(s) - North Star Context */}
                                 <div className="flex flex-wrap gap-2 mb-3 justify-center md:justify-start">
                                     {memberships.length > 0 ? (
                                         memberships.map(m => (
                                             <Link key={m.id} to={createPageUrl(`ShopProfile?id=${m.shop.id}`)} className="hover:opacity-80 transition-opacity">
-                                                <div className="flex items-center gap-1.5 text-xs font-medium bg-gray-100 text-gray-700 px-2 py-1 rounded-full border border-gray-200">
+                                                <div className="flex items-center gap-1.5 text-xs font-medium bg-muted text-foreground/90 px-2 py-1 rounded-full border border-border">
                                                     <span>{m.role === 'owner' ? 'Owner at' : 'Works at'} <strong>{m.shop.name}</strong></span>
                                                     <Share2 className="w-3 h-3" />
                                                 </div>
@@ -387,25 +396,18 @@ export default function BarberProfile() {
                                 <div className="flex items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground mb-6">
                                     <div className="flex items-center gap-1">
                                         <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                        <span className="font-bold text-foreground">{displayBarber.rating}</span>
-                                        <span className="text-muted-foreground">({displayBarber.review_count})</span>
+                                        <span className="font-bold text-foreground">{barber.rating}</span>
+                                        <span className="text-muted-foreground">({barber.review_count})</span>
                                     </div>
                                     <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
                                     <div className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4 text-muted-foreground" />
-                                        <span>{displayBarber.location || "San Francisco"}</span>
+                                        <span>{barber.location || "San Francisco"}</span>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 mb-6">
-                                    <div className="bg-gray-50 rounded-xl p-3 text-center border border-border">
-                                        <ShieldCheck className="w-5 h-5 text-primary mx-auto mb-1" />
-                                        <span className="text-xs text-muted-foreground block">Verified</span>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-xl p-3 text-center border border-border">
-                                        <span className="block font-bold text-foreground">{displayBarber.review_count || 0}</span>
-                                        <span className="text-xs text-muted-foreground block">Reviews</span>
-                                    </div>
+                                <div className="mb-6">
+                                    <ProviderPublicStats barberId={barberId} variant="profile-row" />
                                 </div>
 
                                 <div className="flex gap-2 justify-center md:justify-start items-center">
@@ -455,7 +457,7 @@ export default function BarberProfile() {
                                         "https://images.unsplash.com/photo-1635273051932-a56976a4a49c",
                                         "https://images.unsplash.com/photo-1605497788044-5a32c7078486"
                                     ].map((url, i) => (
-                                        <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-gray-100 relative group cursor-pointer border border-border">
+                                        <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-muted relative group cursor-pointer border border-border">
                                             <OptimizedImage
                                                 src={`${url}?w=400&auto=format&fit=crop`}
                                                 fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&fit=crop"
@@ -498,7 +500,7 @@ export default function BarberProfile() {
                     <DialogHeader>
                         <DialogTitle>Choose Location</DialogTitle>
                         <DialogDescription>
-                            {displayBarber.name} works at multiple locations. Where would you like to book?
+                            {barber.name} works at multiple locations. Where would you like to book?
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -509,8 +511,8 @@ export default function BarberProfile() {
                                 className="h-auto py-4 justify-start text-left flex gap-3 hover:border-primary hover:bg-primary/5"
                                 onClick={() => proceedToBooking(m.shop.id, 'shop')}
                             >
-                                <div className="bg-gray-100 p-2 rounded-full">
-                                    <MapPin className="w-5 h-5 text-gray-600" />
+                                <div className="bg-muted p-2 rounded-full">
+                                    <MapPin className="w-5 h-5 text-muted-foreground" />
                                 </div>
                                 <div>
                                     <div className="font-bold text-foreground">{m.shop.name}</div>

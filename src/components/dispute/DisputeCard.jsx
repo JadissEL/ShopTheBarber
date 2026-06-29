@@ -1,15 +1,18 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
+import { disputeStatusLabel } from '@/utils/disputeStatus';
 
 export default function DisputeCard({ dispute }) {
+  const displayStatus = dispute.status_label || disputeStatusLabel(dispute.status);
+
   const statusConfig = {
     'Open': { color: 'bg-red-50 text-red-700', icon: AlertCircle, label: 'New' },
     'In Review': { color: 'bg-amber-50 text-amber-700', icon: Clock, label: 'Reviewing' },
     'Resolved': { color: 'bg-green-50 text-green-700', icon: CheckCircle2, label: 'Resolved' }
   };
 
-  const config = statusConfig[dispute.status] || statusConfig['Open'];
+  const config = statusConfig[displayStatus] || statusConfig['Open'];
   const Icon = config.icon;
 
   return (
@@ -33,9 +36,9 @@ export default function DisputeCard({ dispute }) {
             <div className="flex flex-wrap gap-2 items-center">
               <Badge className={config.color}>{config.label}</Badge>
               <span className="text-sm text-muted-foreground">•</span>
-              <span className="text-sm text-muted-foreground">{dispute.booking_date}</span>
+              <span className="text-sm text-muted-foreground">{dispute.booking_date || dispute.date_text || '-'}</span>
               <span className="text-sm text-muted-foreground">•</span>
-              <span className="text-sm font-semibold text-destructive">${dispute.amount}</span>
+              <span className="text-sm font-semibold text-destructive">${dispute.amount ?? dispute.booking_amount ?? 0}</span>
             </div>
           </div>
 

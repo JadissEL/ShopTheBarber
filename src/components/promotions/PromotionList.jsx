@@ -41,13 +41,13 @@ export default function PromotionList({ barberId }) {
     switch(type) {
       case 'barber': 
         return {
-          container: 'bg-[#2E1065] border-[#4C1D95]', // Dark purple (indigo-950/purple-900 mix)
-          text: 'text-white',
-          subtext: 'text-purple-200',
+          container: 'bg-vip/90 border-vip',
+          text: 'text-vip-foreground',
+          subtext: 'text-vip-foreground/80',
           badge: 'bg-white/10 text-white border-white/20',
           code: 'bg-white/10 text-white border-white/20',
-          label: 'bg-[#4C1D95] text-white border-[#5B21B6]',
-          discountBox: 'bg-[#7C3AED] text-white' // Vivid purple for contrast
+          label: 'bg-vip text-vip-foreground border-vip',
+          discountBox: 'bg-primary text-primary-foreground'
         };
       case 'platform_targeted': 
         return {
@@ -71,12 +71,12 @@ export default function PromotionList({ barberId }) {
         };
       default: 
         return {
-          container: 'bg-white border-border',
+          container: 'bg-card border-border',
           text: 'text-foreground',
           subtext: 'text-muted-foreground',
           badge: 'bg-primary/10 text-primary border-primary/20',
-          code: 'bg-gray-100 text-foreground border-gray-300',
-          label: 'bg-gray-100 text-gray-800 border-gray-200',
+          code: 'bg-muted text-foreground border-gray-300',
+          label: 'bg-muted text-foreground border-border',
           discountBox: 'bg-primary text-white'
         };
     }

@@ -19,7 +19,7 @@ const STATUS_LABELS = {
 
 export default function MyOrders() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders'],
@@ -30,13 +30,20 @@ export default function MyOrders() {
 
   // Redirect if not authenticated (useEffect to avoid render-phase side effects)
   useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/MyOrders'), { replace: true });
+    if (isLoadingAuth) return;
+    if (isSignedIn && !isAuthenticated) {
+      if (syncStatus === 'error') {
+        navigate(createPageUrl('SetupGuide'), { replace: true });
+      }
+      return;
     }
-  }, [isAuthenticated, isAuthLoading, navigate]);
+    if (!isAuthenticated) {
+      navigate(`${createPageUrl('SignIn')  }?return=${  encodeURIComponent('/MyOrders')}`, { replace: true });
+    }
+  }, [isAuthenticated, isLoadingAuth, isSignedIn, syncStatus, navigate]);
 
   // Show loading while checking auth
-  if (isAuthLoading) {
+  if (isLoadingAuth || (isSignedIn && !isAuthenticated && syncStatus !== 'error')) {
     return <PageLoading message="Checking authentication..." />;
   }
 
@@ -45,9 +52,9 @@ export default function MyOrders() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="stb-page lg:pb-8">
       <MetaTags
-        title="My Orders – Shop The Barber"
+        title="My Orders - Shop The Barber"
         description="View and track your premium grooming orders."
       />
 
@@ -79,7 +86,7 @@ export default function MyOrders() {
               return (
                 <li key={order.id}>
                   <Link
-                    to={createPageUrl('OrderTracking') + '?id=' + encodeURIComponent(order.id)}
+                    to={`${createPageUrl('OrderTracking')  }?id=${  encodeURIComponent(order.id)}`}
                     className="block rounded-2xl border border-border bg-card p-4 hover:border-primary/30 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-center justify-between gap-4">

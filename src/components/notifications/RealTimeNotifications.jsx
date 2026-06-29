@@ -27,18 +27,29 @@ export default function RealTimeNotifications() {
 
         if (notification.user_id === userId) {
 
-          // 1. Invalidate Query to update UI counts
           queryClient.invalidateQueries(['user-notifications']);
 
-          // 2. Show Toast
+          if (notification.type === 'waitlist') {
+            queryClient.invalidateQueries({ queryKey: ['waitlist-my-offers'] });
+            queryClient.invalidateQueries({ queryKey: ['waitlist-my-entries'] });
+          }
+
           toast(notification.title, {
             description: notification.content,
             icon: <Bell className="w-4 h-4 text-primary" />,
-            action: notification.link ? {
-              label: "View",
-              onClick: () => navigate(notification.link)
-            } : undefined,
-            duration: 5000,
+            action:
+              notification.type === 'waitlist'
+                ? {
+                    label: 'View offer',
+                    onClick: () => navigate('/UserBookings?tab=waitlist'),
+                  }
+                : notification.link
+                  ? {
+                      label: 'View',
+                      onClick: () => navigate(notification.link),
+                    }
+                  : undefined,
+            duration: notification.type === 'waitlist' ? 15000 : 5000,
           });
 
           // 3. Optional: Play sound

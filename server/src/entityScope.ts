@@ -25,8 +25,8 @@ export function createEntityScopeCache(): EntityScopeCache {
                         prisma.shops.findMany({ where: { owner_id: userId }, select: { id: true } }),
                     ]);
                     return {
-                        barberIds: barberRows.map(r => r.id).filter(Boolean) as string[],
-                        shopIds: shopRows.map(r => r.id).filter(Boolean) as string[],
+                        barberIds: barberRows.map(r => r.id).filter(Boolean),
+                        shopIds: shopRows.map(r => r.id).filter(Boolean),
                     };
                 })();
                 pending.set(userId, p);
@@ -45,7 +45,7 @@ export async function getManagedShopIdsForUser(userId: string, cache?: EntitySco
         where: { user_id: userId, role: { in: ['owner', 'manager'] } },
         select: { shop_id: true },
     });
-    const fromMember = memberRows.map(r => r.shop_id).filter(Boolean) as string[];
+    const fromMember = memberRows.map(r => r.shop_id).filter(Boolean);
     return [...new Set([...owned, ...fromMember])];
 }
 
@@ -56,9 +56,14 @@ async function barberShopIdsForUser(userId: string, cache?: EntityScopeCache): P
         prisma.shops.findMany({ where: { owner_id: userId }, select: { id: true } }),
     ]);
     return {
-        barberIds: barberRows.map(r => r.id).filter(Boolean) as string[],
-        shopIds: shopRows.map(r => r.id).filter(Boolean) as string[],
+        barberIds: barberRows.map(r => r.id).filter(Boolean),
+        shopIds: shopRows.map(r => r.id).filter(Boolean),
     };
+}
+
+/** Public helper for messaging, bookings, etc. */
+export async function getBarberShopIdsForUser(userId: string): Promise<{ barberIds: string[]; shopIds: string[] }> {
+    return barberShopIdsForUser(userId, undefined);
 }
 
 type Where = Record<string, any>;
@@ -106,7 +111,7 @@ export async function getEntityScopeCondition(
             if (barberIds.length > 0) or.push({ barber_id: { in: barberIds } });
             if (shopIds.length > 0) or.push({ shop_id: { in: shopIds } });
             const bookingRows = await prisma.bookings.findMany({ where: { OR: or }, select: { id: true } });
-            const bookingIds = bookingRows.map(r => r.id).filter(Boolean) as string[];
+            const bookingIds = bookingRows.map(r => r.id).filter(Boolean);
             if (bookingIds.length === 0) return { booking_id: '__none__' };
             return { booking_id: { in: bookingIds } };
         }
@@ -221,7 +226,7 @@ export async function rowInScope(
             if (!booking) return false;
             if (booking.client_id === user.id) return true;
             const { barberIds, shopIds } = await barberShopIdsForUser(user.id, cache);
-            return barberIds.includes(booking.barber_id as string) || shopIds.includes(booking.shop_id as string);
+            return barberIds.includes(booking.barber_id) || shopIds.includes(booking.shop_id as string);
         }
         case 'audit_log':
             return row.actor_id === user.id;

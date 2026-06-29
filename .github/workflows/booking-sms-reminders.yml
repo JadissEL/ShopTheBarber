@@ -1,0 +1,77 @@
+# Booking SMS + email reminders — runs hourly via GitHub Actions.
+# Requires repository secrets: PRODUCTION_API_URL, CRON_SECRET (same value as Render CRON_SECRET).
+
+name: Booking Reminders (SMS + Email)
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    name: Trigger booking reminder cron
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/cron/booking-reminders
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::warning::PRODUCTION_API_URL or CRON_SECRET not set — skipping."
+            exit 0
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/reminders.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/booking-reminders" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/reminders.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Reminder cron failed with HTTP $HTTP"
+            exit 1
+          fi
+
+      - name: POST /api/cron/review-nudges
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::warning::PRODUCTION_API_URL or CRON_SECRET not set — skipping review nudges."
+            exit 0
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/review-nudges.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/review-nudges" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/review-nudges.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Review nudge cron failed with HTTP $HTTP"
+            exit 1
+          fi
+
+      - name: POST /api/cron/rebook-nudges
+        env:
+          API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::warning::PRODUCTION_API_URL or CRON_SECRET not set — skipping rebook nudges."
+            exit 0
+          fi
+          BASE="${API_URL%/}"
+          HTTP=$(curl -sS -o /tmp/rebook-nudges.json -w "%{http_code}" --max-time 60 \
+            -X POST "${BASE}/api/cron/rebook-nudges" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json")
+          cat /tmp/rebook-nudges.json
+          echo ""
+          if [ "$HTTP" != "200" ]; then
+            echo "Rebook nudge cron failed with HTTP $HTTP"
+            exit 1
+          fi

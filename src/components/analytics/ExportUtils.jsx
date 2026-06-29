@@ -10,7 +10,7 @@ export const downloadCSV = (data, filename) => {
         ...data.map(row => headers.map(header => {
             const val = row[header];
             // Escape quotes and wrap in quotes if contains comma
-            const escaped = ('' + (val || '')).replace(/"/g, '""');
+            const escaped = (`${  val || ''}`).replace(/"/g, '""');
             return `"${escaped}"`;
         }).join(','))
     ].join('\n');

@@ -1,129 +1,169 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Wallet, CreditCard, Plus, ArrowUpRight, ArrowDownLeft, TrendingUp } from "lucide-react";
-import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { sovereign } from '@/api/apiClient';
+import { useAuth } from '@/lib/AuthContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Wallet, ArrowUpRight, ArrowDownLeft, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { format, parseISO, isValid } from 'date-fns';
+import { MetaTags } from '@/components/seo/MetaTags';
+import { signInUrlWithReturn } from '@/utils';
+
+function formatTxDate(value) {
+    if (!value) return '-';
+    const d = typeof value === 'string' ? parseISO(value) : new Date(value);
+    return isValid(d) ? format(d, 'MMM d, yyyy') : '-';
+}
 
 export default function ClientWallet() {
-    const balance = 125.50;
-    const transactions = [
-        { id: 1, type: "credit", amount: 50, description: "Remboursement réservation", date: new Date(2025, 11, 1) },
-        { id: 2, type: "debit", amount: 35, description: "Paiement coupe", date: new Date(2025, 10, 28) },
-        { id: 3, type: "credit", amount: 100, description: "Recharge portefeuille", date: new Date(2025, 10, 25) },
-        { id: 4, type: "debit", amount: 45, description: "Service barbe", date: new Date(2025, 10, 20) }
-    ];
+    const { user, isAuthenticated } = useAuth();
+
+    const { data: wallet, isLoading } = useQuery({
+        queryKey: ['wallet-me', user?.id],
+        queryFn: () => sovereign.wallet.getMe(),
+        enabled: isAuthenticated && !!user?.id,
+    });
+
+    const balance = wallet?.balance ?? 0;
+    const currency = wallet?.currency ?? 'USD';
+    const symbol = currency === 'EUR' ? '€' : '$';
+    const transactions = wallet?.transactions ?? [];
+
+    const monthStats = useMemo(() => {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+        let received = 0;
+        let spent = 0;
+        for (const tx of transactions) {
+            const d = tx.created_at ? parseISO(tx.created_at) : null;
+            if (!d || !isValid(d) || d.getMonth() !== month || d.getFullYear() !== year) continue;
+            if (tx.amount >= 0) received += tx.amount;
+            else spent += Math.abs(tx.amount);
+        }
+        return { received, spent };
+    }, [transactions]);
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen py-12 flex items-center justify-center px-4">
+                <MetaTags title="Wallet" description="Platform wallet balance" />
+                <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center space-y-4">
+                        <Wallet className="w-12 h-12 text-primary mx-auto" />
+                        <h1 className="text-2xl font-bold">Wallet</h1>
+                        <p className="text-muted-foreground">Sign in to view your balance and referral credits.</p>
+                        <Button asChild>
+                            <a href={signInUrlWithReturn('/ClientWallet')}>Sign in</a>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
+            <MetaTags title="Wallet" description="Platform wallet and referral credits" />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                    <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">Mon Portefeuille</h1>
-                    <p className="text-lg text-slate dark:text-matte-silver">Gérez votre solde et vos transactions</p>
+                    <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">Wallet</h1>
+                    <p className="text-lg text-slate dark:text-matte-silver">
+                        Referral credits and platform balance, use at checkout when available.
+                    </p>
                 </motion.div>
 
-                <div className="space-y-6">
-                    {/* Balance Card */}
-                    <Card className="rounded-2xl border-none shadow-soft bg-gradient-to-br from-primary to-primary/80 text-white overflow-hidden">
-                        <CardContent className="p-8">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <p className="text-white/80 mb-2">Solde Disponible</p>
-                                    <h2 className="text-5xl font-display font-bold">{balance.toFixed(2)}€</h2>
-                                </div>
-                                <Wallet className="w-16 h-16 text-white/30" />
-                            </div>
-                            <div className="flex gap-4">
-                                <Button className="flex-1 bg-white text-primary hover:bg-white/90 font-bold rounded-xl h-12">
-                                    <Plus className="w-5 h-5 mr-2" />
-                                    Recharger
-                                </Button>
-                                <Button variant="outline" className="flex-1 border-2 border-white text-white hover:bg-white/10 font-bold rounded-xl h-12">
-                                    <CreditCard className="w-5 h-5 mr-2" />
-                                    Retirer
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Quick Stats */}
-                    <div className="grid md:grid-cols-3 gap-6">
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
-                            <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                                        <ArrowDownLeft className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                {isLoading ? (
+                    <div className="flex justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        <Card className="rounded-2xl border-none shadow-soft bg-gradient-to-br from-primary to-primary/80 text-white overflow-hidden">
+                            <CardContent className="p-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <p className="text-white/80 mb-2">Available balance</p>
+                                        <h2 className="text-5xl font-display font-bold">
+                                            {symbol}{balance.toFixed(2)}
+                                        </h2>
                                     </div>
-                                    <p className="text-sm text-slate dark:text-matte-silver">Reçu ce mois</p>
+                                    <Wallet className="w-16 h-16 text-white/30" />
                                 </div>
-                                <p className="text-2xl font-bold text-charcoal dark:text-white">150.00€</p>
+                                <p className="text-sm text-white/70">
+                                    Credits from referrals and promotions appear here automatically.
+                                </p>
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
-                            <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                                        <ArrowUpRight className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <Card className="rounded-2xl border-none shadow-soft">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                                            <ArrowDownLeft className="w-5 h-5 text-emerald-600" />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Received this month</p>
                                     </div>
-                                    <p className="text-sm text-slate dark:text-matte-silver">Dépensé ce mois</p>
-                                </div>
-                                <p className="text-2xl font-bold text-charcoal dark:text-white">80.00€</p>
-                            </CardContent>
-                        </Card>
+                                    <p className="text-2xl font-bold">{symbol}{monthStats.received.toFixed(2)}</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="rounded-2xl border-none shadow-soft">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                                            <ArrowUpRight className="w-5 h-5 text-red-600" />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Used this month</p>
+                                    </div>
+                                    <p className="text-2xl font-bold">{symbol}{monthStats.spent.toFixed(2)}</p>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                        <Card className="rounded-2xl border-none shadow-soft">
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                                        <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <h3 className="text-2xl font-bold mb-6">Transaction history</h3>
+                                {transactions.length === 0 ? (
+                                    <p className="text-muted-foreground text-center py-8">No transactions yet. Refer friends to earn credits.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {transactions.map((tx, idx) => {
+                                            const isCredit = tx.amount >= 0;
+                                            return (
+                                                <motion.div
+                                                    key={tx.id}
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    className="flex items-center justify-between p-4 bg-muted/40 rounded-xl"
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isCredit ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                                                            {isCredit ? (
+                                                                <ArrowDownLeft className="w-6 h-6 text-emerald-600" />
+                                                            ) : (
+                                                                <ArrowUpRight className="w-6 h-6 text-red-600" />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold">{tx.description || tx.type}</p>
+                                                            <p className="text-sm text-muted-foreground">{formatTxDate(tx.created_at)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <p className={`text-xl font-bold ${isCredit ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                        {isCredit ? '+' : ''}{symbol}{Math.abs(tx.amount).toFixed(2)}
+                                                    </p>
+                                                </motion.div>
+                                            );
+                                        })}
                                     </div>
-                                    <p className="text-sm text-slate dark:text-matte-silver">Économies</p>
-                                </div>
-                                <p className="text-2xl font-bold text-charcoal dark:text-white">70.00€</p>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
-
-                    {/* Transactions */}
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
-                        <CardContent className="p-6">
-                            <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Historique des Transactions</h3>
-                            <div className="space-y-3">
-                                {transactions.map((transaction, idx) => (
-                                    <motion.div
-                                        key={transaction.id}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
-                                        className="flex items-center justify-between p-4 bg-background-light dark:bg-background-dark rounded-xl"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${transaction.type === 'credit' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'
-                                                }`}>
-                                                {transaction.type === 'credit' ? (
-                                                    <ArrowDownLeft className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                                                ) : (
-                                                    <ArrowUpRight className="w-6 h-6 text-red-600 dark:text-red-400" />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-charcoal dark:text-white">{transaction.description}</p>
-                                                <p className="text-sm text-slate dark:text-matte-silver">
-                                                    {format(transaction.date, 'dd MMMM yyyy', { locale: fr })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p className={`text-xl font-bold ${transaction.type === 'credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                                            }`}>
-                                            {transaction.type === 'credit' ? '+' : '-'}{transaction.amount.toFixed(2)}€
-                                        </p>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                )}
             </div>
         </div>
     );

@@ -44,25 +44,25 @@ export default function ShoppingBag() {
         }
         if (!isAuthenticated) {
             toast.error('Sign in to checkout');
-            navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/Checkout'));
+            navigate(`${createPageUrl('SignIn')  }?return=${  encodeURIComponent('/Checkout')}`);
             return;
         }
         navigate(createPageUrl('Checkout'));
     };
 
     return (
-        <div className="min-h-screen bg-background pb-24 lg:pb-8">
+        <div className="stb-page lg:pb-8">
             <MetaTags
-                title="Shopping Bag – Shop The Barber"
+                title="Shopping Bag - Shop The Barber"
                 description="Review your luxury grooming selections and proceed to secure checkout."
             />
 
-            <header className="sticky top-0 z-40 bg-white border-b border-slate-100">
+            <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
                 <div className="w-full max-w-3xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
                     <button
                         type="button"
                         onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 rounded-full text-slate-600 hover:bg-slate-100"
+                        className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted"
                         aria-label="Back"
                     >
                         <ChevronLeft className="w-5 h-5" />
@@ -70,7 +70,7 @@ export default function ShoppingBag() {
                     <h1 className="text-xl font-bold text-foreground tracking-tight" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
                         Shopping Bag
                     </h1>
-                    <button type="button" className="p-2 rounded-full text-slate-600 hover:bg-slate-100" aria-label="Options">
+                    <button type="button" className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Options">
                         <MoreHorizontal className="w-5 h-5" />
                     </button>
                 </div>
@@ -95,7 +95,7 @@ export default function ShoppingBag() {
                                 const _lineTotal = price * (item.quantity || 1);
                                 const details = [item.product?.vendor_name, item.product?.category].filter(Boolean).join(' • ') || 'Premium';
                                 return (
-                                    <li key={item.product_id} className="rounded-2xl bg-slate-50 border border-slate-100 p-4 flex gap-4">
+                                    <li key={item.product_id} className="rounded-2xl bg-muted/50 border border-slate-100 p-4 flex gap-4">
                                         <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0">
                                             <OptimizedImage
                                                 src={item.product?.image_url || ''}
@@ -106,13 +106,13 @@ export default function ShoppingBag() {
                                         </div>
                                         <div className="flex-1 min-w-0 flex flex-col">
                                             <p className="font-semibold text-foreground truncate">{item.product?.name || 'Product'}</p>
-                                            <p className="text-xs text-slate-500 mt-0.5">{details}</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{details}</p>
                                             <p className="font-bold text-foreground mt-1">${price.toFixed(2)}</p>
                                             <div className="mt-2 flex items-center rounded-full bg-slate-200/80 overflow-hidden w-fit">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleQuantityChange(item.product_id, -1)}
-                                                    className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-300 font-medium"
+                                                    className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-slate-300 font-medium"
                                                     aria-label="Decrease quantity"
                                                 >
                                                     −
@@ -121,7 +121,7 @@ export default function ShoppingBag() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleQuantityChange(item.product_id, 1)}
-                                                    className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-300 font-medium"
+                                                    className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-slate-300 font-medium"
                                                     aria-label="Increase quantity"
                                                 >
                                                     +
@@ -133,10 +133,10 @@ export default function ShoppingBag() {
                             })}
                         </ul>
 
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 p-4 mb-8">
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-muted/50/50 p-4 mb-8">
                             <button
                                 type="button"
-                                className="w-full flex items-center justify-between text-slate-500 hover:text-slate-700"
+                                className="w-full flex items-center justify-between text-muted-foreground hover:text-foreground/90"
                                 onClick={() => setPromoCode(appliedPromo ? '' : '')}
                             >
                                 <span className="flex items-center gap-2">
@@ -151,15 +151,15 @@ export default function ShoppingBag() {
                             <h2 className="font-bold text-foreground mb-3">Summary</h2>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-600">Subtotal</span>
+                                    <span className="text-muted-foreground">Subtotal</span>
                                     <span className="font-semibold text-foreground">${subtotal.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-600">Shipping</span>
+                                    <span className="text-muted-foreground">Shipping</span>
                                     <span className="text-primary font-medium">Free</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-600">Tax</span>
+                                    <span className="text-muted-foreground">Tax</span>
                                     <span className="font-semibold text-foreground">${tax.toFixed(2)}</span>
                                 </div>
                             </div>

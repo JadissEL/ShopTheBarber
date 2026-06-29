@@ -17,7 +17,7 @@ export default function AppLayout({ children, zone: _zone, branding: _branding, 
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-background text-foreground">
+    <div className="min-h-screen flex flex-col font-sans bg-background text-foreground stb-site-bg">
       {/* Skip link: single instance in Layout.jsx (SkipLink) avoids duplicate focus targets */}
 
       {/* 

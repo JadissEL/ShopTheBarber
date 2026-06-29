@@ -71,7 +71,7 @@ export default function ShiftForm({ shopId, staffMembers, onSuccess, context = '
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-        toast.error("Failed to add shift: " + err.message);
+        toast.error(`Failed to add shift: ${  err.message}`);
     }
   });
 

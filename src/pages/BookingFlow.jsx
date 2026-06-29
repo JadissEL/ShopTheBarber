@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import {
   Scissors, Clock, MapPin, Star, ArrowRight, ArrowLeft,
   Check, TrendingUp, DollarSign,
-  Award, Sparkles, Loader2, CheckCircle2, Home
+  Award, Sparkles, Loader2, CheckCircle2, Home, Globe, Baby
 } from 'lucide-react';
 import React from 'react';
 import { format } from 'date-fns';
@@ -23,6 +23,32 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import BookingServicesStep from '@/components/booking/BookingServicesStep';
 import BookingDateTimeStep from '@/components/booking/BookingDateTimeStep';
 import BookingConfirmationStep from '@/components/booking/BookingConfirmationStep';
+import BookingWaitlistDialog from '@/components/booking/BookingWaitlistDialog';
+import ReferralShareCard from '@/components/referral/ReferralShareCard';
+import { parseSpokenLanguages, matchesLanguageFilter, FALLBACK_LANGUAGE_OPTIONS } from '@/lib/languages';
+import { parseChildrenFriendly, matchesChildrenFriendlyFilter, CHILDREN_FRIENDLY_LABEL } from '@/lib/childrenFriendly';
+import {
+  getServiceLocationModes,
+  getShopBookingLocationModes,
+  isShopBookingContext,
+  offersMobileService,
+  offersShopService,
+  resolveClientLocationType,
+} from '@/lib/serviceLocation';
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import { distanceKm, roundKm } from '@/lib/geo';
+import { usePreferredLocation } from '@/hooks/usePreferredLocation';
+import { loadPreferredLocation, savePreferredLocation } from '@/lib/userLocation';
+import { loadRebookPrefill, clearRebookPrefill } from '@/lib/rebook';
+import { resolveBareBookingFlowRedirect } from '@/lib/discoveryRoutes';
+import {
+  loadGuestContact,
+  saveGuestContact,
+  validateGuestContact,
+  saveGuestBookingToken,
+  getGuestManagePath,
+  isGuestBookingBlocked,
+} from '@/lib/guestBooking';
 
 export default function BookingFlow() {
   const navigate = useNavigate();
@@ -30,30 +56,40 @@ export default function BookingFlow() {
   const { bookingState, updateBooking } = useBooking();
 
   const searchParams = new URLSearchParams(location.search);
-  const urlBarberId = searchParams.get('barberId');
+  const urlBarberId = searchParams.get('barberId') || searchParams.get('barber');
   const urlShopId = searchParams.get('shopId');
   const urlServiceId = searchParams.get('serviceId');
+  const urlServiceIds = searchParams.get('serviceIds');
   const context = searchParams.get('context');
+  const groupMode = searchParams.get('group') === '1';
+  const isRebookFlow = searchParams.get('rebook') === '1';
+
+  // Discovery nav (Mobile, Group, etc.) must open Explore, not a barber-less booking wizard.
+  useEffect(() => {
+    const redirect = resolveBareBookingFlowRedirect(searchParams, {
+      barberId: urlBarberId,
+      shopId: urlShopId,
+      serviceId: urlServiceId,
+      serviceIds: urlServiceIds,
+      isRebook: isRebookFlow,
+    });
+    if (redirect) {
+      navigate(createPageUrl(redirect), { replace: true });
+    }
+  }, [location.search, urlBarberId, urlShopId, urlServiceId, urlServiceIds, isRebookFlow, navigate]);
 
   // Sync URL params to booking state if present
   useEffect(() => {
     const updates = {};
     if (urlBarberId && bookingState?.barberId !== urlBarberId) updates.barberId = urlBarberId;
     if (urlShopId && bookingState?.shopId !== urlShopId) updates.shopId = urlShopId;
-
-    // Handle Service Pre-selection from URL
-    if (urlServiceId) {
-      // We need to fetch the service object to add it to state, or just store ID
-      // Since state uses objects, we might need to rely on the service query to resolve it later.
-      // For now, let's just ensure we don't overwrite if already set, or force it.
-      // But selectedServices state is local to this component initially.
-      // We'll handle this in the services initialization or effect.
-    }
+    if (context === 'independent') updates.context = 'independent';
+    else if (urlShopId) updates.context = 'shop';
 
     if (Object.keys(updates).length > 0) {
       updateBooking({ ...bookingState, ...updates });
     }
-  }, [urlBarberId, urlShopId, bookingState?.barberId, bookingState?.shopId]);
+  }, [urlBarberId, urlShopId, context, bookingState?.barberId, bookingState?.shopId]);
 
   // Dynamically determine steps based on whether a barber is pre-selected
   const isSpecificBarberBooking = !!(bookingState?.barberId || urlBarberId);
@@ -65,9 +101,12 @@ export default function BookingFlow() {
   const getInitialStep = () => {
     const params = new URLSearchParams(location.search);
     const stepParam = params.get('step');
+    const hasBarber = params.get('barberId') || params.get('barber');
     if (stepParam === 'datetime' || stepParam === '1') return 1;
-    if (stepParam === 'preferences' || stepParam === '2') return 2;
-    if (stepParam === 'results' || stepParam === 'confirm' || stepParam === '3') return 3;
+    if (stepParam === 'preferences' || stepParam === '2') return hasBarber ? 1 : 2;
+    if (stepParam === 'results') return hasBarber ? 2 : 3;
+    if (stepParam === 'confirm' || stepParam === 'confirmation') return hasBarber ? 2 : 3;
+    if (stepParam === '3') return hasBarber ? 2 : 3;
     return 0;
   };
 
@@ -77,6 +116,11 @@ export default function BookingFlow() {
   // Step 1: Services
   // Initialize services from global state or URL param
   const [selectedServices, setSelectedServices] = useState(() => {
+    const fromUrlList = urlServiceIds
+      ? urlServiceIds.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    if (fromUrlList.length > 0) return fromUrlList;
+
     const urlServiceId = searchParams.get('serviceId');
     if (urlServiceId) return [urlServiceId];
 
@@ -95,15 +139,93 @@ export default function BookingFlow() {
   const [appliedPromotion, setAppliedPromotion] = useState(null);
   const [promoError, setPromoError] = useState('');
   const [customerNotes, setCustomerNotes] = useState(''); // New: Customer Notes
+  const [paymentMethod, setPaymentMethod] = useState('online'); // online | cash_at_store
+  const [confirmedPaymentMethod, setConfirmedPaymentMethod] = useState('online');
+  const [guestContact, setGuestContact] = useState(() => loadGuestContact());
+  const [guestContactError, setGuestContactError] = useState('');
+  const [confirmedGuestToken, setConfirmedGuestToken] = useState(null);
+
+  // One-click rebook prefill (address, group label, prior payment preference)
+  useEffect(() => {
+    if (!isRebookFlow) return;
+    const prefill = loadRebookPrefill();
+    if (!prefill) return;
+
+    if (prefill.address && typeof prefill.address === 'string') {
+      setAddress(prefill.address);
+      if (prefill.client_latitude != null && prefill.client_longitude != null) {
+        setAddressCoords({
+          latitude: prefill.client_latitude,
+          longitude: prefill.client_longitude,
+        });
+      }
+    }
+    if (prefill.group_event_label) {
+      setGroupEventLabel(String(prefill.group_event_label));
+    }
+    if (prefill.is_group && prefill.party_size && prefill.party_size >= 2) {
+      const size = Math.min(Number(prefill.party_size), 12);
+      setGroupGuests(Array.from({ length: size }, () => ({ guest_name: '' })));
+    }
+    if (prefill.payment_method === 'cash_at_store' || prefill.payment_method === 'online') {
+      setPaymentMethod(prefill.payment_method);
+    }
+
+    toast.message('Rebooking', {
+      description: prefill.barber_name
+        ? `Same services & provider as last time, pick a new date with ${prefill.barber_name}.`
+        : 'Same provider as last time, pick a new date.',
+    });
+    clearRebookPrefill();
+  }, [isRebookFlow]);
+
+  const { setPreferredLocation } = usePreferredLocation();
 
   // Step 3: Preferences
   const [address, setAddress] = useState('');
+  const [addressCoords, setAddressCoords] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  useEffect(() => {
+    const saved = loadPreferredLocation();
+    if (saved && !address) {
+      setAddress(saved.address);
+      setAddressCoords({ latitude: saved.latitude, longitude: saved.longitude });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- hydrate once on mount
+
+  const persistPreferredLocation = (item) => {
+    if (!item?.formatted_address || item.latitude == null || item.longitude == null) return;
+    savePreferredLocation({
+      address: item.formatted_address,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    });
+    setPreferredLocation({
+      address: item.formatted_address,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    });
+  };
+
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('global_score'); // global_score, price, distance, rating
   const [acceptanceType, setAcceptanceType] = useState('all'); // all, auto, manual
   const [providerType, setProviderType] = useState('all'); // all, freelancer, shop
-  const [locationType, setLocationType] = useState('any'); // any, shop, mobile
+  const [locationType, setLocationType] = useState(() => {
+    const loc = searchParams.get('location');
+    const isGroup = searchParams.get('group') === '1';
+    if (loc === 'mobile') return 'mobile';
+    if (loc === 'shop') return 'shop';
+    // Group bookings default to in-shop unless client explicitly chose at-home
+    if (isGroup) return 'shop';
+    return 'any';
+  }); // any, shop, mobile
+  const [preferredLanguage, setPreferredLanguage] = useState('');
+  const [kidsWelcomeOnly, setKidsWelcomeOnly] = useState(false);
+  const [groupGuests, setGroupGuests] = useState([{ guest_name: '' }, { guest_name: '' }]);
+  const [groupEventLabel, setGroupEventLabel] = useState('');
+  const [groupCapsInitialized, setGroupCapsInitialized] = useState(false);
 
   // Note: activeBarberId is defined here to be used in queries
   const tempBarberId = bookingState?.barberId || urlBarberId;
@@ -163,6 +285,20 @@ export default function BookingFlow() {
         const hasShops = memberships.length > 0;
         const targetShopId = urlShopId || bookingState?.shopId;
         const targetContext = context || bookingState?.context;
+
+        const barberData = barber.data || barber;
+        const modes = getServiceLocationModes(barberData);
+        const wantsMobile =
+          locationType === 'mobile' ||
+          (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('location') === 'mobile');
+
+        // At-home-only barbers (including VIP mobile specialists) never use shop booking context
+        if (modes.mobile_only || wantsMobile) {
+          if (targetShopId || bookingState?.shopId) {
+            updateBooking({ ...(bookingState || {}), shopId: undefined, context: 'independent' });
+          }
+          return;
+        }
 
         // Case A: Target is Shop
         if (targetShopId) {
@@ -227,7 +363,7 @@ export default function BookingFlow() {
     };
 
     validateContext();
-  }, [tempBarberId, urlShopId, context, bookingState?.shopId, bookingState?.context]);
+  }, [tempBarberId, urlShopId, context, bookingState?.shopId, bookingState?.context, locationType]);
 
   const { data: staffConfig } = useQuery({
     queryKey: ['staffConfig', tempBarberId, bookingState?.shopId],
@@ -308,6 +444,37 @@ export default function BookingFlow() {
     retryDelay: (i) => (i + 1) * 1000
   });
 
+  const { data: bookingShops = [] } = useQuery({
+    queryKey: ['explore-shops'],
+    queryFn: async () => {
+      try {
+        const list = await sovereign.entities.Shop.list();
+        return Array.isArray(list) ? list : [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const bookingShopById = React.useMemo(() => {
+    const map = {};
+    for (const s of bookingShops) {
+      map[s.id] = {
+        ...s,
+        spoken_languages: parseSpokenLanguages(s.spoken_languages),
+        children_friendly: parseChildrenFriendly(s.children_friendly),
+      };
+    }
+    return map;
+  }, [bookingShops]);
+
+  const { data: languageOptions = FALLBACK_LANGUAGE_OPTIONS } = useQuery({
+    queryKey: ['language-options'],
+    queryFn: () => sovereign.languages.getOptions(),
+    staleTime: 1000 * 60 * 60,
+  });
+
   // Fetch specific barber if ID is present
   const { data: selectedBarber, isError: _selectedBarberError, isFetched: selectedBarberFetched } = useQuery({
     queryKey: ['barber', activeBarberId],
@@ -322,6 +489,75 @@ export default function BookingFlow() {
     enabled: !!activeBarberId,
     retry: 2
   });
+
+  const activeShopId = bookingState?.shopId || urlShopId;
+  const bookingContext = context || bookingState?.context;
+  const isShopContext = isShopBookingContext(activeShopId, bookingContext);
+
+  const { data: shopLocationSettings } = useQuery({
+    queryKey: ['shop-service-locations', activeShopId],
+    queryFn: () => sovereign.serviceLocation.getShop(activeShopId),
+    enabled: !!activeShopId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const normalizedSelectedBarber = React.useMemo(() => {
+    if (!selectedBarber) return null;
+    const nested = selectedBarber.data || {};
+    return {
+      ...selectedBarber,
+      ...nested,
+      id: selectedBarber.id ?? nested.id,
+      offers_shop_service: nested.offers_shop_service ?? selectedBarber.offers_shop_service,
+      offers_mobile_service: nested.offers_mobile_service ?? selectedBarber.offers_mobile_service,
+      is_vip: nested.is_vip ?? selectedBarber.is_vip,
+    };
+  }, [selectedBarber]);
+
+  const barberServiceModes = React.useMemo(
+    () => getServiceLocationModes(normalizedSelectedBarber),
+    [normalizedSelectedBarber]
+  );
+
+  const effectiveServiceModes = React.useMemo(() => {
+    if (isShopContext && shopLocationSettings && normalizedSelectedBarber) {
+      return getShopBookingLocationModes(normalizedSelectedBarber, shopLocationSettings);
+    }
+    if (isShopContext && shopLocationSettings && !normalizedSelectedBarber) {
+      return getServiceLocationModes(shopLocationSettings);
+    }
+    return barberServiceModes;
+  }, [isShopContext, shopLocationSettings, normalizedSelectedBarber, barberServiceModes]);
+
+  React.useEffect(() => {
+    if (!normalizedSelectedBarber && !isShopContext) return;
+    const modes = effectiveServiceModes;
+    if (isShopContext && modes.shop_only) {
+      setLocationType('shop');
+      return;
+    }
+    if (!normalizedSelectedBarber) return;
+    const barberModes = getServiceLocationModes(normalizedSelectedBarber);
+    if (locationType === 'mobile' && !modes.mobile) {
+      setLocationType(modes.shop ? 'shop' : 'mobile');
+      toast.message('This barber only offers in-shop visits');
+    } else if (locationType === 'shop' && !modes.shop && modes.mobile) {
+      setLocationType('mobile');
+      toast.message('This barber only offers at-home visits');
+    } else if (locationType === 'any') {
+      if (barberModes.mobile_only) setLocationType('mobile');
+      else if (barberModes.shop_only || (isShopContext && modes.shop_only)) setLocationType('shop');
+    }
+  }, [
+    normalizedSelectedBarber?.id,
+    normalizedSelectedBarber?.offers_shop_service,
+    normalizedSelectedBarber?.offers_mobile_service,
+    isShopContext,
+    shopLocationSettings?.offers_shop_service,
+    shopLocationSettings?.offers_mobile_service,
+    effectiveServiceModes,
+    locationType,
+  ]);
 
   // Fetch shifts for this barber to determine availability
   // If no activeBarberId (generic booking), we fetch ALL shifts for the shop context
@@ -408,11 +644,121 @@ export default function BookingFlow() {
     return { duration: baseMinutes, price: baseAmount, name: serviceData.name, category: serviceData.category };
   };
 
-  // Calculate totals
-  const totalDuration = selectedServices.reduce((sum, serviceId) => sum + getServiceDetails(serviceId).duration, 0);
-  const basePrice = selectedServices.reduce((sum, serviceId) => sum + getServiceDetails(serviceId).price, 0);
+  // Calculate totals (local fallback when quote unavailable)
+  const totalDurationLocal = selectedServices.reduce((sum, serviceId) => sum + getServiceDetails(serviceId).duration, 0);
+  const basePriceLocal = selectedServices.reduce((sum, serviceId) => sum + getServiceDetails(serviceId).price, 0);
+
+  const shopIdForQuote = bookingState?.shopId || urlShopId;
+  const promoForQuote = appliedPromotion?.code?.trim() || null;
+
+  const { data: groupBookingCaps } = useQuery({
+    queryKey: ['barber-group-booking', activeBarberId],
+    queryFn: () => sovereign.groupBooking.getBarber(activeBarberId),
+    enabled: !!activeBarberId && groupMode,
+  });
+
+  React.useEffect(() => {
+    if (!groupMode || !groupBookingCaps || groupCapsInitialized) return;
+    const min = groupBookingCaps.min_party ?? 2;
+    setGroupGuests(Array.from({ length: min }, () => ({ guest_name: '' })));
+    setGroupCapsInitialized(true);
+    if (!groupBookingCaps.offers_group_booking) {
+      toast.error('This barber has not enabled group bookings. Choose another professional or book individually.');
+    }
+  }, [groupMode, groupBookingCaps, groupCapsInitialized]);
+
+  const groupModeActive =
+    groupMode && groupBookingCaps?.offers_group_booking && groupGuests.length >= (groupBookingCaps.min_party ?? 2);
+
+  const { data: groupQuote, refetch: refetchGroupQuote, isFetching: groupQuoteLoading } = useQuery({
+    queryKey: [
+      'group-booking-quote',
+      activeBarberId,
+      shopIdForQuote,
+      selectedServices.slice().sort().join(','),
+      groupGuests.length,
+      promoForQuote,
+    ],
+    queryFn: () =>
+      sovereign.groupBooking.quote({
+        barber_id: activeBarberId,
+        shop_id: shopIdForQuote || null,
+        shop_member_id: shopIdForQuote ? staffConfig?.member?.id : null,
+        service_ids: selectedServices,
+        guests: groupGuests,
+        promo_code: promoForQuote,
+        context_type: shopIdForQuote ? 'shop' : 'independent',
+      }),
+    enabled:
+      groupModeActive &&
+      selectedServices.length > 0 &&
+      (!shopIdForQuote || !!staffConfig?.member?.id),
+    staleTime: 30_000,
+  });
+
+  const { data: bookingOffers, isLoading: offersLoading } = useQuery({
+    queryKey: [
+      'pricing-offers',
+      selectedServices.slice().sort().join(','),
+      activeBarberId,
+      shopIdForQuote,
+      staffConfig?.member?.id,
+    ],
+    queryFn: () =>
+      sovereign.pricing.getOffers({
+        service_ids: selectedServices,
+        barber_id: activeBarberId || undefined,
+        shop_id: shopIdForQuote || undefined,
+        shop_member_id: shopIdForQuote ? staffConfig?.member?.id : undefined,
+      }),
+    enabled: !!(shopIdForQuote || activeBarberId),
+    staleTime: 20_000,
+  });
+
+  const { data: priceQuote, refetch: refetchPriceQuote } = useQuery({
+    queryKey: [
+      'pricing-quote',
+      selectedServices.slice().sort().join(','),
+      activeBarberId,
+      shopIdForQuote,
+      staffConfig?.member?.id,
+      promoForQuote,
+    ],
+    queryFn: () =>
+      sovereign.pricing.quote({
+        service_ids: selectedServices,
+        barber_id: activeBarberId,
+        shop_id: shopIdForQuote || null,
+        shop_member_id: shopIdForQuote ? staffConfig?.member?.id : null,
+        promo_code: promoForQuote,
+        context_type: shopIdForQuote ? 'shop' : 'independent',
+      }),
+    enabled:
+      !!activeBarberId &&
+      selectedServices.length > 0 &&
+      (!shopIdForQuote || !!staffConfig?.member?.id),
+    staleTime: 30_000,
+  });
+
+  const totalDuration = groupModeActive
+    ? (groupQuote?.total_duration_minutes ?? totalDurationLocal * groupGuests.length)
+    : (priceQuote?.total_duration_minutes ?? totalDurationLocal);
+  const basePrice = groupModeActive
+    ? (groupQuote?.group_subtotal ?? basePriceLocal * groupGuests.length)
+    : (priceQuote?.sum_price ?? basePriceLocal);
+  const comboSavings = groupModeActive ? 0 : (priceQuote?.combo_savings ?? 0);
+  const subtotalAfterCombo = groupModeActive
+    ? (groupQuote?.group_subtotal ?? basePrice)
+    : (priceQuote?.subtotal_after_combo ?? basePriceLocal);
+  const bundleMatch = groupModeActive ? null : (priceQuote?.bundle ?? null);
 
   const calculateDiscount = () => {
+    if (groupModeActive) {
+      const groupDisc = groupQuote?.group_discount_amount ?? 0;
+      const promoDisc = groupQuote?.promo?.discount_amount ?? 0;
+      return groupDisc + promoDisc;
+    }
+    if (priceQuote?.promo?.discount_amount != null) return priceQuote.promo.discount_amount;
     if (!appliedPromotion) return 0;
     const fromServer =
       typeof appliedPromotion.discount_amount === 'number' && Number.isFinite(appliedPromotion.discount_amount)
@@ -424,13 +770,76 @@ export default function BookingFlow() {
     const amount = parseFloat(discountText.replace(/[^0-9.]/g, '') || 0);
 
     if (discountText.includes('%')) {
-      return (basePrice * amount) / 100;
+      return (subtotalAfterCombo * amount) / 100;
     }
     return amount;
   };
 
-  const discountAmount = calculateDiscount();
-  const totalPrice = Math.max(0, basePrice - discountAmount);
+  const promoDiscountAmount = calculateDiscount();
+  const totalPrice = groupModeActive
+    ? (groupQuote?.final_price ?? Math.max(0, subtotalAfterCombo - promoDiscountAmount))
+    : (priceQuote?.final_price ?? Math.max(0, subtotalAfterCombo - promoDiscountAmount));
+
+  const atHomeVisitForQuote = Boolean(
+    locationType === 'mobile' ||
+    (normalizedSelectedBarber && getServiceLocationModes(normalizedSelectedBarber).mobile_only),
+  );
+
+  const travelContextShopId = (() => {
+    const shopId = bookingState?.shopId || urlShopId;
+    const isIndependent = context === 'independent' || bookingState?.context === 'independent';
+    if (atHomeVisitForQuote || isIndependent) return null;
+    return shopId || null;
+  })();
+
+  const {
+    data: travelQuote,
+    isLoading: travelQuoteLoading,
+    isFetching: travelQuoteFetching,
+    error: travelQuoteError,
+  } = useQuery({
+    queryKey: [
+      'travel-quote',
+      activeBarberId,
+      travelContextShopId,
+      context || bookingState?.context,
+      address.trim(),
+      addressCoords?.latitude,
+      addressCoords?.longitude,
+    ],
+    queryFn: () =>
+      sovereign.atHomeService.quote({
+        barber_id: activeBarberId,
+        shop_id: travelContextShopId || undefined,
+        context_type: travelContextShopId ? 'shop' : 'independent',
+        address: address.trim(),
+        latitude: addressCoords?.latitude,
+        longitude: addressCoords?.longitude,
+      }),
+    enabled: !!activeBarberId && atHomeVisitForQuote && address.trim().length >= 8,
+    staleTime: 30_000,
+    retry: 1,
+  });
+
+  const travelFeeAmount = atHomeVisitForQuote ? (travelQuote?.travel_fee ?? 0) : 0;
+  const travelOutOfArea =
+    travelQuote?.configured === true && travelQuote?.in_service_area === false;
+  const grandTotal = totalPrice + travelFeeAmount;
+
+  const { data: loyaltyMe } = useQuery({
+    queryKey: ['loyalty-me', currentUser?.id],
+    queryFn: () => sovereign.loyalty.getMe(),
+    enabled: !!currentUser?.id,
+  });
+
+  const { data: loyaltyEarnPreview } = useQuery({
+    queryKey: ['loyalty-preview', grandTotal, loyaltyMe?.tier],
+    queryFn: () => sovereign.loyalty.previewEarn(grandTotal, loyaltyMe?.tier ?? 'Bronze'),
+    enabled: grandTotal >= 5,
+  });
+
+  const pointsEarnedPreview = loyaltyEarnPreview?.points_earned ?? 0;
+  const loyaltyRewardCodes = loyaltyMe?.active_reward_codes ?? [];
 
   // Calculate Financial Breakdown (Commission & Payouts)
   const financialBreakdown = React.useMemo(() => {
@@ -439,23 +848,66 @@ export default function BookingFlow() {
       ? (activePricingRule.commission_shop || 0.05)
       : (activePricingRule.commission_freelancer || 0.10);
 
-    const platformFee = totalPrice * commissionRate;
+    const platformFee = grandTotal * commissionRate;
     const taxRate = 0; // Simplified for MVP (assume baked in or 0)
-    const taxAmount = totalPrice * taxRate;
+    const taxAmount = grandTotal * taxRate;
 
-    const providerPayout = Math.max(0, totalPrice - platformFee - taxAmount);
+    const providerPayout = Math.max(0, grandTotal - platformFee - taxAmount);
 
     return {
       base_price: basePrice,
-      discount_amount: discountAmount,
-      final_price: totalPrice,
+      subtotal_after_combo: subtotalAfterCombo,
+      combo_savings: comboSavings,
+      bundle_id: bundleMatch?.bundle_id ?? null,
+      discount_amount: promoDiscountAmount,
+      travel_fee: travelFeeAmount,
+      travel_distance_km: travelQuote?.distance_km ?? null,
+      travel_zone_label: travelQuote?.zone_label ?? null,
+      final_price: grandTotal,
       platform_fee: platformFee,
       tax_amount: taxAmount,
       provider_payout: providerPayout,
       commission_rate_snapshot: commissionRate,
       currency: 'USD'
     };
-  }, [basePrice, discountAmount, totalPrice, bookingState?.shopId, urlShopId, activePricingRule]);
+  }, [basePrice, subtotalAfterCombo, comboSavings, bundleMatch, promoDiscountAmount, grandTotal, travelFeeAmount, travelQuote, bookingState?.shopId, urlShopId, activePricingRule]);
+
+  const shopIdForCash = bookingState?.shopId || urlShopId;
+  const { data: cashAvailability } = useQuery({
+    queryKey: ['cash-availability', activeBarberId, shopIdForCash],
+    queryFn: () => sovereign.providerWallet.getCashAvailability(activeBarberId, shopIdForCash || undefined),
+    enabled: !!activeBarberId && isSpecificBarberBooking,
+  });
+
+  const { data: paymentProtectionPreview } = useQuery({
+    queryKey: ['payment-protection-preview', activeBarberId, shopIdForCash, grandTotal, paymentMethod],
+    queryFn: () =>
+      sovereign.paymentProtection.getPreview({
+        barberId: activeBarberId,
+        shopId: shopIdForCash || undefined,
+        totalPrice: grandTotal,
+        paymentMethod,
+      }),
+    enabled: !!activeBarberId && isSpecificBarberBooking && grandTotal > 0,
+  });
+
+  const isGuestCheckout = !currentUser?.id;
+  const guestBookingBlock = isGuestBookingBlocked(
+    paymentProtectionPreview,
+    cashAvailability,
+    paymentMethod,
+    !!currentUser?.id
+  );
+
+  useEffect(() => {
+    saveGuestContact(guestContact);
+  }, [guestContact]);
+
+  useEffect(() => {
+    if (isGuestCheckout && cashAvailability?.accepts_cash) {
+      setPaymentMethod('cash_at_store');
+    }
+  }, [isGuestCheckout, cashAvailability?.accepts_cash]);
 
   const handleApplyPromo = async () => {
     if (!promoCode) return;
@@ -473,19 +925,25 @@ export default function BookingFlow() {
         return;
       }
       const shopId = bookingState?.shopId || urlShopId;
-      const res = await sovereign.functions.invoke('validate-promo-code', {
-        code: promoCode,
+      const quote = await sovereign.pricing.quote({
+        service_ids: selectedServices,
         barber_id: activeBarberId,
         shop_id: shopId || null,
-        base_price: basePrice,
+        shop_member_id: shopId ? staffConfig?.member?.id : null,
+        promo_code: promoCode.trim(),
         user_id: currentUser.id,
         context_type: shopId ? 'shop' : 'independent',
       });
-      if (res.status === 'VALID') {
-        setAppliedPromotion(res);
+      if (quote.promo) {
+        setAppliedPromotion({
+          code: quote.promo.code,
+          discount_text: quote.promo.discount_text,
+          discount_amount: quote.promo.discount_amount,
+        });
         setPromoError('');
+        refetchPriceQuote();
       } else {
-        setPromoError(res.message || 'Invalid promo code');
+        setPromoError('Invalid promo code');
         setAppliedPromotion(null);
       }
     } catch (e) {
@@ -511,10 +969,23 @@ export default function BookingFlow() {
       if (providerType === 'freelancer' && barberData.type === 'shop') return false;
       if (providerType === 'shop' && barberData.type !== 'shop') return false;
 
-      // Filter by location type (Mobile vs Shop)
-      if (locationType === 'mobile' && !barberData.offers_mobile_service) return false;
-      // If locationType is 'shop', we generally assume all barbers have a base, 
-      // but strictly we could check if they have a location. For now, we assume all valid barbers do.
+      // Filter by location type (shop vs at-home)
+      if (locationType === 'shop' && !offersShopService(barberData)) return false;
+      if (locationType === 'mobile' && !offersMobileService(barberData)) return false;
+
+      // Group booking: only barbers who accept group parties
+      if (groupMode && !barberData.offers_group_booking) return false;
+
+      if (preferredLanguage) {
+        const barberLangs = parseSpokenLanguages(barberData.spoken_languages);
+        const shopLangs = barberData.shop_id ? bookingShopById[barberData.shop_id]?.spoken_languages || [] : [];
+        if (!matchesLanguageFilter(barberLangs, shopLangs, [preferredLanguage])) return false;
+      }
+
+      if (kidsWelcomeOnly) {
+        const shopFriendly = barberData.shop_id ? bookingShopById[barberData.shop_id]?.children_friendly : false;
+        if (!matchesChildrenFriendlyFilter(barberData.children_friendly, shopFriendly, true)) return false;
+      }
 
       return true;
     });
@@ -524,22 +995,29 @@ export default function BookingFlow() {
       const barberData = barber.data || barber;
       const rating = barberData.rating || 0;
       const reviewCount = barberData.review_count || 0;
-      const estimatedPrice = totalPrice; // In real app, sum barber's prices for selected services
+      const estimatedPrice = totalPrice;
 
-      // Simple distance mock (would use actual geolocation)
-      const mockDistance = Math.random() * 10;
+      const barberLat = barberData.latitude;
+      const barberLng = barberData.longitude;
+      let barberDistance = null;
+      if (addressCoords?.latitude != null && addressCoords?.longitude != null && barberLat != null && barberLng != null) {
+        barberDistance = roundKm(
+          distanceKm(addressCoords.latitude, addressCoords.longitude, barberLat, barberLng)
+        );
+      }
 
-      // Global score: balanced mix of factors
+      const distanceScore =
+        barberDistance != null ? Math.max(0, 1 - barberDistance / 50) : address ? 0.35 : 0.5;
       const ratingScore = rating / 5;
       const reviewScore = Math.min(reviewCount / 100, 1);
-      const distanceScore = address ? (1 - mockDistance / 10) : 0.5;
       const priceScore = estimatedPrice > 0 ? (1 - Math.min(estimatedPrice / 200, 1)) : 0.5;
 
       const globalScore = (ratingScore * 0.4 + reviewScore * 0.2 + distanceScore * 0.2 + priceScore * 0.2) * 100;
 
       return {
         ...barber,
-        distance: mockDistance,
+        distance: barberDistance ?? 999,
+        distance_km: barberDistance,
         estimatedPrice,
         globalScore
       };
@@ -551,7 +1029,7 @@ export default function BookingFlow() {
         case 'price':
           return a.estimatedPrice - b.estimatedPrice;
         case 'distance':
-          return a.distance - b.distance;
+          return (a.distance_km ?? 999) - (b.distance_km ?? 999);
         case 'rating':
           return b.rating - a.rating;
         case 'global_score':
@@ -561,7 +1039,7 @@ export default function BookingFlow() {
     });
 
     return filtered;
-  }, [allBarbers, minRating, sortBy, address, totalPrice, currentStep]);
+  }, [allBarbers, minRating, sortBy, address, addressCoords, totalPrice, currentStep, acceptanceType, providerType, locationType, preferredLanguage, kidsWelcomeOnly, bookingShopById, groupMode]);
 
   const handleServiceToggle = (serviceId) => {
     const isSelecting = !selectedServices.includes(serviceId);
@@ -581,6 +1059,50 @@ export default function BookingFlow() {
         ? prev.filter(id => id !== serviceId)
         : [...prev, serviceId]
     );
+  };
+
+  const handleAddServices = (serviceIds) => {
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0) return;
+    setSelectedServices((prev) => [...new Set([...prev, ...serviceIds])]);
+    toast.success('Added to your booking');
+  };
+
+  const handleAddBundle = (serviceIds) => {
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0) return;
+    setSelectedServices([...new Set(serviceIds)]);
+    toast.success('Combo added to your booking');
+  };
+
+  const handleApplyPromoFromOffer = async (code) => {
+    if (!code) return;
+    setPromoCode(code);
+    if (!currentUser?.id || !activeBarberId || selectedServices.length === 0) {
+      toast.info(`Promo ${code} saved, we'll apply it at checkout`);
+      return;
+    }
+    try {
+      const shopId = bookingState?.shopId || urlShopId;
+      const quote = await sovereign.pricing.quote({
+        service_ids: selectedServices,
+        barber_id: activeBarberId,
+        shop_id: shopId || null,
+        shop_member_id: shopId ? staffConfig?.member?.id : null,
+        promo_code: code,
+        context_type: shopId ? 'shop' : 'independent',
+      });
+      if (quote.promo) {
+        setAppliedPromotion({
+          code: quote.promo.code,
+          discount_text: quote.promo.discount_text,
+          discount_amount: quote.promo.discount_amount,
+        });
+        setPromoError('');
+        toast.success(`${code} applied`);
+        refetchPriceQuote();
+      }
+    } catch (e) {
+      toast.info(`Promo ${code} saved, apply at checkout`);
+    }
   };
 
   const canProceed = () => {
@@ -648,11 +1170,21 @@ export default function BookingFlow() {
   const currentContent = renderStepContent();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [waitlistDialogOpen, setWaitlistDialogOpen] = useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = useState(null);
+  const [confirmedPaymentStep, setConfirmedPaymentStep] = useState('full_payment');
+  const [confirmedBookingMeta, setConfirmedBookingMeta] = useState(null);
 
   const createBookingMutation = useMutation({
     mutationFn: (data) => sovereign.entities.Booking.create(data),
     onSuccess: async (newBooking) => {
+      setConfirmedBookingMeta({
+        isGroup: groupModeActive,
+        isAtHome: locationType === 'mobile',
+        partySize: groupModeActive ? groupGuests.length : null,
+        eventLabel: groupEventLabel || null,
+        address: locationType === 'mobile' ? address?.trim() : null,
+      });
       // Send Notifications
 
       // 1. To Client (Current User)
@@ -695,6 +1227,7 @@ export default function BookingFlow() {
 
       // Show success modal instead of navigating
       setConfirmedBookingId(newBooking.id);
+      setConfirmedPaymentStep(paymentProtectionPreview?.next_step || 'full_payment');
       setShowSuccessModal(true);
 
       // Trigger confetti
@@ -711,14 +1244,60 @@ export default function BookingFlow() {
       }, 250);
     },
     onError: (error) => {
-      alert("Failed to create booking: " + error.message);
-    }
+      const msg = error?.message || 'Failed to create booking';
+      if (/taken|unavailable|chair|slot is/i.test(msg)) {
+        setWaitlistDialogOpen(true);
+        toast.error('This time slot is no longer available');
+      } else {
+        toast.error(msg);
+      }
+    },
+  });
+
+  const createGuestBookingMutation = useMutation({
+    mutationFn: (data) => sovereign.bookings.createGuest(data),
+    onSuccess: async (newBooking) => {
+      if (newBooking.guest_access_token) {
+        setConfirmedGuestToken(newBooking.guest_access_token);
+        saveGuestBookingToken(newBooking.id, newBooking.guest_access_token);
+      }
+      setConfirmedBookingMeta({
+        isGroup: groupModeActive,
+        isAtHome: locationType === 'mobile',
+        partySize: groupModeActive ? groupGuests.length : null,
+        eventLabel: groupEventLabel || null,
+        address: locationType === 'mobile' ? address?.trim() : null,
+      });
+      setConfirmedBookingId(newBooking.id);
+      setConfirmedPaymentStep('none');
+      setShowSuccessModal(true);
+
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+      const randomInRange = (min, max) => Math.random() * (max - min) + min;
+      const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create booking');
+    },
   });
 
   const createPaymentSessionMutation = useMutation({
     mutationFn: async (bookingId) => {
-      const { url } = await sovereign.functions.invoke('create-checkout-session', { bookingId });
-      return { url };
+      try {
+        const result = await sovereign.paymentProtection.bookingCheckout(bookingId);
+        return { url: result.url, step: result.step };
+      } catch {
+        const { url } = await sovereign.functions.invoke('create-checkout-session', { bookingId });
+        return { url, step: 'full_payment' };
+      }
     },
     onSuccess: (data) => {
       if (data.url) {
@@ -726,7 +1305,7 @@ export default function BookingFlow() {
       }
     },
     onError: (error) => {
-      toast.error("Payment Error: " + error.message);
+      toast.error(`Payment Error: ${  error.message}`);
     }
   });
 
@@ -735,12 +1314,24 @@ export default function BookingFlow() {
 
     // --- PHASE 2: WRITE-TIME INVARIANT ENFORCEMENT ---
 
-    // 1. Authenticated User Check
-    if (!currentUser) {
-      toast.error("Please log in to complete your booking");
-      // Trigger login flow or redirect
-      sovereign.auth.redirectToLogin(location.pathname + location.search);
-      return;
+    const bookingAsGuest = !currentUser?.id;
+
+    if (bookingAsGuest) {
+      const contactErr = validateGuestContact(guestContact);
+      if (contactErr) {
+        setGuestContactError(contactErr);
+        toast.error(contactErr);
+        return;
+      }
+      setGuestContactError('');
+      if (guestBookingBlock.blocked) {
+        toast.error(guestBookingBlock.reason || 'Sign in required for this booking');
+        return;
+      }
+      if (paymentMethod !== 'cash_at_store') {
+        toast.error('Guest bookings use pay-at-shop. Sign in for online payment.');
+        return;
+      }
     }
 
     // 2. Barber Identity Check
@@ -750,23 +1341,85 @@ export default function BookingFlow() {
     }
 
     // 3. Context & Location Integrity Check
-    // We must have either a valid shop_id OR an explicit independent context
+    if (locationType === 'mobile' && !address?.trim()) {
+      toast.error('Please enter your address for at-home service');
+      return;
+    }
+
+    if (normalizedSelectedBarber && locationType !== 'mobile' && !offersShopService(normalizedSelectedBarber)) {
+      toast.error('This barber only offers at-home visits, enter your address');
+      return;
+    }
+
+    if (locationType === 'mobile' && normalizedSelectedBarber && !offersMobileService(normalizedSelectedBarber)) {
+      toast.error('This barber does not offer at-home visits');
+      return;
+    }
+
+    if (groupMode && groupBookingCaps && !groupBookingCaps.offers_group_booking) {
+      toast.error('This barber has not enabled group bookings');
+      return;
+    }
+
+    if (groupModeActive) {
+      const minParty = groupBookingCaps?.min_party ?? 2;
+      const maxParty = groupBookingCaps?.max_party ?? 8;
+      if (groupGuests.length < minParty || groupGuests.length > maxParty) {
+        toast.error(`Group size must be between ${minParty} and ${maxParty} guests`);
+        return;
+      }
+      if (!groupQuote) {
+        toast.error('Group price is still loading, please wait a moment and try again');
+        return;
+      }
+      if (selectedServices.length === 0) {
+        toast.error('Select at least one service for the group');
+        return;
+      }
+    }
+
+    const mobileOnlyBarber = normalizedSelectedBarber
+      ? getServiceLocationModes(normalizedSelectedBarber).mobile_only
+      : false;
+    const atHomeVisit =
+      locationType === 'mobile' || mobileOnlyBarber;
+
+    if (atHomeVisit) {
+      if (travelOutOfArea) {
+        toast.error(
+          travelQuote?.service_radius_km
+            ? `This address is outside the ${travelQuote.service_radius_km} km service area`
+            : 'This address is outside the service area'
+        );
+        return;
+      }
+      if (
+        address.trim().length >= 8 &&
+        travelQuote?.configured !== false &&
+        (travelQuoteLoading || travelQuoteFetching || !travelQuote)
+      ) {
+        toast.error('Travel fee is still calculating, please wait a moment');
+        return;
+      }
+    }
+
+    // We must have either a valid shop_id OR an explicit independent / at-home context
     const shopId = bookingState?.shopId || urlShopId;
     const isIndependentContext = context === 'independent' || bookingState?.context === 'independent';
+    const effectiveShopId = atHomeVisit ? null : shopId;
 
     // If we have a shopId, we MUST have a resolved shop_member_id (provenance)
-    if (shopId && !staffConfig?.member?.id) {
+    if (effectiveShopId && !staffConfig?.member?.id) {
       toast.error("System Error: Could not verify barber's membership at this shop.");
       return;
     }
 
-    // If no shopId, we MUST be in independent mode
-    if (!shopId && !isIndependentContext) {
-      // Edge case: "Implicit" independent if barber has no shops?
-      // Phase 1 guard should catch this, but we block writes here to be safe.
-      // However, if the barber IS independent and we auto-resolved...
-      if (selectedBarber?.is_independent && !shopId) {
+    // If no shopId, we MUST be in independent mode (or at-home visit)
+    if (!effectiveShopId && !isIndependentContext) {
+      if (selectedBarber?.is_independent && !effectiveShopId) {
         // Acceptable implicit independent
+      } else if (atHomeVisit) {
+        // At-home visit, independent context implied
       } else {
         toast.error("Booking Context Error: Please select a specific location (Shop or Independent).");
         return;
@@ -787,10 +1440,22 @@ export default function BookingFlow() {
 
     // Create Immutable Snapshot
     const snapshot = {
-      services: selectedServices.map(id => getServiceDetails(id)),
+      services: selectedServices.map((id) => ({ service_id: id, ...getServiceDetails(id) })),
       total_duration: totalDuration,
-      total_price: totalPrice,
+      total_price: grandTotal,
       base_price: basePrice,
+      subtotal_after_combo: subtotalAfterCombo,
+      combo_savings: comboSavings,
+      travel_fee: travelFeeAmount,
+      travel_distance_km: travelQuote?.distance_km ?? null,
+      travel_zone_label: travelQuote?.zone_label ?? null,
+      bundle: bundleMatch
+        ? {
+            id: bundleMatch.bundle_id,
+            name: bundleMatch.bundle_name,
+            combo_price: bundleMatch.combo_price,
+          }
+        : null,
       applied_promotion: appliedPromotion ? {
         code: appliedPromotion.code,
         discount: appliedPromotion.discount_text,
@@ -803,53 +1468,105 @@ export default function BookingFlow() {
       eventName: 'confirm_booking_attempt',
       properties: {
         barber_id: activeBarberId,
-        shop_id: shopId,
-        total_price: totalPrice,
+        shop_id: effectiveShopId,
+        total_price: grandTotal,
+        travel_fee: travelFeeAmount,
         service_count: selectedServices.length,
-        context_type: shopId ? 'shop' : 'independent'
+        context_type: effectiveShopId ? 'shop' : 'independent',
+        visit_type: atHomeVisit ? 'mobile' : 'shop',
       }
     });
 
-    createBookingMutation.mutate({
+    setConfirmedPaymentMethod(paymentMethod);
+
+    const bookingPayload = {
       // Core Identity
-      client_id: currentUser.id,
       barber_id: activeBarberId,
-      shop_id: shopId || null, // Explicit null if independent
-      shop_member_id: shopId ? staffConfig?.member?.id : null, // Only link membership if in shop context
+      shop_id: effectiveShopId,
+      shop_member_id: effectiveShopId ? staffConfig?.member?.id : null,
+      service_ids: selectedServices,
+      ...(groupModeActive
+        ? {
+            booking_type: 'group',
+            guests: groupGuests,
+            group_event_label: groupEventLabel || undefined,
+            party_size: groupGuests.length,
+          }
+        : {}),
 
       // Display Data
       service_name: serviceNames || 'Barber Service',
       date_text: format(selectedDate, 'PPP'),
       time_text: selectedTime,
-      location: address || selectedBarber?.location || 'Barbershop', // Fallback display location
+      location: atHomeVisit
+        ? address.trim()
+        : address || selectedBarber?.location || 'Barbershop',
+      location_text: atHomeVisit ? address.trim() : undefined,
+      visit_type: resolveClientLocationType(
+        normalizedSelectedBarber,
+        atHomeVisit ? 'mobile' : locationType === 'shop' ? 'shop' : 'shop'
+      ),
 
       // State
       status: 'pending',
       payment_status: 'unpaid',
+      payment_method: paymentMethod,
 
       // Financials (Locked)
-      price_at_booking: totalPrice,
+      price_at_booking: grandTotal,
+      travel_fee_amount: atHomeVisit ? travelFeeAmount : undefined,
+      client_latitude: atHomeVisit ? travelQuote?.client_latitude : undefined,
+      client_longitude: atHomeVisit ? travelQuote?.client_longitude : undefined,
       duration_at_booking: totalDuration,
       service_snapshot: snapshot,
-      financial_breakdown: financialBreakdown, // Persist calculated commissions
+      financial_breakdown: financialBreakdown,
       discount_code: appliedPromotion?.code || undefined,
 
       // Metadata
       image_url: selectedBarber?.image_url,
       category: 'upcoming',
-      description: description,
+      description,
 
-      // Context info for analytics
-      context_type: shopId ? 'shop' : 'independent',
-      customer_notes: customerNotes // Save notes
+      context_type: effectiveShopId ? 'shop' : 'independent',
+      customer_notes: customerNotes,
+    };
+
+    if (bookingAsGuest) {
+      createGuestBookingMutation.mutate({
+        ...bookingPayload,
+        guest_name: guestContact.guest_name.trim(),
+        guest_phone: guestContact.guest_phone.trim(),
+        guest_email: guestContact.guest_email?.trim() || undefined,
+      });
+      return;
+    }
+
+    createBookingMutation.mutate({
+      ...bookingPayload,
+      client_id: currentUser.id,
     });
   };
 
   const handleBarberSelect = (barber) => {
     const barberId = barber.id || barber.data?.id || barber;
+    const barberData = barber.data || barber;
+
+    if (groupMode && !barberData.offers_group_booking) {
+      toast.error('This barber does not offer group bookings. Choose another professional.');
+      return;
+    }
+    if (locationType === 'shop' && !offersShopService(barberData)) {
+      toast.error('This barber only offers at-home visits');
+      return;
+    }
+    if (locationType === 'mobile' && !offersMobileService(barberData)) {
+      toast.error('This barber does not offer at-home visits');
+      return;
+    }
+
     updateBooking({
       barberId,
-      selectedServices: selectedServices.map(id => services.find(s => s.id === id)),
+      selectedServices: selectedServices.map(id => services.find(s => s.id === id)).filter(Boolean),
       selectedDate,
       selectedTime,
       address,
@@ -857,6 +1574,21 @@ export default function BookingFlow() {
       sortBy,
       acceptanceType
     });
+
+    if (groupMode) {
+      const modes = getServiceLocationModes(barberData);
+      let url = `BookingFlow?group=1&barberId=${barberId}&step=confirm&context=independent`;
+      if (modes.mobile_only || locationType === 'mobile' || !offersShopService(barberData)) {
+        url += '&location=mobile';
+      } else {
+        const shopId = barberData.shop_id || urlShopId || bookingState?.shopId;
+        if (shopId) url += `&shopId=${shopId}`;
+        url += '&location=shop';
+      }
+      navigate(createPageUrl(url));
+      return;
+    }
+
     navigate(createPageUrl(`BarberProfile?id=${barberId}`));
   };
 
@@ -864,7 +1596,7 @@ export default function BookingFlow() {
     setIsLoadingLocation(true);
     try {
       if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser');
+        toast.error('Geolocation is not supported by your browser');
         setIsLoadingLocation(false);
         return;
       }
@@ -872,29 +1604,33 @@ export default function BookingFlow() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-
-          // Use reverse geocoding via LLM integration
           try {
-            const locationData = await sovereign.integrations.Core.InvokeLLM({
-              prompt: `Get the address for coordinates: ${latitude}, ${longitude}. Return ONLY the formatted address as a simple string, nothing else.`,
-              add_context_from_internet: true
+            const data = await sovereign.atHomeService.reverseGeocode(latitude, longitude);
+            setAddress(data.formatted_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setAddressCoords({ latitude, longitude });
+            persistPreferredLocation({
+              formatted_address: data.formatted_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+              latitude,
+              longitude,
             });
-
-            setAddress(locationData || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
           } catch {
-            // Fallback to coordinates if geocoding fails
             setAddress(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setAddressCoords({ latitude, longitude });
+            persistPreferredLocation({
+              formatted_address: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+              latitude,
+              longitude,
+            });
           }
-
           setIsLoadingLocation(false);
         },
-        (_error) => {
-          alert('Unable to retrieve your location. Please enter manually.');
+        () => {
+          toast.error('Unable to retrieve your location. Please enter your address manually.');
           setIsLoadingLocation(false);
         }
       );
     } catch {
-      alert('Error accessing location');
+      toast.error('Error accessing location');
       setIsLoadingLocation(false);
     }
   };
@@ -940,7 +1676,7 @@ export default function BookingFlow() {
         const endStr = dayShifts.reduce((max, s) => s.end_time > max ? s.end_time : max, '00:00');
 
         const slots = [];
-        let current = new Date(`2000-01-01T${startStr}`);
+        const current = new Date(`2000-01-01T${startStr}`);
         const end = new Date(`2000-01-01T${endStr}`);
 
         while (current < end) {
@@ -984,7 +1720,7 @@ export default function BookingFlow() {
 
     // 2. Generate Slots
     const slots = [];
-    let current = new Date(`2000-01-01T${startStr}`);
+    const current = new Date(`2000-01-01T${startStr}`);
     const end = new Date(`2000-01-01T${endStr}`);
     const slotDuration = totalDuration || 30; // Use selected service duration or default 30m
 
@@ -1038,50 +1774,143 @@ export default function BookingFlow() {
     return slots;
   };
 
-  const timeSlots = getAvailableTimeSlots();
+  const getWaitlistTimeSlots = () => {
+    if (!selectedDate || !activeBarberId) return [];
 
-  const handleASAP = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-
-    // Find next available slot today
-    const nextSlot = timeSlots.find(slot => {
-      const [time, period] = slot.split(' ');
-      let [hours, _minutes] = time.split(':').map(Number);
-      if (period === 'PM' && hours !== 12) hours += 12;
-      if (period === 'AM' && hours === 12) hours = 0;
-      return hours > currentHour;
+    const dayOfWeek = format(selectedDate, 'EEEE');
+    const currentShopId = bookingState?.shopId || urlShopId;
+    const relevantShift = barberShifts.find((s) => {
+      if (s.day !== dayOfWeek) return false;
+      if (currentShopId) return s.shop_id === currentShopId;
+      return !s.shop_id;
     });
+    if (barberShifts.length > 0 && !relevantShift) return [];
 
-    if (nextSlot) {
-      setSelectedDate(now);
-      setSelectedTime(nextSlot);
-    } else {
-      // If no slots today, pick tomorrow first slot
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setSelectedDate(tomorrow);
-      setSelectedTime(timeSlots[0]);
+    const startStr = relevantShift ? relevantShift.start_time : '09:00';
+    const endStr = relevantShift ? relevantShift.end_time : '18:00';
+    const waitlist = [];
+    const current = new Date(`2000-01-01T${startStr}`);
+    const end = new Date(`2000-01-01T${endStr}`);
+    const slotDuration = totalDuration || 30;
+
+    while (current < end) {
+      const timeString = format(current, 'h:mm a');
+      const slotStart = new Date(selectedDate);
+      slotStart.setHours(current.getHours(), current.getMinutes(), 0, 0);
+      const slotEnd = new Date(slotStart);
+      slotEnd.setMinutes(slotStart.getMinutes() + slotDuration);
+
+      const isBlockedOff = barberTimeOff.some((block) => {
+        const isRelevantBlock = !block.shop_id || block.shop_id === currentShopId;
+        if (!isRelevantBlock) return false;
+        const blockStart = new Date(block.start_datetime);
+        const blockEnd = new Date(block.end_datetime);
+        return slotStart < blockEnd && slotEnd > blockStart;
+      });
+
+      const isDoubleBooked = existingBookings.some((booking) => booking.time_text === timeString);
+
+      if (isDoubleBooked && !isBlockedOff) {
+        waitlist.push(timeString);
+      }
+
+      current.setMinutes(current.getMinutes() + 30);
     }
 
-    // Directly advance step to avoid race condition with state update validation
+    return waitlist;
+  };
+
+  const localTimeSlots = getAvailableTimeSlots();
+  const localWaitlistSlots = getWaitlistTimeSlots();
+
+  const shopIdForSlots = bookingState?.shopId || urlShopId;
+  const { data: serverDaySlots, isFetching: slotsLoading } = useQuery({
+    queryKey: ['barber-day-slots', activeBarberId, selectedDate?.toISOString?.()?.slice(0, 10), shopIdForSlots, totalDuration],
+    queryFn: () =>
+      sovereign.bookings.getBarberDaySlots(activeBarberId, {
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        duration: totalDuration || 30,
+        shop_id: shopIdForSlots || undefined,
+        context_type: shopIdForSlots ? 'shop' : 'independent',
+      }),
+    enabled: Boolean(activeBarberId && selectedDate),
+    staleTime: 30_000,
+  });
+
+  const timeSlots = serverDaySlots?.available ?? localTimeSlots;
+  const waitlistTimeSlots = serverDaySlots?.waitlist ?? localWaitlistSlots;
+
+  const handleASAP = async () => {
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const shopId = bookingState?.shopId || urlShopId;
+
+    const pickNextSlot = (slots, baseDate) => {
+      const available = slots?.available ?? [];
+      if (available.length === 0) return null;
+      const currentHour = baseDate.getHours();
+      const nextToday = available.find((slot) => {
+        const [time, period] = slot.split(' ');
+        let [hours] = time.split(':').map(Number);
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return hours > currentHour;
+      });
+      return nextToday ?? available[0];
+    };
+
+    try {
+      let targetDate = today;
+      let slots = await sovereign.bookings.getBarberDaySlots(activeBarberId, {
+        date: format(today, 'yyyy-MM-dd'),
+        duration: totalDuration || 30,
+        shop_id: shopId || undefined,
+        context_type: shopId ? 'shop' : 'independent',
+      });
+      let chosen = pickNextSlot(slots, now);
+
+      if (!chosen) {
+        targetDate = new Date(today);
+        targetDate.setDate(targetDate.getDate() + 1);
+        slots = await sovereign.bookings.getBarberDaySlots(activeBarberId, {
+          date: format(targetDate, 'yyyy-MM-dd'),
+          duration: totalDuration || 30,
+          shop_id: shopId || undefined,
+          context_type: shopId ? 'shop' : 'independent',
+        });
+        chosen = slots?.available?.[0] ?? '10:00 AM';
+      }
+
+      setSelectedDate(targetDate);
+      setSelectedTime(chosen);
+    } catch {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setSelectedDate(tomorrow);
+      setSelectedTime('10:00 AM');
+    }
+
     if (currentStep < STEPS.length - 1) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24 lg:pb-8">
+    <div className="stb-page pb-24 lg:pb-8 stb-page">
       <MetaTags
         title="Book Appointment"
         description="Find and book with the best barbers in your area"
       />
 
       {/* Progress Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold">Book Appointment</h1>
+      <div className="sticky top-0 z-30 stb-glass border-b border-border/80 bg-background/95 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-5">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-0.5">Booking</p>
+              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight">Book Appointment</h1>
+            </div>
             {currentStep > 0 && currentStep < 3 && !isContextValidating && (
               <Button variant="ghost" size="sm" onClick={handleBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
@@ -1089,35 +1918,44 @@ export default function BookingFlow() {
             )}
           </div>
 
-          {/* Step Indicator */}
-          <div className="flex items-center gap-2">
+          {/* Step Indicator, compact on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {STEPS.map((step, index) => (
               <React.Fragment key={step}>
                 <div className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all",
-                  index === currentStep ? "bg-primary/10 text-primary" :
-                    index < currentStep ? "bg-gray-50 text-muted-foreground" : "text-muted-foreground"
+                  "flex shrink-0 items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all font-semibold",
+                  index === currentStep ? "stb-step-active" :
+                    index < currentStep ? "stb-step-done" : "bg-muted/60 text-muted-foreground"
                 )}>
                   {index < currentStep ? (
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4 shrink-0" />
                   ) : (
                     <span className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                      index === currentStep ? "bg-primary text-white" : "bg-gray-200"
+                      "w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold",
+                      index === currentStep ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background/80 text-muted-foreground"
                     )}>
                       {index + 1}
                     </span>
                   )}
-                  <span className="text-sm font-medium hidden md:inline">{step}</span>
+                  <span className="text-xs sm:text-sm font-semibold hidden sm:inline">{step}</span>
+                  <span className="sr-only sm:hidden">{step}</span>
                 </div>
                 {index < STEPS.length - 1 && (
                   <div className={cn(
-                    "h-0.5 flex-1 max-w-12",
-                    index < currentStep ? "bg-primary" : "bg-gray-200"
+                    "h-0.5 shrink-0 w-4 sm:flex-1 sm:max-w-12",
+                    index < currentStep ? "bg-primary" : "bg-muted"
                   )} />
                 )}
               </React.Fragment>
             ))}
+          </div>
+
+          {/* Progress bar */}
+          <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={currentStep + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
+            <div
+              className="h-full bg-primary transition-all duration-300 rounded-full"
+              style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+            />
           </div>
         </div>
       </div>
@@ -1153,6 +1991,13 @@ export default function BookingFlow() {
                 allBarbers={allBarbers}
                 totalDuration={totalDuration}
                 totalPrice={totalPrice}
+                comboSavings={comboSavings}
+                bundleMatch={bundleMatch}
+                bookingOffers={bookingOffers}
+                offersLoading={offersLoading}
+                onAddServices={handleAddServices}
+                onAddBundle={handleAddBundle}
+                onApplyPromoFromOffer={handleApplyPromoFromOffer}
                 onNext={handleNext}
                 canProceed={canProceed()}
               />
@@ -1166,6 +2011,12 @@ export default function BookingFlow() {
                 selectedTime={selectedTime}
                 onSelectTime={setSelectedTime}
                 timeSlots={timeSlots}
+                waitlistTimeSlots={waitlistTimeSlots}
+                slotsLoading={slotsLoading}
+                onJoinWaitlist={(time) => {
+                  if (time) setSelectedTime(time);
+                  setWaitlistDialogOpen(true);
+                }}
                 onASAP={handleASAP}
                 onNext={handleNext}
                 canProceed={canProceed()}
@@ -1187,8 +2038,17 @@ export default function BookingFlow() {
                 </div>
 
                 <div className="max-w-3xl mx-auto space-y-6">
+                  {groupMode && (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+                      <p className="font-semibold mb-1">Group booking, friends &amp; family</p>
+                      <p>
+                        Book multiple guests in one visit at the shop (default) or at home if you choose mobile.
+                        No account needed for your party, add guest names at checkout, or sign in for promos and online pay.
+                      </p>
+                    </div>
+                  )}
                   {/* Location */}
-                  <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-primary" />
                       Location
@@ -1197,11 +2057,19 @@ export default function BookingFlow() {
                       Enter your address to find nearby barbers. Leave empty to skip location-based filtering.
                     </p>
                     <div className="flex gap-3">
-                      <Input
+                      <AddressAutocomplete
                         placeholder="Enter your address or zip code"
                         value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className="h-12 flex-1"
+                        onChange={(value) => {
+                          setAddress(value);
+                          setAddressCoords(null);
+                        }}
+                        onSelect={(item) => {
+                          setAddress(item.formatted_address);
+                          setAddressCoords({ latitude: item.latitude, longitude: item.longitude });
+                          persistPreferredLocation(item);
+                        }}
+                        inputClassName="h-12"
                       />
                       <Button
                         type="button"
@@ -1223,7 +2091,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Minimum Rating */}
-                  <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Star className="w-5 h-5 text-primary" />
                       Minimum Rating
@@ -1250,53 +2118,137 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Location Preference */}
-                  <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-primary" />
                       Service Location
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Where would you like the service to take place?
+                      Where would you like the service? Only barbers matching your choice will appear.
                     </p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className={cn(
+                      'grid gap-3',
+                      activeBarberId && effectiveServiceModes.both ? 'grid-cols-2' :
+                      activeBarberId && effectiveServiceModes.mobile_only ? 'grid-cols-1' :
+                      isShopContext && effectiveServiceModes.shop_only ? 'grid-cols-1' :
+                      'grid-cols-3'
+                    )}>
+                      {(!activeBarberId || effectiveServiceModes.both || effectiveServiceModes.shop) && (
                       <button
                         onClick={() => setLocationType('any')}
                         className={cn(
                           "py-3 px-4 rounded-lg border-2 font-medium transition-all text-sm",
-                          locationType === 'any'
+                          !activeBarberId && locationType === 'any'
                             ? "border-primary bg-primary text-white"
-                            : "border-border hover:border-primary/50"
+                            : "border-border hover:border-primary/50",
+                          (activeBarberId || isShopContext) && "hidden"
                         )}
                       >
                         Any
                       </button>
+                      )}
+                      {(!activeBarberId || effectiveServiceModes.shop || effectiveServiceModes.both) && (
                       <button
                         onClick={() => setLocationType('shop')}
                         className={cn(
                           "py-3 px-4 rounded-lg border-2 font-medium transition-all text-sm",
-                          locationType === 'shop'
+                          locationType === 'shop' || (activeBarberId && effectiveServiceModes.shop_only) || (isShopContext && effectiveServiceModes.shop_only)
                             ? "border-primary bg-primary text-white"
                             : "border-border hover:border-primary/50"
                         )}
                       >
-                        At Barber's
+                        At barber&apos;s
                       </button>
+                      )}
+                      {!isShopContext && (!activeBarberId || effectiveServiceModes.mobile || effectiveServiceModes.both) && (
                       <button
                         onClick={() => setLocationType('mobile')}
                         className={cn(
                           "py-3 px-4 rounded-lg border-2 font-medium transition-all text-sm",
-                          locationType === 'mobile'
+                          locationType === 'mobile' || (activeBarberId && effectiveServiceModes.mobile_only)
                             ? "border-primary bg-primary text-white"
                             : "border-border hover:border-primary/50"
                         )}
                       >
-                        At My Place
+                        At my place
                       </button>
+                      )}
+                    </div>
+                    {isShopContext && effectiveServiceModes.shop_only && (
+                      <p className="text-xs text-muted-foreground mt-3">
+                        This shop only accepts in-shop visits, clients come to the location.
+                      </p>
+                    )}
+                    {activeBarberId && effectiveServiceModes.shop_only && !isShopContext && (
+                      <p className="text-xs text-muted-foreground mt-3">This barber only accepts in-shop visits.</p>
+                    )}
+                    {activeBarberId && effectiveServiceModes.mobile_only && (
+                      <p className="text-xs text-violet-700 mt-3">
+                        {normalizedSelectedBarber?.is_vip
+                          ? 'VIP at-home specialist, enter your address at checkout for visits to your location.'
+                          : 'This barber only offers at-home visits, you\u2019ll enter your address at checkout.'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Spoken language */}
+                  <div className="bg-card rounded-2xl border border-border p-6">
+                    <h3 className="font-bold mb-2 flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-primary" />
+                      Spoken language
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Prefer a barber or shop team that speaks your language
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPreferredLanguage('')}
+                        className={cn(
+                          'px-3 py-2 rounded-lg border text-sm font-medium',
+                          !preferredLanguage ? 'border-primary bg-primary text-white' : 'border-border'
+                        )}
+                      >
+                        Any
+                      </button>
+                      {languageOptions.slice(0, 10).map((lang) => (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => setPreferredLanguage(lang.code === preferredLanguage ? '' : lang.code)}
+                          className={cn(
+                            'px-3 py-2 rounded-lg border text-sm font-medium',
+                            preferredLanguage === lang.code ? 'border-primary bg-primary text-white' : 'border-border'
+                          )}
+                        >
+                          {lang.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
+                  <div className="bg-card rounded-2xl border border-border p-6">
+                    <h3 className="font-bold mb-2 flex items-center gap-2">
+                      <Baby className="w-5 h-5 text-primary" />
+                      {CHILDREN_FRIENDLY_LABEL}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Show only barbers or shops that welcome children
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setKidsWelcomeOnly((v) => !v)}
+                      className={cn(
+                        'px-4 py-2 rounded-lg border text-sm font-medium',
+                        kidsWelcomeOnly ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-border'
+                      )}
+                    >
+                      {kidsWelcomeOnly ? `${CHILDREN_FRIENDLY_LABEL} only` : 'Any provider'}
+                    </button>
+                  </div>
+
                   {/* Provider Type */}
-                  <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Scissors className="w-5 h-5 text-primary" />
                       Provider Type
@@ -1342,7 +2294,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Acceptance Type */}
-                  <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Check className="w-5 h-5 text-primary" />
                       Booking Confirmation
@@ -1406,7 +2358,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Sort Preference */}
-                  <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-primary" />
                       Sort Results By
@@ -1494,7 +2446,7 @@ export default function BookingFlow() {
             {/* STEP 4: Results or Confirmation */}
             {(currentContent === 'results' || currentContent === 'confirmation') && (
               <BookingConfirmationStep
-                hasBarberId={!!bookingState?.barberId}
+                hasBarberId={!!(bookingState?.barberId || urlBarberId)}
                 selectedBarber={selectedBarber}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
@@ -1508,17 +2460,69 @@ export default function BookingFlow() {
                 onApplyPromo={handleApplyPromo}
                 onRemovePromo={() => { setAppliedPromotion(null); setPromoCode(''); }}
                 promoError={promoError}
+                availablePromotions={bookingOffers?.promotions ?? []}
+                loyaltyRewardCodes={loyaltyRewardCodes}
+                onApplyPromoFromOffer={handleApplyPromoFromOffer}
                 basePrice={basePrice}
-                discountAmount={discountAmount}
+                subtotalAfterCombo={subtotalAfterCombo}
+                comboSavings={comboSavings}
+                bundleMatch={bundleMatch}
+                discountAmount={promoDiscountAmount}
                 totalPrice={totalPrice}
+                grandTotal={grandTotal}
+                travelFee={travelFeeAmount}
+                travelDistanceKm={travelQuote?.distance_km}
+                travelZoneLabel={travelQuote?.zone_label}
+                travelQuoteLoading={travelQuoteLoading || travelQuoteFetching}
+                travelOutOfArea={travelOutOfArea}
+                atHomeVisit={atHomeVisitForQuote}
+                pointsEarnedPreview={pointsEarnedPreview}
                 address={address}
                 onConfirmBooking={handleConfirmBooking}
-                isConfirming={createBookingMutation.isPending}
+                isConfirming={createBookingMutation.isPending || createGuestBookingMutation.isPending}
+                confirmDisabled={
+                  (groupModeActive && (groupQuoteLoading || !groupQuote)) ||
+                  (atHomeVisitForQuote &&
+                    address.trim().length >= 8 &&
+                    (travelQuoteLoading || travelQuoteFetching)) ||
+                  travelOutOfArea ||
+                  (isGuestCheckout && guestBookingBlock.blocked)
+                }
+                isGuestCheckout={isGuestCheckout}
+                guestContact={guestContact}
+                onGuestContactChange={setGuestContact}
+                guestContactError={guestContactError}
+                guestBookingBlocked={guestBookingBlock.blocked}
+                guestBlockReason={guestBookingBlock.reason}
+                signInReturnPath={location.pathname + location.search}
+                cashAvailability={cashAvailability}
+                paymentProtectionPreview={paymentProtectionPreview}
+                paymentMethod={paymentMethod}
+                onPaymentMethodChange={setPaymentMethod}
                 filteredBarbers={filteredBarbers}
                 isLoadingBarbers={isLoadingBarbers}
                 onBarberSelect={handleBarberSelect}
                 sortBy={sortBy}
                 onGoToPreferences={() => setCurrentStep(2)}
+                groupMode={groupModeActive}
+                groupSearchMode={groupMode && !groupModeActive}
+                groupBookingCaps={groupBookingCaps}
+                groupGuests={groupGuests}
+                onGroupGuestsChange={setGroupGuests}
+                groupEventLabel={groupEventLabel}
+                onGroupEventLabelChange={setGroupEventLabel}
+                groupQuote={groupQuote}
+                groupDiscountAmount={groupQuote?.group_discount_amount ?? 0}
+                locationType={locationType}
+                onAddressChange={(value) => {
+                  setAddress(value);
+                  setAddressCoords(null);
+                }}
+                onAddressSelect={(item) => {
+                  setAddress(item.formatted_address);
+                  setAddressCoords({ latitude: item.latitude, longitude: item.longitude });
+                  persistPreferredLocation(item);
+                }}
               />
             )}
           </AnimatePresence>
@@ -1527,17 +2531,49 @@ export default function BookingFlow() {
 
       {/* Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="sm:max-w-md bg-card border-border text-foreground">
+        <DialogContent className="sm:max-w-md bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
           <div className="text-center py-4">
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary/20">
               <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
 
-            <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-            <p className="text-gray-400 mb-6">You're all set. We've sent a confirmation email.</p>
+            <h2 className="text-2xl font-bold mb-2">
+              {confirmedPaymentMethod === 'cash_at_store' ? 'Booking requested!' : 'Booking Confirmed!'}
+            </h2>
+            <p className="text-muted-foreground mb-2">
+              {confirmedPaymentMethod === 'cash_at_store'
+                ? confirmedPaymentStep === 'save_card'
+                  ? 'Save a card on file to secure your appointment. At your visit, pay your barber in the shop (cash or card on their POS).'
+                  : 'Pay your barber in the shop at your appointment (cash or card on their POS). They will confirm once ready.'
+                : confirmedPaymentStep === 'deposit'
+                  ? "Booking reserved, complete your deposit to confirm."
+                  : confirmedPaymentStep === 'auth_hold'
+                    ? "Booking reserved, authorize your card to confirm."
+                    : confirmedPaymentStep === 'save_card'
+                      ? "Booking reserved, save your card to confirm."
+                      : "You're all set. We've sent a confirmation email."}
+            </p>
+            {confirmedBookingMeta && (confirmedBookingMeta.isGroup || confirmedBookingMeta.isAtHome) ? (
+              <p className="text-sm text-foreground/80 mb-6 px-2">
+                {confirmedBookingMeta.isGroup && confirmedBookingMeta.isAtHome
+                  ? `Group at-home booking for ${confirmedBookingMeta.partySize} guests${confirmedBookingMeta.eventLabel ? ` (${confirmedBookingMeta.eventLabel})` : ''}. Your barber will travel to ${confirmedBookingMeta.address || 'your address'}.`
+                  : confirmedBookingMeta.isGroup
+                    ? `Group booking for ${confirmedBookingMeta.partySize} guests at the shop${confirmedBookingMeta.eventLabel ? `, ${confirmedBookingMeta.eventLabel}` : ''}. Friends and family do not need their own accounts.`
+                    : `At-home visit, your barber will come to ${confirmedBookingMeta.address || 'your address'}.`}
+              </p>
+            ) : (
+              <div className="mb-6" aria-hidden />
+            )}
 
             <div className="space-y-2">
-              {confirmedBookingId && (
+              {confirmedGuestToken ? (
+                <Link to={createPageUrl(`GuestBooking?token=${encodeURIComponent(confirmedGuestToken)}`)}>
+                  <Button className="w-full h-11 mb-2">
+                    View your booking
+                  </Button>
+                </Link>
+              ) : null}
+              {confirmedBookingId && !confirmedGuestToken && (confirmedPaymentMethod !== 'cash_at_store' || confirmedPaymentStep === 'save_card') && (
                 <Button
                   onClick={() => createPaymentSessionMutation.mutate(confirmedBookingId)}
                   disabled={createPaymentSessionMutation.isPending}
@@ -1548,27 +2584,61 @@ export default function BookingFlow() {
                   ) : (
                     <DollarSign className="w-4 h-4 mr-2" />
                   )}
-                  Pay with Card (Stripe)
+                  {confirmedPaymentStep === 'deposit'
+                    ? 'Pay deposit (Stripe)'
+                    : confirmedPaymentStep === 'auth_hold'
+                      ? 'Authorize card (Stripe)'
+                      : confirmedPaymentStep === 'save_card'
+                        ? 'Save card on file (Stripe)'
+                        : 'Pay with Card (Stripe)'}
                 </Button>
               )}
-              <Link to={createPageUrl('Dashboard')}>
-                <Button variant="outline" className="w-full border-white/10 hover:bg-white/5 text-gray-300 h-11">
-                  <Home className="w-4 h-4 mr-2" /> Go to Dashboard
+              <Link to={createPageUrl(confirmedGuestToken ? 'Explore' : 'Dashboard')}>
+                <Button variant="outline" className="w-full h-11">
+                  <Home className="w-4 h-4 mr-2" />
+                  {confirmedGuestToken ? 'Continue exploring' : 'Go to Dashboard'}
                 </Button>
               </Link>
               <Link to={createPageUrl('Explore')}>
-                <Button variant="outline" className="w-full border-white/10 hover:bg-white/5 text-gray-300">
+                <Button variant="outline" className="w-full">
                   Continue Exploring
                 </Button>
               </Link>
             </div>
 
             {confirmedBookingId && (
-              <p className="text-xs text-gray-600 mt-4">Order ID: #{confirmedBookingId}</p>
+              <p className="text-xs text-muted-foreground mt-4">Order ID: #{confirmedBookingId}</p>
             )}
           </div>
+          <ReferralShareCard
+            className="mt-4 text-left"
+            title="Invite a friend"
+            subtitle="Share ShopTheBarber, you earn when they complete their first booking."
+          />
         </DialogContent>
       </Dialog>
+
+      <BookingWaitlistDialog
+        open={waitlistDialogOpen}
+        onOpenChange={setWaitlistDialogOpen}
+        selectedDate={selectedDate}
+        selectedTime={selectedTime}
+        barberId={activeBarberId}
+        shopId={bookingState?.shopId || urlShopId}
+        serviceId={selectedServices?.[0]}
+        serviceIds={selectedServices}
+        barberName={normalizedSelectedBarber?.name}
+        barberImageUrl={normalizedSelectedBarber?.image_url}
+        serviceName={
+          selectedServices.length === 1
+            ? getServiceDetails(selectedServices[0]).name
+            : selectedServices.length > 1
+              ? `${selectedServices.length} services`
+              : undefined
+        }
+        servicePrice={priceQuote?.final_price ?? basePriceLocal}
+        serviceDuration={priceQuote?.total_duration_minutes ?? totalDurationLocal}
+      />
     </div>
   );
 }

@@ -1,15 +1,27 @@
 import { MapPin, Star, Heart, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { RefreshIndicator } from '@/components/ui/refresh-indicator';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { LocalBusinessSchema } from '@/components/seo/SchemaMarkup';
+import { HairSalonSchema } from '@/components/seo/SchemaMarkup';
+import { shopProfileUrl } from '@/lib/seoUtils';
 import LocationMap from '@/components/ui/location-map';
+import ReviewCard from '@/components/ui/review-card';
+import SpokenLanguagesBadges from '@/components/languages/SpokenLanguagesBadges';
+import ChildrenFriendlyBadge from '@/components/childrenFriendly/ChildrenFriendlyBadge';
+import ProviderAttestationBadges from '@/components/providerAttestation/ProviderAttestationBadges';
+import ServiceLocationBadges from '@/components/serviceLocation/ServiceLocationBadges';
+import ProviderPublicStats from '@/components/providerStats/ProviderPublicStats';
+import ProviderShowcasePublic from '@/components/providerShowcase/ProviderShowcasePublic';
+import ShowcaseEmptyState from '@/components/providerShowcase/ShowcaseEmptyState';
+import { mergeShowcaseWithFallback } from '@/utils/showcaseFallback';
+import { parseSpokenLanguages } from '@/lib/languages';
+import { parseChildrenFriendly } from '@/lib/childrenFriendly';
 import { toast } from 'sonner';
 export default function ShopProfile() {
     const queryClient = useQueryClient();
@@ -28,6 +40,18 @@ export default function ShopProfile() {
         enabled: !!shopId
     });
 
+    const { data: shopShowcase } = useQuery({
+        queryKey: ['shop-showcase', shopId],
+        queryFn: () => (shopId ? sovereign.showcase.getShopPublic(shopId) : null),
+        enabled: !!shopId,
+    });
+
+    const { data: shopAttestation } = useQuery({
+        queryKey: ['shop-attestation', shopId],
+        queryFn: () => (shopId ? sovereign.providerAttestation.getShop(shopId) : null),
+        enabled: !!shopId,
+    });
+
     const { data: favorites = [] } = useQuery({
         queryKey: ['favorites', user?.id],
         queryFn: () => user ? sovereign.entities.Favorite.filter({ user_id: user.id }) : [],
@@ -40,7 +64,7 @@ export default function ShopProfile() {
         mutationFn: async () => {
             if (!user) {
                 toast.error("Please login first");
-                navigate(createPageUrl('SignIn'));
+                navigate(signInUrlWithReturn());
                 return;
             }
             if (isFavorited) {
@@ -64,18 +88,13 @@ export default function ShopProfile() {
     const initiateChat = async () => {
         if (!user) {
             toast.error("Please login to send messages");
-            navigate(createPageUrl('SignIn'));
+            navigate(signInUrlWithReturn());
             return;
         }
 
         try {
-            const members = await sovereign.entities.ShopMember.filter({ shop_id: shopId, role: 'owner' });
-            const owner = members[0];
-            if (owner && owner.barber_id) {
-                navigate(createPageUrl(`Chat?contactId=${owner.barber_id}`));
-            } else {
-                toast.error("Contact not available for this shop");
-            }
+            const contact = await sovereign.messages.resolveContact({ shop_id: shopId });
+            navigate(createPageUrl(`Chat?contact=${contact.user_id}`));
         } catch {
             toast.error("Could not reach the shop");
         }
@@ -108,7 +127,19 @@ export default function ShopProfile() {
         enabled: !!shopId
     });
 
-    const isRefreshing = isShopFetching || isBarbersFetching || isServicesFetching;
+    const { data: shopLocation } = useQuery({
+        queryKey: ['shop-service-locations', shopId],
+        queryFn: () => sovereign.serviceLocation.getShop(shopId),
+        enabled: !!shopId,
+    });
+
+    const { data: reviews = [], isFetching: isReviewsFetching } = useQuery({
+        queryKey: ['shop-reviews', shopId],
+        queryFn: () => (shopId ? sovereign.reviews.listPublic('shop', shopId, { limit: 12 }) : []),
+        enabled: !!shopId,
+    });
+
+    const isRefreshing = isShopFetching || isBarbersFetching || isServicesFetching || isReviewsFetching;
 
     if (!shop && !isShopFetching) return <div className="p-8 text-center">Shop not found</div>;
 
@@ -120,21 +151,25 @@ export default function ShopProfile() {
         image_url: "",
     };
 
+    const effectiveShopShowcase = mergeShowcaseWithFallback(shopShowcase, shop?.created_at);
+
     return (
-        <div className="min-h-screen bg-background pb-24 lg:pb-8">
+        <div className="stb-page lg:pb-8">
         <div className="container mx-auto px-4 md:px-6 py-8">
             <MetaTags
                 title={displayShop.name}
                 description={`Visit ${displayShop.name}. Top-rated barbershop with ${displayShop.rating} stars.`}
                 image={displayShop.image_url}
+                canonicalUrl={shopId ? shopProfileUrl(shopId) : undefined}
             />
-            <LocalBusinessSchema
+            <HairSalonSchema
                 name={displayShop.name}
                 image={displayShop.image_url}
-                address={displayShop.location || displayShop.address}
+                location={displayShop.location || displayShop.address}
                 rating={displayShop.rating}
                 reviewCount={displayShop.review_count}
                 priceRange="$$"
+                url={shopId ? shopProfileUrl(shopId) : undefined}
             />
 
             {/* Shop Header */}
@@ -168,10 +203,48 @@ export default function ShopProfile() {
                                 <MapPin className="w-5 h-5 text-primary" />
                                 <span className="text-white/90">{displayShop.location || displayShop.address}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
-                                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                <span className="font-bold">{displayShop.rating || 'New'}</span>
-                                <span className="text-white/60 font-normal">({displayShop.review_count || 0} reviews)</span>
+                            {parseSpokenLanguages(displayShop.spoken_languages).length > 0 && (
+                                <div className="mt-3">
+                                    <SpokenLanguagesBadges languages={parseSpokenLanguages(displayShop.spoken_languages)} max={6} />
+                                </div>
+                            )}
+                            {parseChildrenFriendly(displayShop.children_friendly) && (
+                                <div className="mt-3">
+                                    <ChildrenFriendlyBadge />
+                                </div>
+                            )}
+                            {(shopAttestation?.licensed || shopAttestation?.insured) && (
+                                <div className="mt-3">
+                                    <ProviderAttestationBadges
+                                        licensed={shopAttestation.licensed}
+                                        insured={shopAttestation.insured}
+                                    />
+                                </div>
+                            )}
+                            {shopLocation && (
+                                <div className="mt-3">
+                                    <ServiceLocationBadges barber={shopLocation} size="sm" />
+                                </div>
+                            )}
+                            <div className="flex flex-wrap items-center gap-2 mt-3">
+                                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
+                                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                    <span className="font-bold">{displayShop.rating || 'New'}</span>
+                                    <span className="text-white/60 font-normal">({displayShop.review_count || 0} reviews)</span>
+                                </div>
+                                {effectiveShopShowcase?.founded_year && (
+                                    <div className="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 text-sm text-white/90">
+                                        Est. {effectiveShopShowcase.founded_year}
+                                    </div>
+                                )}
+                                {effectiveShopShowcase?.member_since_label && (
+                                    <div className="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 text-sm text-white/90">
+                                        Member since {effectiveShopShowcase.member_since_label}
+                                    </div>
+                                )}
+                                <div className="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 text-sm text-white/90">
+                                    <ProviderPublicStats shopId={shopId} variant="compact-light" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -188,12 +261,17 @@ export default function ShopProfile() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 <div className="lg:col-span-8 space-y-12">
-                    {/* Description */}
-                    {displayShop.description && (
-                        <div>
-                            <h2 className="text-2xl font-black text-foreground mb-4">About</h2>
-                            <p className="text-muted-foreground text-lg leading-relaxed">{displayShop.description}</p>
-                        </div>
+                    {/* About & professional story */}
+                    <ProviderShowcasePublic
+                        showcase={effectiveShopShowcase}
+                        bio={displayShop.description}
+                    />
+                    {!effectiveShopShowcase && !displayShop.description && (
+                        <ShowcaseEmptyState
+                            variant="shop_story"
+                            onAction={initiateChat}
+                            actionVariant="outline"
+                        />
                     )}
 
                     {/* Team */}
@@ -205,7 +283,7 @@ export default function ShopProfile() {
 
                         {shopBarbers.length === 0 ? (
                             <div className="p-12 text-center bg-muted/50 rounded-[32px] border-2 border-dashed border-border">
-                                <p className="text-slate-500 font-bold">No barbers listed for this shop yet.</p>
+                                <p className="text-muted-foreground font-bold">No barbers listed for this shop yet.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -218,7 +296,7 @@ export default function ShopProfile() {
                                                     name={barberRecord.name}
                                                     className="w-24 h-24 border-4 border-white shadow-xl"
                                                 />
-                                                <div className="absolute -bottom-1 -right-1 bg-white rounded-full px-2 py-1 shadow-lg text-xs font-black flex items-center gap-1 border border-border">
+                                                <div className="absolute -bottom-1 -right-1 bg-card rounded-full px-2 py-1 shadow-lg text-xs font-black flex items-center gap-1 border border-border">
                                                     <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> {barberRecord.rating || 'New'}
                                                 </div>
                                             </div>
@@ -240,7 +318,7 @@ export default function ShopProfile() {
                     <div>
                         <h2 className="text-2xl font-black text-foreground mb-8">Popular Services</h2>
                         {services.length === 0 ? (
-                            <p className="text-slate-500 font-bold">No services available at this shop.</p>
+                            <p className="text-muted-foreground font-bold">No services available at this shop.</p>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {services.map((service) => {
@@ -307,6 +385,17 @@ export default function ShopProfile() {
                     </div>
                 </div>
             </div>
+
+            {reviews.length > 0 && (
+                <section className="mt-16">
+                    <h2 className="text-2xl font-black text-foreground mb-6">Client Reviews</h2>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {reviews.map((review) => (
+                            <ReviewCard key={review.id} review={review} />
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
         </div>
     );

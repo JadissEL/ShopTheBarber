@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { resolveOptionalUserId } from '../auth/requestUser';
 
@@ -7,7 +7,7 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return await resolveOptionalUserId(request);
     };
 
-    // GET /api/vault/summary — total investment, points, quick replenish, vault history
+    // GET /api/vault/summary, total investment, points, quick replenish, vault history
     fastify.get('/api/vault/summary', async (request, reply) => {
         const userId = await getUserId(request);
         if (!userId) return reply.status(401).send({ error: 'Sign in to view your vault' });

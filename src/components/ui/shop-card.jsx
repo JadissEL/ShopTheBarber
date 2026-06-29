@@ -5,6 +5,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Star, MapPin, Users, ArrowRight, Heart } from 'lucide-react';
+import SpokenLanguagesBadges from '@/components/languages/SpokenLanguagesBadges';
+import ChildrenFriendlyBadge from '@/components/childrenFriendly/ChildrenFriendlyBadge';
+import ProviderAttestationBadges from '@/components/providerAttestation/ProviderAttestationBadges';
+import { parseSpokenLanguages } from '@/lib/languages';
+import { parseChildrenFriendly } from '@/lib/childrenFriendly';
+import { parseAttestationFlag } from '@/lib/providerAttestation';
+import ServiceLocationBadges from '@/components/serviceLocation/ServiceLocationBadges';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
@@ -32,7 +39,13 @@ export default function ShopCard({ shop }) {
         location: shop.location || 'Location Not Set',
         image_url: shop.image_url || "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800&auto=format&fit=crop",
         rating: shop.rating || 0,
-        review_count: shop.review_count || 0
+        review_count: shop.review_count || 0,
+        spoken_languages: parseSpokenLanguages(shop.spoken_languages),
+        children_friendly: parseChildrenFriendly(shop.children_friendly),
+        licensed: parseAttestationFlag(shop.attestation_licensed),
+        insured: parseAttestationFlag(shop.attestation_insured),
+        offers_shop_service: shop.offers_shop_service,
+        offers_mobile_service: shop.offers_mobile_service === true,
     };
 
     const isFavorited = favorites.some(f => f.target_id === shopData.id && f.target_type === 'shop');
@@ -68,7 +81,7 @@ export default function ShopCard({ shop }) {
     return (
         <Link to={createPageUrl(`ShopProfile?id=${shopData.id}`)} className="h-full block">
             <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }} className="h-full">
-                <Card className="overflow-hidden border border-border shadow-sm bg-card hover:shadow-md transition-all duration-300 h-full rounded-[1.5rem] group relative flex flex-col">
+                <Card className="overflow-hidden border border-border/80 shadow-sm ring-1 ring-border/50 bg-card hover:shadow-md transition-all duration-300 h-full rounded-2xl group relative flex flex-col">
 
                     {/* Image Section */}
                     <div className="relative aspect-[16/9] overflow-hidden">
@@ -91,7 +104,7 @@ export default function ShopCard({ shop }) {
                                 size="icon"
                                 variant="ghost"
                                 onClick={toggleFavorite}
-                                className={`w-10 h-10 rounded-full backdrop-blur-md transition-all border border-white/10 ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'bg-white/20 text-white hover:bg-white hover:text-red-500 dark:hover:bg-slate-800'}`}
+                                className={`w-10 h-10 rounded-full backdrop-blur-md transition-all border border-white/10 ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'bg-white/20 text-white hover:bg-card hover:text-red-500 dark:hover:bg-slate-800'}`}
                             >
                                 <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
                             </Button>
@@ -110,9 +123,22 @@ export default function ShopCard({ shop }) {
                         <h3 className="font-bold text-lg text-foreground leading-tight group-hover:text-primary transition-colors mb-1">{shopData.name}</h3>
 
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground/80" />
                             <span className="line-clamp-1">{shopData.location}</span>
                         </div>
+                        <SpokenLanguagesBadges languages={shopData.spoken_languages} size="xs" max={3} className="mb-3" />
+                        {shopData.children_friendly && (
+                            <ChildrenFriendlyBadge size="xs" className="mb-3" />
+                        )}
+                        {(shopData.licensed || shopData.insured) && (
+                            <ProviderAttestationBadges
+                                licensed={shopData.licensed}
+                                insured={shopData.insured}
+                                size="xs"
+                                className="mb-3"
+                            />
+                        )}
+                        <ServiceLocationBadges barber={shopData} size="xs" className="mb-3" />
 
                         <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
                             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">

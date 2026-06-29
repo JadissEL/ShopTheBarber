@@ -46,7 +46,6 @@ async function ensureDbUserFromClerk(profile: {
         data: {
             clerk_user_id: profile.clerk_user_id,
             email: profile.email,
-            password_hash: null,
             full_name: profile.full_name || profile.email.split('@')[0] || 'User',
             role: roleSafe,
             avatar_url: avatar,
@@ -75,11 +74,22 @@ export async function resolveUserFromBearer(token: string): Promise<ResolvedRequ
     };
 }
 
+function clerkSecretMissing(): boolean {
+    return !process.env.CLERK_SECRET_KEY?.trim();
+}
+
 /** Strict auth guard for protected routes. Sends 401 and returns false when unauthenticated. */
 export async function authenticateRequest(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         void reply.code(401).send({ error: 'Unauthorized' });
+        return false;
+    }
+    if (clerkSecretMissing()) {
+        void reply.code(503).send({
+            error: 'Authentication service unavailable',
+            hint: 'Set CLERK_SECRET_KEY in server/.env (same Clerk app as VITE_CLERK_PUBLISHABLE_KEY).',
+        });
         return false;
     }
     const user = await resolveUserFromBearer(authHeader.slice(7));

@@ -10,8 +10,19 @@ import { useAuth } from '@/lib/AuthContext';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import SavedAddressesManager, { addressToShipping } from '@/components/shipping/SavedAddressesManager';
+import { MarketplaceCheckoutLegalNotice } from '@/components/marketplace/MarketplaceCheckoutLegalNotice';
+import {
+  BUYER_TERMS_PATH,
+  MARKETPLACE_VAT_LABEL,
+  PLATFORM_FREE_SHIPPING_MIN,
+  computeMarketplaceShipping,
+  computeMarketplaceTax,
+  getMarketplaceVatRate,
+} from '@/lib/marketplaceLegal';
+
 const STEPS = ['SHIPPING', 'PAYMENT', 'REVIEW'];
-const TAX_RATE = 0.085;
 
 export default function Checkout() {
     const [searchParams] = useSearchParams();
@@ -19,21 +30,40 @@ export default function Checkout() {
     const status = searchParams.get('status');
     const orderId = searchParams.get('orderId');
     const { items, itemCount } = useCart();
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { isAuthenticated, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
 
     const [step, setStep] = useState(0);
     const [shipping, setShipping] = useState({
         fullName: '',
         street: '',
         city: '',
+        state: '',
         zip: '',
         phone: '',
+        savedAddressId: null,
     });
+    const [saveAddress, setSaveAddress] = useState(false);
+    const [showSavedPicker, setShowSavedPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [acceptedBuyerTerms, setAcceptedBuyerTerms] = useState(false);
+
+    const { data: defaultAddressLoaded } = useQuery({
+        queryKey: ['saved-addresses-checkout'],
+        queryFn: () => sovereign.shipping.listAddresses(),
+        enabled: isAuthenticated,
+    });
+
+    useEffect(() => {
+        if (!defaultAddressLoaded?.length || shipping.savedAddressId || shipping.fullName) return;
+        const def = defaultAddressLoaded.find((a) => a.is_default) || defaultAddressLoaded[0];
+        const mapped = addressToShipping(def);
+        if (mapped) setShipping(mapped);
+    }, [defaultAddressLoaded, shipping.savedAddressId, shipping.fullName]);
 
     const subtotal = items.reduce((sum, i) => sum + Number(i.product?.price ?? 0) * (i.quantity || 0), 0);
-    const tax = Math.round((subtotal * TAX_RATE) * 100) / 100;
-    const total = Math.round((subtotal + tax) * 100) / 100;
+    const shippingFee = computeMarketplaceShipping(subtotal);
+    const tax = computeMarketplaceTax(subtotal, shippingFee, getMarketplaceVatRate());
+    const total = Math.round((subtotal + shippingFee + tax) * 100) / 100;
 
     useEffect(() => {
         // Handle success state first (no auth needed)
@@ -42,12 +72,20 @@ export default function Checkout() {
             return;
         }
         
-        // Don't redirect while auth is loading
-        if (isAuthLoading) return;
+        // Don't redirect while Clerk or backend sync is in progress
+        if (isLoadingAuth) return;
+
+        // Signed in with Clerk but backend not ready, avoid SignIn redirect loop
+        if (isSignedIn && !isAuthenticated) {
+            if (syncStatus === 'error') {
+                navigate(createPageUrl('SetupGuide'), { replace: true });
+            }
+            return;
+        }
         
         // Auth check
         if (!isAuthenticated) {
-            navigate(createPageUrl('SignIn') + '?return=' + encodeURIComponent('/Checkout'), { replace: true });
+            navigate(`${createPageUrl('SignIn')  }?return=${  encodeURIComponent('/Checkout')}`, { replace: true });
             return;
         }
         
@@ -55,22 +93,32 @@ export default function Checkout() {
         if (itemCount === 0 && step < 2) {
             navigate(createPageUrl('ShoppingBag'), { replace: true });
         }
-    }, [status, orderId, isAuthenticated, isAuthLoading, itemCount, navigate, step]);
+    }, [status, orderId, isAuthenticated, isLoadingAuth, isSignedIn, syncStatus, itemCount, navigate, step]);
 
     const handleContinueToPayment = async () => {
-        if (!shipping.fullName?.trim() || !shipping.street?.trim() || !shipping.city?.trim() || !shipping.zip?.trim()) {
+        if (!acceptedBuyerTerms) {
+            toast.error('Please accept the marketplace purchase terms');
+            return;
+        }
+        const useSaved = !!shipping.savedAddressId;
+        if (!useSaved && (!shipping.fullName?.trim() || !shipping.street?.trim() || !shipping.city?.trim() || !shipping.zip?.trim())) {
             toast.error('Please fill in all required shipping fields');
             return;
         }
         setIsSubmitting(true);
         try {
-            const { url } = await sovereign.functions.invoke('create-product-checkout-session', {
-                shipping_full_name: shipping.fullName,
-                shipping_street: shipping.street,
-                shipping_city: shipping.city,
-                shipping_zip: shipping.zip,
-                shipping_phone: shipping.phone,
-            });
+            const payload = shipping.savedAddressId
+                ? { saved_address_id: shipping.savedAddressId }
+                : {
+                    shipping_full_name: shipping.fullName,
+                    shipping_street: shipping.street,
+                    shipping_city: shipping.city,
+                    shipping_state: shipping.state,
+                    shipping_zip: shipping.zip,
+                    shipping_phone: shipping.phone,
+                    save_address: saveAddress,
+                };
+            const { url } = await sovereign.functions.invoke('create-product-checkout-session', payload);
             if (url) {
                 window.location.href = url;
             } else {
@@ -90,18 +138,18 @@ export default function Checkout() {
     const isSuccess = status === 'success' && orderId;
 
     return (
-        <div className="min-h-screen bg-background pb-24 lg:pb-8">
+        <div className="stb-page pb-24 lg:pb-8">
             <MetaTags
-                title="Checkout – Shop The Barber"
+                title="Checkout - Shop The Barber"
                 description="Secure checkout for your order."
             />
 
-            <header className="sticky top-0 z-40 bg-white border-b border-slate-100">
+            <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
                 <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
                     <button
                         type="button"
                         onClick={() => (step > 0 ? setStep(step - 1) : navigate(createPageUrl('ShoppingBag')))}
-                        className="p-2 -ml-2 rounded-full text-slate-600 hover:bg-slate-100"
+                        className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted"
                         aria-label="Back"
                     >
                         <ChevronLeft className="w-5 h-5" />
@@ -139,10 +187,10 @@ export default function Checkout() {
                             <Lock className="w-8 h-8 text-primary" />
                         </div>
                         <h2 className="text-xl font-bold text-foreground mb-2">Thank you for your order</h2>
-                        <p className="text-slate-600 mb-1">Order #{orderId?.slice(-8)}</p>
-                        <p className="text-slate-500 text-sm mb-6">A confirmation email has been sent to your inbox.</p>
+                        <p className="text-muted-foreground mb-1">Order #{orderId?.slice(-8)}</p>
+                        <p className="text-muted-foreground text-sm mb-6">A confirmation email has been sent to your inbox.</p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                            <Link to={createPageUrl('OrderTracking') + '?id=' + encodeURIComponent(orderId || '')}>
+                            <Link to={`${createPageUrl('OrderTracking')  }?id=${  encodeURIComponent(orderId || '')}`}>
                                 <Button className="rounded-xl bg-primary text-primary-foreground hover:opacity-95 w-full sm:w-auto">Track Order</Button>
                             </Link>
                             <Link to={createPageUrl('Marketplace')}>
@@ -168,81 +216,162 @@ export default function Checkout() {
                         <section className="mb-8">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="font-bold text-foreground">Shipping Address</h2>
-                                <button type="button" className="text-sm text-primary hover:underline">
-                                    Saved Addresses
+                                <button
+                                    type="button"
+                                    className="text-sm text-primary hover:underline"
+                                    onClick={() => setShowSavedPicker((v) => !v)}
+                                >
+                                    {showSavedPicker ? 'Enter manually' : 'Saved addresses'}
                                 </button>
                             </div>
+
+                            {showSavedPicker ? (
+                                <SavedAddressesManager
+                                    compact
+                                    selectedId={shipping.savedAddressId}
+                                    onSelect={(addr) => {
+                                        const mapped = addressToShipping(addr);
+                                        if (mapped) {
+                                            setShipping(mapped);
+                                            setShowSavedPicker(false);
+                                        }
+                                    }}
+                                />
+                            ) : (
                             <div className="space-y-4">
                                 <div>
-                                    <Label htmlFor="fullName" className="text-slate-700">Full Name</Label>
+                                    <Label htmlFor="fullName" className="text-foreground/90">Full Name</Label>
                                     <Input
                                         id="fullName"
                                         placeholder="Alexander Sterling"
                                         value={shipping.fullName}
-                                        onChange={(e) => setShipping((s) => ({ ...s, fullName: e.target.value }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-slate-100 border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        onChange={(e) => setShipping((s) => ({ ...s, fullName: e.target.value, savedAddressId: null }))}
+                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="street" className="text-slate-700">Street Address</Label>
+                                    <Label htmlFor="street" className="text-foreground/90">Street Address</Label>
                                     <Input
                                         id="street"
                                         placeholder="742 Evergreen Terrace"
                                         value={shipping.street}
-                                        onChange={(e) => setShipping((s) => ({ ...s, street: e.target.value }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-slate-100 border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        onChange={(e) => setShipping((s) => ({ ...s, street: e.target.value, savedAddressId: null }))}
+                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="city" className="text-slate-700">City</Label>
+                                        <Label htmlFor="city" className="text-foreground/90">City</Label>
                                         <Input
                                             id="city"
                                             placeholder="Beverly Hills"
                                             value={shipping.city}
-                                            onChange={(e) => setShipping((s) => ({ ...s, city: e.target.value }))}
-                                            className="mt-1.5 h-11 rounded-xl bg-slate-100 border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                            onChange={(e) => setShipping((s) => ({ ...s, city: e.target.value, savedAddressId: null }))}
+                                            className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="zip" className="text-slate-700">Zip Code</Label>
+                                        <Label htmlFor="state" className="text-foreground/90">State</Label>
                                         <Input
-                                            id="zip"
-                                            placeholder="90210"
-                                            value={shipping.zip}
-                                            onChange={(e) => setShipping((s) => ({ ...s, zip: e.target.value }))}
-                                            className="mt-1.5 h-11 rounded-xl bg-slate-100 border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                            id="state"
+                                            placeholder="CA"
+                                            value={shipping.state}
+                                            onChange={(e) => setShipping((s) => ({ ...s, state: e.target.value, savedAddressId: null }))}
+                                            className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <Label htmlFor="phone" className="text-slate-700">Phone Number</Label>
+                                    <Label htmlFor="zip" className="text-foreground/90">Zip Code</Label>
+                                    <Input
+                                        id="zip"
+                                        placeholder="90210"
+                                        value={shipping.zip}
+                                        onChange={(e) => setShipping((s) => ({ ...s, zip: e.target.value, savedAddressId: null }))}
+                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="phone" className="text-foreground/90">Phone Number</Label>
                                     <Input
                                         id="phone"
                                         type="tel"
                                         placeholder="+1 (555) 000-0000"
                                         value={shipping.phone}
-                                        onChange={(e) => setShipping((s) => ({ ...s, phone: e.target.value }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-slate-100 border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        onChange={(e) => setShipping((s) => ({ ...s, phone: e.target.value, savedAddressId: null }))}
+                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
                                     />
                                 </div>
+                                {!shipping.savedAddressId && (
+                                    <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={saveAddress}
+                                            onChange={(e) => setSaveAddress(e.target.checked)}
+                                            className="rounded border-border"
+                                        />
+                                        Save this address to my profile
+                                    </label>
+                                )}
                             </div>
+                            )}
+                            {shippingFee === 0 ? (
+                                <p className="text-xs text-emerald-600 mt-3 font-medium">Free shipping on orders over ${PLATFORM_FREE_SHIPPING_MIN}</p>
+                            ) : (
+                                <p className="text-xs text-muted-foreground mt-3">Shipping: ${shippingFee.toFixed(2)}, Free over ${PLATFORM_FREE_SHIPPING_MIN}</p>
+                            )}
+                            <div className="mt-6 rounded-xl border border-border p-4 space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Subtotal</span>
+                                    <span>${subtotal.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Shipping</span>
+                                    <span>{shippingFee === 0 ? 'Free' : `$${shippingFee.toFixed(2)}`}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">{MARKETPLACE_VAT_LABEL}</span>
+                                    <span>${tax.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between font-semibold pt-2 border-t border-border">
+                                    <span>Total</span>
+                                    <span>${total.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <MarketplaceCheckoutLegalNotice />
+                            </div>
+                            <label className="flex items-start gap-2 text-sm text-muted-foreground mt-4 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={acceptedBuyerTerms}
+                                    onChange={(e) => setAcceptedBuyerTerms(e.target.checked)}
+                                    className="rounded border-border mt-0.5"
+                                />
+                                <span>
+                                    I agree to the{' '}
+                                    <Link to={BUYER_TERMS_PATH} className="text-primary hover:underline">
+                                        Marketplace Purchase Terms
+                                    </Link>{' '}
+                                    and understand products ship from individual sellers.
+                                </span>
+                            </label>
                         </section>
                     </>
                 ) : null}
             </main>
 
             {!isSuccess && itemCount > 0 && (
-                <footer className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 p-4 safe-area-pb lg:static lg:border-0 lg:bg-transparent lg:pt-0">
+                <footer className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-slate-200 p-4 safe-area-pb lg:static lg:border-0 lg:bg-transparent lg:pt-0">
                     <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                             <span className="font-bold text-foreground text-lg">${total.toFixed(2)}</span>
-                            <span className="text-sm text-slate-500">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
+                            <span className="text-sm text-muted-foreground">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
                         </div>
                         <Button
                             className="rounded-xl h-12 bg-primary text-primary-foreground hover:opacity-95 font-semibold gap-2 w-full sm:w-auto px-8"
                             onClick={handleContinueToPayment}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !acceptedBuyerTerms}
                         >
                             {isSubmitting ? 'Redirecting…' : 'Continue to Payment'}
                             <ArrowRight className="w-4 h-4" />

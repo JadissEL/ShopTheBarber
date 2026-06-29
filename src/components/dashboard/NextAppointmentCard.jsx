@@ -10,12 +10,12 @@ export default function NextAppointmentCard({ booking }) {
   if (!booking) {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="bg-white border border-slate-200 shadow-sm rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[200px]">
+        <Card className="bg-card border border-border shadow-sm rounded-[13px] p-8 text-center flex flex-col items-center justify-center min-h-[200px]">
           <div className="bg-primary/10 p-3 rounded-full mb-4">
             <CalendarPlus className="w-6 h-6 text-primary" />
           </div>
           <h3 className="text-lg font-bold text-foreground mb-1">No booking yet?</h3>
-          <p className="text-slate-500 text-sm mb-6 max-w-xs">Let's find your perfect cut in 2 minutes.</p>
+          <p className="text-muted-foreground text-sm mb-6 max-w-xs">Let's find your perfect cut in 2 minutes.</p>
           <Link to={createPageUrl('Explore')}>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-8 rounded-xl shadow-md">
               Book Now
@@ -26,22 +26,22 @@ export default function NextAppointmentCard({ booking }) {
     );
   }
 
-  const timeLabel = booking.time_label || `Tomorrow at ${booking.time || '10:30 AM'} · ${booking.duration_minutes || 45} mins`;
+  const timeLabel = booking.time_label || `Tomorrow at ${booking.time || '10:30 AM'}, ${booking.duration_minutes || 45} mins`;
   const location = booking.shop_name || booking.location || 'Mayfair, London';
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="bg-white border border-slate-200 shadow-sm overflow-hidden rounded-2xl hover:shadow-md transition-all">
+      <Card className="bg-card border border-border shadow-sm overflow-hidden rounded-[13px] hover:shadow-md transition-all stb-panel-hover">
         <div className="p-5">
-          <span className="inline-block px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-semibold uppercase tracking-wider mb-4">
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
             Next Appointment
           </span>
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
               <h3 className="text-xl font-bold text-foreground mb-1">{booking.service_name || 'Signature Fade & Beard Sculpt'}</h3>
-              <p className="text-slate-500 text-sm mb-4">{timeLabel}</p>
+              <p className="text-muted-foreground text-sm mb-4">{timeLabel}</p>
               <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                <span className="text-slate-600 text-sm flex items-center gap-1.5">
+                <span className="text-muted-foreground text-sm flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-slate-400" />
                   {location}
                 </span>

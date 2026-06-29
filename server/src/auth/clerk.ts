@@ -1,10 +1,11 @@
 /**
  * Clerk Authentication Middleware
- * 
- * Verifies Clerk JWT tokens and extracts user information
+ *
+ * Verifies Clerk JWT tokens and extracts user information.
  */
 
-import { createClerkClient } from '@clerk/backend';
+import { createClerkClient, verifyToken } from '@clerk/backend';
+
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
 });
@@ -17,6 +18,12 @@ export interface ClerkUser {
   avatar_url?: string | null;
 }
 
+function getVerifiedSubject(decoded: unknown): string | null {
+  if (!decoded || typeof decoded !== 'object') return null;
+  const sub = (decoded as { sub?: string }).sub;
+  return typeof sub === 'string' && sub.length > 0 ? sub : null;
+}
+
 /**
  * Verify Clerk JWT token and extract user info
  */
@@ -27,17 +34,16 @@ export async function verifyClerkToken(token: string): Promise<ClerkUser | null>
       return null;
     }
 
-    // Verify the token with Clerk
-    const decoded = await clerkClient.verifyToken(token, {
+    const decoded = await verifyToken(token, {
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 
-    if (!decoded || !decoded.sub) {
+    const clerkUserId = getVerifiedSubject(decoded);
+    if (!clerkUserId) {
       return null;
     }
 
-    // Get full user details from Clerk
-    const user = await clerkClient.users.getUser(decoded.sub);
+    const user = await clerkClient.users.getUser(clerkUserId);
 
     const name =
       user.fullName ||

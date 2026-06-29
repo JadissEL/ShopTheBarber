@@ -85,7 +85,7 @@ export default function MessagesPanel({ isOpen, onClose }) {
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:w-96 p-0 bg-card border-border">
         <div className="flex flex-col h-full">
-          <SheetHeader className="p-4 border-b border-border bg-white">
+          <SheetHeader className="p-4 border-b border-border bg-card">
             <SheetTitle className="text-foreground">Messages</SheetTitle>
           </SheetHeader>
 
@@ -122,7 +122,7 @@ export default function MessagesPanel({ isOpen, onClose }) {
             </ScrollArea>
           ) : (
             <>
-              <div className="p-3 border-b border-border bg-white flex items-center justify-between">
+              <div className="p-3 border-b border-border bg-card flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={() => setSelectedEmail(null)} className="text-muted-foreground hover:bg-muted">
                     <X className="w-4 h-4" />
@@ -148,13 +148,13 @@ export default function MessagesPanel({ isOpen, onClose }) {
                 </div>
               </ScrollArea>
 
-              <div className="p-3 border-t border-border bg-white flex gap-2">
+              <div className="p-3 border-t border-border bg-card flex gap-2">
                 <Input
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Type a message..."
-                  className="flex-1 border-border bg-slate-50 text-foreground placeholder:text-muted-foreground"
+                  className="flex-1 border-border bg-muted/50 text-foreground placeholder:text-muted-foreground"
                 />
                 <Button onClick={handleSendMessage} size="icon" className="shrink-0">
                   <Send className="w-4 h-4" />

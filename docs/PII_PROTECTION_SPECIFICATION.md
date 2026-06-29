@@ -9,7 +9,7 @@
 ### Tier 1: Never Expose (High Risk)
 - Full credit card numbers
 - CVV/CVC codes
-- Password hashes
+- Password hashes (column removed; Clerk-only auth)
 - Social security numbers
 - Full passport numbers
 - Bank account numbers

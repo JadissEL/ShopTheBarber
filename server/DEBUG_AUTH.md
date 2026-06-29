@@ -1,66 +1,33 @@
-# Auth 500 — Debug Steps
+# Auth debugging (Clerk-only)
 
-## Root cause (fixed)
+Interactive sign-in and sign-up are handled by **Clerk** on the frontend. The Fastify API does not expose `/api/auth/login` or `/api/auth/register`.
 
-**If Sign In / Sign Up always returned 500:** The backend was **crashing on startup** before it could handle any request. The error was:
+## Architecture
 
-`Method 'GET' already declared for route '/api/shops'` (FST_ERR_DUPLICATED_ROUTE).
+1. User signs in via Clerk (`SignIn` / `SignUp` components).
+2. Frontend sends `Authorization: Bearer <clerk_session_token>` to `/api/*`.
+3. `server/src/auth/requestUser.ts` verifies the token with Clerk, then links or provisions a row in Neon `users` (`clerk_user_id`, email, role).
+4. Protected routes use `authenticateRequest`; `/api/auth/me` returns the DB-backed profile.
 
-- **Cause:** `index.ts` registers generic entity routes including GET `/api/shops` for entity `shop`. `jobs/routes.ts` also registered GET `/api/shops`, causing a duplicate.
-- **Fix:** Removed the duplicate GET `/api/shops` handler from `server/src/jobs/routes.ts`. The generic route in index.ts serves `/api/shops`.
+## Required env
 
-After this fix, restart the backend; auth (login/register) should work.
+| Variable | Where |
+|----------|--------|
+| `CLERK_SECRET_KEY` | `server/.env` |
+| `VITE_CLERK_PUBLISHABLE_KEY` | root `.env` (Vite) |
 
----
+See `server/.env.example` — there is **no** `JWT_SECRET` for this app.
 
-## Before you start
+## Quick checks
 
-- **Backend** must be running on port **3001** (from the `server` folder: `npm run dev`).
-- **Frontend** runs on port **3000** and proxies `/api` to 3001.
-- On startup the server logs `[DB] SQLite path: ...` — confirm that path exists and the file is there.
+1. **Backend health:** `GET http://localhost:3001/api/health` → `{ ok: true, ... }`
+2. **Auth me (needs Bearer token):** `GET /api/auth/me` with Clerk session JWT
+3. **401 on protected routes:** Missing/expired Clerk token, or `CLERK_SECRET_KEY` mismatch with the frontend tenant
 
-## STEP 1 — Locate the failing request
+## Common issues
 
-- **Sign In:** `POST /api/auth/login` (body: `{ "email", "password" }`)
-- **Sign Up:** `POST /api/auth/register` (body: `{ "email", "password", "full_name", "role?" }`)
-- Frontend uses `BASE_URL = '/api'`, so requests go to `http://localhost:3000/api/auth/...` and Vite proxies to `http://localhost:3001/api/auth/...`
-
-## STEP 2 — Capture the exact error
-
-1. **Start the backend** (in this folder):
-   ```bash
-   npm run dev
-   ```
-2. **Try Sign Up or Sign In** from the UI, or run:
-   ```bash
-   node scripts/test-auth-request.mjs
-   ```
-3. **Check the terminal where the server is running.** You will see either:
-   - `REGISTER request` / `LOGIN request` (request received)
-   - `REGISTER catch` or `LOGIN catch` with `message`, `code`, `stack` (exact error)
-4. **Check the response body:** DevTools → Network → click the failed request → Response tab. The backend returns JSON with `error` and optional `hint`.
-
-## STEP 3 — Common causes and fixes
-
-| What you see in logs/response | Fix |
-|-------------------------------|-----|
-| `no such table: users` or `SQLITE_ERROR` | Run `npm run push` then `npm run seed` |
-| `no such column: stripe_*` | Run `node scripts/add-users-stripe-columns.mjs` |
-| `Insert failed: ...` | Same as above; ensure DB schema is applied |
-| `Token failed` / JWT error | Ensure `.env` has `JWT_SECRET` or the server uses the default |
-| `hasBody: false` or `bodyKeys: []` | Request body not parsed; ensure `Content-Type: application/json` and body is valid JSON |
-
-## STEP 4 — Verify DB and auth
-
-- **Health check:** Open `http://localhost:3001/api/health` in the browser (or run `node -e "fetch('http://localhost:3001/api/health').then(r=>r.json()).then(console.log).catch(e=>console.error(e.message))"`). Should return `{ "ok": true, "db": "ok" }`. If 503 or connection refused, start the backend and/or run `npm run push` and `npm run seed`.
-- **Users table:** After signup, inspect `sovereign.sqlite` (e.g. with DB Browser for SQLite) and confirm a row in `users`.
-
-## Quick test (backend must be running)
-
-```bash
-cd server
-npm run dev
-# In another terminal:
-node scripts/test-auth-request.mjs register
-```
-Check the first terminal for `REGISTER request` and any `REGISTER catch` or error; check the second for Status and Body.
+| Symptom | Fix |
+|---------|-----|
+| 401 on all authenticated calls | Confirm `CLERK_SECRET_KEY` matches the Clerk app used by `VITE_CLERK_PUBLISHABLE_KEY` |
+| User not found after sign-in | Check server logs for Clerk verify errors; ensure email is present on the Clerk user |
+| DB errors on first login | Run `npx prisma migrate deploy` against `DATABASE_URL` |

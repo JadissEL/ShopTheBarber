@@ -4,17 +4,24 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
+import BookingOffersPanel from '@/components/booking/BookingOffersPanel';
+import { toast } from 'sonner';
 
 export default function ServiceSelection({ 
     services = [], 
     selectedServiceIds = [], 
     onToggleService,
     barberId,
+    shopId: shopIdProp,
     onBookNow
 }) {
     const [activeCategory, setActiveCategory] = useState('All');
 
-    // Fetch Staff Configs for Overrides
+    const urlShopId = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('shopId')
+        : null;
+    const shopId = shopIdProp || urlShopId;
+
     const { data: staffConfig } = useQuery({
         queryKey: ['staffConfig', barberId],
         queryFn: async () => {
@@ -39,6 +46,41 @@ export default function ServiceSelection({
         },
         enabled: !!barberId
     });
+
+    const memberId = staffConfig?.[0]?.shop_member_id ?? staffConfig?.shop_member_id;
+
+    const { data: bookingOffers, isLoading: offersLoading } = useQuery({
+        queryKey: ['pricing-offers-profile', selectedServiceIds.slice().sort().join(','), barberId, shopId, memberId],
+        queryFn: () =>
+            sovereign.pricing.getOffers({
+                service_ids: selectedServiceIds,
+                barber_id: barberId,
+                shop_id: shopId || undefined,
+                shop_member_id: memberId || undefined,
+            }),
+        enabled: !!(barberId || shopId),
+        staleTime: 20_000,
+    });
+
+    const handleAddServices = (serviceIds) => {
+        serviceIds.forEach((id) => {
+            const svc = services.find((s) => s.id === id);
+            if (svc && !selectedServiceIds.includes(id)) onToggleService(svc);
+        });
+        toast.success('Added to your selection');
+    };
+
+    const handleAddBundle = (serviceIds) => {
+        selectedServiceIds.forEach((id) => {
+            const svc = services.find((s) => s.id === id);
+            if (svc) onToggleService(svc);
+        });
+        serviceIds.forEach((id) => {
+            const svc = services.find((s) => s.id === id);
+            if (svc && !selectedServiceIds.includes(id)) onToggleService(svc);
+        });
+        toast.success('Combo added');
+    };
 
     const getServiceDetails = (service) => {
         const data = service.data || service;
@@ -98,9 +140,16 @@ export default function ServiceSelection({
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Main Content: Filters + Grid */}
             <div className="flex-1 w-full">
-                
+                <BookingOffersPanel
+                    offers={bookingOffers}
+                    isLoading={offersLoading}
+                    selectedServices={selectedServiceIds}
+                    onAddServices={handleAddServices}
+                    onAddBundle={handleAddBundle}
+                    compact
+                />
+
                 {/* Category Filters */}
                 <div className="flex flex-wrap gap-2 mb-6">
                     {categories.map(cat => (
@@ -111,7 +160,7 @@ export default function ServiceSelection({
                                 "px-5 py-2.5 rounded-full text-sm font-bold transition-all border border-transparent",
                                 activeCategory === cat
                                     ? "bg-black text-white shadow-lg"
-                                    : "bg-white text-gray-600 hover:bg-gray-100 border-gray-200"
+                                    : "bg-card text-muted-foreground hover:bg-muted border-border"
                             )}
                         >
                             {cat}
@@ -133,18 +182,18 @@ export default function ServiceSelection({
                                     "relative rounded-2xl p-5 border transition-all cursor-pointer h-full flex flex-col justify-between group",
                                     isSelected 
                                         ? "bg-black text-white border-black shadow-xl" 
-                                        : "bg-white border-border hover:border-black/30 hover:shadow-md"
+                                        : "bg-card border-border hover:border-black/30 hover:shadow-md"
                                 )}
                             >
                                 <div className="mb-4">
                                     <div className="flex justify-between items-start mb-2">
                                         <h4 className="font-bold text-base leading-tight pr-2">{serviceData.name}</h4>
                                         {isSelected ? (
-                                            <div className="bg-white text-black rounded-full p-1 w-6 h-6 flex items-center justify-center shrink-0">
+                                            <div className="bg-card text-black rounded-full p-1 w-6 h-6 flex items-center justify-center shrink-0">
                                                 <Check className="w-3.5 h-3.5 stroke-[4]" />
                                             </div>
                                         ) : (
-                                            <div className="bg-gray-100 text-gray-400 group-hover:bg-black group-hover:text-white rounded-full p-1 w-6 h-6 flex items-center justify-center shrink-0 transition-colors">
+                                            <div className="bg-muted text-muted-foreground/80 group-hover:bg-black group-hover:text-white rounded-full p-1 w-6 h-6 flex items-center justify-center shrink-0 transition-colors">
                                                 <Plus className="w-3.5 h-3.5" />
                                             </div>
                                         )}
@@ -154,7 +203,7 @@ export default function ServiceSelection({
                                     </p>
                                 </div>
                                 
-                                <div className={cn("flex justify-between items-center text-xs font-bold pt-4 border-t", isSelected ? "border-white/20" : "border-gray-100")}>
+                                <div className={cn("flex justify-between items-center text-xs font-bold pt-4 border-t", isSelected ? "border-white/20" : "border-border/60")}>
                                     <span className="flex items-center gap-1 opacity-80">{serviceData.duration_text}</span>
                                     <span className="text-sm">
                                         {serviceData.price_text}
@@ -219,7 +268,7 @@ export default function ServiceSelection({
                             </div>
 
                             <Button 
-                                className="w-full bg-white text-black hover:bg-gray-200 font-bold h-14 rounded-xl text-base shadow-lg transition-transform active:scale-[0.98]"
+                                className="w-full bg-card text-black hover:bg-muted font-bold h-14 rounded-xl text-base shadow-lg transition-transform active:scale-[0.98]"
                                 disabled={selectedServiceIds.length === 0}
                                 onClick={onBookNow}
                             >
