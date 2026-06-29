@@ -26,7 +26,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/auto-confirm.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/bookings/auto-confirm" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/auto-confirm.json
           echo ""
           if [ "$HTTP" != "200" ]; then
@@ -47,7 +47,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/waitlist-expire.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/waitlist/expire-offers" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/waitlist-expire.json
           echo ""
           if [ "$HTTP" != "200" ]; then
@@ -68,7 +68,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/reservations-expire.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/marketplace/expire-reservations" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/reservations-expire.json
           echo ""
           if [ "$HTTP" != "200" ]; then
@@ -89,7 +89,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/promo-expire.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/wallet/expire-promotional-credits" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/promo-expire.json
           echo ""
           if [ "$HTTP" != "200" ]; then
@@ -105,7 +105,8 @@ jobs:
           BASE="${API_URL%/}"
           HTTP=$(curl -sS -o /tmp/championship.json -w "%{http_code}" --max-time 120 \
             -X POST "${BASE}/api/cron/championships/refresh" \
-            -H "x-cron-secret: ${CRON_SECRET}")
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/championship.json
           test "$HTTP" = "200"
 
@@ -117,7 +118,8 @@ jobs:
           BASE="${API_URL%/}"
           HTTP=$(curl -sS -o /tmp/reconcile.json -w "%{http_code}" --max-time 120 \
             -X POST "${BASE}/api/cron/wallets/reconcile" \
-            -H "x-cron-secret: ${CRON_SECRET}")
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/reconcile.json
           test "$HTTP" = "200"
 
@@ -129,7 +131,8 @@ jobs:
           BASE="${API_URL%/}"
           HTTP=$(curl -sS -o /tmp/auto-recharge.json -w "%{http_code}" --max-time 120 \
             -X POST "${BASE}/api/cron/wallets/auto-recharge-nudge" \
-            -H "x-cron-secret: ${CRON_SECRET}")
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/auto-recharge.json
           test "$HTTP" = "200"
 
@@ -141,6 +144,7 @@ jobs:
           BASE="${API_URL%/}"
           HTTP=$(curl -sS -o /tmp/championship-finalize.json -w "%{http_code}" --max-time 120 \
             -X POST "${BASE}/api/cron/championships/finalize-ended" \
-            -H "x-cron-secret: ${CRON_SECRET}")
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/championship-finalize.json
           test "$HTTP" = "200"

@@ -26,7 +26,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/reminders.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/booking-reminders" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/reminders.json
           echo ""
           if [ "$HTTP" != "200" ]; then
@@ -47,7 +47,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/review-nudges.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/review-nudges" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/review-nudges.json
           echo ""
           if [ "$HTTP" != "200" ]; then
@@ -68,7 +68,7 @@ jobs:
           HTTP=$(curl -sS -o /tmp/rebook-nudges.json -w "%{http_code}" --max-time 60 \
             -X POST "${BASE}/api/cron/rebook-nudges" \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" -d '{}')
           cat /tmp/rebook-nudges.json
           echo ""
           if [ "$HTTP" != "200" ]; then
