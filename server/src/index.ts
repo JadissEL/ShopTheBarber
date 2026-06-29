@@ -7,35 +7,43 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { Prisma } from '@prisma/client';
 import { prisma } from './db/prisma';
+import { isProductionGeocodingConfigured } from './lib/geocoding';
 
-// Fail-fast environment validation. Neon (DATABASE_URL) and Clerk (CLERK_SECRET_KEY)
-// are mandatory in production; missing config must not start a half-working server.
+// Fail-fast environment validation. Core vars must be set in production; payments,
+// rate limiting, and geocoding warn at startup until configured (see /AdminKeysWalkthrough).
 (() => {
     const isProd = process.env.NODE_ENV === 'production';
     const isTest = process.env.NODE_ENV === 'test';
     const dbUrl = process.env.DATABASE_URL || (isTest ? process.env.TEST_DATABASE_URL : undefined);
-    const missing: string[] = [];
-    if (!dbUrl) missing.push('DATABASE_URL');
-    if (isProd && !process.env.CLERK_SECRET_KEY) missing.push('CLERK_SECRET_KEY');
-    if (isProd && !process.env.STRIPE_API_KEY) missing.push('STRIPE_API_KEY');
-    if (isProd && !process.env.STRIPE_WEBHOOK_SECRET) missing.push('STRIPE_WEBHOOK_SECRET');
-    if (isProd && !process.env.STRIPE_PUBLISHABLE_KEY) missing.push('STRIPE_PUBLISHABLE_KEY');
-    if (isProd && !process.env.FRONTEND_URL) missing.push('FRONTEND_URL');
-    if (isProd && !process.env.CRON_SECRET) missing.push('CRON_SECRET');
+    const missingCritical: string[] = [];
+    const missingDeferred: string[] = [];
+    if (!dbUrl) missingCritical.push('DATABASE_URL');
+    if (isProd && !process.env.CLERK_SECRET_KEY) missingCritical.push('CLERK_SECRET_KEY');
+    if (isProd && !process.env.FRONTEND_URL) missingCritical.push('FRONTEND_URL');
+    if (isProd && !process.env.CRON_SECRET) missingCritical.push('CRON_SECRET');
+    if (isProd && !process.env.STRIPE_API_KEY) missingDeferred.push('STRIPE_API_KEY');
+    if (isProd && !process.env.STRIPE_WEBHOOK_SECRET) missingDeferred.push('STRIPE_WEBHOOK_SECRET');
+    if (isProd && !process.env.STRIPE_PUBLISHABLE_KEY) missingDeferred.push('STRIPE_PUBLISHABLE_KEY');
     if (isProd && (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)) {
-        missing.push('UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN');
+        missingDeferred.push('UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN');
     }
     if (isProd && !isProductionGeocodingConfigured()) {
-        missing.push('MAPBOX_ACCESS_TOKEN or GOOGLE_MAPS_API_KEY');
+        missingDeferred.push('MAPBOX_ACCESS_TOKEN or GOOGLE_MAPS_API_KEY');
     }
-    if (missing.length) {
-        const msg = `FATAL: missing required environment variable(s): ${missing.join(', ')}. See server/.env.example.`;
+    if (missingCritical.length) {
+        const msg = `FATAL: missing required environment variable(s): ${missingCritical.join(', ')}. See server/.env.example.`;
         if (isProd || !dbUrl) {
             console.error(msg);
             process.exit(1);
         } else {
             console.warn(msg);
         }
+    }
+    if (isProd && missingDeferred.length) {
+        console.warn(
+            `WARN: production missing optional-until-launch config: ${missingDeferred.join(', ')}. ` +
+                'Payments, distributed rate limits, and geocoding may be degraded. See /AdminKeysWalkthrough.'
+        );
     }
 })();
 
@@ -56,7 +64,6 @@ import { handleStripeWebhook } from './webhooks/stripe';
 import { checkStripeConnectStatusForUser, initiateStripeConnectForUser } from './stripe/connect';
 import { rateLimitMiddleware } from './middleware/rateLimit';
 import { isIpRateLimitAllowed } from './lib/ipRateLimit';
-import { isProductionGeocodingConfigured } from './lib/geocoding';
 import { enrichBarberLocationFields } from './lib/geocoding/barberLocation';
 import { validatePromoCode } from './logic/promoCode';
 import { notifyUserOfModerationAction } from './logic/moderation';
