@@ -63,4 +63,11 @@ describe('PublicLayout (mobile)', () => {
     expect(footer.parentElement).toHaveClass('hidden');
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
   });
+
+  it('does not render client desktop sidebar on public pages when authenticated on desktop', () => {
+    useIsDesktop.mockReturnValue(true);
+    renderPublicLayout(true, '/Home');
+    expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
+    expect(screen.getByTestId('site-navbar')).toBeInTheDocument();
+  });
 });
