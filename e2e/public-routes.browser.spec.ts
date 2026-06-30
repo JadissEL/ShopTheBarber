@@ -18,7 +18,7 @@ test.describe('Public routes (mobile browser)', () => {
 
     test('explore page shows discovery search', async ({ page }) => {
         await page.goto('/Explore');
-        await expect(page.getByPlaceholder(/search for professionals/i)).toBeVisible({
+        await expect(page.getByPlaceholder(/search barbers/i)).toBeVisible({
             timeout: 30_000,
         });
         await expect(page.getByRole('button', { name: /Professionals/i })).toBeVisible();
