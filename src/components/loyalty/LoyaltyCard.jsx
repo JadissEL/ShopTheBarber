@@ -29,11 +29,9 @@ export default function LoyaltyCard({ profile, nextTierPoints, progress }) {
     <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full">
       <div
         className={cn(
-          stb.surface,
-          stb.surfaceInteractive,
           'relative overflow-hidden p-6 min-h-[220px] flex flex-col justify-between',
-          tierStyle,
-          isPlatinum && '[&_.stb-tier-label]:text-white/70 [&_.stb-tier-value]:text-white [&_.stb-tier-body]:text-white/75',
+          isPlatinum ? cn(stb.surfaceDark, stb.surfaceDarkHover) : cn(stb.surface, stb.surfaceInteractive, tierStyle),
+          isPlatinum && '[&_.stb-tier-label]:text-white/80 [&_.stb-tier-value]:text-white [&_.stb-tier-body]:text-white/85',
         )}
       >
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" aria-hidden />

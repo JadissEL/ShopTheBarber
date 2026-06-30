@@ -301,10 +301,37 @@
     @apply min-h-screen bg-background text-foreground font-sans;
   }
   .stb-panel {
-    @apply rounded-lg border border-foreground/10 bg-card shadow-sm;
+    @apply rounded-lg border border-foreground/10 bg-card text-card-foreground shadow-sm;
   }
   .stb-panel-hover {
     @apply stb-panel transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .stb-surface-warm {
+    @apply rounded-lg border border-primary/20 text-foreground shadow-md;
+    background-color: hsl(40 38% 93%);
+  }
+  .stb-surface-warm .stb-body {
+    @apply text-muted-foreground;
+  }
+  .stb-surface-dark {
+    @apply rounded-lg border border-white/10 bg-[hsl(var(--navy))] text-white shadow-md;
+  }
+  .stb-surface-dark-hover {
+    @apply stb-surface-dark transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg;
+  }
+  .stb-text-on-dark-muted {
+    @apply text-white/85;
+  }
+  .stb-text-on-light-muted {
+    @apply text-muted-foreground;
+  }
+  .stb-surface-glass-dark {
+    @apply rounded-lg border border-white/15 text-white;
+    background-color: hsl(0 0% 100% / 0.06);
+  }
+  .stb-surface-glass-dark:hover {
+    background-color: hsl(0 0% 100% / 0.1);
+    border-color: hsl(var(--primary) / 0.4);
   }
   .stb-nav-active {
     @apply bg-primary text-primary-foreground font-bold uppercase tracking-wider;

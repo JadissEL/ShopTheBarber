@@ -42,7 +42,7 @@ export default function HomeHowItWorks() {
           <h2 className={cn(stb.heading, 'text-white mb-4')}>
             How ShopTheBarber works
           </h2>
-          <p className="text-lg text-white/70 font-sans normal-case">
+          <p className={cn(stb.textOnDarkMuted, 'text-lg font-sans normal-case')}>
             From search to fresh cut in three steps, with transparent pricing and EU-compliant promotions built in.
           </p>
         </div>
@@ -55,14 +55,14 @@ export default function HomeHowItWorks() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="relative rounded-lg border border-white/15 bg-white/5 p-8 hover:border-primary/40 transition-all stb-surface-hover"
+              className={cn(stb.surfaceGlassDark, 'relative p-8 transition-all')}
             >
               <div className={cn(stb.display, 'text-5xl text-primary/30 absolute top-6 right-6')}>{item.step}</div>
               <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground border border-white/20 flex items-center justify-center mb-6">
                 <item.icon className="w-6 h-6" />
               </div>
               <h3 className={cn(stb.title, 'text-xl text-white mb-3')}>{item.title}</h3>
-              <p className="text-white/65 text-sm leading-relaxed mb-6 font-sans normal-case">{item.description}</p>
+              <p className={cn(stb.textOnDarkMuted, 'text-sm leading-relaxed mb-6 font-sans normal-case')}>{item.description}</p>
               <Link
                 to={createPageUrl(item.link)}
                 className="text-sm font-semibold text-primary hover:underline no-underline"

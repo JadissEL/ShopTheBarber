@@ -27,7 +27,7 @@ function TrustPanel({ icon: Icon, title, subtitle, description, points, delay = 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay }}
-      className="stb-panel border-white/15 bg-white/5 p-8"
+      className={cn(stb.surfaceGlassDark, 'p-8')}
     >
       <div className="flex items-center gap-3 mb-6">
         <div className={cn(stb.iconBox, 'w-12 h-12 border-white/20 bg-primary/15 text-primary')}>
@@ -38,10 +38,10 @@ function TrustPanel({ icon: Icon, title, subtitle, description, points, delay = 
           <p className="text-sm text-primary font-medium font-sans normal-case">{subtitle}</p>
         </div>
       </div>
-      <p className="stb-body text-white/75 mb-6">{description}</p>
+      <p className={cn(stb.textOnDarkMuted, 'text-sm mb-6')}>{description}</p>
       <ul className="space-y-3">
         {points.map((point) => (
-          <li key={point} className="flex gap-3 text-sm text-white/75 font-sans normal-case">
+          <li key={point} className={cn('flex gap-3 text-sm font-sans normal-case', stb.textOnDarkMuted)}>
             <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <span>{point}</span>
           </li>
@@ -68,7 +68,7 @@ export default function HomeComplianceTrust() {
           <h2 className={cn(stb.heading, 'text-white text-3xl md:text-4xl mb-4')}>
             Promotions and prize draws you can trust
           </h2>
-          <p className="stb-body text-white/75 text-lg max-w-2xl mx-auto">
+          <p className={cn(stb.textOnDarkMuted, 'text-lg max-w-2xl mx-auto')}>
             We built ShopTheBarber so savings and rewards follow transparent rules, aligned with EU consumer
             protection for discounts and with prize-promotion principles that keep our weekly draw outside gambling
             regulation.
@@ -97,7 +97,7 @@ export default function HomeComplianceTrust() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="stb-panel border-white/15 bg-white/5 p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+          className={cn(stb.surfaceGlassDark, 'p-8 flex flex-col md:flex-row md:items-center justify-between gap-6')}
         >
           <div className="flex items-start gap-4">
             <div className={cn(stb.iconBox, 'w-12 h-12 shrink-0 border-white/20 bg-primary/15 text-primary')}>
@@ -105,7 +105,7 @@ export default function HomeComplianceTrust() {
             </div>
             <div>
               <h3 className={cn(stb.title, 'text-lg text-white mb-1')}>Read the full rules</h3>
-              <p className="stb-body text-white/75">
+              <p className={stb.textOnDarkMuted}>
                 Promotion terms, tombola rules, and consumer rights are documented in our legal centre.
               </p>
             </div>

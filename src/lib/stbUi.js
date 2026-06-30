@@ -19,6 +19,11 @@
  * SURFACE LEVELS (0–4)
  * 0 page bg | 1 cards | 2 hover/dropdown | 3 modal | 4 toast
  *
+ * SURFACE TEXT PAIRING (readability)
+ * - stb-surface-warm / stb-panel / stb-surface-hover → text-foreground, text-muted-foreground
+ * - stb-surface-dark / stb-surface-glass-dark → text-white, stb-text-on-dark-muted
+ * Never combine stb-panel or stb-surface-hover with bg-[navy] or text-white on light cards
+ *
  * ZONE HEADER TIERS (layout/PageHeader)
  * - display + dark: public marketing (Marketplace, GiftCards, Championship)
  * - app + light: client/provider/admin pages (Dashboard, Bookings, Settings)
@@ -67,6 +72,12 @@ export const stb = {
   surfaceMuted: 'stb-surface-muted',
   panel: 'stb-panel',
   panelHover: 'stb-panel-hover',
+  surfaceWarm: 'stb-surface-warm',
+  surfaceDark: 'stb-surface-dark',
+  surfaceDarkHover: 'stb-surface-dark-hover',
+  surfaceGlassDark: 'stb-surface-glass-dark',
+  textOnDarkMuted: 'stb-text-on-dark-muted',
+  textOnLightMuted: 'stb-text-on-light-muted',
   /** @deprecated */ card: 'stb-card',
   /** @deprecated */ cardInteractive: 'stb-card-interactive',
   /** @deprecated */ cardLift: 'stb-card-lift',
