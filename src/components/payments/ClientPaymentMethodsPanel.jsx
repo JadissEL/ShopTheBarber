@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Loader2, Plus, Trash2 } from 'lucide-react';
@@ -42,7 +44,7 @@ export default function ClientPaymentMethodsPanel() {
     const methods = data?.methods ?? [];
 
     return (
-        <Card className="border-border rounded-3xl">
+        <Card className={cn(stb.panel, 'border-border')}>
             <CardContent className="p-6 space-y-4">
                 <div className="flex items-start justify-between gap-4">
                     <div>
@@ -72,7 +74,7 @@ export default function ClientPaymentMethodsPanel() {
                 </div>
 
                 {methods.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-xl">
+                    <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
                         No cards saved yet.
                     </p>
                 ) : (
@@ -80,7 +82,7 @@ export default function ClientPaymentMethodsPanel() {
                         {methods.map((m) => (
                             <li
                                 key={m.id}
-                                className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/20"
+                                className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20"
                             >
                                 <div className="flex items-center gap-3">
                                     <CreditCard className="w-4 h-4 text-muted-foreground" />

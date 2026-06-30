@@ -25,7 +25,7 @@ export default function SetupGuideHeader() {
             'Setup guide'
           )}
         </p>
-        <Button asChild variant="ghost" size="sm" className="shrink-0 rounded-xl text-muted-foreground">
+        <Button asChild variant="ghost" size="sm" className="shrink-0 rounded-lg text-muted-foreground">
           <Link to={getDashboardPathForRole(role)}>
             <X className="w-4 h-4 mr-1" />
             Exit

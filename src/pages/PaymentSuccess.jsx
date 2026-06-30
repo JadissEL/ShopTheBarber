@@ -12,29 +12,25 @@ import { getAnalyticsSessionId } from '@/lib/analyticsSession';
 
 import { Button } from '@/components/ui/button';
 
-import { Card, CardContent } from '@/components/ui/card';
-
 import { Separator } from '@/components/ui/separator';
 
 import {
-
   CheckCircle,
-
   Package,
-
   Truck,
-
   Mail,
-
   Home,
-
   ShoppingBag
-
 } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 
 import confetti from 'canvas-confetti';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { MetaTags } from '@/components/seo/MetaTags';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 
 
@@ -118,13 +114,13 @@ export default function PaymentSuccess() {
 
     return (
 
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="stb-page flex items-center justify-center">
 
         <div className="text-center">
 
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
 
-          <p className="text-muted-foreground">Loading your order…</p>
+          <p className={cn(stb.body, 'text-muted-foreground')}>Loading your order…</p>
 
         </div>
 
@@ -138,9 +134,20 @@ export default function PaymentSuccess() {
 
   return (
 
-    <div className="min-h-screen py-12 bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="stb-page lg:pb-8">
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <MetaTags title="Payment Successful" description="Your order was placed successfully." />
+
+      <PageHeader
+        label="Marketplace"
+        title="Payment successful"
+        subtitle="Thank you for your purchase"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
 
         <motion.div
 
@@ -152,9 +159,9 @@ export default function PaymentSuccess() {
 
         >
 
-          <Card className="border-2 border-green-200 overflow-hidden mb-8">
+          <div className={cn(stb.panel, 'overflow-hidden mb-8 border-success/30')}>
 
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-center">
+            <div className="bg-success p-8 text-center text-success-foreground">
 
               <motion.div
 
@@ -166,25 +173,17 @@ export default function PaymentSuccess() {
 
               >
 
-                <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-elevation-lg">
 
-                  <CheckCircle className="w-12 h-12 text-green-600" />
+                  <CheckCircle className="w-12 h-12 text-success" />
 
                 </div>
 
               </motion.div>
 
+              <p className={cn(stb.body, 'text-success-foreground/90 text-lg')}>
 
-
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-
-                Payment Successful!
-
-              </h1>
-
-              <p className="text-green-100 text-lg">
-
-                Thank you for your purchase
+                Order #{orderId.slice(0, 8)} confirmed
 
               </p>
 
@@ -192,15 +191,15 @@ export default function PaymentSuccess() {
 
 
 
-            <CardContent className="p-8">
+            <div className="p-8">
 
               <div className="grid md:grid-cols-2 gap-6 mb-6">
 
-                <div className="bg-muted/50 p-4 rounded-xl">
+                <div className={cn(stb.surfaceMuted, 'p-4 rounded-lg')}>
 
-                  <p className="text-sm text-muted-foreground mb-1">Order number</p>
+                  <p className={cn(stb.caption, 'text-muted-foreground mb-1')}>Order number</p>
 
-                  <p className="text-lg font-bold text-foreground font-mono">
+                  <p className={cn(stb.uiSubheading, 'font-mono')}>
 
                     #{orderId.slice(0, 8)}
 
@@ -210,11 +209,11 @@ export default function PaymentSuccess() {
 
 
 
-                <div className="bg-muted/50 p-4 rounded-xl">
+                <div className={cn(stb.surfaceMuted, 'p-4 rounded-lg')}>
 
-                  <p className="text-sm text-muted-foreground mb-1">Amount paid</p>
+                  <p className={cn(stb.caption, 'text-muted-foreground mb-1')}>Amount paid</p>
 
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className={cn(stb.metricValue, 'text-2xl text-success')}>
 
                     ${order.total_amount.toFixed(2)}
 
@@ -226,11 +225,11 @@ export default function PaymentSuccess() {
 
                 {order.tracking_number && (
 
-                  <div className="bg-muted/50 p-4 rounded-xl">
+                  <div className={cn(stb.surfaceMuted, 'p-4 rounded-lg')}>
 
-                    <p className="text-sm text-muted-foreground mb-1">Tracking number</p>
+                    <p className={cn(stb.caption, 'text-muted-foreground mb-1')}>Tracking number</p>
 
-                    <p className="text-lg font-bold text-foreground font-mono">
+                    <p className={cn(stb.uiSubheading, 'font-mono')}>
 
                       {order.tracking_number}
 
@@ -252,27 +251,27 @@ export default function PaymentSuccess() {
 
               <div className="space-y-4">
 
-                <h3 className="font-bold text-foreground mb-4">What happens next</h3>
+                <h3 className={cn(stb.uiSubheading, 'mb-4')}>What happens next</h3>
 
 
 
-                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <div className={cn(stb.notice, 'flex items-start gap-4 p-4 rounded-lg')}>
 
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className={cn(stb.iconBox, 'bg-primary text-primary-foreground shrink-0')}>
 
-                    <Mail className="w-5 h-5 text-white" />
+                    <Mail className="w-5 h-5" />
 
                   </div>
 
                   <div className="flex-1">
 
-                    <p className="font-semibold text-blue-900 mb-1">
+                    <p className={cn(stb.uiSubheading, 'text-sm mb-1')}>
 
                       Confirmation email sent
 
                     </p>
 
-                    <p className="text-sm text-blue-700">
+                    <p className={cn(stb.caption, 'text-muted-foreground')}>
 
                       Check your inbox for order details and receipt
 
@@ -284,23 +283,23 @@ export default function PaymentSuccess() {
 
 
 
-                <div className="flex items-start gap-4 p-4 bg-salmon/15 rounded-[13px] border border-salmon/30">
+                <div className={cn(stb.noticeWarm, 'flex items-start gap-4 p-4 rounded-lg')}>
 
-                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className={cn(stb.iconBox, 'bg-primary text-primary-foreground shrink-0')}>
 
-                    <Package className="w-5 h-5 text-white" />
+                    <Package className="w-5 h-5" />
 
                   </div>
 
                   <div className="flex-1">
 
-                    <p className="font-semibold text-foreground mb-1">
+                    <p className={cn(stb.uiSubheading, 'text-sm mb-1')}>
 
                       Preparing your order
 
                     </p>
 
-                    <p className="text-sm text-muted-foreground">
+                    <p className={cn(stb.caption, 'text-muted-foreground')}>
 
                       We&apos;re getting your items ready to ship
 
@@ -312,23 +311,23 @@ export default function PaymentSuccess() {
 
 
 
-                <div className="flex items-start gap-4 p-4 bg-green-50 rounded-xl border border-green-200">
+                <div className={cn(stb.surfaceMuted, 'flex items-start gap-4 p-4 rounded-lg border border-success/20')}>
 
-                  <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className={cn(stb.iconBox, 'bg-success text-success-foreground shrink-0')}>
 
-                    <Truck className="w-5 h-5 text-white" />
+                    <Truck className="w-5 h-5" />
 
                   </div>
 
                   <div className="flex-1">
 
-                    <p className="font-semibold text-green-900 mb-1">
+                    <p className={cn(stb.uiSubheading, 'text-sm mb-1')}>
 
                       Shipping soon
 
                     </p>
 
-                    <p className="text-sm text-green-700">
+                    <p className={cn(stb.caption, 'text-muted-foreground')}>
 
                       Your package will ship within 24-48 hours
 
@@ -350,23 +349,23 @@ export default function PaymentSuccess() {
 
                   <div>
 
-                    <h3 className="font-bold text-foreground mb-4">Order items</h3>
+                    <h3 className={cn(stb.uiSubheading, 'mb-4')}>Order items</h3>
 
                     <div className="space-y-3">
 
                       {order.items.map((item, idx) => (
 
-                        <div key={idx} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <div key={idx} className={cn(stb.surfaceMuted, 'flex justify-between items-center p-3 rounded-lg')}>
 
                           <div className="flex-1">
 
-                            <p className="font-semibold text-foreground">{item.name}</p>
+                            <p className={cn(stb.uiSubheading, 'text-sm')}>{item.name}</p>
 
-                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                            <p className={cn(stb.caption, 'text-muted-foreground')}>Qty: {item.quantity}</p>
 
                           </div>
 
-                          <p className="font-bold text-foreground">
+                          <p className={cn(stb.metricValue)}>
 
                             ${(item.price * item.quantity).toFixed(2)}
 
@@ -404,7 +403,7 @@ export default function PaymentSuccess() {
 
                 <Link to={createPageUrl("MyOrders")}>
 
-                  <Button variant="outline" className="w-full border-slate-300">
+                  <Button variant="outline" className="w-full">
 
                     <Package className="w-4 h-4 mr-2" />
 
@@ -418,7 +417,7 @@ export default function PaymentSuccess() {
 
                 <Link to={createPageUrl("Marketplace")}>
 
-                  <Button variant="outline" className="w-full border-slate-300">
+                  <Button variant="outline" className="w-full">
 
                     <ShoppingBag className="w-4 h-4 mr-2" />
 
@@ -430,9 +429,9 @@ export default function PaymentSuccess() {
 
               </div>
 
-            </CardContent>
+            </div>
 
-          </Card>
+          </div>
 
 
 
@@ -454,11 +453,10 @@ export default function PaymentSuccess() {
 
         </motion.div>
 
-      </div>
+      </PageContent>
 
     </div>
 
   );
 
 }
-

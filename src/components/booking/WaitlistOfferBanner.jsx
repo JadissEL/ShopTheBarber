@@ -14,6 +14,8 @@ import { WAITLIST_OFFER_MS } from '@/lib/waitlistConstants';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatMoney } from '@/lib/formatMoney';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import {
     Dialog,
     DialogContent,
@@ -40,14 +42,14 @@ function OfferCountdownRing({ progress, label }) {
     return (
         <div className="relative w-12 h-12 shrink-0" aria-label={`${label} remaining`}>
             <svg className="w-12 h-12 -rotate-90" viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r={radius} fill="none" stroke="currentColor" strokeWidth="3" className="text-amber-200 dark:text-amber-900" />
+                <circle cx="22" cy="22" r={radius} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary/25" />
                 <circle
                     cx="22" cy="22" r={radius} fill="none" stroke="currentColor" strokeWidth="3"
                     strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
-                    className="text-amber-500 transition-[stroke-dashoffset] duration-1000 linear"
+                    className="text-primary transition-[stroke-dashoffset] duration-1000 linear"
                 />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums text-amber-700 dark:text-amber-300">
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums text-muted-foreground">
                 {label}
             </span>
         </div>
@@ -108,15 +110,15 @@ export function WaitlistOfferCard({ offer }) {
     return (
         <motion.div
             {...motionProps}
-            className="rounded-2xl border-2 border-amber-400/50 bg-gradient-to-br from-amber-50 via-orange-50/80 to-background dark:from-amber-950/40 dark:via-orange-950/20 dark:to-background p-4 sm:p-5 shadow-sm"
+            className="stb-notice-warm border-2 border-primary/50 p-4 sm:p-5"
             role="alert"
         >
             <div className="flex gap-4 items-start">
                 <OfferCountdownRing progress={progress} label={label} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <Zap className="w-4 h-4 text-amber-600 shrink-0" />
-                        <p className="font-semibold text-sm text-amber-900 dark:text-amber-100">Slot opened — accept now</p>
+                        <Zap className="w-4 h-4 text-primary shrink-0" />
+                        <p className="font-semibold text-sm text-foreground">Slot opened — accept now</p>
                     </div>
                     <div className="flex items-center gap-3 mt-2">
                         <Avatar className="h-10 w-10 border border-border">
@@ -141,7 +143,7 @@ export function WaitlistOfferCard({ offer }) {
                 </div>
                 <Button
                     size="sm"
-                    className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl h-10 px-4 touch-manipulation focus-visible:ring-2 focus-visible:ring-amber-400"
+                    className="shrink-0 h-10 px-4 touch-manipulation"
                     disabled={acceptMutation.isPending}
                     onClick={() => acceptMutation.mutate()}
                 >
@@ -157,7 +159,7 @@ function WaitlistEntryCard({ entry, onLeave, leaving }) {
     const serviceLabel = entry.service_label ?? entry.service_name;
 
     return (
-        <div className={`rounded-xl border p-4 ${isOffered ? 'border-amber-300/60 bg-amber-50/50 dark:bg-amber-950/10' : 'border-border bg-card'}`}>
+        <div className={cn('p-4', isOffered ? 'stb-notice-warm' : stb.panel)}>
             <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3 min-w-0">
                     <Avatar className="h-9 w-9 shrink-0 border border-border">
@@ -314,7 +316,7 @@ export function MyWaitlistPanel() {
             )}
 
             <Dialog open={Boolean(leaveTarget)} onOpenChange={(open) => !open && setLeaveTarget(null)}>
-                <DialogContent className="rounded-2xl max-w-sm overscroll-contain">
+                <DialogContent className=" max-w-sm overscroll-contain">
                     <DialogHeader>
                         <DialogTitle>Leave Waitlist?</DialogTitle>
                         <DialogDescription>

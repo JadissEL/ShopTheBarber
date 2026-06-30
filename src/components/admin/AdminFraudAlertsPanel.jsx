@@ -58,7 +58,7 @@ export default function AdminFraudAlertsPanel() {
         <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                    <AlertTriangle className="w-5 h-5 text-primary" />
                     Fraud alerts
                     {alerts.length > 0 && (
                         <Badge variant="destructive" className="ml-1">{alerts.length}</Badge>
@@ -81,7 +81,7 @@ export default function AdminFraudAlertsPanel() {
                 )}
                 {!isLoading && !isError && alerts.length === 0 && (
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
                         No open fraud alerts.
                     </p>
                 )}
@@ -90,7 +90,7 @@ export default function AdminFraudAlertsPanel() {
                         {alerts.map((alert) => (
                             <li
                                 key={alert.id}
-                                className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 rounded-xl border border-amber-200/80 bg-amber-50/40 dark:bg-amber-950/10"
+                                className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 rounded-lg border border-primary/30 bg-primary/10/40 dark:bg-primary/10"
                             >
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2 mb-1">

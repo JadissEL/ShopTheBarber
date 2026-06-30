@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function FAQItem({ item, isOpen, onToggle }) {
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
-      <div className="border-b border-border last:border-b-0">
+      <div className="border-b border-foreground/10 last:border-b-0">
         <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 py-5 text-left group">
           <span className="text-sm md:text-base font-medium text-foreground group-hover:text-primary transition-colors duration-150">
             {item.question}
@@ -40,11 +41,11 @@ export default function FAQAccordion({ items, title = 'Popular questions' }) {
 
   return (
     <section aria-labelledby="help-faq-heading">
-      <h2 id="help-faq-heading" className="text-xl font-semibold text-foreground mb-2 tracking-tight">
+      <h2 id="help-faq-heading" className={cn(stb.uiHeading, 'text-xl mb-2')}>
         {title}
       </h2>
       <p className="text-sm text-muted-foreground mb-6">Quick answers to common questions.</p>
-      <div className="rounded-xl border border-border bg-card px-4 md:px-6">
+      <div className={cn(stb.surface, 'border-foreground/10 px-4 md:px-6')}>
         {items.map((item) => (
           <FAQItem
             key={item.id}

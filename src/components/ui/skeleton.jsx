@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { stb } from "@/lib/stbUi";
 
 function Skeleton({
   className,
@@ -6,7 +7,7 @@ function Skeleton({
 }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={cn(stb.skeleton, className)}
       {...props}
     />
   );

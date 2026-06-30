@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { createPageUrl } from '@/utils';
 import { useNavigate, Link } from 'react-router-dom';
 import TipBarber from '@/components/tips/TipBarber';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 function StarRating({ rating, onChange, disabled }) {
     return (
@@ -21,9 +24,9 @@ function StarRating({ rating, onChange, disabled }) {
                     type="button"
                     disabled={disabled}
                     onClick={() => onChange(star)}
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                    className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all ${
                         rating >= star
-                            ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                            ? 'bg-primary/100 text-white shadow-lg shadow-amber-500/20'
                             : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
@@ -228,24 +231,30 @@ export default function Review() {
     const allDone = effectiveStatus?.all_done;
 
     return (
-        <div className="stb-page lg:pb-8 pt-10 px-4">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="Write a Review" description="Share your experience with your barber and shop." />
 
-            <div className="w-full max-w-2xl lg:max-w-3xl mx-auto">
+            <PageHeader
+                label="Feedback"
+                title="How was your visit?"
+                subtitle={
+                    shopAvailable
+                        ? 'Tap a star rating, a short note is optional but helps a lot.'
+                        : `Your feedback helps ${effectiveBooking.barber_name || 'your barber'} and the community.`
+                }
+                compact
+                variant="light"
+                tier="app"
+            />
+
+            <PageContent narrow>
                 <Button
                     variant="ghost"
                     onClick={() => navigate(-1)}
-                    className="text-muted-foreground hover:text-foreground mb-8 gap-2"
+                    className="text-muted-foreground hover:text-foreground mb-6 gap-2 -ml-2"
                 >
                     <ArrowLeft className="w-4 h-4" /> Back
                 </Button>
-
-                <h1 className="text-4xl font-bold mb-2">How was your visit?</h1>
-                <p className="text-muted-foreground mb-6 text-lg">
-                    {shopAvailable
-                        ? 'Tap a star rating, a short note is optional but helps a lot.'
-                        : `Your feedback helps ${effectiveBooking.barber_name || 'your barber'} and the community.`}
-                </p>
 
                 {!isTokenMode && resolvedBookingId && (
                     <div className="mb-8">
@@ -254,23 +263,21 @@ export default function Review() {
                 )}
 
                 {allDone ? (
-                    <Card className="border-green-200 bg-green-50/50">
-                        <CardContent className="p-8 text-center">
-                            <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                            <h2 className="text-xl font-bold mb-2">Thank you!</h2>
+                    <div className={stb.panel + ' p-8 text-center border-primary/30 bg-primary/5'}>
+                            <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-4" />
+                            <h2 className={stb.uiSubheading + ' mb-2'}>Thank you!</h2>
                             <p className="text-muted-foreground mb-6">All reviews for this visit have been submitted.</p>
                             <Button onClick={handleFinish}>Done</Button>
-                        </CardContent>
-                    </Card>
+                    </div>
                 ) : (
                     <div className="space-y-8">
-                        <Card className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
+                        <Card className="stb-panel overflow-hidden">
                             <CardHeader className="bg-primary/5 border-b border-border p-6">
                                 <CardTitle className="flex items-center gap-3 text-xl">
                                     <Scissors className="w-6 h-6 text-primary" />
                                     Rate your barber
                                     {barberDone && (
-                                        <span className="text-sm font-normal text-green-600 ml-auto flex items-center gap-1">
+                                        <span className="text-sm font-normal text-primary ml-auto flex items-center gap-1">
                                             <CheckCircle2 className="w-4 h-4" /> Submitted
                                         </span>
                                     )}
@@ -284,7 +291,7 @@ export default function Review() {
                                     <div>
                                         <Label className="text-base font-bold mb-3 block">Your rating</Label>
                                         <StarRating rating={barberRating} onChange={setBarberRating} />
-                                        <p className="text-sm font-bold text-amber-600 uppercase tracking-widest mt-2">
+                                        <p className="text-sm font-bold text-primary uppercase tracking-widest mt-2">
                                             {ratingLabel(barberRating)}
                                         </p>
                                     </div>
@@ -315,13 +322,13 @@ export default function Review() {
                         </Card>
 
                         {shopAvailable && (
-                            <Card className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
-                                <CardHeader className="bg-amber-500/5 border-b border-border p-6">
+                            <Card className="stb-panel overflow-hidden">
+                                <CardHeader className="bg-primary/5 border-b border-border p-6">
                                     <CardTitle className="flex items-center gap-3 text-xl">
-                                        <Store className="w-6 h-6 text-amber-600" />
+                                        <Store className="w-6 h-6 text-primary" />
                                         Rate the shop
                                         {shopDone && (
-                                            <span className="text-sm font-normal text-green-600 ml-auto flex items-center gap-1">
+                                            <span className="text-sm font-normal text-primary ml-auto flex items-center gap-1">
                                                 <CheckCircle2 className="w-4 h-4" /> Submitted
                                             </span>
                                         )}
@@ -335,7 +342,7 @@ export default function Review() {
                                         <div>
                                             <Label className="text-base font-bold mb-3 block">Your rating</Label>
                                             <StarRating rating={shopRating} onChange={setShopRating} />
-                                            <p className="text-sm font-bold text-amber-600 uppercase tracking-widest mt-2">
+                                            <p className="text-sm font-bold text-primary uppercase tracking-widest mt-2">
                                                 {ratingLabel(shopRating)}
                                             </p>
                                         </div>
@@ -374,7 +381,7 @@ export default function Review() {
                         )}
                     </div>
                 )}
-            </div>
+            </PageContent>
         </div>
     );
 }

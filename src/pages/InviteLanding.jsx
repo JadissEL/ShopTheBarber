@@ -5,6 +5,9 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Gift, Loader2, Users } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const REF_STORAGE_KEY = 'stb_referral_code';
 
@@ -41,13 +44,22 @@ export default function InviteLanding() {
     const signupUrl = `/register?ref=${encodeURIComponent((code || '').trim().toUpperCase())}`;
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
+        <div className={stb.page}>
             <MetaTags
                 title="You're invited"
                 description="Join ShopTheBarber with a friend referral and unlock welcome rewards on your first booking."
                 noindex
             />
-            <Card className="max-w-md w-full border-none shadow-soft">
+            <PageHeader
+                label="Referral"
+                title={state.valid ? `${state.referrerName} invited you` : 'Invite link'}
+                subtitle="Create your free account to book barbers and unlock referral rewards"
+                compact
+                tier="display"
+                variant="dark"
+            />
+            <PageContent narrow className="flex justify-center">
+            <Card className="max-w-md w-full border-none shadow-sm">
                 <CardContent className="p-8 text-center space-y-6">
                     {state.loading ? (
                         <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
@@ -62,7 +74,7 @@ export default function InviteLanding() {
                                     Create your free account to book barbers and unlock referral rewards on your first visit.
                                 </p>
                             </div>
-                            <Button asChild size="lg" className="w-full rounded-xl h-12">
+                            <Button asChild size="lg" className="w-full rounded-lg h-12">
                                 <Link to={signupUrl}>Accept invite & sign up</Link>
                             </Button>
                             <Button asChild variant="ghost" className="w-full">
@@ -74,13 +86,14 @@ export default function InviteLanding() {
                             <Users className="w-12 h-12 text-muted-foreground mx-auto" />
                             <h1 className="text-xl font-bold">Invite link expired</h1>
                             <p className="text-muted-foreground text-sm">{state.error}</p>
-                            <Button asChild className="w-full rounded-xl">
+                            <Button asChild className="w-full rounded-lg">
                                 <Link to="/register">Sign up without a code</Link>
                             </Button>
                         </>
                     )}
                 </CardContent>
             </Card>
+            </PageContent>
         </div>
     );
 }

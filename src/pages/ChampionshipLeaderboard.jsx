@@ -7,11 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Star } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function RankBadge({ rank }) {
-    if (rank === 1) return <Trophy className="w-5 h-5 text-amber-500" />;
-    if (rank === 2) return <Medal className="w-5 h-5 text-slate-400" />;
-    if (rank === 3) return <Medal className="w-5 h-5 text-amber-700" />;
+    if (rank === 1) return <Trophy className="w-5 h-5 text-primary" />;
+    if (rank === 2) return <Medal className="w-5 h-5 text-muted-foreground" />;
+    if (rank === 3) return <Medal className="w-5 h-5 text-muted-foreground" />;
     return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{rank}</span>;
 }
 
@@ -37,15 +41,13 @@ export default function ChampionshipLeaderboard() {
                 title="Barber Championships"
                 description="Season rankings and Hall of Fame — ShopTheBarber trust ecosystem"
             />
-            <div className="max-w-3xl mx-auto px-4 py-10">
-                <div className="text-center mb-10">
-                    <Trophy className="w-14 h-14 text-primary mx-auto mb-4" />
-                    <h1 className="text-3xl font-bold tracking-tight">Barber Championships</h1>
-                    <p className="text-muted-foreground mt-2">
-                        {season?.name ?? 'Current season'} — ranked by reviews, bookings, revenue, and reliability
-                    </p>
-                </div>
+            <PageHeader
+                label="Rankings"
+                title="Barber championships"
+                subtitle={season?.name ? `${season.name} — ranked by reviews, bookings, revenue, and reliability` : 'Ranked by reviews, bookings, revenue, and reliability'}
+            />
 
+            <PageContent narrow>
                 <Tabs defaultValue="leaderboard" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 mb-6">
                         <TabsTrigger value="leaderboard">Live leaderboard</TabsTrigger>
@@ -117,7 +119,7 @@ export default function ChampionshipLeaderboard() {
                         )}
                     </TabsContent>
                 </Tabs>
-            </div>
+            </PageContent>
         </div>
     );
 }

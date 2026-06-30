@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronUp, Download, AlertCircle, CheckCircle2, HelpCircle } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 // Items that are verified complete based on codebase
 const VERIFIED_COMPLETE = new Set([
@@ -49,8 +52,8 @@ const _BLOCKED_ITEMS = new Map([
 const CHECKLIST_DATA = {
   'Critical Blockers': {
     icon: AlertCircle,
-    color: 'bg-red-50 border-red-200',
-    badgeColor: 'bg-red-500',
+    color: 'bg-destructive/10 border-destructive/20',
+    badgeColor: 'bg-destructive',
     items: [
       { id: 1, text: 'Stripe integration live', category: 'Payment & Billing', blocking: true, prerequisite: 'setupStripeConnect() + handleStripeWebhooks()' },
       { id: 2, text: 'Promo codes server-side validation', category: 'Payment & Billing', blocking: true },
@@ -105,8 +108,8 @@ const CHECKLIST_DATA = {
   },
   'Ops & Infrastructure': {
     icon: CheckCircle2,
-    color: 'bg-green-50 border-green-200',
-    badgeColor: 'bg-green-500',
+    color: 'bg-success/10 border-success/20',
+    badgeColor: 'bg-success',
     items: [
       { id: 60, text: 'Error tracking enabled (Sentry)', category: 'Monitoring & Alerting' },
       { id: 61, text: 'API monitoring configured', category: 'Monitoring & Alerting' },
@@ -171,30 +174,32 @@ export default function LaunchChecklist() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pb-20">
+    <div className={stb.page + ' pb-20'}>
       <MetaTags
         title="Launch Checklist"
         description="Tracking MVP status and go-live readiness for ShopTheBarber"
       />
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">ShopTheBarber Launch Checklist 🚀</h1>
-          <p className="text-muted-foreground">Target Launch: TBD | Status: MVP Phase</p>
-
-          {/* Overall Progress */}
-          <div className="mt-6 bg-card rounded-xl p-6 border border-slate-200">
+      <PageHeader
+        label="Admin"
+        title="Launch checklist"
+        subtitle="Target Launch: TBD | Status: MVP Phase"
+        compact
+        variant="light"
+        tier="app"
+      />
+      <PageContent narrow>
+        {/* Overall Progress */}
+        <div className={stb.panel + ' p-6 mb-8'}>
             <div className="flex justify-between items-center mb-3">
-              <span className="font-semibold text-foreground">Overall Progress</span>
-              <span className="text-2xl font-bold text-blue-600">{getTotalProgress()}%</span>
+              <span className={stb.uiSubheading}>Overall Progress</span>
+              <span className={stb.metricValue + ' text-primary'}>{getTotalProgress()}%</span>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-3">
+            <div className="w-full bg-muted rounded-full h-3">
               <div
-                className="bg-blue-600 h-3 rounded-full transition-all"
+                className="bg-primary h-3 rounded-full transition-all"
                 style={{ width: `${getTotalProgress()}%` }}
               />
             </div>
-          </div>
         </div>
 
         {/* Sections */}
@@ -228,14 +233,14 @@ export default function LaunchChecklist() {
                       {isExpanded ? <ChevronUp /> : <ChevronDown />}
                     </div>
                   </div>
-                  <div className="mt-3 w-full bg-slate-200 rounded-full h-2">
+                  <div className="mt-3 w-full bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all`}
                       style={{
                         width: `${progress}%`,
-                        backgroundColor: sectionData.badgeColor === 'bg-red-500' ? '#ef4444' :
-                          sectionData.badgeColor === 'bg-yellow-500' ? '#eab308' :
-                            sectionData.badgeColor === 'bg-blue-500' ? '#3b82f6' : '#10b981'
+                        backgroundColor: sectionData.badgeColor === 'bg-destructive/100' ? 'hsl(var(--destructive))' :
+                          sectionData.badgeColor === 'bg-yellow-500' ? 'hsl(var(--chart-3))' :
+                            sectionData.badgeColor === 'bg-blue-500' ? 'hsl(var(--chart-1))' : 'hsl(var(--primary))'
                       }}
                     />
                   </div>
@@ -257,26 +262,26 @@ export default function LaunchChecklist() {
                               {item.text}
                             </p>
                             {UNCERTAIN_ITEMS.has(item.id) && (
-                              <HelpCircle className="w-4 h-4 text-amber-500" title="Partially built or unclear implementation" />
+                              <HelpCircle className="w-4 h-4 text-primary" title="Partially built or unclear implementation" />
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">{item.category}</p>
                           {item.prerequisite && (
-                            <p className="text-xs text-red-600 mt-2 font-semibold">🔴 BLOCKED: {item.prerequisite}</p>
+                            <p className="text-xs text-destructive mt-2 font-semibold">🔴 BLOCKED: {item.prerequisite}</p>
                           )}
                         </div>
                         {item.blocking && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
                             Blocker
                           </Badge>
                         )}
                         {UNCERTAIN_ITEMS.has(item.id) && (
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          <Badge variant="outline" className="bg-primary/10 text-muted-foreground border-primary/30">
                             Partial
                           </Badge>
                         )}
                         {item.prerequisite && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
                             Blocked
                           </Badge>
                         )}
@@ -290,14 +295,14 @@ export default function LaunchChecklist() {
         </div>
 
         {/* Go/No-Go Criteria */}
-        <Card className="mt-8 bg-card border-slate-200">
+        <Card className="mt-8 bg-card border-border">
           <CardHeader>
             <CardTitle>Launch Go/No-Go Criteria</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-semibold text-green-900 mb-2">✅ GO to Launch when:</h4>
-              <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+              <h4 className="font-semibold text-success mb-2">✅ GO to Launch when:</h4>
+              <ul className="text-sm text-success/90 space-y-1 list-disc list-inside">
                 <li>All Critical Blockers checked</li>
                 <li>All Core Features tested end-to-end</li>
                 <li>Security audit passed</li>
@@ -305,9 +310,9 @@ export default function LaunchChecklist() {
                 <li>Monitoring & alerting configured</li>
               </ul>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h4 className="font-semibold text-red-900 mb-2">❌ NO-GO if:</h4>
-              <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <h4 className="font-semibold text-destructive mb-2">❌ NO-GO if:</h4>
+              <ul className="text-sm text-destructive/90 space-y-1 list-disc list-inside">
                 <li>Any critical blocker remains unchecked</li>
                 <li>Booking system has double-booking risk</li>
                 <li>Payment integration incomplete</li>
@@ -318,7 +323,7 @@ export default function LaunchChecklist() {
         </Card>
 
         {/* Timeline */}
-        <Card className="mt-8 bg-card border-slate-200">
+        <Card className="mt-8 bg-card border-border">
           <CardHeader>
             <CardTitle>Suggested Timeline</CardTitle>
           </CardHeader>
@@ -349,7 +354,6 @@ export default function LaunchChecklist() {
         {/* Export Button */}
         <div className="mt-8 text-center">
           <Button
-            className="bg-blue-600 hover:bg-blue-700"
             onClick={() => {
               const text = `ShopTheBarber Launch Checklist\n\n${ 
                 Object.entries(CHECKLIST_DATA).map(([section, data]) => {
@@ -369,7 +373,7 @@ export default function LaunchChecklist() {
             <Download className="w-4 h-4 mr-2" /> Export Checklist
           </Button>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

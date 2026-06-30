@@ -29,14 +29,14 @@ export default function AdminVipBarbersPanel() {
         <div className="space-y-4">
             <div>
                 <h3 className="text-lg font-bold flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-amber-500" />
+                    <Crown className="w-5 h-5 text-primary" />
                     VIP highlight (optional)
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                     VIP is a recognition badge, independent of where they work. A VIP barber can be at-home only, in-shop only, or both; those modes are set in Provider Settings.
                 </p>
             </div>
-            <div className="border border-border rounded-2xl overflow-hidden divide-y divide-border max-h-[480px] overflow-y-auto">
+            <div className="stb-panel overflow-hidden divide-y divide-border max-h-[480px] overflow-y-auto">
                 {barbers.slice(0, 50).map((b) => (
                     <div
                         key={b.id}

@@ -2,26 +2,31 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function ProviderTermsOfService() {
   return (
-    <div className="stb-page">
+    <div className={stb.page}>
       <MetaTags
         title="Provider Terms of Service"
         description="Terms of Service for ShopTheBarber service providers"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Provider Dashboard
-        </Link>
+      <PageHeader
+        label="Legal"
+        title="Terms of Service"
+        subtitle="Service Provider Edition • Effective January 28, 2026"
+        compact
+        variant="light"
+        tier="app"
+      />
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Terms of Service</h1>
-          <p className="text-muted-foreground">Service Provider Edition • Effective January 28, 2026</p>
-        </div>
+      <PageContent narrow>
+        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-6 text-sm">
+          ← Back to Provider Dashboard
+        </Link>
 
         <Card className="prose prose-sm max-w-none">
           <CardContent className="prose prose-sm prose-headings:font-bold prose-headings:mt-6 prose-headings:mb-3 pt-6 space-y-4">
@@ -312,7 +317,7 @@ export default function ProviderTermsOfService() {
             <Link to={createPageUrl('ProviderDashboard')} className="text-primary hover:underline">Return to Provider Dashboard</Link>
           </p>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

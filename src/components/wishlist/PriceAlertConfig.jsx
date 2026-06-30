@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 export default function PriceAlertConfig({ product, trigger }) {
   const queryClient = useQueryClient();
@@ -95,7 +96,7 @@ export default function PriceAlertConfig({ product, trigger }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-            <Bell className="w-6 h-6 text-[#D08B3D]" />
+            <Bell className="w-6 h-6 text-primary" />
             Alerte de Prix
           </DialogTitle>
           <DialogDescription>
@@ -105,17 +106,17 @@ export default function PriceAlertConfig({ product, trigger }) {
 
         <div className="space-y-6 mt-6">
           {/* Product Info */}
-          <div className="flex items-center gap-4 p-4 bg-[#F7F8FA] rounded-[10px]">
+          <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
             {product.image_url && (
               <img
                 src={product.image_url}
                 alt={product.name}
-                className="w-16 h-16 rounded-[8px] object-cover"
+                className="w-16 h-16 rounded-lg object-cover"
               />
             )}
             <div className="flex-1">
-              <p className="font-semibold text-[#0B2545]">{product.name}</p>
-              <p className="text-2xl font-bold text-[#D08B3D]">{product.price}€</p>
+              <p className="font-semibold text-foreground">{product.name}</p>
+              <p className="text-2xl font-bold text-primary">{product.price}€</p>
             </div>
           </div>
 
@@ -123,16 +124,16 @@ export default function PriceAlertConfig({ product, trigger }) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="p-6 bg-[#1E7A4B]/10 border-2 border-[#1E7A4B] rounded-[10px]"
+              className="p-6 bg-success/10 border-2 border-success rounded-lg"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#1E7A4B] rounded-full flex items-center justify-center">
-                    <Check className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-success rounded-full flex items-center justify-center">
+                    <Check className="w-6 h-6 text-success-foreground" />
                   </div>
                   <div>
-                    <p className="font-bold text-[#1E7A4B]">Alerte Active</p>
-                    <p className="text-sm text-[#1E7A4B]">
+                    <p className="font-bold text-success">Alerte Active</p>
+                    <p className="text-sm text-success">
                       {existingAlert.alert_type === 'any_drop' && 'Toute baisse de prix'}
                       {existingAlert.alert_type === 'target_price' && `Prix cible: ${existingAlert.target_price}€`}
                       {existingAlert.alert_type === 'percentage_drop' && `Baisse de ${existingAlert.percentage_threshold}%`}
@@ -142,13 +143,13 @@ export default function PriceAlertConfig({ product, trigger }) {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="text-[#D6454A] hover:bg-[#D6454A]/10 min-h-[44px] min-w-[44px]"
+                  className="text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px]"
                   onClick={() => deleteAlertMutation.mutate(existingAlert.id)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-              <p className="text-sm text-[#1E7A4B]">
+              <p className="text-sm text-success">
                 Vous recevrez un email dès que les conditions sont remplies
               </p>
             </motion.div>
@@ -156,7 +157,7 @@ export default function PriceAlertConfig({ product, trigger }) {
             <div className="space-y-6">
               <RadioGroup value={alertType} onValueChange={setAlertType}>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-4 border-2 rounded-[10px] cursor-pointer hover:border-[#D08B3D] transition-colors"
+                  <div className="flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors"
                     onClick={() => setAlertType('any_drop')}>
                     <RadioGroupItem value="any_drop" id="any_drop" className="mt-1" />
                     <div className="flex-1">
@@ -169,7 +170,7 @@ export default function PriceAlertConfig({ product, trigger }) {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-4 border-2 rounded-[10px] cursor-pointer hover:border-[#D08B3D] transition-colors"
+                  <div className="flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors"
                     onClick={() => setAlertType('percentage_drop')}>
                     <RadioGroupItem value="percentage_drop" id="percentage_drop" className="mt-1" />
                     <div className="flex-1">
@@ -196,7 +197,7 @@ export default function PriceAlertConfig({ product, trigger }) {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-4 border-2 rounded-[10px] cursor-pointer hover:border-[#D08B3D] transition-colors"
+                  <div className="flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors"
                     onClick={() => setAlertType('target_price')}>
                     <RadioGroupItem value="target_price" id="target_price" className="mt-1" />
                     <div className="flex-1">
@@ -229,7 +230,7 @@ export default function PriceAlertConfig({ product, trigger }) {
                   createAlertMutation.isPending ||
                   (alertType === 'target_price' && !targetPrice)
                 }
-                className="w-full bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white h-12 rounded-[10px]"
+                className="w-full h-12 rounded-lg"
               >
                 <Bell className="w-4 h-4 mr-2" />
                 Activer l'Alerte

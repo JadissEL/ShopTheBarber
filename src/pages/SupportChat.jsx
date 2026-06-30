@@ -26,11 +26,13 @@ import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import ClientDisputeAppealsPanel from '@/components/dispute/ClientDisputeAppealsPanel';
 import { cn } from '@/lib/utils';
+import PageHeader from '@/components/layout/PageHeader';
+import { stb } from '@/lib/stbUi';
 
 const STATUS_COLORS = {
-    open: 'bg-amber-100 text-amber-800',
-    in_progress: 'bg-sky-100 text-sky-800',
-    resolved: 'bg-emerald-100 text-emerald-800',
+    open: 'bg-warning/15 text-foreground',
+    in_progress: 'bg-primary/10 text-primary',
+    resolved: 'stb-chip stb-chip-active',
     closed: 'bg-muted text-muted-foreground',
 };
 
@@ -136,7 +138,7 @@ export default function SupportChat() {
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen flex items-center justify-center p-6">
+            <div className={stb.page + ' flex items-center justify-center p-6'}>
                 <MetaTags title="Support" />
                 <p className="text-muted-foreground">Sign in to contact support.</p>
             </div>
@@ -150,9 +152,21 @@ export default function SupportChat() {
     ];
 
     return (
-        <div className="stb-page flex flex-col">
+        <div className={stb.page + ' flex flex-col lg:pb-8'}>
             <MetaTags title="Support Chat" description="Chat with ShopTheBarber support" />
-            <div className="max-w-7xl mx-auto w-full px-4 py-4">
+            <PageHeader
+                label="Help"
+                title="Support"
+                subtitle="We typically reply within a few hours."
+                compact
+                variant="light"
+                tier="app"
+            >
+                <Button className="gap-2" onClick={() => setNewOpen(true)}>
+                    <MessageSquarePlus className="w-4 h-4" /> New conversation
+                </Button>
+            </PageHeader>
+            <div className="max-w-7xl mx-auto w-full px-4 py-2">
                 <ClientDisputeAppealsPanel />
             </div>
             <div className="flex flex-col lg:flex-row flex-1">
@@ -161,17 +175,9 @@ export default function SupportChat() {
                 selectedTicketId && 'hidden lg:flex'
             )}>
                 <div className="p-4 border-b border-border">
-                    <Link to={createPageUrl('HelpCenter')} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3">
+                    <Link to={createPageUrl('HelpCenter')} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                         <ArrowLeft className="w-4 h-4" /> Help Center
                     </Link>
-                    <div className="flex items-center gap-2">
-                        <Headphones className="w-5 h-5 text-primary" />
-                        <h1 className="font-bold text-lg">Support</h1>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">We typically reply within a few hours.</p>
-                    <Button className="w-full mt-3 gap-2" onClick={() => setNewOpen(true)}>
-                        <MessageSquarePlus className="w-4 h-4" /> New conversation
-                    </Button>
                 </div>
                 <ScrollArea className="flex-1">
                     {ticketsLoading ? (
@@ -252,7 +258,7 @@ export default function SupportChat() {
                                         return (
                                             <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
                                                 <div className={cn(
-                                                    'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
+                                                    'max-w-[85%] rounded-lg px-4 py-2.5 text-sm',
                                                     isMine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
                                                 )}>
                                                     {!isMine && (

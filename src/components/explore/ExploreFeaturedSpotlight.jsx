@@ -4,6 +4,8 @@ import { Star, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { formatBarberRatingLine } from '@/lib/barberCardTags';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function ExploreFeaturedSpotlight({ barber, bookingLocation = null }) {
   if (!barber?.id) return null;
@@ -21,7 +23,7 @@ export default function ExploreFeaturedSpotlight({ barber, bookingLocation = nul
   const bookUrl = createPageUrl(`BookingFlow?${bookParams.toString()}`);
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-card shadow-sm overflow-hidden">
+    <div className={cn(stb.surface, 'border-foreground/10 overflow-hidden')}>
       <div className="flex flex-col sm:flex-row">
         <Link
           to={profileUrl}
@@ -43,27 +45,27 @@ export default function ExploreFeaturedSpotlight({ barber, bookingLocation = nul
             Featured
           </p>
           <Link to={profileUrl} className="group/name min-w-0">
-            <h3 className="font-bold text-base text-foreground truncate group-hover/name:text-primary transition-colors">
+            <h3 className={cn(stb.uiHeading, 'text-base truncate group-hover/name:text-primary transition-colors')}>
               {name}
             </h3>
           </Link>
           <p className="text-sm text-muted-foreground truncate">{title}</p>
           <div className="flex items-center gap-1.5 text-sm">
-            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" aria-hidden />
+            <Star className="w-3.5 h-3.5 text-primary fill-amber-500" aria-hidden />
             <span className="font-semibold">{ratingLine.value}</span>
             {ratingLine.reviews ? (
               <span className="text-muted-foreground text-xs">({ratingLine.reviews})</span>
             ) : null}
           </div>
           <div className="flex items-center gap-2 mt-auto pt-1">
-            <Button asChild size="sm" className="rounded-xl h-9 font-semibold text-sm flex-1 sm:flex-none">
+            <Button asChild size="sm" className=" h-9 font-semibold text-sm flex-1 sm:flex-none">
               <Link to={bookUrl}>Book now</Link>
             </Button>
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="rounded-xl h-9 text-muted-foreground hover:text-foreground gap-1"
+              className=" h-9 text-muted-foreground hover:text-foreground gap-1"
             >
               <Link to={profileUrl}>
                 Profile

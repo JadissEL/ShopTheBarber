@@ -23,7 +23,7 @@ export default function HomeLocalCities() {
                         <h2 className="text-3xl font-bold text-foreground">Book barbers in your city</h2>
                         <p className="text-muted-foreground mt-2">SEO-friendly local guides with top pros, shops, and mobile options.</p>
                     </div>
-                    <Button asChild variant="outline" className="rounded-xl shrink-0">
+                    <Button asChild variant="outline" className=" shrink-0">
                         <Link to="/cities">All cities <ArrowRight className="w-4 h-4 ml-2" /></Link>
                     </Button>
                 </div>
@@ -32,7 +32,7 @@ export default function HomeLocalCities() {
                         <Link
                             key={city.slug}
                             to={`/barbers-in/${city.slug}`}
-                            className="flex items-center gap-2 p-4 rounded-xl bg-card border hover:border-primary/40 transition-colors"
+                            className="flex items-center gap-2 p-4 rounded-lg bg-card border hover:border-primary/40 transition-colors"
                         >
                             <MapPin className="w-4 h-4 text-primary shrink-0" />
                             <span className="font-medium text-sm">{city.name}</span>

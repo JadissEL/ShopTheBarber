@@ -35,7 +35,7 @@ export default function BookingDateTimeStep({
           type="button"
           size="lg"
           onClick={onASAP}
-          className="px-8 h-12 text-base rounded-[13px] shadow-sm touch-manipulation"
+          className="px-8 h-12 text-base rounded-lg shadow-sm touch-manipulation"
         >
           <Clock className="w-5 h-5 mr-2" aria-hidden />
           Book ASAP (Next Available)
@@ -53,7 +53,7 @@ export default function BookingDateTimeStep({
             selected={selectedDate}
             onSelect={onSelectDate}
             disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-            className="rounded-xl border-0 w-full"
+            className=" border-0 w-full"
           />
           {selectedDate && (
             <p className="mt-4 text-sm text-center text-muted-foreground">
@@ -62,14 +62,14 @@ export default function BookingDateTimeStep({
           )}
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
+        <div className="stb-panel p-6 space-y-6">
           <div>
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-primary" aria-hidden />
               Pick a Time
             </h3>
             {!selectedDate ? (
-              <p className="text-sm text-muted-foreground rounded-xl border border-dashed border-border p-6 text-center">
+              <p className="text-sm text-muted-foreground rounded-lg border border-dashed border-border p-6 text-center">
                 Select a date to see available times.
               </p>
             ) : slotsLoading ? (
@@ -79,7 +79,7 @@ export default function BookingDateTimeStep({
                 ))}
               </div>
             ) : timeSlots.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              <div className=" border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
                 <p>No open slots on this date.</p>
                 {onJoinWaitlist && (
                   <Button
@@ -103,7 +103,7 @@ export default function BookingDateTimeStep({
                     aria-pressed={selectedTime === time}
                     onClick={() => onSelectTime(time)}
                     className={cn(
-                      'py-3 px-4 rounded-[13px] border-2 font-medium text-sm touch-manipulation transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2',
+                      'py-3 px-4 rounded-lg border-2 font-medium text-sm touch-manipulation transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2',
                       selectedTime === time
                         ? 'border-success bg-success text-success-foreground shadow-sm'
                         : 'border-border hover:border-success/40 bg-background'
@@ -125,7 +125,7 @@ export default function BookingDateTimeStep({
                     key={`waitlist-${time}`}
                     type="button"
                     onClick={() => onJoinWaitlist(time)}
-                    className="py-3 px-4 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50/80 dark:bg-amber-950/20 text-amber-950 dark:text-amber-100 font-medium text-sm hover:bg-amber-100 dark:hover:bg-amber-950/40 transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+                    className="py-3 px-4 rounded-lg border-2 border-dashed border-primary/40 bg-primary/10/80 dark:bg-primary/10 text-primary-foreground dark:text-primary-foreground font-medium text-sm hover:bg-primary/15 dark:hover:bg-primary/15 transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
                     {time}
                     <span className="block text-[10px] font-normal opacity-80">Waitlist</span>

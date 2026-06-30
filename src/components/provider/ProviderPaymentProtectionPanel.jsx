@@ -48,10 +48,10 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
 
     return (
         <div className="space-y-6">
-            <Card className="border-violet-200/60 bg-gradient-to-br from-violet-50/50 to-transparent rounded-3xl">
+            <Card className="border-primary/30 bg-primary/10">
                 <CardHeader>
                     <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-                        <Shield className="w-5 h-5 text-violet-600" />
+                        <Shield className="w-5 h-5 text-primary" />
                         No-show protection &amp; deposits
                         <Badge variant={data?.stripe_configured ? 'default' : 'secondary'} className="ml-auto">
                             {data?.stripe_configured ? 'Stripe ready' : 'Stripe not configured'}
@@ -84,7 +84,7 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
                     )}
 
                     {effective && (
-                        <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm space-y-1">
+                        <div className=" border border-border bg-muted/30 p-4 text-sm space-y-1">
                             <p className="font-semibold flex items-center gap-2">
                                 <Info className="w-4 h-4" /> Effective policy for clients
                             </p>
@@ -119,7 +119,7 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border">
+                    <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border">
                         <div>
                             <Label className="text-base font-semibold flex items-center gap-2">
                                 <CreditCard className="w-4 h-4" /> Require card on file
@@ -135,7 +135,7 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
                         />
                     </div>
 
-                    <div className="space-y-4 p-4 rounded-xl border border-border">
+                    <div className="space-y-4 p-4 rounded-lg border border-border">
                         <div className="flex items-center justify-between gap-4">
                             <div>
                                 <Label className="text-base font-semibold">Booking deposit</Label>
@@ -184,7 +184,7 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
                         )}
                     </div>
 
-                    <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border">
+                    <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border">
                         <div>
                             <Label className="text-base font-semibold">Payment authorization</Label>
                             <p className="text-xs text-muted-foreground mt-1">
@@ -198,11 +198,11 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
                         />
                     </div>
 
-                    <div className="space-y-4 p-4 rounded-xl border border-amber-200/60 bg-amber-50/30">
+                    <div className="space-y-4 p-4 rounded-lg border border-primary/30 bg-primary/10/30">
                         <div className="flex items-center justify-between gap-4">
                             <div>
                                 <Label className="text-base font-semibold flex items-center gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                    <AlertTriangle className="w-4 h-4 text-primary" />
                                     No-show protection
                                 </Label>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -251,7 +251,7 @@ export default function ProviderPaymentProtectionPanel({ shopId, isShopOwner }) 
                         )}
                     </div>
 
-                    <div className="space-y-4 p-4 rounded-xl border border-violet-200/60 bg-violet-50/20">
+                    <div className="space-y-4 p-4 rounded-lg border border-primary/30 bg-primary/10">
                         <div className="flex items-center justify-between gap-4">
                             <div>
                                 <Label className="text-base font-semibold">Late cancellation fees</Label>

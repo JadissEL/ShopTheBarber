@@ -65,7 +65,7 @@ export default function StaffServicePricingEditor({ shopId, memberId, memberName
   if (isLoading) return <p className="text-sm text-muted-foreground p-4">Loading services…</p>;
 
   return (
-    <Card className="rounded-2xl border-slate-200">
+    <Card className=" border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-bold">Services & pricing, {memberName}</CardTitle>
         <p className="text-xs text-muted-foreground">
@@ -86,7 +86,7 @@ export default function StaffServicePricingEditor({ shopId, memberId, memberName
             return (
               <div
                 key={svc.id}
-                className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl border ${enabled ? 'bg-card border-slate-200' : 'bg-muted/50 border-slate-100 opacity-70'}`}
+                className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border ${enabled ? 'bg-card border-border' : 'bg-muted/50 border-border opacity-70'}`}
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm truncate">{svc.name}</p>
@@ -134,7 +134,7 @@ export default function StaffServicePricingEditor({ shopId, memberId, memberName
         )}
         {services.length > 0 && (
           <Button
-            className="w-full rounded-xl font-bold mt-2"
+            className="w-full rounded-lg font-bold mt-2"
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
           >

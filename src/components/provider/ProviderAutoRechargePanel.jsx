@@ -60,14 +60,14 @@ export default function ProviderAutoRechargePanel() {
     };
 
     if (isLoading) {
-        return <div className="h-32 rounded-2xl bg-muted/40 animate-pulse" aria-busy="true" />;
+        return <div className="h-32 rounded-lg bg-muted/40 animate-pulse" aria-busy="true" />;
     }
 
     return (
-        <Card className="rounded-2xl border-border/60">
+        <Card className=" border-border/60">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-amber-500" />
+                    <Zap className="w-5 h-5 text-primary" />
                     Low balance alerts
                     {enabled ? (
                         <Badge variant="secondary" className="ml-auto text-xs">Active</Badge>
@@ -77,7 +77,7 @@ export default function ProviderAutoRechargePanel() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-                <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-4 text-sm">
+                <div className="flex items-start gap-3 rounded-lg bg-muted/40 p-4 text-sm">
                     <Info className="w-4 h-4 shrink-0 mt-0.5 text-muted-foreground" />
                     <p className="text-muted-foreground">
                         When your fee wallet drops below the threshold, we send you a reminder to top up.
@@ -152,7 +152,7 @@ export default function ProviderAutoRechargePanel() {
                 <Button
                     onClick={handleSave}
                     disabled={saveMutation.isPending}
-                    className="rounded-xl font-bold"
+                    className=" font-bold"
                 >
                     Save alert settings
                 </Button>

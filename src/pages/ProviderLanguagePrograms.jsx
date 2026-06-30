@@ -16,6 +16,9 @@ import {
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 import { SpokenLanguagesBadges } from '@/components/languages/SpokenLanguagesBadges';
 
 function fmt(iso) {
@@ -43,7 +46,7 @@ function ProgramCard({ program, config, onJoin, onCancel, busy, termsAccepted, s
                         {program.language_label}
                     </Badge>
                     {program.suggested && !program.already_speaks_target && (
-                        <Badge className="bg-violet-100 text-violet-800">Suggested for you</Badge>
+                        <Badge className="bg-primary/10 text-foreground">Suggested for you</Badge>
                     )}
                     <Badge variant="outline" className="capitalize">{program.format?.replace('_', ' ')}</Badge>
                 </div>
@@ -73,12 +76,12 @@ function ProgramCard({ program, config, onJoin, onCancel, busy, termsAccepted, s
 
                 <div className="pt-2 space-y-3">
                     {isEnrolled ? (
-                        <Badge className="bg-emerald-100 text-emerald-800">
+                        <Badge className="stb-chip stb-chip-active">
                             <GraduationCap className="w-3 h-3 mr-1" />Enrolled
                         </Badge>
                     ) : isWaitlisted ? (
                         <div className="space-y-2">
-                            <Badge className="bg-emerald-100 text-emerald-800">
+                            <Badge className="stb-chip stb-chip-active">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
                                 Waitlist #{wl.position ?? '-'}, deposit paid
                             </Badge>
@@ -89,7 +92,7 @@ function ProgramCard({ program, config, onJoin, onCancel, busy, termsAccepted, s
                         </div>
                     ) : isPending && wl?.payment_status !== 'paid' ? (
                         <div className="space-y-2">
-                            <Badge className="bg-amber-100 text-amber-800">
+                            <Badge className="bg-warning/15 text-foreground">
                                 <Clock className="w-3 h-3 mr-1" />Payment pending
                             </Badge>
                             <div className="flex items-start gap-2">
@@ -213,17 +216,17 @@ export default function ProviderLanguagePrograms() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="Language Learning Programs" description="Join waitlists for barber language training" />
-            <div>
-                <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <Languages className="w-7 h-7" />
-                    Language learning programs
-                </h1>
-                <p className="text-muted-foreground mt-1 text-sm">
-                    Enroll on a waitlist for languages you want to learn. A {config?.deposit_percent ?? 20}% deposit is required and is non-refundable.
-                </p>
-            </div>
+            <PageHeader
+                label="Provider"
+                title="Language learning programs"
+                subtitle={`Enroll on a waitlist for languages you want to learn. A ${config?.deposit_percent ?? 20}% deposit is required and is non-refundable.`}
+                compact
+                variant="light"
+                tier="app"
+            />
+            <PageContent narrow className="space-y-6">
 
             {spoken.length > 0 && (
                 <Card>
@@ -243,7 +246,7 @@ export default function ProviderLanguagePrograms() {
                 <TabsContent value="browse" className="space-y-6 mt-4">
                     {suggested.length > 0 && (
                         <section>
-                            <h2 className="text-lg font-semibold mb-3">Recommended for you</h2>
+                            <h2 className={stb.uiSubheading + ' mb-3'}>Recommended for you</h2>
                             <div className="grid gap-4 md:grid-cols-2">
                                 {suggested.map((p) => (
                                     <ProgramCard
@@ -261,7 +264,7 @@ export default function ProviderLanguagePrograms() {
                         </section>
                     )}
                     <section>
-                        <h2 className="text-lg font-semibold mb-3">{suggested.length ? 'All programs' : 'Programs'}</h2>
+                        <h2 className={stb.uiSubheading + ' mb-3'}>{suggested.length ? 'All programs' : 'Programs'}</h2>
                         {other.length === 0 && suggested.length === 0 ? (
                             <p className="text-muted-foreground text-sm">No programs available yet.</p>
                         ) : (
@@ -319,6 +322,7 @@ export default function ProviderLanguagePrograms() {
                     )}
                 </TabsContent>
             </Tabs>
+            </PageContent>
         </div>
     );
 }

@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { stb } from '@/lib/stbUi';
 
 export function EmptyState({
   icon: Icon,
@@ -12,15 +13,15 @@ export function EmptyState({
   className,
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-16 px-4 text-center", className)}>
+    <div className={cn(stb.surface, "flex flex-col items-center justify-center py-16 px-4 text-center", className)}>
       {Icon && (
-        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-6">
-          <Icon className="w-8 h-8 text-muted-foreground" />
+        <div className={cn(stb.iconBox, "mb-6")}>
+          <Icon className="w-7 h-7" />
         </div>
       )}
-      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+      <h3 className={cn(stb.uiHeading, "text-lg mb-2")}>{title}</h3>
       {description && (
-        <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>
+        <p className={cn(stb.body, "max-w-sm mb-6")}>{description}</p>
       )}
       {actionLabel && actionHref && (
         <Link to={actionHref}>

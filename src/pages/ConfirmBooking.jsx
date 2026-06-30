@@ -9,6 +9,9 @@ import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ReferralShareCard from '@/components/referral/ReferralShareCard';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 /**
  * Standalone booking confirmation entry, e.g. from email link.
  * If no booking id, redirects to UserBookings. Otherwise shows confirmation and link to bookings.
@@ -27,14 +30,22 @@ export default function ConfirmBooking() {
   }, [bookingId]);
 
   return (
-    <div className="stb-page flex flex-col items-center p-4 pb-24 lg:pb-8 gap-6">
+    <div className={stb.page + ' pb-24 lg:pb-8'}>
       <MetaTags title="Booking Confirmation" description="Your booking has been confirmed" noindex />
+      <PageHeader
+        label="Booking"
+        title="Booking confirmed"
+        subtitle={bookingId ? `Booking #${bookingId} is confirmed.` : 'Your appointment is confirmed.'}
+        compact
+        variant="light"
+        tier="app"
+      />
+      <PageContent narrow className="flex flex-col items-center gap-6">
       <Card className="w-full max-w-md lg:max-w-lg">
         <CardContent className="py-8 text-center">
           <CheckCircle className="w-14 h-14 text-primary mx-auto mb-4" />
-          <h1 className="text-xl font-bold mb-2">Booking confirmed</h1>
           <p className="text-muted-foreground text-sm mb-6">
-            {bookingId ? `Booking #${bookingId} is confirmed.` : 'Your appointment is confirmed.'}
+            You&apos;re all set. We sent a confirmation if email is on file.
           </p>
           <Link to={createPageUrl('UserBookings')}>
             <Button className="w-full">View my bookings</Button>
@@ -48,6 +59,7 @@ export default function ConfirmBooking() {
           subtitle="Invite a friend, you earn when they complete their first booking."
         />
       </div>
+      </PageContent>
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { ArrowRight, MapPin, Sparkles, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { DISCOVERY_ROUTES } from '@/lib/discoveryRoutes';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 const IMAGES = {
   hero: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f0?w=1600&auto=format&fit=crop&q=80',
@@ -103,15 +105,14 @@ function HeroDealCard({ offer }) {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="relative overflow-hidden rounded-[2rem] min-h-[320px] md:min-h-[380px] shadow-2xl shadow-black/20 group"
+      className={cn('relative overflow-hidden min-h-[320px] md:min-h-[380px] group', stb.cardInteractive)}
     >
       <OptimizedImage src={image} alt="" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/25" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-foreground/60" />
 
       <div className="relative z-10 flex flex-col justify-between h-full min-h-[320px] md:min-h-[380px] p-8 md:p-10 lg:p-12">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/90 text-amber-950 text-xs font-bold uppercase tracking-wider">
+          <span className="stb-chip stb-chip-active text-xs">
             <Sparkles className="w-3.5 h-3.5" />
             Featured deal
           </span>
@@ -123,7 +124,7 @@ function HeroDealCard({ offer }) {
         </div>
 
         <div className="mt-auto max-w-xl">
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-[1.08] mb-3">
+          <h3 className={cn(stb.heading, 'text-white text-3xl sm:text-4xl md:text-5xl mb-3')}>
             {headlineFromOffer(offer)}
           </h3>
           <p className="text-base md:text-lg text-white/80 leading-relaxed mb-6 max-w-md">
@@ -131,16 +132,12 @@ function HeroDealCard({ offer }) {
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 px-8 rounded-xl bg-card text-foreground hover:bg-white/90 font-semibold shadow-lg"
-            >
+            <Button asChild size="lg" className="h-12 px-8">
               <Link to={createPageUrl(path)}>{ctaFromOffer(offer, 'hero')}</Link>
             </Button>
             {offer.code && (
-              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white font-mono text-sm backdrop-blur-md">
-                <Tag className="w-4 h-4 text-amber-300" />
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-black/40 border border-white/20 text-white font-mono text-sm backdrop-blur-md">
+                <Tag className="w-4 h-4 text-primary" />
                 {offer.code}
               </span>
             )}
@@ -159,17 +156,17 @@ function SecondaryDealCard({ offer, fallback, imageKey = 'shop' }) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.08 }}
-        className="relative overflow-hidden rounded-[1.75rem] min-h-[280px] shadow-lg group"
+        className={cn('relative overflow-hidden min-h-[280px] group', stb.cardInteractive)}
       >
         <OptimizedImage src={IMAGES.discover} alt="" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-t from-violet-950/95 via-violet-900/50 to-violet-900/20" />
+        <div className="absolute inset-0 bg-[hsl(var(--navy))]/80" />
         <div className="relative z-10 flex flex-col justify-end h-full min-h-[280px] p-7 md:p-8">
-          <p className="text-violet-200/90 text-xs font-semibold uppercase tracking-widest mb-2">Independent barbers</p>
-          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">Discover rising talent near you</h3>
+          <p className="text-white/75 text-xs font-semibold uppercase tracking-widest mb-2">Independent barbers</p>
+          <h3 className={cn(stb.title, 'text-2xl text-white mb-2')}>Discover rising talent near you</h3>
           <p className="text-sm text-white/75 mb-5 max-w-xs">
             Browse profiles, compare services, and book your next cut in minutes.
           </p>
-          <Button asChild className="w-fit rounded-xl bg-card text-violet-950 hover:bg-violet-50 font-semibold">
+          <Button asChild className="w-fit">
             <Link to={createPageUrl(DISCOVERY_ROUTES.explore)}>Explore barbers</Link>
           </Button>
         </div>
@@ -192,10 +189,10 @@ function SecondaryDealCard({ offer, fallback, imageKey = 'shop' }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: 0.05 }}
-      className="relative overflow-hidden rounded-[1.75rem] min-h-[280px] shadow-lg group"
+      className={cn('relative overflow-hidden min-h-[280px] group', stb.cardInteractive)}
     >
       <OptimizedImage src={image} alt="" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
+      <div className="absolute inset-0 bg-foreground/65" />
 
       <div className="relative z-10 flex flex-col justify-between h-full min-h-[280px] p-7 md:p-8">
         <div>
@@ -219,14 +216,14 @@ function SecondaryDealCard({ offer, fallback, imageKey = 'shop' }) {
               {offer.scope === 'shop' ? 'Shop special' : offer.kind === 'highlight' ? 'Top barber' : 'Barber bundle'}
             </span>
           </div>
-          <h3 className="text-xl md:text-2xl font-bold text-white leading-snug mb-2 line-clamp-2">
+          <h3 className={cn(stb.title, 'text-xl md:text-2xl text-white mb-2 line-clamp-2')}>
             {headlineFromOffer(offer)}
           </h3>
           <p className="text-sm text-white/75 mb-5 line-clamp-2">{sublineFromOffer(offer)}</p>
           <Button
             asChild
             variant="secondary"
-            className="rounded-xl bg-white/95 text-foreground hover:bg-card font-semibold"
+            className=" bg-white/95 text-foreground hover:bg-card font-semibold"
           >
             <Link to={createPageUrl(path)}>{ctaFromOffer(offer)}</Link>
           </Button>
@@ -238,17 +235,17 @@ function SecondaryDealCard({ offer, fallback, imageKey = 'shop' }) {
 
 function DealsSkeleton() {
   return (
-    <section className="py-24 md:py-28 bg-zinc-950">
+    <section className="py-24 md:py-28 bg-[hsl(var(--navy))]">
       <div className="container mx-auto px-4 md:px-6 max-w-6xl animate-pulse space-y-10">
         <div className="space-y-3 max-w-lg">
-          <div className="h-4 w-20 bg-zinc-800 rounded" />
-          <div className="h-10 w-80 bg-zinc-800 rounded" />
-          <div className="h-5 w-96 bg-zinc-800/80 rounded" />
+          <div className="h-4 w-20 bg-muted rounded" />
+          <div className="h-10 w-80 bg-muted rounded" />
+          <div className="h-5 w-96 bg-muted rounded" />
         </div>
-        <div className="h-[380px] bg-zinc-800 rounded-[2rem]" />
+        <div className="h-[380px] bg-muted rounded-lg" />
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="h-[280px] bg-zinc-800 rounded-[1.75rem]" />
-          <div className="h-[280px] bg-zinc-800 rounded-[1.75rem]" />
+          <div className="h-[280px] bg-muted rounded-lg" />
+          <div className="h-[280px] bg-muted rounded-lg" />
         </div>
       </div>
     </section>
@@ -270,10 +267,10 @@ export default function HomeOffers() {
 
   if (isError) {
     return (
-      <section className="py-24 bg-zinc-950 border-y border-zinc-800">
+      <section className="py-24 bg-[hsl(var(--navy))] border-y border-white/15">
         <div className="container mx-auto px-4 md:px-6 text-center">
-          <p className="text-zinc-400 mb-4">Could not load deals right now.</p>
-          <Button variant="outline" onClick={() => refetch()} className="rounded-xl border-zinc-600 text-white hover:bg-zinc-800">
+          <p className="text-white/70 mb-4">Could not load deals right now.</p>
+          <Button variant="outline" onClick={() => refetch()} className=" border-foreground/25 text-white hover:bg-muted">
             Try again
           </Button>
         </div>
@@ -294,9 +291,7 @@ export default function HomeOffers() {
     });
 
   return (
-    <section className="py-24 md:py-28 bg-zinc-950 text-white relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent pointer-events-none" />
-
+    <section className="py-24 md:py-28 bg-[hsl(var(--navy))] text-white relative overflow-hidden">
       <div className="container mx-auto px-4 md:px-6 max-w-6xl relative z-10">
         <motion.header
           initial={{ opacity: 0, y: 12 }}
@@ -304,11 +299,11 @@ export default function HomeOffers() {
           viewport={{ once: true }}
           className="mb-12 md:mb-14 max-w-2xl"
         >
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-3">Deals</p>
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight mb-4">
+          <p className={cn(stb.label, 'mb-3')}>Deals</p>
+          <h2 className={cn(stb.heading, 'text-white text-3xl md:text-5xl mb-4')}>
             Save on your next cut
           </h2>
-          <p className="text-lg text-zinc-400 leading-relaxed">
+          <p className="text-lg text-white/70 leading-relaxed">
             Discover exclusive offers from top barbers and shops, applied at checkout when you book.
           </p>
         </motion.header>
@@ -334,9 +329,9 @@ export default function HomeOffers() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mt-14 md:mt-16 pt-10 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6"
+          className="mt-14 md:mt-16 pt-10 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-6"
         >
-          <p className="text-sm text-zinc-500 text-center sm:text-left">
+          <p className="text-sm text-white/60 text-center sm:text-left">
             {hasAnyDeal
               ? 'New promos and bundles added weekly by shops and barbers on the platform.'
               : 'More deals coming soon as shops and barbers join your city.'}
@@ -345,7 +340,7 @@ export default function HomeOffers() {
             asChild
             size="lg"
             variant="outline"
-            className="rounded-xl border-zinc-600 bg-transparent text-white hover:bg-zinc-800 hover:text-white gap-2 shrink-0 h-12 px-8 font-semibold"
+            className=" border-foreground/25 bg-transparent text-white hover:bg-muted hover:text-white gap-2 shrink-0 h-12 px-8 font-semibold"
           >
             <Link to={createPageUrl(DISCOVERY_ROUTES.deals)}>
               Browse all deals

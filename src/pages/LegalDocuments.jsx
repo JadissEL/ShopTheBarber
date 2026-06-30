@@ -1,28 +1,22 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Shield, Cookie } from "lucide-react";
-import { motion } from "framer-motion";
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function LegalDocuments() {
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-8 text-center"
-                >
-                    <FileText className="w-16 h-16 text-primary mx-auto mb-4" />
-                    <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">
-                        Documents Légaux
-                    </h1>
-                    <p className="text-lg text-slate dark:text-matte-silver">
-                        Consultez nos conditions d'utilisation et politiques
-                    </p>
-                </motion.div>
-
+        <div className={stb.page}>
+            <PageHeader
+                tier="app"
+                variant="light"
+                title="Documents Légaux"
+                subtitle="Consultez nos conditions d'utilisation et politiques"
+            />
+            <PageContent narrow>
                 <Tabs defaultValue="terms" className="space-y-6">
-                    <TabsList className="bg-surface-light dark:bg-surface-dark rounded-xl p-1 w-full justify-start">
+                    <TabsList className="bg-card  rounded-lg p-1 w-full justify-start">
                         <TabsTrigger value="terms" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
                             <FileText className="w-4 h-4 mr-2" />
                             Conditions d'Utilisation
@@ -38,10 +32,10 @@ export default function LegalDocuments() {
                     </TabsList>
 
                     <TabsContent value="terms">
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                        <Card className=" border-none shadow-sm bg-card ">
                             <CardContent className="p-8 prose dark:prose-invert max-w-none">
                                 <h2>Conditions Générales d'Utilisation</h2>
-                                <p className="text-slate dark:text-matte-silver">Dernière mise à jour: 02 Décembre 2025</p>
+                                <p className="text-muted-foreground">Dernière mise à jour: 02 Décembre 2025</p>
 
                                 <h3>1. Acceptation des Conditions</h3>
                                 <p>En accédant et en utilisant ShopTheBarber, vous acceptez d'être lié par ces conditions d'utilisation.</p>
@@ -71,10 +65,10 @@ export default function LegalDocuments() {
                     </TabsContent>
 
                     <TabsContent value="privacy">
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                        <Card className=" border-none shadow-sm bg-card ">
                             <CardContent className="p-8 prose dark:prose-invert max-w-none">
                                 <h2>Politique de Confidentialité</h2>
-                                <p className="text-slate dark:text-matte-silver">Dernière mise à jour: 02 Décembre 2025</p>
+                                <p className="text-muted-foreground">Dernière mise à jour: 02 Décembre 2025</p>
 
                                 <h3>1. Collecte des Données</h3>
                                 <p>Nous collectons les informations que vous nous fournissez directement, telles que votre nom, adresse e-mail, numéro de téléphone et informations de paiement.</p>
@@ -107,10 +101,10 @@ export default function LegalDocuments() {
                     </TabsContent>
 
                     <TabsContent value="cookies">
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                        <Card className=" border-none shadow-sm bg-card ">
                             <CardContent className="p-8 prose dark:prose-invert max-w-none">
                                 <h2>Politique des Cookies</h2>
-                                <p className="text-slate dark:text-matte-silver">Dernière mise à jour: 02 Décembre 2025</p>
+                                <p className="text-muted-foreground">Dernière mise à jour: 02 Décembre 2025</p>
 
                                 <h3>1. Qu'est-ce qu'un Cookie?</h3>
                                 <p>Un cookie est un petit fichier texte stocké sur votre appareil lorsque vous visitez notre site.</p>
@@ -135,7 +129,7 @@ export default function LegalDocuments() {
                         </Card>
                     </TabsContent>
                 </Tabs>
-            </div>
+            </PageContent>
         </div>
     );
 }

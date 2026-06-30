@@ -4,7 +4,7 @@ export default function ShopCardSkeleton({ className }) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border/60 bg-card overflow-hidden animate-pulse ring-1 ring-border/50',
+        'stb-panel/60 bg-card overflow-hidden animate-pulse ring-1 ring-border/50',
         className
       )}
       aria-hidden

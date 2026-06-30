@@ -9,6 +9,9 @@ import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import ResolutionActions from '@/components/dispute/ResolutionActions';
 import { disputeStatusLabel } from '@/utils/disputeStatus';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function DisputeDetail() {
   const navigate = useNavigate();
@@ -44,66 +47,63 @@ export default function DisputeDetail() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="stb-page flex items-center justify-center p-4">
+      <div className={stb.page + ' flex items-center justify-center p-4'}>
         <MetaTags title="Access Denied" />
-        <Card>
-          <CardContent className="py-8 text-center">
+        <div className={stb.panel + ' p-8 text-center'}>
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
-            <p className="text-foreground font-semibold">Admin Access Required</p>
-          </CardContent>
-        </Card>
+            <p className={stb.uiSubheading}>Admin Access Required</p>
+        </div>
       </div>
     );
   }
 
   if (!disputeForUi) {
     return (
-      <div className="stb-page flex items-center justify-center p-4">
+      <div className={stb.page + ' flex items-center justify-center p-4'}>
         <MetaTags title="Dispute Not Found" />
-        <Card>
-          <CardContent className="py-8 text-center">
+        <div className={stb.panel + ' p-8 text-center'}>
             <p className="text-muted-foreground mb-4">Dispute not found</p>
             <Link to={createPageUrl('AdminDisputes')}>
               <Button>Back to Disputes</Button>
             </Link>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     );
   }
 
   const statusConfig = {
-    'Open': { color: 'bg-red-50 text-red-700', icon: AlertCircle },
-    'In Review': { color: 'bg-amber-50 text-amber-700', icon: Clock },
-    'Resolved': { color: 'bg-green-50 text-green-700', icon: CheckCircle2 }
+    'Open': { color: 'bg-destructive/10 text-destructive', icon: AlertCircle },
+    'In Review': { color: 'bg-primary/10 text-muted-foreground', icon: Clock },
+    'Resolved': { color: 'stb-chip stb-chip-active', icon: CheckCircle2 }
   };
 
   const config = statusConfig[disputeForUi.status] || statusConfig['Open'];
   const _Icon = config.icon;
 
   return (
-    <div className="stb-page pb-16">
+    <div className={stb.page + ' pb-16'}>
       <MetaTags 
         title={`Dispute: ${disputeForUi.client_name} vs ${disputeForUi.barber_name}`}
         description="Manage dispute resolution"
       />
 
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to={createPageUrl('AdminDisputes')}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{disputeForUi.client_name} vs {disputeForUi.barber_name}</h1>
-            <p className="text-muted-foreground text-sm mt-1">{disputeForUi.booking_date}</p>
-          </div>
-          <Badge className={config.color}>
-            {disputeForUi.status}
-          </Badge>
-        </div>
+      <PageHeader
+        label="Admin"
+        title={`${disputeForUi.client_name} vs ${disputeForUi.barber_name}`}
+        subtitle={disputeForUi.booking_date}
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Badge className={config.color}>
+          {disputeForUi.status}
+        </Badge>
+      </PageHeader>
+
+      <PageContent narrow>
+        <Link to={createPageUrl('AdminDisputes')} className="inline-flex items-center gap-2 text-sm text-primary mb-6">
+          <ArrowLeft className="w-4 h-4" /> Back to disputes
+        </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -199,7 +199,7 @@ export default function DisputeDetail() {
             />
           </div>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

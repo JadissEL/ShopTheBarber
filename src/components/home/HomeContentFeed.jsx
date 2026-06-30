@@ -5,6 +5,8 @@ import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHomepage } from '@/hooks/useHomepage';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function HomeContentFeed() {
   const { data, isLoading } = useHomepage();
@@ -17,7 +19,7 @@ export default function HomeContentFeed() {
           <div className="h-8 bg-muted rounded w-64 mb-8" />
           <div className="grid md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-64 bg-muted rounded-2xl" />
+              <div key={i} className="h-64 bg-muted rounded-lg" />
             ))}
           </div>
         </div>
@@ -28,14 +30,14 @@ export default function HomeContentFeed() {
   if (articles.length === 0) return null;
 
   return (
-    <section className="py-24 bg-card border-t border-border">
+    <section className="py-24 bg-background border-t border-foreground/10 stb-marketing-prose">
       <div className="container mx-auto px-4 md:px-6 max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div>
-            <div className="text-primary font-semibold uppercase tracking-wider text-xs mb-2 flex items-center gap-1">
+            <div className={cn(stb.label, 'mb-2 flex items-center gap-1')}>
               <BookOpen className="w-3.5 h-3.5" /> Style & tips
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-2">
+            <h2 className={cn(stb.heading, 'text-3xl md:text-4xl mb-2')}>
               From the ShopTheBarber blog
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl">
@@ -69,7 +71,7 @@ export default function HomeContentFeed() {
                 to={createPageUrl(`ArticleDetail?id=${article.id}`)}
                 className="group block no-underline text-inherit"
               >
-                <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-muted mb-4 relative border border-border group-hover:border-primary/30 transition-colors">
+                <div className={cn(stb.surfaceHover, 'aspect-[16/10] overflow-hidden bg-muted mb-4 relative border border-foreground/10')}>
                   <OptimizedImage
                     src={
                       article.image_url ||
@@ -85,7 +87,7 @@ export default function HomeContentFeed() {
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
+                <h3 className={cn(stb.uiHeading, 'text-lg group-hover:text-primary transition-colors line-clamp-2 mb-2')}>
                   {article.title}
                 </h3>
                 {article.excerpt && (

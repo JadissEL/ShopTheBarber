@@ -2,12 +2,13 @@ import React from "react";
 import { Controller } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { stb } from "@/lib/stbUi";
 
 const FormError = ({ message, id }) => {
   if (!message) return null;
   return (
-    <p id={id} role="alert" className="text-sm font-medium text-red-500 mt-1.5 flex items-center gap-1 animate-in slide-in-from-top-1 fade-in duration-200">
-      <span className="inline-block w-1 h-1 rounded-full bg-red-500" />
+    <p id={id} role="alert" className="text-sm font-medium text-destructive mt-1.5 flex items-center gap-1 animate-in slide-in-from-top-1 fade-in duration-normal ease-out">
+      <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
       {message}
     </p>
   );
@@ -32,12 +33,13 @@ export const FormField = ({
             <Label 
               htmlFor={name} 
               className={cn(
-                "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                error && "text-red-500"
+                stb.formLabel,
+                "leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+                error && "text-destructive"
               )}
             >
               {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
+              {required && <span className="text-destructive ml-1">*</span>}
             </Label>
           )}
           
@@ -49,13 +51,13 @@ export const FormField = ({
               "aria-describedby": error ? `${name}-error` : description ? `${name}-desc` : undefined,
               className: cn(
                 field.className, // Merge className from render prop if passed via styled components or whatever
-                error && "border-red-500 focus-visible:ring-red-500"
+                error && "border-destructive focus-visible:ring-destructive"
               )
             })}
           </div>
 
           {description && !error && (
-            <p id={`${name}-desc`} className="text-[0.8rem] text-muted-foreground">
+            <p id={`${name}-desc`} className={cn(stb.caption)}>
               {description}
             </p>
           )}

@@ -14,7 +14,7 @@ export default function ServiceLocationBadges({ barber, className = '', size = '
     if (modes.both) {
         if (compact) {
             return (
-                <Badge variant="outline" className={`text-[10px] border-violet-300 text-violet-800 bg-violet-50 gap-1 ${className}`}>
+                <Badge variant="outline" className={`text-[10px] border-primary/30 text-foreground bg-primary/10 gap-1 ${className}`}>
                     <Store className="w-3 h-3" />
                     <Home className="w-3 h-3" />
                     Shop &amp; at-home

@@ -3,6 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, Image as ImageIcon, Video, Award } from "lucide-react";
 import { motion } from "framer-motion";
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function InspirationFeed() {
     const posts = [
@@ -20,16 +23,17 @@ export default function InspirationFeed() {
     ];
 
     return (
-        <div className="min-h-screen py-12 bg-background font-sans">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
-                    <Sparkles className="w-16 h-16 text-primary mx-auto mb-4" />
-                    <h1 className="text-4xl font-display font-bold text-foreground mb-2">Style Inspiration</h1>
-                    <p className="text-lg text-muted-foreground">Discover the latest trends and techniques</p>
-                </motion.div>
-
+        <div className={stb.page}>
+            <PageHeader
+                tier="display"
+                variant="dark"
+                label="Discover"
+                title="Style Inspiration"
+                subtitle="Discover the latest trends and techniques"
+            />
+            <PageContent>
                 <Tabs defaultValue="all" className="space-y-8">
-                    <TabsList className="bg-muted rounded-xl p-1 w-full justify-start overflow-x-auto">
+                    <TabsList className="bg-muted rounded-lg p-1 w-full justify-start overflow-x-auto">
                         {categories.map((cat) => (
                             <TabsTrigger key={cat.value} value={cat.value} className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                 {cat.label}
@@ -40,7 +44,7 @@ export default function InspirationFeed() {
                     <TabsContent value="all" className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {posts.map((post, idx) => (
                             <motion.div key={post.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                                <Card className="rounded-2xl border border-border shadow-sm bg-card overflow-hidden group cursor-pointer hover:shadow-md transition-all">
+                                <Card className=" border border-border shadow-sm bg-card overflow-hidden group cursor-pointer hover:shadow-md transition-all">
                                     <div className="relative aspect-square overflow-hidden">
                                         <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                                         <div className="absolute top-4 right-4">
@@ -65,7 +69,7 @@ export default function InspirationFeed() {
                         ))}
                     </TabsContent>
                 </Tabs>
-            </div>
+            </PageContent>
         </div>
     );
 }

@@ -13,6 +13,9 @@ import {
 import { format, parseISO, isValid, isPast } from 'date-fns';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const TYPE_LABELS = { webinar: 'Webinar', workshop: 'Workshop', training: 'Training', networking: 'Networking', conference: 'Conference' };
 const FORMAT_ICONS = { online: Video, in_person: MapPin, hybrid: Calendar };
@@ -67,13 +70,13 @@ function EventCard({ event, onRegister, onCancel, busy }) {
                 <div className="pt-2">
                     {isRegistered ? (
                         <div className="flex flex-wrap gap-2 items-center">
-                            <Badge className="bg-emerald-100 text-emerald-800"><CheckCircle2 className="w-3 h-3 mr-1" />Registered</Badge>
+                            <Badge className="stb-chip stb-chip-active"><CheckCircle2 className="w-3 h-3 mr-1" />Registered</Badge>
                             {!past && (
                                 <Button size="sm" variant="outline" disabled={busy} onClick={() => onCancel(event.id)}>Cancel</Button>
                             )}
                         </div>
                     ) : isWaitlist ? (
-                        <Badge className="bg-amber-100 text-amber-800"><Clock className="w-3 h-3 mr-1" />Waitlist</Badge>
+                        <Badge className="bg-warning/15 text-foreground"><Clock className="w-3 h-3 mr-1" />Waitlist</Badge>
                     ) : event.registration_open && !past ? (
                         <Button size="sm" disabled={busy} onClick={() => onRegister(event.id)}>Register</Button>
                     ) : (
@@ -142,14 +145,17 @@ export default function ProviderEvents() {
     if (isLoading) return <PageLoading message="Loading events…" />;
 
     return (
-        <div className="stb-page lg:pb-8">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="Events & Webinars" description="Register for grooming industry events and webinars" />
-            <div className="max-w-4xl mx-auto px-4 py-8">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold flex items-center gap-2"><Calendar className="w-6 h-6 text-primary" /> Events & Webinars</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Workshops, training sessions, and live webinars for professionals.</p>
-                </div>
-
+            <PageHeader
+                label="Provider"
+                title="Events & webinars"
+                subtitle="Workshops, training sessions, and live webinars for professionals."
+                compact
+                variant="light"
+                tier="app"
+            />
+            <PageContent narrow>
                 <Tabs value={tab} onValueChange={setTab}>
                     <TabsList className="mb-6">
                         <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
@@ -196,7 +202,7 @@ export default function ProviderEvents() {
                         ))}
                     </TabsContent>
                 </Tabs>
-            </div>
+            </PageContent>
         </div>
     );
 }

@@ -23,7 +23,7 @@ export default function PublicLayout({ children }) {
   const businessLinks = getPublicBusinessNavItems();
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-background text-foreground stb-site-bg transition-colors duration-300">
+    <div className="min-h-screen flex flex-col font-sans bg-background text-foreground stb-site-bg stb-page transition-colors duration-300">
       <Navbar navLinks={navLinks} businessLinks={businessLinks} />
 
       <div className={cn('flex flex-1 min-h-0', isAuthenticated && isDesktop && 'lg:flex-row')}>

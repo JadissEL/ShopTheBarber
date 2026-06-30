@@ -9,6 +9,9 @@ import { PageLoading } from '@/components/ui/page-loading';
 import {
   Building2, Users, Wallet, Package, DollarSign, Palette, BarChart3, UserCog, ArrowRight,
 } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const SHOP_OPS_LINKS = [
   { label: 'Inventory', page: 'ShopInventoryManagement', icon: Package },
@@ -27,15 +30,17 @@ export default function NetworkOwnerDashboard() {
     if (isLoading) return <PageLoading message="Loading network…" />;
 
     return (
-        <div className="stb-page px-4 py-10 max-w-5xl mx-auto">
+        <div className={stb.page}>
             <MetaTags title="Network Dashboard" description="Multi-shop owner rollup" />
-            <div className="flex items-center gap-3 mb-8">
-                <Building2 className="w-8 h-8 text-primary" />
-                <div>
-                    <h1 className="text-2xl font-bold">Network dashboard</h1>
-                    <p className="text-muted-foreground text-sm">All shops you own — Phase 3 rollup</p>
-                </div>
-            </div>
+            <PageHeader
+                label="Provider"
+                title="Network dashboard"
+                subtitle="All shops you own — Phase 3 rollup"
+                compact
+                variant="light"
+                tier="app"
+            />
+            <PageContent narrow>
 
             {isError || !data?.shops?.length ? (
                 <Card>
@@ -111,6 +116,7 @@ export default function NetworkOwnerDashboard() {
                     </div>
                 </>
             )}
+            </PageContent>
         </div>
     );
 }

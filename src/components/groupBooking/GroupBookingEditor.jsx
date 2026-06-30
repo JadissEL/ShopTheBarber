@@ -58,7 +58,7 @@ export function ProviderGroupBookingPanel() {
                 </div>
             </div>
 
-            <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4 bg-muted/20">
+            <div className="flex items-start justify-between gap-4 stb-panel p-4 bg-muted/20">
                 <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2 font-bold text-foreground">
                         <Users className="w-5 h-5 text-primary" />
@@ -79,7 +79,7 @@ export function ProviderGroupBookingPanel() {
             </div>
 
             {offersGroup && offersShop && !offersMobile && (
-                <div className="rounded-2xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+                <div className=" border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
                     <p className="text-foreground font-medium mb-1">In-shop group booking is active</p>
                     <p>
                         Clients can book groomsmen, friends, and family for chair cuts at your location, no guest accounts required.
@@ -92,7 +92,7 @@ export function ProviderGroupBookingPanel() {
             )}
 
             {offersGroup && offersMobile && !offersShop && (
-                <div className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4 text-sm text-violet-900">
+                <div className=" border border-primary/30 bg-primary/10 p-4 text-sm text-foreground">
                     <div className="flex items-center gap-2 font-bold mb-1">
                         <Home className="w-4 h-4" />
                         At-home group booking only
@@ -102,7 +102,7 @@ export function ProviderGroupBookingPanel() {
             )}
 
             {offersGroup && offersMobile && offersShop && (
-                <div className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4 text-sm text-violet-900">
+                <div className=" border border-primary/30 bg-primary/10 p-4 text-sm text-foreground">
                     <div className="flex items-center gap-2 font-bold mb-1">
                         <Home className="w-4 h-4" />
                         Shop &amp; at-home groups
@@ -126,7 +126,7 @@ export function ProviderGroupBookingPanel() {
                                     mutation.mutate({ group_booking_min_party: n });
                                 }
                             }}
-                            className="rounded-xl"
+                            className=""
                         />
                     </div>
                     <div className="space-y-2">
@@ -142,7 +142,7 @@ export function ProviderGroupBookingPanel() {
                                     mutation.mutate({ group_booking_max_party: n });
                                 }
                             }}
-                            className="rounded-xl"
+                            className=""
                         />
                     </div>
                     <div className="space-y-2">
@@ -159,7 +159,7 @@ export function ProviderGroupBookingPanel() {
                                     mutation.mutate({ group_booking_discount_percent: n });
                                 }
                             }}
-                            className="rounded-xl"
+                            className=""
                         />
                     </div>
                 </div>

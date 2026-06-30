@@ -11,7 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { Save, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CATEGORIES = [
@@ -131,14 +134,18 @@ export default function BlogArticleEditor() {
   }
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page}>
       <MetaTags title={articleId ? 'Edit article' : 'New article'} />
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <Button variant="ghost" className="mb-4 gap-2" onClick={() => navigate(createPageUrl('ProviderBlogArticles'))}>
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-
-        <Card className="rounded-2xl">
+      <PageHeader
+        label="Provider"
+        title={articleId ? 'Edit article' : 'New article'}
+        subtitle="Draft content for the ShopTheBarber blog. Submit when ready for review."
+        compact
+        variant="light"
+        tier="app"
+      />
+      <PageContent narrow>
+        <Card>
           <CardContent className="p-6 space-y-5">
             <div>
               <Label htmlFor="title">Title</Label>
@@ -208,7 +215,7 @@ export default function BlogArticleEditor() {
                 <Save className="w-4 h-4" /> Save draft
               </Button>
               <Button
-                className="gap-2 bg-primary text-white"
+                className="gap-2"
                 disabled={submitMutation.isPending || !form.title.trim()}
                 onClick={() => submitMutation.mutate()}
               >
@@ -217,7 +224,7 @@ export default function BlogArticleEditor() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

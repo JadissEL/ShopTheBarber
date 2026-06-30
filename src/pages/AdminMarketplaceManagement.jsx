@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
+import SearchField from '@/components/ui/search-field';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Package, Eye, CheckCircle2, XCircle, Star, Ban } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const STATUS_TABS = [
   { id: 'pending_review', label: 'Pending' },
@@ -23,10 +26,10 @@ const STATUS_TABS = [
 ];
 
 const STATUS_STYLES = {
-  draft: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Draft' },
-  pending_review: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Pending' },
-  published: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Live' },
-  rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+  draft: { bg: 'bg-warning/15', text: 'text-foreground', label: 'Draft' },
+  pending_review: { bg: 'bg-primary/10', text: 'text-primary', label: 'Pending' },
+  published: { bg: 'bg-success/10', text: 'text-success', label: 'Live' },
+  rejected: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Rejected' },
 };
 
 export default function AdminMarketplaceManagement() {
@@ -90,15 +93,18 @@ export default function AdminMarketplaceManagement() {
   const pendingCount = statusFilter === 'pending_review' ? products.length : products.filter((p) => p.status === 'pending_review').length;
 
   return (
-    <div className="min-h-screen py-8 bg-background">
+    <div className="stb-page pb-16 font-sans">
       <MetaTags title="Marketplace moderation | Admin" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Marketplace moderation</h1>
-          <p className="text-muted-foreground">
-            Approve product listings from barbers and shop owners before they appear for sale.
-          </p>
-        </div>
+      <PageHeader
+        label="Admin"
+        title="Marketplace moderation"
+        subtitle="Approve product listings from barbers and shop owners before they appear for sale."
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent>
 
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           {[
@@ -106,10 +112,10 @@ export default function AdminMarketplaceManagement() {
             { label: 'In view', value: filtered.length },
             { label: 'Live stock units', value: filtered.reduce((s, p) => s + (p.stock || 0), 0) },
           ].map((stat) => (
-            <Card key={stat.label} className="rounded-2xl">
+            <Card key={stat.label} className="">
               <CardContent className="p-5">
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className={stb.metricValue}>{stat.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -123,7 +129,14 @@ export default function AdminMarketplaceManagement() {
               </Button>
             ))}
           </div>
-          <Input placeholder="Search name, seller, category…" value={search} onChange={(e) => setSearch(e.target.value)} className="sm:max-w-xs sm:ml-auto" />
+          <SearchField
+            placeholder="Search name, seller, category…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
+            className="sm:max-w-xs sm:ml-auto"
+            aria-label="Search marketplace products"
+          />
         </div>
 
         {isLoading ? (
@@ -135,11 +148,11 @@ export default function AdminMarketplaceManagement() {
             {filtered.map((item) => {
               const st = STATUS_STYLES[item.status] || STATUS_STYLES.draft;
               return (
-                <Card key={item.id} className="rounded-2xl">
+                <Card key={item.id} className="">
                   <CardContent className="p-5">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       <div className="flex gap-4 flex-1 min-w-0">
-                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                           {item.image_url ? (
                             <img src={item.image_url} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -162,7 +175,7 @@ export default function AdminMarketplaceManagement() {
                             )}
                           </div>
                           {item.rejection_reason && item.status === 'rejected' && (
-                            <p className="text-sm text-red-600 mt-1">{item.rejection_reason}</p>
+                            <p className="text-sm text-destructive mt-1">{item.rejection_reason}</p>
                           )}
                         </div>
                       </div>
@@ -175,17 +188,17 @@ export default function AdminMarketplaceManagement() {
                             <Button variant="outline" size="sm" onClick={() => featureMutation.mutate({ id: item.id, featured: !item.featured })}>
                               <Star className={`w-4 h-4 ${item.featured ? 'fill-current' : ''}`} />
                             </Button>
-                            <Button variant="outline" size="sm" className="text-red-600" onClick={() => unpublishMutation.mutate(item.id)}>
+                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => unpublishMutation.mutate(item.id)}>
                               <Ban className="w-4 h-4" />
                             </Button>
                           </>
                         )}
                         {item.status === 'pending_review' && (
                           <>
-                            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={() => approveMutation.mutate(item.id)}>
+                            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white gap-1" onClick={() => approveMutation.mutate(item.id)}>
                               <CheckCircle2 className="w-4 h-4" /> Approve
                             </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 gap-1" onClick={() => setRejectTarget(item)}>
+                            <Button size="sm" variant="outline" className="text-destructive gap-1" onClick={() => setRejectTarget(item)}>
                               <XCircle className="w-4 h-4" /> Reject
                             </Button>
                           </>
@@ -198,7 +211,7 @@ export default function AdminMarketplaceManagement() {
             })}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <Dialog open={!!rejectTarget} onOpenChange={(open) => !open && setRejectTarget(null)}>
         <DialogContent>

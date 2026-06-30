@@ -8,7 +8,7 @@ import { CHILDREN_FRIENDLY_LABEL } from '@/lib/childrenFriendly';
 
 function ChildrenFriendlyToggle({ title, description, checked, onSave, isSaving }) {
     return (
-        <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4 bg-muted/20">
+        <div className="flex items-start justify-between gap-4 stb-panel p-4 bg-muted/20">
             <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2 font-bold text-foreground">
                     <Baby className="w-5 h-5 text-primary" />

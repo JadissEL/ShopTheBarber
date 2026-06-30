@@ -1,10 +1,10 @@
 import Stripe from 'stripe';
 import { prisma } from '../db/prisma';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 
 function getStripeClient(): Stripe {
     const apiKey = getStripeApiKey();
-    if (!apiKey?.startsWith('sk_')) {
+    if (!isUsableStripeApiKey(apiKey)) {
         throw new Error('Stripe is not configured. Set STRIPE_API_KEY on the server.');
     }
     return new Stripe(apiKey, { apiVersion: '2025-01-27.acacia', typescript: true });
@@ -64,7 +64,7 @@ export async function checkStripeConnectStatusForUser(userId: string) {
     }
 
     const apiKey = getStripeApiKey();
-    if (!apiKey?.startsWith('sk_')) {
+    if (!isUsableStripeApiKey(apiKey)) {
         const status = user.stripe_connect_status || 'pending';
         return {
             isConnected: status === 'active',

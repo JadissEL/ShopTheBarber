@@ -152,27 +152,25 @@ export default function UserBookings() {
 
             <PageHeader
                 label="Appointments"
-                title="My Bookings"
+                title="My bookings"
                 subtitle="View and manage your upcoming and past appointments."
                 compact
+                variant="light"
+                tier="app"
             />
 
             <PageContent narrow>
                 {activeTab !== 'waitlist' && <WaitlistOfferBanner />}
                 <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
-                    <TabsList className="bg-muted border border-border p-1 mb-8">
-                        <TabsTrigger value="upcoming" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                            Upcoming ({upcomingBookings.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="waitlist" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative">
+                    <TabsList className="bg-muted/60 border border-foreground/10 p-1 mb-8 rounded-lg">
+                        <TabsTrigger value="upcoming">Upcoming ({upcomingBookings.length})</TabsTrigger>
+                        <TabsTrigger value="waitlist" className="relative">
                             Waitlist ({waitlistCount})
                             {urgentOfferCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-background" />
+                                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary/100 ring-2 ring-background" />
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="past" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                            History ({pastBookings.length})
-                        </TabsTrigger>
+                        <TabsTrigger value="past">History ({pastBookings.length})</TabsTrigger>
                     </TabsList>
 
                     <AnimatePresence mode="wait">
@@ -182,11 +180,11 @@ export default function UserBookings() {
                                     {upcomingBookings.map((booking) => {
                                       const isGroup = booking.is_group || booking.booking_type === 'group';
                                       return (
-                                        <div key={booking.id} className="relative group rounded-2xl border border-border overflow-hidden bg-card hover:border-primary/30 transition-colors">
+                                        <div key={booking.id} className="relative group stb-panel overflow-hidden bg-card hover:border-primary/30 transition-colors">
                                             <BookingCard
                                                 booking={booking}
                                                 variant="default"
-                                                className="border-0 shadow-none rounded-none"
+                                                className="border-0 shadow-none"
                                                 actions={
                                                     <div className="flex gap-2 flex-wrap justify-end">
                                                         <BookingPaymentActionButton
@@ -194,7 +192,7 @@ export default function UserBookings() {
                                                             onSuccess={() => queryClient.invalidateQueries(['my-bookings'])}
                                                         />
                                                         <Link to={createPageUrl(`Chat?booking=${booking.id}`)}>
-                                                            <Button size="sm" variant="outline" className="h-9 rounded-xl">
+                                                            <Button size="sm" variant="outline" className="h-9 rounded-lg">
                                                                 <MessageSquare className="w-4 h-4 mr-1" />
                                                                 Message
                                                             </Button>
@@ -227,7 +225,7 @@ export default function UserBookings() {
                                             )}
                                             <BookingCardOnFileHint booking={booking} />
                                             {booking.status === 'pending' && (
-                                                <div className="absolute -top-2 -left-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg">
+                                                <div className="absolute -top-2 -left-2 bg-primary/100 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg">
                                                     <AlertCircle className="w-3 h-3" /> PENDING CONFIRMATION
                                                 </div>
                                             )}
@@ -263,20 +261,20 @@ export default function UserBookings() {
                                                 <div className="flex gap-2">
                                                     {booking.status === 'completed' && tipStatusMap[booking.id]?.can_tip && (
                                                         <Link to={createPageUrl(`Review?bookingId=${booking.id}`)}>
-                                                            <Button variant="outline" size="sm" className="border-amber-300/50 text-amber-700 hover:bg-amber-50 h-9">
+                                                            <Button variant="outline" size="sm" className="border-primary/40 text-muted-foreground hover:bg-primary/10 h-9">
                                                                 <Heart className="w-4 h-4 mr-1" /> Leave tip
                                                             </Button>
                                                         </Link>
                                                     )}
                                                     {booking.status === 'completed' && tipStatusMap[booking.id]?.already_tipped && (
                                                         <Button variant="outline" size="sm" disabled className="h-9 opacity-70">
-                                                            <Heart className="w-4 h-4 mr-1 text-green-600" /> Tipped
+                                                            <Heart className="w-4 h-4 mr-1 text-success" /> Tipped
                                                         </Button>
                                                     )}
                                                     {booking.status === 'completed' && (
                                                         reviewStatusMap[booking.id]?.all_done ? (
                                                             <Button variant="outline" size="sm" disabled className="h-9 opacity-70">
-                                                                <CheckCircle2 className="w-4 h-4 mr-1 text-green-600" /> Reviewed
+                                                                <CheckCircle2 className="w-4 h-4 mr-1 text-success" /> Reviewed
                                                             </Button>
                                                         ) : (
                                                             <Link to={createPageUrl(`Review?bookingId=${booking.id}`)}>
@@ -289,7 +287,7 @@ export default function UserBookings() {
                                                     <RebookButton
                                                         booking={booking}
                                                         variant="default"
-                                                        className="h-9 rounded-xl"
+                                                        className="h-9 rounded-lg"
                                                     />
                                                 </div>
                                             }

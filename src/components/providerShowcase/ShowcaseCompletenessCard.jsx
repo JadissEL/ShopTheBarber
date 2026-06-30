@@ -31,9 +31,9 @@ export default function ShowcaseCompletenessCard({ barber, shop }) {
 
     if (isComplete) {
         return (
-            <Card className="border-emerald-200 bg-emerald-50/50 shadow-sm rounded-3xl">
+            <Card className="border-primary/30 bg-primary/10 shadow-sm ">
                 <CardContent className="py-5 flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                     <div>
                         <p className="font-semibold text-sm text-emerald-900">Your story is live for discovery</p>
                         <p className="text-xs text-emerald-800/80">
@@ -46,7 +46,7 @@ export default function ShowcaseCompletenessCard({ barber, shop }) {
     }
 
     return (
-        <Card className="border-primary/20 bg-primary/5 shadow-sm rounded-3xl">
+        <Card className="border-primary/20 bg-primary/5 shadow-sm ">
             <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-4">
                     <div>
@@ -67,7 +67,7 @@ export default function ShowcaseCompletenessCard({ barber, shop }) {
                     {primary.items.map((item) => (
                         <li key={item.id} className="flex items-start gap-2 text-sm">
                             {item.done ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                             ) : (
                                 <Circle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                             )}

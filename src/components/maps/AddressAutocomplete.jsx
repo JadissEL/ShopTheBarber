@@ -133,7 +133,7 @@ export default function AddressAutocomplete({
                 onBlur={handleBlur}
                 onKeyDown={onKeyDown}
                 placeholder={placeholder}
-                className={cn('rounded-xl', inputClassName)}
+                className={cn('rounded-lg', inputClassName)}
                 disabled={disabled}
                 role="combobox"
                 aria-expanded={open}
@@ -150,7 +150,7 @@ export default function AddressAutocomplete({
                 <ul
                     id={listId}
                     role="listbox"
-                    className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg py-1"
+                    className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg py-1"
                 >
                     {suggestions.map((item, index) => (
                         <li

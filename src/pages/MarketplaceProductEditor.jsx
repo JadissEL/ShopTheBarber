@@ -11,7 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { Save, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   MARKETPLACE_SELLER_TERMS_VERSION,
@@ -184,14 +187,18 @@ export default function MarketplaceProductEditor() {
   }
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page}>
       <MetaTags title={productId ? 'Edit product' : 'New marketplace product'} />
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <Button variant="ghost" className="mb-4 gap-2" onClick={() => navigate(createPageUrl('ProviderMarketplaceProducts'))}>
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-
-        <Card className="rounded-2xl">
+      <PageHeader
+        label="Provider"
+        title={productId ? 'Edit product' : 'New marketplace product'}
+        subtitle="List grooming products for sale on the ShopTheBarber marketplace."
+        compact
+        variant="light"
+        tier="app"
+      />
+      <PageContent narrow>
+        <Card>
           <CardContent className="p-6 space-y-5">
             <div>
               <Label htmlFor="name">Product name</Label>
@@ -282,7 +289,7 @@ export default function MarketplaceProductEditor() {
               <Input id="image_url" value={form.image_url} onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))} className="mt-1" placeholder="https://…" />
             </div>
 
-            <div className="rounded-xl border border-amber-200 bg-amber-50/80 dark:bg-amber-950/20 p-4 text-sm space-y-3">
+            <div className=" border border-primary/30 bg-primary/10/80 dark:bg-primary/10 p-4 text-sm space-y-3">
               <p className="font-medium text-foreground">Seller obligations</p>
               <p className="text-muted-foreground text-xs leading-relaxed">
                 List VAT-inclusive prices where required. You are responsible for shipping, returns, and
@@ -310,13 +317,13 @@ export default function MarketplaceProductEditor() {
               <Button variant="outline" className="gap-2" disabled={saveMutation.isPending || !form.name.trim()} onClick={() => saveMutation.mutate()}>
                 <Save className="w-4 h-4" /> Save draft
               </Button>
-              <Button className="gap-2 bg-primary text-white" disabled={submitMutation.isPending || !form.name.trim() || !sellerTermsAccepted} onClick={() => submitMutation.mutate()}>
+              <Button className="gap-2" disabled={submitMutation.isPending || !form.name.trim() || !sellerTermsAccepted} onClick={() => submitMutation.mutate()}>
                 <Send className="w-4 h-4" /> Submit for approval
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

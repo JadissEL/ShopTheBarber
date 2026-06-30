@@ -1,8 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { stb } from '@/lib/stbUi';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Minus, TrendingDown, AlertCircle, Receipt } from "lucide-react";
 import { motion } from "framer-motion";
+import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function ShopExpenseTracking() {
     const expenses = [
@@ -18,48 +22,53 @@ export default function ShopExpenseTracking() {
     const categories = ["Loyer", "Produits", "Électricité", "Marketing", "Salaires", "Autres"];
 
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">Suivi des Dépenses</h1>
-                        <p className="text-lg text-slate dark:text-matte-silver">Gérez vos dépenses professionnelles</p>
-                    </div>
-                    <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl h-12 px-6">
-                        <Plus className="w-5 h-5 mr-2" />
-                        Nouvelle Dépense
-                    </Button>
-                </motion.div>
+        <div className="stb-page pb-16 font-sans">
+            <MetaTags title="Expenses" description="Track shop business expenses" />
+            <PageHeader
+                label="Provider"
+                title="Expense tracking"
+                subtitle="Gérez vos dépenses professionnelles"
+                compact
+                variant="light"
+                tier="app"
+            >
+                <Button className="h-11">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Nouvelle Dépense
+                </Button>
+            </PageHeader>
+
+            <PageContent narrow>
 
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
-                    <Card className="rounded-2xl border-none shadow-soft bg-gradient-to-br from-red-500 to-red-600 text-white">
+                    <Card className="border-none shadow-sm bg-destructive text-destructive-foreground">
                         <CardContent className="p-6">
                             <TrendingDown className="w-10 h-10 mb-3" />
                             <p className="text-sm text-white/80 mb-1">Dépenses Totales</p>
-                            <p className="text-4xl font-display font-bold">{totalExpenses}€</p>
+                            <p className="stb.metricValue text-4xl">{totalExpenses}€</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                    <Card className=" border-none shadow-sm bg-card ">
                         <CardContent className="p-6">
-                            <Receipt className="w-10 h-10 text-amber-600 mb-3" />
-                            <p className="text-sm text-slate dark:text-matte-silver mb-1">Dépenses Récurrentes</p>
-                            <p className="text-4xl font-display font-bold text-charcoal dark:text-white">{recurringExpenses}€</p>
+                            <Receipt className="w-10 h-10 text-primary mb-3" />
+                            <p className="text-sm text-muted-foreground mb-1">Dépenses Récurrentes</p>
+                            <p className="stb.metricValue text-4xl">{recurringExpenses}€</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                    <Card className=" border-none shadow-sm bg-card ">
                         <CardContent className="p-6">
-                            <AlertCircle className="w-10 h-10 text-blue-600 mb-3" />
-                            <p className="text-sm text-slate dark:text-matte-silver mb-1">Catégories</p>
-                            <p className="text-4xl font-display font-bold text-charcoal dark:text-white">{categories.length}</p>
+                            <AlertCircle className="w-10 h-10 text-primary mb-3" />
+                            <p className="text-sm text-muted-foreground mb-1">Catégories</p>
+                            <p className="stb.metricValue text-4xl">{categories.length}</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                <Card className=" border-none shadow-sm bg-card ">
                     <CardContent className="p-6">
-                        <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Dépenses Récentes</h3>
+                        <h3 className="text-2xl font-bold text-foreground dark:text-white mb-6">Dépenses Récentes</h3>
                         <div className="space-y-4">
                             {expenses.map((expense, idx) => (
                                 <motion.div
@@ -67,15 +76,15 @@ export default function ShopExpenseTracking() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.1 }}
-                                    className="flex items-center justify-between p-4 bg-background-light dark:bg-background-dark rounded-xl"
+                                    className="flex items-center justify-between p-4 bg-background  rounded-lg"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
-                                            <Minus className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                        <div className="w-12 h-12 bg-destructive/10 rounded-lg flex items-center justify-center">
+                                            <Minus className="w-6 h-6 text-destructive" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-charcoal dark:text-white">{expense.category}</h4>
-                                            <p className="text-sm text-slate dark:text-matte-silver">
+                                            <h4 className="font-bold text-foreground dark:text-white">{expense.category}</h4>
+                                            <p className="text-sm text-muted-foreground">
                                                 {new Date(expense.date).toLocaleDateString('fr-FR')}
                                             </p>
                                         </div>
@@ -83,16 +92,16 @@ export default function ShopExpenseTracking() {
 
                                     <div className="flex items-center gap-4">
                                         {expense.recurring && (
-                                            <Badge className="bg-blue-100 text-blue-800 border-0">Récurrent</Badge>
+                                            <Badge className="bg-primary/10 text-primary border-0">Récurrent</Badge>
                                         )}
-                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">-{expense.amount}€</p>
+                                        <p className="text-2xl font-bold text-destructive">-{expense.amount}€</p>
                                     </div>
                                 </motion.div>
                             ))}
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+            </PageContent>
         </div>
     );
 }

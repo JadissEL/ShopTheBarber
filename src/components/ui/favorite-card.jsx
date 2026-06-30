@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import RebookButton from '@/components/booking/RebookButton';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function FavoriteCard({ fav, onRemove }) {
   const rebookBooking = {
@@ -12,18 +14,21 @@ export default function FavoriteCard({ fav, onRemove }) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[240px] group relative shadow-sm hover:shadow-md transition-all">
+    <div className={cn(stb.surfaceHover, 'overflow-hidden flex flex-col md:flex-row min-h-[240px] group relative transition-all duration-normal ease-out')}>
       <button 
         onClick={() => onRemove(fav.id)}
-        className="absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur-md rounded-full text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors md:left-4 md:right-auto shadow-sm"
+        className={cn(
+          'absolute top-4 right-4 z-10 p-2 bg-card/80 backdrop-blur-md rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors duration-normal ease-out md:left-4 md:right-auto shadow-sm',
+          stb.focusRing
+        )}
       >
         <Trash2 className="w-4 h-4" />
       </button>
 
       <div className="p-8 flex-1 flex flex-col justify-center order-2 md:order-1">
         <div>
-          <h2 className="text-xl font-bold text-foreground mb-2">{fav.barber_name}</h2>
-          <div className="flex items-center gap-2 mb-8 text-muted-foreground text-sm">
+          <h2 className={cn(stb.uiHeading, 'text-xl mb-2')}>{fav.barber_name}</h2>
+          <div className={cn(stb.body, 'flex items-center gap-2 mb-8')}>
              <span className="text-primary font-semibold">{fav.rating || 'New'}</span>
              <span>•</span>
              <span>{fav.review_count || 0} reviews</span>
@@ -38,7 +43,7 @@ export default function FavoriteCard({ fav, onRemove }) {
           </div>
         </div>
       </div>
-      <div className="md:w-[400px] bg-muted relative order-1 md:order-2">
+      <div className={cn(stb.catalogMedia, 'md:w-[400px] order-1 md:order-2 aspect-auto min-h-[200px]')}>
         <OptimizedImage
           src={fav.barber_image || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&auto=format&fit=crop"} 
           alt={fav.barber_name} 

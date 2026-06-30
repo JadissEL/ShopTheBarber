@@ -10,6 +10,7 @@ import { useCart } from '@/components/context/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
+import { stb } from '@/lib/stbUi';
 const SHIPPING_FREE_THRESHOLD = 50;
 const TAX_RATE = 0.085;
 
@@ -57,7 +58,7 @@ export default function ShoppingBag() {
                 description="Review your luxury grooming selections and proceed to secure checkout."
             />
 
-            <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
+            <header className="sticky top-0 z-40 bg-card border-b border-border shadow-elevation-sm">
                 <div className="w-full max-w-3xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
                     <button
                         type="button"
@@ -67,7 +68,7 @@ export default function ShoppingBag() {
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <h1 className="text-xl font-bold text-foreground tracking-tight" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
+                    <h1 className={stb.uiHeading}>
                         Shopping Bag
                     </h1>
                     <button type="button" className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Options">
@@ -95,8 +96,8 @@ export default function ShoppingBag() {
                                 const _lineTotal = price * (item.quantity || 1);
                                 const details = [item.product?.vendor_name, item.product?.category].filter(Boolean).join(' • ') || 'Premium';
                                 return (
-                                    <li key={item.product_id} className="rounded-2xl bg-muted/50 border border-slate-100 p-4 flex gap-4">
-                                        <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0">
+                                    <li key={item.product_id} className=" bg-muted/50 border border-border p-4 flex gap-4">
+                                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                                             <OptimizedImage
                                                 src={item.product?.image_url || ''}
                                                 alt={item.product?.name || ''}
@@ -108,11 +109,11 @@ export default function ShoppingBag() {
                                             <p className="font-semibold text-foreground truncate">{item.product?.name || 'Product'}</p>
                                             <p className="text-xs text-muted-foreground mt-0.5">{details}</p>
                                             <p className="font-bold text-foreground mt-1">${price.toFixed(2)}</p>
-                                            <div className="mt-2 flex items-center rounded-full bg-slate-200/80 overflow-hidden w-fit">
+                                            <div className="mt-2 flex items-center rounded-full bg-muted/80 overflow-hidden w-fit">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleQuantityChange(item.product_id, -1)}
-                                                    className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-slate-300 font-medium"
+                                                    className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted font-medium"
                                                     aria-label="Decrease quantity"
                                                 >
                                                     −
@@ -121,7 +122,7 @@ export default function ShoppingBag() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleQuantityChange(item.product_id, 1)}
-                                                    className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-slate-300 font-medium"
+                                                    className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted font-medium"
                                                     aria-label="Increase quantity"
                                                 >
                                                     +
@@ -133,7 +134,7 @@ export default function ShoppingBag() {
                             })}
                         </ul>
 
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-muted/50/50 p-4 mb-8">
+                        <div className=" border border-dashed border-foreground/20 bg-muted/50/50 p-4 mb-8">
                             <button
                                 type="button"
                                 className="w-full flex items-center justify-between text-muted-foreground hover:text-foreground/90"
@@ -163,21 +164,21 @@ export default function ShoppingBag() {
                                     <span className="font-semibold text-foreground">${tax.toFixed(2)}</span>
                                 </div>
                             </div>
-                            <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-slate-200">
+                            <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-border">
                                 <span className="font-bold text-foreground text-lg">Total</span>
                                 <span className="font-bold text-foreground text-xl">${total.toFixed(2)}</span>
                             </div>
                         </section>
 
                         <Button
-                            className="w-full rounded-xl h-12 bg-primary text-primary-foreground hover:opacity-95 font-semibold gap-2"
+                            className="w-full rounded-lg h-12 bg-primary text-primary-foreground hover:opacity-95 font-semibold gap-2"
                             onClick={handleSecureCheckout}
                         >
                             <Lock className="w-4 h-4" />
                             Secure Checkout
                         </Button>
 
-                        <p className="text-center text-xs text-slate-400 uppercase tracking-wider mt-6">
+                        <p className="text-center text-xs text-muted-foreground uppercase tracking-wider mt-6">
                             Complimentary 2-day shipping applied
                         </p>
                     </>

@@ -65,7 +65,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
 
     if (!shopId) {
         return (
-            <Card className="rounded-3xl border-dashed">
+            <Card className=" border-dashed">
                 <CardContent className="py-10 text-center text-muted-foreground text-sm">
                     Link a shop to manage chairs and capacity.
                 </CardContent>
@@ -83,7 +83,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
 
     return (
         <div className="space-y-6">
-            <Card className="rounded-3xl">
+            <Card className="">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Armchair className="w-5 h-5 text-primary" />
@@ -104,7 +104,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
                                 placeholder="Chair 1, Station A…"
                                 value={newChairName}
                                 onChange={(e) => setNewChairName(e.target.value)}
-                                className="mt-1 rounded-xl"
+                                className="mt-1 rounded-lg"
                             />
                         </div>
                         <Button
@@ -125,7 +125,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
                             {chairs.map((chair) => (
                                 <li
                                     key={chair.id}
-                                    className="flex flex-wrap items-center gap-3 p-4 rounded-2xl border border-border bg-muted/30"
+                                    className="flex flex-wrap items-center gap-3 p-4 stb-notice/30"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="font-medium">{chair.name}</p>
@@ -151,7 +151,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
                                     />
                                     {shopBarbers.length > 0 && (
                                         <select
-                                            className="h-9 rounded-xl border border-border bg-background px-2 text-sm"
+                                            className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
                                             defaultValue=""
                                             onChange={(e) => {
                                                 if (e.target.value) {
@@ -179,7 +179,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
             </Card>
 
             {barberId && (
-                <Card className="rounded-3xl">
+                <Card className="">
                     <CardHeader>
                         <CardTitle className="text-lg">Cleaning buffer</CardTitle>
                     </CardHeader>
@@ -191,7 +191,7 @@ export default function ShopChairsPanel({ shopId, barberId }) {
                                 type="number"
                                 min={0}
                                 max={120}
-                                className="mt-1 w-32 rounded-xl"
+                                className="mt-1 w-32 rounded-lg"
                                 value={bufferMinutes}
                                 onChange={(e) => setBufferMinutes(e.target.value)}
                             />

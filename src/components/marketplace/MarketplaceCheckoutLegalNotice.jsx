@@ -19,7 +19,7 @@ export function MarketplaceCheckoutLegalNotice({ compact = false }) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground space-y-2 leading-relaxed">
+    <div className=" border border-border bg-muted/40 p-4 text-xs text-muted-foreground space-y-2 leading-relaxed">
       <p className="font-medium text-foreground text-sm">Marketplace order notice</p>
       <p>
         <strong>VAT:</strong> Checkout displays an estimated {vatPct} VAT line. Sellers are responsible

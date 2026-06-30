@@ -3,25 +3,31 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function Privacy() {
   return (
-    <div className="stb-page">
+    <div className={stb.page}>
       <MetaTags
         title="Privacy Policy"
         description="Privacy Policy for ShopTheBarber - how we collect, use, and protect your data"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <PageHeader
+        tier="app"
+        variant="light"
+        title="Privacy Policy"
+        subtitle="Effective January 28, 2026 • Last Updated January 28, 2026"
+        compact
+      />
+
+      <PageContent narrow>
         <Link to={createPageUrl('Home')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
-
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Privacy Policy</h1>
-          <p className="text-muted-foreground">Effective January 28, 2026 • Last Updated January 28, 2026</p>
-        </div>
 
         <Card className="prose prose-sm max-w-none">
           <CardContent className="prose prose-sm prose-headings:font-bold prose-headings:mt-6 prose-headings:mb-3 pt-6 space-y-4">
@@ -313,7 +319,7 @@ export default function Privacy() {
             <Link to={createPageUrl('Home')} className="text-primary hover:underline">Return to Home</Link>
           </p>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

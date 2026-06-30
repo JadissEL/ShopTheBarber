@@ -111,7 +111,7 @@ export default function StickyFilterBar({
       <div className="max-w-6xl lg:max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-4 space-y-3 md:space-y-4">
         {banner ? (
           <div
-            className="flex items-center gap-2.5 px-4 py-2 rounded-xl border border-primary/15 bg-primary/5 text-sm font-medium text-foreground"
+            className="flex items-center gap-2.5 px-4 py-2 rounded-lg border border-primary/15 bg-primary/5 text-sm font-medium text-foreground"
             role="status"
           >
             <banner.icon className="w-4 h-4 shrink-0 text-primary" aria-hidden />
@@ -121,7 +121,7 @@ export default function StickyFilterBar({
 
         <div className="flex flex-col gap-3 md:gap-4">
           {!lockProfessionals ? (
-            <div className="flex gap-2 p-1 rounded-xl bg-muted/50 border border-border/60 w-fit">
+            <div className="flex gap-2 p-1 rounded-lg bg-muted/50 border border-border/60 w-fit">
               <FilterChip
                 label="Barbers"
                 icon={User}

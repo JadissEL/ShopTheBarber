@@ -85,7 +85,7 @@ export default function AvailabilitySetup({ shopId, onNext, onBack, variant = 'd
                             <Switch
                                 checked={!daySchedule.is_closed}
                                 onCheckedChange={(checked) => handleDayChange(i, 'is_closed', !checked)}
-                                className="data-[state=checked]:bg-emerald-500"
+                                className="data-[state=checked]:bg-primary/100"
                             />
                             <div className="flex-1 flex items-center gap-2 justify-end md:justify-start">
                                 {!daySchedule.is_closed ? (

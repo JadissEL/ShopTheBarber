@@ -8,7 +8,7 @@ export function ChildrenFriendlyBadge({ className, size = 'sm' }) {
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium',
+                'inline-flex items-center gap-1 rounded-full stb-chip stb-chip-active border border-primary/30 font-medium',
                 sizeClass,
                 className
             )}

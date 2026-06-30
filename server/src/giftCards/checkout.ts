@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import { purchaseGiftCard } from './logic';
 import { sendEmail } from '../logic/email';
 import { prisma } from '../db/prisma';
@@ -7,7 +7,7 @@ import { logger } from '../lib/logger';
 
 function getStripeClient(): Stripe {
     const apiKey = getStripeApiKey();
-    if (!apiKey?.startsWith('sk_')) {
+    if (!isUsableStripeApiKey(apiKey)) {
         throw new Error('Stripe is not configured for gift card purchases');
     }
     return new Stripe(apiKey, { apiVersion: '2025-01-27.acacia', typescript: true });

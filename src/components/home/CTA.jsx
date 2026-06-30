@@ -9,6 +9,8 @@ import {
   GTM_PRICING_DEFAULTS,
   mergePricingConfig,
 } from '@/lib/gtmPricing';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function CTA() {
   const { data: pricingConfig } = useQuery({
@@ -21,33 +23,27 @@ export default function CTA() {
   const barberFee = formatMoney(pricing.monthly_fee_barber ?? GTM_PRICING_DEFAULTS.monthly_fee_barber, pricing.currency);
 
   return (
-    <div className="py-24 bg-card">
+    <div className="py-24 bg-background border-t border-foreground/10 stb-marketing-prose">
       <div className="container mx-auto px-4 md:px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative rounded-[3rem] overflow-hidden bg-muted/50 border border-slate-100 px-8 py-24 text-center shadow-2xl"
+          className="relative rounded-lg overflow-hidden bg-card border border-foreground/10 px-8 py-24 text-center stb-surface-hover"
         >
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
-
           <div className="relative z-10 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6 tracking-tight leading-[1.1]">
+            <h2 className={cn(stb.heading, 'text-foreground mb-6')}>
               Ready to upgrade your style?
             </h2>
-            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
+            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto font-sans normal-case">
               Book top-rated barbers with secure payments, or list your chair from {barberFee}/mo with 0% commission on
               direct bookings.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
               <Link to={createPageUrl('Explore')} className="block flex-1">
-                <Button
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:opacity-95 font-semibold px-10 h-14 text-base rounded-xl w-full transition-opacity"
-                >
+                <Button size="lg" className={cn(stb.btn, 'h-14 text-base w-full')}>
                   Book your cut
                 </Button>
               </Link>
@@ -55,13 +51,13 @@ export default function CTA() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="bg-card border-2 border-border text-foreground hover:bg-muted font-semibold px-10 h-14 text-base rounded-xl w-full"
+                  className="h-14 text-base w-full"
                 >
                   View plans for pros
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground mt-6">
+            <p className="text-sm text-muted-foreground mt-6 font-sans normal-case">
               Already a provider?{' '}
               <Link to={createPageUrl('SelectProviderType')} className="text-primary font-semibold hover:underline">
                 Start onboarding

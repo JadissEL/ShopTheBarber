@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
+import SearchField from '@/components/ui/search-field';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Briefcase, Eye, CheckCircle2, XCircle, Star, Ban } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -24,10 +28,10 @@ const STATUS_TABS = [
 ];
 
 const STATUS_STYLES = {
-  draft: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Draft' },
-  pending_review: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Pending' },
-  published: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Live' },
-  rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+  draft: { bg: 'bg-warning/15', text: 'text-foreground', label: 'Draft' },
+  pending_review: { bg: 'bg-primary/10', text: 'text-primary', label: 'Pending' },
+  published: { bg: 'bg-success/10', text: 'text-success', label: 'Live' },
+  rejected: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Rejected' },
   closed: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Closed' },
 };
 
@@ -93,26 +97,26 @@ export default function AdminJobsManagement() {
   const pendingCount = statusFilter === 'pending_review' ? jobs.length : jobs.filter((j) => j.status === 'pending_review').length;
 
   return (
-    <div className="min-h-screen py-8 bg-background">
+    <div className={stb.page}>
       <MetaTags title="Jobs moderation | Admin" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Jobs moderation</h1>
-          <p className="text-muted-foreground">
-            Approve job postings from barbers and shop owners before they appear on Career Hub.
-          </p>
-        </div>
+      <PageHeader
+        tier="app"
+        variant="light"
+        title="Jobs moderation"
+        subtitle="Approve job postings from barbers and shop owners before they appear on Career Hub."
+      />
 
+      <PageContent>
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           {[
             { label: 'Pending approval', value: pendingCount },
             { label: 'In view', value: filtered.length },
             { label: 'Live listings', value: filtered.filter((j) => j.status === 'published').length },
           ].map((stat) => (
-            <Card key={stat.label} className="rounded-2xl">
+            <Card key={stat.label} className={stb.panel}>
               <CardContent className="p-5">
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className={stb.caption}>{stat.label}</p>
+                <p className={stb.metricValue}>{stat.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -125,25 +129,26 @@ export default function AdminJobsManagement() {
                 key={tab.id}
                 variant={statusFilter === tab.id ? 'default' : 'outline'}
                 size="sm"
-                className="rounded-xl"
                 onClick={() => setStatusFilter(tab.id)}
               >
                 {tab.label}
               </Button>
             ))}
           </div>
-          <Input
+          <SearchField
             placeholder="Search title, employer, location…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="sm:max-w-xs rounded-xl"
+            onClear={() => setSearch('')}
+            className="sm:max-w-xs sm:ml-auto"
+            aria-label="Search job postings"
           />
         </div>
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : filtered.length === 0 ? (
-          <Card className="rounded-2xl">
+          <Card className="">
             <CardContent className="p-12 text-center">
               <Briefcase className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
               <p className="text-muted-foreground">No job postings in this queue.</p>
@@ -155,7 +160,7 @@ export default function AdminJobsManagement() {
               const style = STATUS_STYLES[job.status] || STATUS_STYLES.draft;
               return (
                 <li key={job.id}>
-                  <Card className="rounded-2xl overflow-hidden">
+                  <Card className=" overflow-hidden">
                     <CardContent className="p-5 flex flex-col lg:flex-row lg:items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -176,7 +181,7 @@ export default function AdminJobsManagement() {
                           </p>
                         )}
                         {job.rejection_reason && job.status === 'rejected' && (
-                          <p className="text-xs text-red-600 mt-1">Reason: {job.rejection_reason}</p>
+                          <p className={cn(stb.caption, 'text-destructive mt-1')}>Reason: {job.rejection_reason}</p>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2 shrink-0">
@@ -198,7 +203,7 @@ export default function AdminJobsManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="rounded-lg gap-1 text-red-600 border-red-200"
+                              className="rounded-lg gap-1 text-destructive border-destructive/20"
                               onClick={() => setRejectTarget(job)}
                             >
                               <XCircle className="w-4 h-4" /> Reject
@@ -218,7 +223,7 @@ export default function AdminJobsManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="rounded-lg gap-1 text-red-600"
+                              className="rounded-lg gap-1 text-destructive"
                               onClick={() => unpublishMutation.mutate(job.id)}
                             >
                               <Ban className="w-4 h-4" /> Unpublish
@@ -233,7 +238,7 @@ export default function AdminJobsManagement() {
             })}
           </ul>
         )}
-      </div>
+      </PageContent>
 
       <Dialog open={!!rejectTarget} onOpenChange={(open) => !open && setRejectTarget(null)}>
         <DialogContent>

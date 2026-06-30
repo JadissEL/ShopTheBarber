@@ -10,6 +10,10 @@ import { useManagedShop } from '@/hooks/useManagedShop';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PageLoading } from '@/components/ui/page-loading';
 import { format, parseISO } from 'date-fns';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function ClientList() {
   const { user, shopId, isManager, isLoading: shopLoading } = useManagedShop();
@@ -86,19 +90,21 @@ export default function ClientList() {
   const loading = shopLoading || (shopId && clientsLoading);
 
   return (
-    <div className="stb-page pb-20">
+    <div className="stb-page pb-20 font-sans">
       <MetaTags title="Client List" description="Clients who have booked with you" />
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
+      <PageHeader
+        label="Provider"
+        title="Client list"
+        subtitle="Visit history and spend from completed bookings"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
+        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
-        <div className="flex items-center gap-3 mb-6">
-          <Users className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Client List</h1>
-            <p className="text-muted-foreground text-sm">Visit history and spend from completed bookings</p>
-          </div>
-        </div>
 
         {loading ? (
           <PageLoading message="Loading clients…" />
@@ -111,7 +117,7 @@ export default function ClientList() {
         ) : (
           <div className="space-y-3">
             {soloClients.map((c) => (
-              <Card key={c.client_id || c.full_name} className="rounded-2xl border-slate-200">
+              <Card key={c.client_id || c.full_name} className=" border-border">
                 <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                   <UserAvatar name={c.full_name} src={c.avatar_url} className="w-12 h-12" />
                   <div className="flex-1 min-w-0">
@@ -120,11 +126,11 @@ export default function ClientList() {
                   </div>
                   <div className="flex gap-6 text-sm">
                     <div className="text-center">
-                      <p className="font-black">{c.visit_count}</p>
+                      <p className={stb.metricValue}>{c.visit_count}</p>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">Visits</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-black flex items-center gap-0.5"><DollarSign className="w-3 h-3" />{c.total_spent?.toFixed(0)}</p>
+                      <p className={cn(stb.metricValue, 'flex items-center gap-0.5')}><DollarSign className="w-3 h-3" />{c.total_spent?.toFixed(0)}</p>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">Spent</p>
                     </div>
                     <div className="text-center min-w-[80px]">
@@ -140,7 +146,7 @@ export default function ClientList() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

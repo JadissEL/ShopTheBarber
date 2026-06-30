@@ -20,12 +20,12 @@ export default function ExploreEmptyState({
       />
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 -mt-4 pb-8">
         {actionLabel && onAction ? (
-          <Button onClick={onAction} className="rounded-xl">
+          <Button onClick={onAction} className="">
             {actionLabel}
           </Button>
         ) : null}
         {onClearFilters ? (
-          <Button variant="outline" onClick={onClearFilters} className="rounded-xl">
+          <Button variant="outline" onClick={onClearFilters} className="">
             Clear filters
           </Button>
         ) : null}

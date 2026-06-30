@@ -2,9 +2,12 @@ import { Link } from 'react-router-dom';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, MapPin, Users, Calendar, CheckCircle2 } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const PILOT_CRITERIA = [
   '5-10 shops or solo barbers in one city',
@@ -35,7 +38,7 @@ export default function PilotProgram() {
         canonicalUrl="/pilot"
       />
 
-      <div className="border-b border-border bg-muted/30">
+      <div className="border-b border-foreground/10 bg-muted/30">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <Link
             to="/pricing"
@@ -47,33 +50,30 @@ export default function PilotProgram() {
         </div>
       </div>
 
-      <section className="max-w-4xl mx-auto px-4 py-16 md:py-20">
-        <Badge className="mb-4">P1, Pilot program</Badge>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-          One city. Real shops. Prove it before we scale.
-        </h1>
-        <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
-          National marketing comes after density, not before. We are recruiting{' '}
-          <strong className="text-foreground">5-10 barbershops and solo barbers in a single city</strong>{' '}
-          to validate direct booking, no-show recovery, and flat pricing in the wild.
-        </p>
-        <div className="flex flex-wrap gap-3 mt-8">
-          <Button asChild size="lg" className="rounded-xl">
+      <PageHeader
+        label="P1, Pilot program"
+        title="One city. Real shops. Prove it before we scale."
+        subtitle="National marketing comes after density, not before. We are recruiting 5-10 barbershops and solo barbers in a single city to validate direct booking, no-show recovery, and flat pricing in the wild."
+      />
+
+      <PageContent narrow className="py-8">
+        <div className="flex flex-wrap gap-3">
+          <Button asChild size="lg">
             <a href={applyHref}>Apply for pilot</a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-xl">
+          <Button asChild variant="outline" size="lg">
             <Link to={createPageUrl('SelectProviderType')}>Start self-serve setup</Link>
           </Button>
         </div>
-      </section>
+      </PageContent>
 
-      <section className="max-w-4xl mx-auto px-4 pb-16 grid md:grid-cols-3 gap-4">
+      <PageContent narrow className="pb-16 grid md:grid-cols-3 gap-4">
         {[
           { icon: MapPin, label: '1 city', sub: 'Depth over spray' },
           { icon: Users, label: '5-10 providers', sub: 'Mix of shops + solos' },
           { icon: Calendar, label: '90 days', sub: 'Measured rollout' },
         ].map(({ icon: Icon, label, sub }) => (
-          <Card key={label}>
+          <Card key={label} className={cn(stb.surface, 'border-foreground/10')}>
             <CardContent className="p-6 text-center">
               <Icon className="w-8 h-8 text-primary mx-auto mb-2" />
               <p className="font-bold text-lg">{label}</p>
@@ -81,12 +81,13 @@ export default function PilotProgram() {
             </CardContent>
           </Card>
         ))}
-      </section>
+      </PageContent>
 
-      <section className="bg-muted/40 border-y border-border py-16">
-        <div className="max-w-4xl mx-auto px-4 grid md:grid-cols-2 gap-10">
-          <div>
-            <h2 className="text-xl font-bold mb-4">Who we accept</h2>
+      <section className="bg-muted/40 border-y border-foreground/10 py-16">
+        <PageContent narrow>
+          <div className="grid md:grid-cols-2 gap-10">
+            <div>
+              <h2 className={cn(stb.uiHeading, 'text-xl mb-4')}>Who we accept</h2>
             <ul className="space-y-3">
               {PILOT_CRITERIA.map((item) => (
                 <li key={item} className="flex gap-2 text-sm text-muted-foreground">
@@ -97,20 +98,21 @@ export default function PilotProgram() {
             </ul>
           </div>
           <div>
-            <h2 className="text-xl font-bold mb-4">What you get</h2>
+            <h2 className={cn(stb.uiHeading, 'text-xl mb-4')}>What you get</h2>
             <ul className="space-y-3">
               {PILOT_PERKS.map((item) => (
                 <li key={item} className="flex gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-        </div>
+          </div>
+        </PageContent>
       </section>
 
-      <section className="max-w-4xl mx-auto px-4 py-16 text-sm text-muted-foreground">
+      <PageContent narrow className="py-16 text-sm text-muted-foreground">
         <p>
           Internal playbook for founders: <code className="text-xs bg-muted px-1 py-0.5 rounded">docs/PILOT_PROGRAM.md</code>{' '}
           in the repo. Questions?{' '}
@@ -118,7 +120,7 @@ export default function PilotProgram() {
             hello@shopthebarber.com
           </a>
         </p>
-      </section>
+      </PageContent>
     </div>
   );
 }

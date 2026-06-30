@@ -7,9 +7,9 @@ export default function DisputeCard({ dispute }) {
   const displayStatus = dispute.status_label || disputeStatusLabel(dispute.status);
 
   const statusConfig = {
-    'Open': { color: 'bg-red-50 text-red-700', icon: AlertCircle, label: 'New' },
-    'In Review': { color: 'bg-amber-50 text-amber-700', icon: Clock, label: 'Reviewing' },
-    'Resolved': { color: 'bg-green-50 text-green-700', icon: CheckCircle2, label: 'Resolved' }
+    'Open': { color: 'bg-destructive/10 text-destructive', icon: AlertCircle, label: 'New' },
+    'In Review': { color: 'bg-primary/10 text-muted-foreground', icon: Clock, label: 'Reviewing' },
+    'Resolved': { color: 'bg-success/10 text-success', icon: CheckCircle2, label: 'Resolved' }
   };
 
   const config = statusConfig[displayStatus] || statusConfig['Open'];

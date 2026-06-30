@@ -13,6 +13,10 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import SavedAddressesManager, { addressToShipping } from '@/components/shipping/SavedAddressesManager';
 import { MarketplaceCheckoutLegalNotice } from '@/components/marketplace/MarketplaceCheckoutLegalNotice';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import {
   BUYER_TERMS_PATH,
   MARKETPLACE_VAT_LABEL,
@@ -144,74 +148,78 @@ export default function Checkout() {
                 description="Secure checkout for your order."
             />
 
-            <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
-                <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
-                    <button
-                        type="button"
-                        onClick={() => (step > 0 ? setStep(step - 1) : navigate(createPageUrl('ShoppingBag')))}
-                        className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted"
-                        aria-label="Back"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <h1 className="text-lg font-bold text-foreground">Checkout</h1>
-                    <div className="w-10 h-10 flex items-center justify-center text-primary">
-                        <Lock className="w-5 h-5" />
-                    </div>
+            <PageHeader
+                label="Marketplace"
+                title="Checkout"
+                compact
+                variant="light"
+                tier="app"
+                className="sticky top-0 z-40 !py-4"
+            >
+                <button
+                    type="button"
+                    onClick={() => (step > 0 ? setStep(step - 1) : navigate(createPageUrl('ShoppingBag')))}
+                    className="p-2 rounded-full text-muted-foreground hover:bg-muted md:order-first"
+                    aria-label="Back"
+                >
+                    <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="w-10 h-10 flex items-center justify-center text-primary" aria-hidden>
+                    <Lock className="w-5 h-5" />
                 </div>
+            </PageHeader>
 
-                {!isSuccess && (
-                    <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 pb-4 flex items-center justify-center gap-2">
+            {!isSuccess && (
+                <div className={cn(stb.containerNarrow, 'pb-4 flex items-center justify-center gap-2')}>
                         {STEPS.map((label, i) => (
                             <div key={label} className="flex items-center gap-1">
                                 <span
                                     className={`text-xs font-semibold uppercase tracking-wider ${
-                                        i === step ? 'text-primary' : 'text-slate-400'
+                                        i === step ? 'text-primary' : 'text-muted-foreground'
                                     }`}
                                 >
                                     {label}
                                 </span>
                                 {i < STEPS.length - 1 && (
-                                    <span className="w-4 h-px bg-slate-200 mx-0.5" aria-hidden />
+                                    <span className="w-4 h-px bg-muted mx-0.5" aria-hidden />
                                 )}
                             </div>
                         ))}
                     </div>
                 )}
-            </header>
 
-            <main className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-8">
+            <PageContent narrow>
                 {isSuccess ? (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
                             <Lock className="w-8 h-8 text-primary" />
                         </div>
-                        <h2 className="text-xl font-bold text-foreground mb-2">Thank you for your order</h2>
+                        <h2 className={cn(stb.uiHeading, 'text-xl mb-2')}>Thank you for your order</h2>
                         <p className="text-muted-foreground mb-1">Order #{orderId?.slice(-8)}</p>
                         <p className="text-muted-foreground text-sm mb-6">A confirmation email has been sent to your inbox.</p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Link to={`${createPageUrl('OrderTracking')  }?id=${  encodeURIComponent(orderId || '')}`}>
-                                <Button className="rounded-xl bg-primary text-primary-foreground hover:opacity-95 w-full sm:w-auto">Track Order</Button>
+                                <Button className=" bg-primary text-primary-foreground hover:opacity-95 w-full sm:w-auto">Track Order</Button>
                             </Link>
                             <Link to={createPageUrl('Marketplace')}>
-                                <Button variant="outline" className="rounded-xl w-full sm:w-auto">Continue Shopping</Button>
+                                <Button variant="outline" className=" w-full sm:w-auto">Continue Shopping</Button>
                             </Link>
                         </div>
                     </div>
                 ) : step === 0 ? (
                     <>
                         <div className="mb-6">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Express Checkout</p>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Express Checkout</p>
                             <button
                                 type="button"
-                                className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-semibold h-12 px-4"
+                                className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground font-semibold h-12 px-4"
                                 onClick={handleContinueToPayment}
                             >
                                 <CreditCard className="w-5 h-5" />
                                 Pay with Card (Stripe)
                             </button>
                         </div>
-                        <p className="text-center text-xs text-slate-400 uppercase tracking-wider mb-6">Or continue with shipping</p>
+                        <p className="text-center text-xs text-muted-foreground uppercase tracking-wider mb-6">Or continue with shipping</p>
 
                         <section className="mb-8">
                             <div className="flex items-center justify-between mb-4">
@@ -246,7 +254,7 @@ export default function Checkout() {
                                         placeholder="Alexander Sterling"
                                         value={shipping.fullName}
                                         onChange={(e) => setShipping((s) => ({ ...s, fullName: e.target.value, savedAddressId: null }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        className="mt-1.5 h-11 rounded-lg bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring"
                                     />
                                 </div>
                                 <div>
@@ -256,7 +264,7 @@ export default function Checkout() {
                                         placeholder="742 Evergreen Terrace"
                                         value={shipping.street}
                                         onChange={(e) => setShipping((s) => ({ ...s, street: e.target.value, savedAddressId: null }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        className="mt-1.5 h-11 rounded-lg bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -267,7 +275,7 @@ export default function Checkout() {
                                             placeholder="Beverly Hills"
                                             value={shipping.city}
                                             onChange={(e) => setShipping((s) => ({ ...s, city: e.target.value, savedAddressId: null }))}
-                                            className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                            className="mt-1.5 h-11 rounded-lg bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring"
                                         />
                                     </div>
                                     <div>
@@ -277,7 +285,7 @@ export default function Checkout() {
                                             placeholder="CA"
                                             value={shipping.state}
                                             onChange={(e) => setShipping((s) => ({ ...s, state: e.target.value, savedAddressId: null }))}
-                                            className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                            className="mt-1.5 h-11 rounded-lg bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring"
                                         />
                                     </div>
                                 </div>
@@ -288,7 +296,7 @@ export default function Checkout() {
                                         placeholder="90210"
                                         value={shipping.zip}
                                         onChange={(e) => setShipping((s) => ({ ...s, zip: e.target.value, savedAddressId: null }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        className="mt-1.5 h-11 rounded-lg bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring"
                                     />
                                 </div>
                                 <div>
@@ -299,7 +307,7 @@ export default function Checkout() {
                                         placeholder="+1 (555) 000-0000"
                                         value={shipping.phone}
                                         onChange={(e) => setShipping((s) => ({ ...s, phone: e.target.value, savedAddressId: null }))}
-                                        className="mt-1.5 h-11 rounded-xl bg-muted border-0 focus-visible:ring-2 focus-visible:ring-slate-300"
+                                        className="mt-1.5 h-11 rounded-lg bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring"
                                     />
                                 </div>
                                 {!shipping.savedAddressId && (
@@ -316,11 +324,11 @@ export default function Checkout() {
                             </div>
                             )}
                             {shippingFee === 0 ? (
-                                <p className="text-xs text-emerald-600 mt-3 font-medium">Free shipping on orders over ${PLATFORM_FREE_SHIPPING_MIN}</p>
+                                <p className="text-xs text-primary mt-3 font-medium">Free shipping on orders over ${PLATFORM_FREE_SHIPPING_MIN}</p>
                             ) : (
                                 <p className="text-xs text-muted-foreground mt-3">Shipping: ${shippingFee.toFixed(2)}, Free over ${PLATFORM_FREE_SHIPPING_MIN}</p>
                             )}
-                            <div className="mt-6 rounded-xl border border-border p-4 space-y-2 text-sm">
+                            <div className="mt-6 rounded-lg border border-border p-4 space-y-2 text-sm stb-panel">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Subtotal</span>
                                     <span>${subtotal.toFixed(2)}</span>
@@ -359,17 +367,17 @@ export default function Checkout() {
                         </section>
                     </>
                 ) : null}
-            </main>
+            </PageContent>
 
             {!isSuccess && itemCount > 0 && (
-                <footer className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-slate-200 p-4 safe-area-pb lg:static lg:border-0 lg:bg-transparent lg:pt-0">
+                <footer className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border p-4 safe-area-pb lg:static lg:border-0 lg:bg-transparent lg:pt-0">
                     <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                             <span className="font-bold text-foreground text-lg">${total.toFixed(2)}</span>
                             <span className="text-sm text-muted-foreground">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
                         </div>
                         <Button
-                            className="rounded-xl h-12 bg-primary text-primary-foreground hover:opacity-95 font-semibold gap-2 w-full sm:w-auto px-8"
+                            className=" h-12 bg-primary text-primary-foreground hover:opacity-95 font-semibold gap-2 w-full sm:w-auto px-8"
                             onClick={handleContinueToPayment}
                             disabled={isSubmitting || !acceptedBuyerTerms}
                         >

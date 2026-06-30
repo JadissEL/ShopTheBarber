@@ -41,7 +41,7 @@ export default function ExploreResultsToolbar({
           <>
             <SortingBar value={sortBy} onChange={onSortChange} compact />
             <Link to={createPageUrl('Barbers')}>
-              <Button variant="outline" size="sm" className="rounded-xl gap-2 h-10 border-border">
+              <Button variant="outline" size="sm" className=" gap-2 h-10 border-border">
                 <Map className="w-4 h-4" aria-hidden />
                 <span className="hidden xs:inline">Map</span>
               </Button>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Filter, Calendar as CalendarIcon, CheckCircle2, XCircle, AlertCircle, AlertTriangle, Check, X, MessageSquare } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
+import { Filter, Calendar as CalendarIcon, CheckCircle2, XCircle, AlertCircle, AlertTriangle, Check, X, MessageSquare } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { PaginationControls } from '@/components/ui/pagination-controls';
@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useDebounce } from '@/components/hooks/use-debounce';
 import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookingCard from '@/components/ui/booking-card';
 import { GroupBookingGuestPanel } from '@/components/booking/GroupBookingGuestPanel';
@@ -189,9 +191,9 @@ export default function ProviderBookings() {
 
   const _statusColors = {
       Confirmed: "bg-primary/10 text-primary border-primary/20",
-      Pending: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+      Pending: "bg-primary/10 text-primary border-primary/25",
       Completed: "bg-primary/10 text-primary border-primary/20",
-      Cancelled: "bg-red-500/10 text-red-400 border-red-500/20"
+      Cancelled: "bg-destructive/10 text-destructive border-destructive/20"
   };
 
   const _StatusIcon = ({ status }) => {
@@ -208,30 +210,30 @@ export default function ProviderBookings() {
         description="View and manage client appointments." 
       />
       
-      {/* Header */}
-      <div className="border-b border-border bg-card sticky top-0 z-30">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 flex justify-between items-center">
-              <div>
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Bookings</h1>
-                  <p className="text-sm text-muted-foreground mt-1">Manage all client appointments</p>
-              </div>
-              <Button className="bg-primary text-primary-foreground hover:opacity-95 border-none h-10 rounded-xl">
-                  + Create Appointment
-              </Button>
-          </div>
-      </div>
+      <PageHeader
+        label="Provider"
+        title="Bookings"
+        subtitle="Manage all client appointments"
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Button className="h-11">
+          + Create Appointment
+        </Button>
+      </PageHeader>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+      <PageContent>
         
         {/* Legacy Data Warning */}
         {bookings.some(b => !b.context_type) && (
-            <div className="mb-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center justify-between">
+            <div className="mb-6 bg-primary/10 border border-primary/25 rounded-lg p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600" />
-                    <span className="text-amber-800 text-sm">Some bookings are missing context data.</span>
+                    <AlertTriangle className="w-5 h-5 text-primary" />
+                    <span className="text-foreground text-sm">Some bookings are missing context data.</span>
                 </div>
                 <Link to={createPageUrl('ProviderSettings')}>
-                    <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-700 hover:bg-amber-500/10">
+                    <Button size="sm" variant="outline" className="border-amber-500/30 text-muted-foreground hover:bg-primary/10">
                         Settings
                     </Button>
                 </Link>
@@ -240,7 +242,7 @@ export default function ProviderBookings() {
 
         {/* Controls Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <div className="flex bg-muted p-1 rounded-xl border border-border">
+            <div className="flex bg-muted p-1 rounded-lg border border-border">
                 {['upcoming', 'completed', 'no_show', 'cancelled', 'waitlist'].map((tab) => (
                     <button 
                         key={tab}
@@ -257,15 +259,14 @@ export default function ProviderBookings() {
             </div>
 
             <div className="flex gap-3 w-full md:w-auto">
-                <div className="relative flex-1 md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search client, service, or date..." 
-                        className="pl-10 bg-card border border-border placeholder:text-muted-foreground focus:ring-primary/50 h-10 rounded-xl"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
+                <SearchField
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onClear={() => setSearchTerm('')}
+                    placeholder="Search client, service, or date..."
+                    className="flex-1 md:w-80"
+                    aria-label="Search bookings"
+                />
                 <Button variant="outline" className="border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted">
                     <Filter className="w-4 h-4 mr-2" /> Filters
                 </Button>
@@ -280,7 +281,7 @@ export default function ProviderBookings() {
                 ) : bookings.length === 0 && !isFetching ? (
                     <motion.div 
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                        className="text-center py-20 bg-muted/50 rounded-3xl border border-border border-dashed"
+                        className="text-center py-20 bg-muted/50  border border-border border-dashed"
                     >
                         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                             <CalendarIcon className="w-8 h-8" />
@@ -292,14 +293,14 @@ export default function ProviderBookings() {
                     bookings.map((booking) => {
                       const isGroup = booking.is_group || booking.booking_type === 'group';
                       return (
-                        <div key={booking.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+                        <div key={booking.id} className="stb-card overflow-hidden">
                             <BookingCard
                             booking={booking}
-                            className="border-0 rounded-none shadow-none"
+                            className="border-0 shadow-none"
                             actions={
                                 <div className="flex gap-2 flex-wrap justify-end">
                                     <Link to={createPageUrl(`ProviderMessages?booking=${booking.id}`)}>
-                                        <Button size="sm" variant="outline" className="h-8 rounded-xl">
+                                        <Button size="sm" variant="outline" className="h-8 rounded-lg">
                                             <MessageSquare className="w-4 h-4 mr-1" />
                                             Chat
                                         </Button>
@@ -336,7 +337,7 @@ export default function ProviderBookings() {
                                         </Button>
                                         <Button
                                             size="sm"
-                                            className="bg-emerald-600 text-white hover:bg-emerald-700 h-8"
+                                            className="bg-primary text-primary-foreground hover:bg-primary/90 h-8"
                                             onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'completed', booking })}
                                         >
                                             <Check className="w-4 h-4 mr-1" /> Complete
@@ -344,7 +345,7 @@ export default function ProviderBookings() {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            className="h-8 border-amber-500/30 text-amber-700 hover:bg-amber-50"
+                                            className="h-8 border-amber-500/30 text-muted-foreground hover:bg-primary/10"
                                             onClick={() => {
                                                 if (confirm('Mark this client as a no-show? A fee may be charged per your policy.')) {
                                                     noShowMutation.mutate(booking.id);
@@ -356,7 +357,7 @@ export default function ProviderBookings() {
                                         <Button 
                                             size="sm" 
                                             variant="outline"
-                                            className="h-8 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                            className="h-8 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive/80"
                                             onClick={() => {
                                                 if(confirm("Cancel this booking?")) {
                                                     updateStatusMutation.mutate({ id: booking.id, status: 'cancelled', booking });
@@ -407,7 +408,7 @@ export default function ProviderBookings() {
             />
             )}
         </div>
-      </div>
+      </PageContent>
 
       <ProviderCheckInDialog
         booking={checkInBooking}

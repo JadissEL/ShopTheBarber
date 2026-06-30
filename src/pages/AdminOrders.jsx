@@ -4,7 +4,11 @@ import { sovereign } from '@/api/apiClient';
 import { AlertCircle, Package, Truck, CheckCircle2, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { toast } from 'sonner';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 const FULFILLMENT_OPTIONS = [
   { value: 'confirmed', label: 'Confirmed' },
@@ -84,11 +88,16 @@ export default function AdminOrders() {
     <div className="stb-page pb-16">
       <MetaTags title="Order Management" description="Manage marketplace orders and fulfillment" />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Order Management</h1>
-          <p className="text-muted-foreground">View and update fulfillment for marketplace orders</p>
-        </div>
+      <PageHeader
+        label="Admin"
+        title="Order management"
+        subtitle="View and update fulfillment for marketplace orders"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -109,7 +118,7 @@ export default function AdminOrders() {
                   <p className="text-sm text-muted-foreground">Paid</p>
                   <h3 className="text-3xl font-bold">{paidCount}</h3>
                 </div>
-                <CheckCircle2 className="w-8 h-8 text-green-600 opacity-50" />
+                <CheckCircle2 className="w-8 h-8 text-success opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -120,7 +129,7 @@ export default function AdminOrders() {
                   <p className="text-sm text-muted-foreground">In transit</p>
                   <h3 className="text-3xl font-bold">{inTransitCount}</h3>
                 </div>
-                <Truck className="w-8 h-8 text-amber-600 opacity-50" />
+                <Truck className="w-8 h-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -131,7 +140,7 @@ export default function AdminOrders() {
                   <p className="text-sm text-muted-foreground">Delivered</p>
                   <h3 className="text-3xl font-bold">{deliveredCount}</h3>
                 </div>
-                <CheckCircle2 className="w-8 h-8 text-emerald-600 opacity-50" />
+                <CheckCircle2 className="w-8 h-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -162,7 +171,7 @@ export default function AdminOrders() {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className={cn(stb.dataTable, 'text-left [&_tbody_tr]:border-b [&_tbody_tr]:border-border [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
                       <th className="px-4 py-3 text-sm font-medium text-muted-foreground">Order #</th>
@@ -177,7 +186,7 @@ export default function AdminOrders() {
                   </thead>
                   <tbody>
                     {filteredOrders.map((order) => (
-                      <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                      <tr key={order.id} className="last:border-0">
                         <td className="px-4 py-3 font-mono text-sm">{order.order_number}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(order.created_at)}</td>
                         <td className="px-4 py-3 text-sm">
@@ -193,8 +202,8 @@ export default function AdminOrders() {
                           <span
                             className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
                               order.payment_status === 'paid'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-amber-100 text-amber-800'
+                                ? 'bg-success/10 text-success'
+                                : 'bg-warning/15 text-foreground'
                             }`}
                           >
                             {order.payment_status || 'unpaid'}
@@ -251,7 +260,7 @@ export default function AdminOrders() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

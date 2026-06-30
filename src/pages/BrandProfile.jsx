@@ -20,6 +20,9 @@ import { createPageUrl } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const ACCOLADE_ICONS = {
   trophy: Trophy,
@@ -150,30 +153,39 @@ export default function BrandProfile() {
   const priceRange = displayBrand.price_range || '$$$';
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page + ' lg:pb-8'}>
       <MetaTags
         title={displayBrand.name}
         description={displayBrand.description || `Elite brand profile for ${displayBrand.name}.`}
         image={displayBrand.hero_image_url || displayBrand.logo_url}
       />
 
+      <PageHeader
+        label="Marketplace"
+        title={displayBrand.name || 'Brand profile'}
+        subtitle={displayBrand.description || 'Discover products from this brand'}
+        compact
+        tier="display"
+        variant="dark"
+      />
+
       {/* Top nav: back, share, heart */}
-      <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-slate-200 lg:border-0 lg:bg-transparent lg:absolute lg:left-0 lg:right-0 lg:py-6 lg:px-6">
+      <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-border lg:border-0 lg:bg-transparent lg:absolute lg:left-0 lg:right-0 lg:py-6 lg:px-6">
         <Link
           to={createPageUrl('Marketplace')}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 border border-slate-200 text-foreground/90 hover:bg-muted/50 lg:bg-white/80 lg:backdrop-blur"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 border border-border text-foreground/90 hover:bg-muted/50 lg:bg-white/80 lg:backdrop-blur"
           aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="icon" className="rounded-full w-10 h-10 lg:bg-white/80 lg:backdrop-blur lg:border lg:border-slate-200" onClick={handleShare} aria-label="Share">
+          <Button variant="secondary" size="icon" className="rounded-full w-10 h-10 lg:bg-white/80 lg:backdrop-blur lg:border lg:border-border" onClick={handleShare} aria-label="Share">
             <Share2 className="w-5 h-5" />
           </Button>
           <Button
             variant="secondary"
             size="icon"
-            className={`rounded-full w-10 h-10 lg:bg-white/80 lg:backdrop-blur lg:border lg:border-slate-200 ${isFollowed ? 'bg-red-50 text-red-600 border-red-200' : ''}`}
+            className={`rounded-full w-10 h-10 lg:bg-white/80 lg:backdrop-blur lg:border lg:border-border ${isFollowed ? 'bg-destructive/10 text-destructive border-destructive/30' : ''}`}
             onClick={handleToggleFollow}
             aria-label={isFollowed ? 'Unfollow brand' : 'Follow brand'}
           >
@@ -191,15 +203,15 @@ export default function BrandProfile() {
           fill
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        <div className="absolute inset-0 bg-background/80" />
       </div>
 
       <div className="container mx-auto px-4 md:px-6 -mt-4 relative z-10">
         {/* Brand block: logo, name, badge, locations, Follow, contact, description */}
-        <div className="bg-card rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="shrink-0">
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted border border-slate-200">
+              <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted border border-border">
                 <OptimizedImage
                   src={displayBrand.logo_url}
                   alt=""
@@ -213,7 +225,7 @@ export default function BrandProfile() {
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="text-2xl font-bold text-foreground">{displayBrand.name}</h1>
                 {displayBrand.verified_elite && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 text-sky-800 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-sky-800 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
                     <Star className="w-3.5 h-3.5 fill-current" />
                     Verified Elite
                   </span>
@@ -250,10 +262,10 @@ export default function BrandProfile() {
               {sortedAccolades.map((acc) => {
                 const IconComponent = ACCOLADE_ICONS[acc.icon_key] || Star;
                 const colors = {
-                  trophy: 'bg-amber-100 text-amber-800',
-                  star: 'bg-sky-100 text-sky-800',
-                  leaf: 'bg-emerald-100 text-emerald-800',
-                  art: 'bg-violet-100 text-violet-800',
+                  trophy: 'bg-warning/15 text-foreground',
+                  star: 'bg-primary/10 text-sky-800',
+                  leaf: 'stb-chip stb-chip-active',
+                  art: 'bg-primary/10 text-foreground',
                 };
                 const colorClass = colors[acc.icon_key] || 'bg-muted text-foreground';
                 return (
@@ -285,7 +297,7 @@ export default function BrandProfile() {
                   to={`${createPageUrl('Marketplace')}?brand=${brandId}&collection=${coll.id}`}
                   className="shrink-0 w-[200px] group"
                 >
-                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted border border-slate-200">
+                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted border border-border">
                     <OptimizedImage
                       src={coll.image_url}
                       alt={coll.name}
@@ -326,7 +338,7 @@ export default function BrandProfile() {
                   to={`${createPageUrl('ProductDetail')}?id=${encodeURIComponent(product.id)}`}
                   className="group text-left"
                 >
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-muted border border-slate-200 mb-2">
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-muted border border-border mb-2">
                     <OptimizedImage
                       src={product.image_url}
                       alt={product.name}
@@ -335,7 +347,7 @@ export default function BrandProfile() {
                       height={400}
                     />
                     <span
-                      className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-card border border-slate-200 flex items-center justify-center text-foreground/90 shadow-sm"
+                      className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center text-foreground/90 shadow-sm"
                       aria-hidden
                     >
                       <Plus className="w-4 h-4" />
@@ -350,7 +362,7 @@ export default function BrandProfile() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-muted/50 py-12 px-6 text-center">
+            <div className=" border border-border bg-muted/50 py-12 px-6 text-center">
               <p className="text-muted-foreground font-medium">No products in catalog yet.</p>
             </div>
           )}
@@ -358,7 +370,7 @@ export default function BrandProfile() {
       </div>
 
       {/* Bottom bar - mobile only */}
-      <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-4 py-3 bg-card border-t border-slate-200 lg:hidden z-20">
+      <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-4 py-3 bg-card border-t border-border lg:hidden z-20">
         <span className="text-sm font-semibold text-foreground/90">PRICE RANGE {priceRange}</span>
         <Button className="rounded-full gap-2" asChild>
           <Link to={createPageUrl('Explore')}>

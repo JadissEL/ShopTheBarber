@@ -277,7 +277,7 @@ export default function ProviderShowcaseEditor() {
         <div className="space-y-6">
             <ShowcaseCompletenessCard barber={barber} shop={shop} />
 
-            <Card className="border-slate-200 shadow-sm rounded-3xl bg-card">
+            <Card className="border-border shadow-sm  bg-card">
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div>
                         <CardTitle>Your professional story</CardTitle>
@@ -302,7 +302,7 @@ export default function ProviderShowcaseEditor() {
             </Card>
 
             {barberForm && (
-                <Card className="border-slate-200 shadow-sm rounded-3xl bg-card">
+                <Card className="border-border shadow-sm  bg-card">
                     <CardHeader>
                         <CardTitle className="text-lg">Barber profile</CardTitle>
                     </CardHeader>
@@ -432,7 +432,7 @@ export default function ProviderShowcaseEditor() {
             )}
 
             {shopForm && (
-                <Card className="border-slate-200 shadow-sm rounded-3xl bg-card">
+                <Card className="border-border shadow-sm  bg-card">
                     <CardHeader>
                         <CardTitle className="text-lg">Shop story</CardTitle>
                     </CardHeader>
@@ -494,7 +494,7 @@ export default function ProviderShowcaseEditor() {
             )}
 
             {barber && (
-                <Card className="border-slate-200 shadow-sm rounded-3xl bg-card">
+                <Card className="border-border shadow-sm  bg-card">
                     <CardHeader>
                         <CardTitle className="text-lg">Portfolio</CardTitle>
                         <CardDescription>
@@ -508,7 +508,7 @@ export default function ProviderShowcaseEditor() {
                                 {portfolioItems.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="relative aspect-square rounded-2xl overflow-hidden border border-border group"
+                                        className="relative aspect-square stb-panel overflow-hidden group"
                                     >
                                         <OptimizedImage
                                             src={
@@ -520,7 +520,7 @@ export default function ProviderShowcaseEditor() {
                                             fill
                                             imgClassName="object-cover"
                                         />
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                                        <div className="absolute inset-x-0 bottom-0 bg-foreground/80 p-3">
                                             <p className="text-white text-xs font-semibold line-clamp-2">
                                                 {item.title}
                                             </p>
@@ -537,7 +537,7 @@ export default function ProviderShowcaseEditor() {
                                 ))}
                             </div>
                         )}
-                        <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+                        <div className=" border border-dashed border-border p-4 space-y-3">
                             <p className="text-sm font-semibold">Add portfolio item</p>
                             <Input
                                 placeholder="Title, e.g. Skin fade transformation"
@@ -582,7 +582,7 @@ export default function ProviderShowcaseEditor() {
                 </Card>
             )}
 
-            <Card className="border-slate-200 shadow-sm rounded-3xl bg-card">
+            <Card className="border-border shadow-sm  bg-card">
                 <CardHeader>
                     <CardTitle className="text-lg">Career timeline</CardTitle>
                     <CardDescription>
@@ -595,7 +595,7 @@ export default function ProviderShowcaseEditor() {
                             {allEntries.map((entry) => (
                                 <div
                                     key={entry.id}
-                                    className="flex items-start justify-between gap-4 rounded-xl border border-border p-4"
+                                    className="flex items-start justify-between gap-4 rounded-lg border border-border p-4"
                                 >
                                     <div>
                                         <p className="font-semibold text-sm">{entry.title}</p>
@@ -635,7 +635,7 @@ export default function ProviderShowcaseEditor() {
                         </div>
                     )}
 
-                    <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+                    <div className=" border border-dashed border-border p-4 space-y-3">
                         <div className="flex items-center justify-between">
                             <p className="text-sm font-semibold">
                                 {editingEntryId ? 'Edit timeline entry' : 'Add timeline entry'}

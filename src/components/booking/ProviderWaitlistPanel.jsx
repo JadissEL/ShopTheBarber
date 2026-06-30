@@ -33,8 +33,8 @@ function QueueEntryRow({ entry }) {
 
     return (
         <div
-            className={`flex items-center gap-3 p-3 rounded-xl border ${
-                isOffered ? 'border-amber-300/50 bg-amber-50/40 dark:bg-amber-950/10' : 'border-border/60 bg-background'
+            className={`flex items-center gap-3 p-3 rounded-lg border ${
+                isOffered ? 'border-primary/40 bg-primary/10/40 dark:bg-primary/10' : 'border-border/60 bg-background'
             }`}
         >
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
@@ -59,7 +59,7 @@ function QueueEntryRow({ entry }) {
                 )}
             </div>
             {isOffered && (
-                <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 shrink-0">
+                <span className="text-[10px] font-medium text-muted-foreground dark:text-primary shrink-0">
                     Offer sent
                 </span>
             )}
@@ -72,7 +72,7 @@ export default function ProviderWaitlistPanel({ entries = [], isLoading }) {
         return (
             <div className="space-y-4">
                 {[1, 2].map((i) => (
-                    <div key={i} className="h-32 rounded-2xl bg-muted/50 animate-pulse" />
+                    <div key={i} className="h-32 rounded-lg bg-muted/50 animate-pulse" />
                 ))}
             </div>
         );
@@ -102,7 +102,7 @@ export default function ProviderWaitlistPanel({ entries = [], isLoading }) {
                         key={slotStart}
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-2xl border border-border bg-card overflow-hidden"
+                        className={cn(stb.panel, 'overflow-hidden')}
                     >
                         <div className="px-4 py-3 bg-muted/40 border-b border-border flex flex-wrap items-center justify-between gap-2">
                             <div className="min-w-0">
@@ -123,7 +123,7 @@ export default function ProviderWaitlistPanel({ entries = [], isLoading }) {
                                     {slotEntries.length} waiting
                                 </span>
                                 {offeredCount > 0 && (
-                                    <span className="text-amber-600 font-medium">
+                                    <span className="text-primary font-medium">
                                         · {offeredCount} offered
                                     </span>
                                 )}

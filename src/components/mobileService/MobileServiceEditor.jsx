@@ -30,7 +30,7 @@ export function ProviderMobileServicePanel({ offersMobile = false }) {
                     &ldquo;At home&rdquo; booking filters. Optional add-on to in-shop group booking, enable both for weddings and parties at the client&apos;s address.
                 </p>
             </div>
-            <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4 bg-muted/20">
+            <div className="flex items-start justify-between gap-4 stb-panel p-4 bg-muted/20">
                 <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2 font-bold text-foreground">
                         <Home className="w-5 h-5 text-primary" />
@@ -40,7 +40,7 @@ export function ProviderMobileServicePanel({ offersMobile = false }) {
                         Bring your tools and deliver the same quality cut wherever the client is.
                     </p>
                     {offersMobile && (
-                        <p className="text-xs font-medium text-violet-700">
+                        <p className="text-xs font-medium text-primary">
                             {MOBILE_SERVICE_LABEL}, visible on homepage &amp; Explore
                         </p>
                     )}

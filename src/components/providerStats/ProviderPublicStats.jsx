@@ -100,7 +100,7 @@ export default function ProviderPublicStats({ barberId, shopId, variant = 'profi
 
             <div className={`grid grid-cols-3 gap-2 ${className}`}>
 
-                <div className="bg-muted/50 dark:bg-muted/40 rounded-xl p-3 text-center border border-border">
+                <div className="bg-muted/50 dark:bg-muted/40 rounded-lg p-3 text-center border border-border">
 
                     <Scissors className="w-4 h-4 text-primary mx-auto mb-1" />
 
@@ -110,9 +110,9 @@ export default function ProviderPublicStats({ barberId, shopId, variant = 'profi
 
                 </div>
 
-                <div className="bg-muted/50 dark:bg-muted/40 rounded-xl p-3 text-center border border-border">
+                <div className="bg-muted/50 dark:bg-muted/40 rounded-lg p-3 text-center border border-border">
 
-                    <Star className="w-4 h-4 text-amber-500 mx-auto mb-1" />
+                    <Star className="w-4 h-4 text-primary mx-auto mb-1" />
 
                     <span className="block font-bold text-foreground text-sm">{completion ?? '—'}</span>
 
@@ -120,7 +120,7 @@ export default function ProviderPublicStats({ barberId, shopId, variant = 'profi
 
                 </div>
 
-                <div className="bg-muted/50 dark:bg-muted/40 rounded-xl p-3 text-center border border-border">
+                <div className="bg-muted/50 dark:bg-muted/40 rounded-lg p-3 text-center border border-border">
 
                     <ShieldCheck className="w-4 h-4 text-primary mx-auto mb-1" />
 
@@ -150,7 +150,7 @@ export default function ProviderPublicStats({ barberId, shopId, variant = 'profi
 
         <div className={`grid gap-2 ${className}`}>
 
-            <div className="bg-muted/50 rounded-xl p-3 text-center border border-border">
+            <div className="bg-muted/50 rounded-lg p-3 text-center border border-border">
 
                 <Scissors className="w-5 h-5 text-primary mx-auto mb-1" />
 

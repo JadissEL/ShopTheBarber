@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Clock, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -80,7 +82,7 @@ export default function ShopHoursEditor({ shopId, barberId }) {
         }));
     };
 
-    if (isLoading) return <div className="py-12 flex justify-center"><Loader className="w-6 h-6 animate-spin text-slate-400" /></div>;
+    if (isLoading) return <div className="py-12 flex justify-center"><Loader className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
     return (
         <div className="space-y-4 max-w-3xl">
@@ -88,9 +90,9 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                 {DAYS.map(day => {
                     const dayData = schedule[day] || {};
                     return (
-                        <div key={day} className={`flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border transition-all ${dayData.is_closed ? 'bg-muted/50 border-slate-100 opacity-60' : 'bg-card border-slate-200 shadow-sm'}`}>
+                        <div key={day} className={cn('flex flex-col md:flex-row md:items-center justify-between p-5 border transition-all', dayData.is_closed ? 'stb-notice opacity-60' : 'stb-panel')}>
                             <div className="flex items-center gap-4 mb-3 md:mb-0">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${dayData.is_closed ? 'bg-slate-200 text-muted-foreground' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-100'}`}>
+                                <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-bold ${dayData.is_closed ? 'bg-muted text-muted-foreground' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}>
                                     {day.substring(0, 2)}
                                 </div>
                                 <div>
@@ -104,15 +106,15 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                                     <Switch
                                         checked={!dayData.is_closed}
                                         onCheckedChange={(val) => handleChange(day, 'is_closed', !val)}
-                                        className="data-[state=checked]:bg-indigo-600"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                     <span className="text-sm font-bold text-muted-foreground">{dayData.is_closed ? 'OFF' : 'ON'}</span>
                                 </div>
 
                                 {!dayData.is_closed ? (
-                                    <div className="flex items-center gap-3 bg-muted/50 p-2 rounded-xl border border-slate-100">
+                                    <div className="flex items-center gap-3 bg-muted/50 p-2 rounded-lg border border-border">
                                         <div className="flex items-center gap-2">
-                                            <Clock className="w-3 h-3 text-slate-400" />
+                                            <Clock className="w-3 h-3 text-muted-foreground" />
                                             <input
                                                 type="time"
                                                 value={dayData.start_time}
@@ -120,7 +122,7 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                                                 className="bg-transparent text-sm font-bold text-foreground outline-none w-20"
                                             />
                                         </div>
-                                        <span className="text-slate-300 font-bold"></span>
+                                        <span className="text-white/70 font-bold"></span>
                                         <div className="flex items-center gap-2">
                                             <input
                                                 type="time"
@@ -131,7 +133,7 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="w-[200px] flex items-center justify-center py-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs font-bold uppercase tracking-widest">
+                                    <div className="w-[200px] flex items-center justify-center py-2.5 rounded-lg border border-dashed border-border text-muted-foreground text-xs font-bold uppercase tracking-widest">
                                         No Shifts Observed
                                     </div>
                                 )}
@@ -141,15 +143,15 @@ export default function ShopHoursEditor({ shopId, barberId }) {
                 })}
             </div>
 
-            <div className="pt-8 flex items-center justify-between border-t border-slate-100 mt-8">
-                <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-xl border border-amber-100">
+            <div className="pt-8 flex items-center justify-between border-t border-border mt-8">
+                <div className="flex items-center gap-2 text-primary bg-primary/10 px-4 py-2 rounded-lg border border-warning/30">
                     <AlertCircle className="w-4 h-4" />
                     <span className="text-xs font-bold">Updates apply to future search availability.</span>
                 </div>
                 <Button
                     onClick={() => saveMutation.mutate(schedule)}
                     disabled={saveMutation.isPending}
-                    className="rounded-2xl h-12 px-10 font-black shadow-xl bg-primary hover:opacity-95 transition-all active:scale-95"
+                    className={cn(stb.btn, 'h-12 px-10 shadow-elevation-md transition-all active:scale-95')}
                 >
                     {saveMutation.isPending ? 'Syncing...' : 'Lock Availability'}
                 </Button>

@@ -17,6 +17,10 @@ import {
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 function formatCountdown(totalSeconds) {
     const h = Math.floor(totalSeconds / 3600);
@@ -91,31 +95,27 @@ export default function TombolaLive() {
     const isBarber = user?.role === 'barber' || user?.role === 'provider' || user?.role === 'shop_owner';
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-violet-950 via-background to-background text-foreground pb-24">
+        <div className={cn(stb.page, 'pb-24')}>
             <MetaTags
                 title="Weekly Trip Tombola, Live Draw"
                 description="Win a dream getaway for two. Watch the live draw every Sunday."
             />
 
-            <div className="max-w-4xl mx-auto px-4 py-8 lg:py-12">
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-200 text-xs font-medium mb-4">
-                        <Sparkles className="w-3.5 h-3.5" /> Weekly live event
-                    </div>
-                    <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-white mb-2">
-                        Trip Tombola
-                    </h1>
-                    <p className="text-violet-200/80 max-w-lg mx-auto">
-                        {draw?.prize_title ?? 'Dream Getaway for Two'}, clients & barbers eligible each week.
-                    </p>
-                </div>
+            <PageHeader
+                tier="display"
+                variant="dark"
+                label="Weekly live event"
+                title="Trip Tombola"
+                subtitle={`${draw?.prize_title ?? 'Dream Getaway for Two'} — clients & barbers eligible each week.`}
+            />
 
+            <PageContent narrow>
                 {isLoading ? (
-                    <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-violet-300" /></div>
+                    <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : (
                     <>
                         {/* Live stage */}
-                        <Card className="mb-6 border-violet-500/30 bg-violet-950/40 backdrop-blur overflow-hidden">
+                        <Card className="mb-6 border-primary/30 bg-[hsl(var(--navy))]/80 backdrop-blur overflow-hidden">
                             <CardContent className="p-8 text-center relative">
                                 <AnimatePresence mode="wait">
                                     {isCompleted && draw?.winner_display_name ? (
@@ -125,36 +125,36 @@ export default function TombolaLive() {
                                             animate={{ scale: 1, opacity: 1 }}
                                             className="space-y-4"
                                         >
-                                            <Trophy className="w-16 h-16 text-amber-400 mx-auto" />
-                                            <p className="text-sm uppercase tracking-widest text-violet-300">Winner</p>
+                                            <Trophy className="w-16 h-16 text-primary mx-auto" />
+                                            <p className="text-sm uppercase tracking-widest text-primary">Winner</p>
                                             <p className="text-3xl font-bold text-white">{draw.winner_display_name}</p>
-                                            <p className="text-violet-200/70 text-sm">{draw.prize_title}</p>
+                                            <p className="text-white/75/70 text-sm">{draw.prize_title}</p>
                                             {draw.draw_hash && (
-                                                <p className="text-[10px] text-violet-400 font-mono truncate max-w-xs mx-auto">
+                                                <p className="text-[10px] text-primary font-mono truncate max-w-xs mx-auto">
                                                     Audit: {draw.draw_hash.slice(0, 16)}…
                                                 </p>
                                             )}
                                         </motion.div>
                                     ) : isLive ? (
                                         <motion.div key="live" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                                            <Badge className="bg-red-500 animate-pulse">LIVE</Badge>
+                                            <Badge className="bg-destructive/100 animate-pulse">LIVE</Badge>
                                             <p className="text-2xl font-bold text-white">Drawing winner…</p>
-                                            <p className="text-5xl font-mono font-bold text-violet-200 tabular-nums">
+                                            <p className="text-5xl font-mono font-bold text-white/75 tabular-nums">
                                                 {formatCountdown(countdown)}
                                             </p>
-                                            <p className="text-sm text-violet-300">
+                                            <p className="text-sm text-primary">
                                                 {draw?.total_tickets ?? 0} tickets, {draw?.participant_count ?? 0} participants
                                             </p>
                                         </motion.div>
                                     ) : (
                                         <motion.div key="waiting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                                            <Plane className="w-14 h-14 text-violet-300 mx-auto" />
-                                            <p className="text-lg text-violet-100">Next live draw</p>
+                                            <Plane className="w-14 h-14 text-primary mx-auto" />
+                                            <p className="text-lg text-white/75">Next live draw</p>
                                             <p className="text-4xl font-mono font-bold text-white tabular-nums">
                                                 {formatCountdown(countdown)}
                                             </p>
-                                            <p className="text-sm text-violet-300">{formatDate(draw?.draw_at)}</p>
-                                            <div className="flex justify-center gap-6 text-sm text-violet-200/80 pt-2">
+                                            <p className="text-sm text-primary">{formatDate(draw?.draw_at)}</p>
+                                            <div className="flex justify-center gap-6 text-sm text-white/75 pt-2">
                                                 <span className="flex items-center gap-1"><Ticket className="w-4 h-4" />{draw?.total_tickets ?? 0} tickets</span>
                                                 <span className="flex items-center gap-1"><Users className="w-4 h-4" />{draw?.participant_count ?? 0} players</span>
                                             </div>
@@ -183,8 +183,8 @@ export default function TombolaLive() {
                                     )}
 
                                     {myStatus?.entry ? (
-                                        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                                        <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/10 bg-primary/10 border border-primary/30">
+                                            <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                                             <div>
                                                 <p className="font-semibold">{myStatus.entry.entry_count} ticket(s) this week</p>
                                                 <p className="text-sm text-muted-foreground capitalize">Role: {myStatus.entry.participant_role}</p>
@@ -193,8 +193,8 @@ export default function TombolaLive() {
                                     ) : myStatus?.eligibility?.eligible ? (
                                         <p className="text-sm text-muted-foreground">You qualify, sync your entries below.</p>
                                     ) : (
-                                        <div className="flex gap-2 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200">
-                                            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                                        <div className="flex gap-2 p-4 rounded-lg bg-primary/10 dark:bg-primary/10 border border-primary/30">
+                                            <AlertCircle className="w-5 h-5 text-primary shrink-0" />
                                             <ul className="text-sm space-y-1">
                                                 {(myStatus?.eligibility?.reasons ?? ['Complete eligibility requirements to enter.']).map((r) => (
                                                     <li key={r}>{r}</li>
@@ -223,7 +223,7 @@ export default function TombolaLive() {
                                     </div>
 
                                     {myStatus?.is_winner && myStatus?.claim?.status !== 'verified' && (
-                                        <div className="p-4 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 space-y-3">
+                                        <div className="p-4 rounded-lg border-2 border-amber-400 bg-primary/10 dark:bg-primary/10 space-y-3">
                                             <p className="font-bold flex items-center gap-2"><Gift className="w-5 h-5" /> You won! Answer to claim:</p>
                                             <p className="text-sm">{myStatus.skill_question}</p>
                                             <div className="flex gap-2">
@@ -233,7 +233,7 @@ export default function TombolaLive() {
                                         </div>
                                     )}
                                     {myStatus?.claim?.status === 'verified' && (
-                                        <p className="text-emerald-600 font-medium flex items-center gap-2">
+                                        <p className="text-primary font-medium flex items-center gap-2">
                                             <CheckCircle2 className="w-5 h-5" /> Prize claim verified, our team will contact you.
                                         </p>
                                     )}
@@ -293,7 +293,7 @@ export default function TombolaLive() {
                         </p>
                     </>
                 )}
-            </div>
+            </PageContent>
         </div>
     );
 }

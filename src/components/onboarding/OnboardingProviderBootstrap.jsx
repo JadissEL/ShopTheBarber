@@ -52,7 +52,7 @@ export function OnboardingProviderBootstrap({ user, onReady }) {
             type="button"
             onClick={() => selectIntent('barber')}
             className={cn(
-              'rounded-xl border p-4 text-left transition-colors',
+              'rounded-lg border p-4 text-left transition-colors',
               intent === 'barber' ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/50',
             )}
           >
@@ -64,7 +64,7 @@ export function OnboardingProviderBootstrap({ user, onReady }) {
             type="button"
             onClick={() => selectIntent('shop')}
             className={cn(
-              'rounded-xl border p-4 text-left transition-colors',
+              'rounded-lg border p-4 text-left transition-colors',
               intent === 'shop' ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/50',
             )}
           >

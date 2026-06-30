@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const slides = [
   {
@@ -37,7 +39,7 @@ export default function Onboarding() {
   const slide = slides[currentSlide];
 
   return (
-    <div className="stb-page-dark flex flex-col items-center justify-center px-6 py-12 font-sans">
+    <div className={cn(stb.page, 'stb-page-dark flex flex-col items-center justify-center px-6 py-12 font-sans')}>
       <div className="w-full max-w-md flex flex-col h-full">
 
         {/* Image Card */}
@@ -49,9 +51,9 @@ export default function Onboarding() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.4 }}
-              className="w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-black/50 relative"
+              className="w-full aspect-[4/5] overflow-hidden rounded-lg shadow-elevation-lg relative"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
+              <div className="absolute inset-0 bg-foreground/50 z-10" />
               <img
                 src={slide.image}
                 alt={slide.title}
@@ -71,10 +73,10 @@ export default function Onboarding() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="text-3xl font-display font-bold text-white mb-4 tracking-tight">
+              <h1 className={cn(stb.uiHeading, 'text-3xl text-white mb-4 tracking-tight')}>
                 {slide.title}
               </h1>
-              <p className="text-matte-silver text-base leading-relaxed max-w-xs mx-auto">
+              <p className="text-muted-foreground text-base leading-relaxed max-w-xs mx-auto">
                 {slide.description}
               </p>
             </motion.div>
@@ -89,7 +91,7 @@ export default function Onboarding() {
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-primary w-8' : 'bg-surface-light/20 w-2 hover:bg-surface-light/40'
+                className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-primary w-8' : 'bg-card/20 w-2 hover:bg-card/40'
                   }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -99,7 +101,7 @@ export default function Onboarding() {
           {/* Continue Button */}
           <Button
             onClick={handleContinue}
-            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl text-lg shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg text-lg shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
           >
             {currentSlide === slides.length - 1 ? "Get Started" : "Continue"}
           </Button>

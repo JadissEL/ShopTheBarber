@@ -51,12 +51,12 @@ export function isNavActive(pathname, page, options = {}) {
 
 export function navItemClassName(isActive, { compact = false } = {}) {
   const base = compact
-    ? 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150'
-    : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-150';
+    ? 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-colors duration-fast font-sans normal-case'
+    : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-fast font-sans normal-case';
 
   return isActive
-    ? `${base} stb-nav-active border-l-2 border-primary pl-[10px]`
-    : `${base} text-muted-foreground hover:bg-muted hover:text-foreground`;
+    ? `${base} stb-nav-item-active`
+    : `${base} stb-nav-item text-muted-foreground`;
 }
 
 export function roleLabel(role) {

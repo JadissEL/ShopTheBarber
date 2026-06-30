@@ -57,7 +57,7 @@ export default function ProviderTaxExportPanel({ shopId }) {
     };
 
     return (
-        <Card className="rounded-3xl">
+        <Card className="">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <FileSpreadsheet className="w-5 h-5 text-primary" />
@@ -79,7 +79,7 @@ export default function ProviderTaxExportPanel({ shopId }) {
                     </div>
                 </div>
                 {preview?.summary && (
-                    <div className="grid grid-cols-3 gap-3 text-sm rounded-xl bg-muted/40 p-4">
+                    <div className="grid grid-cols-3 gap-3 text-sm rounded-lg bg-muted/40 p-4">
                         <div>
                             <p className="text-muted-foreground text-xs">Gross</p>
                             <p className="font-semibold tabular-nums">€{preview.summary.gross.toFixed(2)}</p>

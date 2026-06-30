@@ -76,7 +76,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
 
   if (!shopId) {
     return (
-      <Card className="rounded-3xl">
+      <Card className="">
         <CardContent className="p-8 text-muted-foreground text-sm">
           Link your shop to manage promotions and service combos.
         </CardContent>
@@ -109,7 +109,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
   return (
     <div className="space-y-8">
       {policy && (
-        <Card className="rounded-2xl border-primary/20 bg-primary/5">
+        <Card className=" border-primary/20 bg-primary/5">
           <CardContent className="p-5 text-sm text-muted-foreground">
             <p className="font-semibold text-foreground mb-1">Fair pricing bounds (platform)</p>
             <p>
@@ -121,7 +121,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
         </Card>
       )}
 
-      <Card className="rounded-3xl">
+      <Card className="">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Tag className="w-5 h-5" /> Promotions
@@ -136,13 +136,13 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
                 value={promoForm.code}
                 onChange={(e) => setPromoForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
                 placeholder="SUMMER20"
-                className="rounded-xl mt-1"
+                className=" mt-1"
               />
             </div>
             <div>
               <Label>Type</Label>
               <select
-                className="w-full mt-1 rounded-xl border border-border p-2 text-sm"
+                className="w-full mt-1 rounded-lg border border-border p-2 text-sm"
                 value={promoForm.discount_type}
                 onChange={(e) => setPromoForm((f) => ({ ...f, discount_type: e.target.value }))}
               >
@@ -156,12 +156,12 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
                 type="number"
                 value={promoForm.discount_value}
                 onChange={(e) => setPromoForm((f) => ({ ...f, discount_value: e.target.value }))}
-                className="rounded-xl mt-1"
+                className=" mt-1"
               />
             </div>
             <div className="flex items-end">
               <Button
-                className="w-full rounded-xl"
+                className="w-full rounded-lg"
                 disabled={!promoForm.code || createPromoMutation.isPending}
                 onClick={() =>
                   createPromoMutation.mutate({
@@ -179,13 +179,13 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
           </div>
           <ul className="space-y-2">
             {promotions.filter((p) => p.is_active).map((p) => (
-              <li key={p.id} className="flex items-center justify-between p-3 rounded-xl border border-border">
+              <li key={p.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <span className="font-mono font-semibold">{p.code}</span>
                 <span className="text-sm text-muted-foreground">
                   {p.discount_type === 'percentage' ? `${p.discount_value}%` : `$${p.discount_value}`} off
                 </span>
                 <Button variant="ghost" size="sm" onClick={() => deletePromoMutation.mutate(p.id)}>
-                  <Trash2 className="w-4 h-4 text-red-500" />
+                  <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </li>
             ))}
@@ -196,7 +196,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl">
+      <Card className="">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Layers className="w-5 h-5" /> Service combos
@@ -213,13 +213,13 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
                 value={bundleForm.name}
                 onChange={(e) => setBundleForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Cut + Beard"
-                className="rounded-xl mt-1"
+                className=" mt-1"
               />
             </div>
             <div>
               <Label>Discount mode</Label>
               <select
-                className="w-full mt-1 rounded-xl border border-border p-2 text-sm"
+                className="w-full mt-1 rounded-lg border border-border p-2 text-sm"
                 value={bundleForm.pricing_mode}
                 onChange={(e) => setBundleForm((f) => ({ ...f, pricing_mode: e.target.value }))}
               >
@@ -236,7 +236,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
                 type="number"
                 value={bundleForm.bundle_price}
                 onChange={(e) => setBundleForm((f) => ({ ...f, bundle_price: e.target.value }))}
-                className="rounded-xl mt-1 max-w-xs"
+                className=" mt-1 max-w-xs"
               />
             </div>
           ) : (
@@ -246,7 +246,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
                 type="number"
                 value={bundleForm.discount_value}
                 onChange={(e) => setBundleForm((f) => ({ ...f, discount_value: e.target.value }))}
-                className="rounded-xl mt-1 max-w-xs"
+                className=" mt-1 max-w-xs"
               />
             </div>
           )}
@@ -270,7 +270,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
             </div>
           </div>
           <Button
-            className="rounded-xl"
+            className=""
             disabled={!bundleForm.name || bundleForm.service_ids.length < 2 || createBundleMutation.isPending}
             onClick={submitBundle}
           >
@@ -278,7 +278,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
           </Button>
           <ul className="space-y-2">
             {bundles.map((b) => (
-              <li key={b.id} className="flex items-center justify-between p-3 rounded-xl border border-border">
+              <li key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <div>
                   <p className="font-semibold">{b.name}</p>
                   <p className="text-xs text-muted-foreground">
@@ -291,7 +291,7 @@ export default function ProviderPricingPanel({ shopId, services = [] }) {
                   </p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => deleteBundleMutation.mutate(b.id)}>
-                  <Trash2 className="w-4 h-4 text-red-500" />
+                  <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </li>
             ))}

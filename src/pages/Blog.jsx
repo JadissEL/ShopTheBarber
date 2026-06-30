@@ -4,15 +4,19 @@ import { createPageUrl } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { sovereign } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import SearchField from '@/components/ui/search-field';
+import { Card } from '@/components/ui/card';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Clock, Eye, TrendingUp, Sparkles, BookOpen } from "lucide-react";
+import { Clock, Eye, TrendingUp, BookOpen, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import PageHeader from "@/components/layout/PageHeader";
+import PageContent from "@/components/layout/PageContent";
+import { cn } from "@/lib/utils";
+import { stb } from "@/lib/stbUi";
 
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,46 +49,33 @@ export default function Blog() {
   const regularArticles = filteredArticles.slice(1);
 
   return (
-    <div className="min-h-screen py-12 bg-[#F7F8FA]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <Badge className="mb-4 bg-[#D08B3D] text-white border-0 px-5 py-2">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Blog & Inspiration
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-[#0B2545] mb-4">
-            L'Univers du Grooming
-          </h1>
-          <p className="text-xl text-[#4B5563] max-w-2xl mx-auto">
-            Conseils, tendances et techniques par des experts passionnés
-          </p>
-        </motion.div>
+    <div className="stb-page pb-16">
+      <PageHeader
+        label="Blog & inspiration"
+        title="L'univers du grooming"
+        subtitle="Conseils, tendances et techniques par des experts passionnés"
+      />
 
-        {/* Search & Filters */}
-        <div className="bg-card rounded-[12px] p-6 mb-12 shadow-lg border border-slate-200">
+      <PageContent>
+        <div className={cn(stb.surface, 'p-6 mb-12')}>
           <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#4B5563] w-5 h-5" />
-              <Input
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 border-slate-200 text-[#0B2545] placeholder:text-[#4B5563] rounded-[10px] focus:ring-2 focus:ring-[#D08B3D] focus:border-[#D08B3D]"
-              />
-            </div>
+            <SearchField
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              placeholder="Search articles..."
+              size="lg"
+              className="flex-1"
+              aria-label="Search blog articles"
+            />
 
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <TabsList className="bg-[#F7F8FA] h-12 rounded-[10px]">
+              <TabsList className="bg-muted h-12 rounded-lg">
                 {categories.slice(0, 4).map((cat) => (
                   <TabsTrigger
                     key={cat.id}
                     value={cat.id}
-                    className="rounded-[8px] data-[state=active]:bg-[#0B2545] data-[state=active]:text-white text-[#4B5563] min-h-[44px]"
+                    className="rounded-md data-[state=active]:bg-foreground data-[state=active]:text-background text-muted-foreground min-h-[44px]"
                   >
                     <span className="mr-2">{cat.icon}</span>
                     <span className="hidden sm:inline">{cat.label}</span>
@@ -95,15 +86,14 @@ export default function Blog() {
           </div>
         </div>
 
-        {/* Featured Article */}
         {featuredArticle && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-16"
+            className="mb-16 stb-marketing-prose"
           >
             <Link to={createPageUrl(`ArticleDetail?id=${featuredArticle.id}`)}>
-              <Card className="group rounded-[12px] border-2 border-slate-200 overflow-hidden hover:border-[#D08B3D] hover:shadow-2xl transition-all">
+              <Card className={cn(stb.surfaceHover, 'group overflow-hidden border-foreground/10')}>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="relative h-[400px] md:h-auto overflow-hidden bg-muted">
                     {featuredArticle.image_url ? (
@@ -113,31 +103,31 @@ export default function Blog() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#D08B3D]/10 flex items-center justify-center">
-                        <BookOpen className="w-24 h-24 text-[#D08B3D]/30" />
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <BookOpen className="w-24 h-24 text-primary/30" />
                       </div>
                     )}
-                    <Badge className="absolute top-4 left-4 bg-[#D08B3D] border-0 text-white">
+                    <Badge className="absolute top-4 left-4 bg-primary border-0 text-primary-foreground">
                       <TrendingUp className="w-3 h-3 mr-1" />
                       À la Une
                     </Badge>
                   </div>
 
                   <div className="p-8 flex flex-col justify-center bg-card">
-                    <Badge className="w-fit mb-4 bg-[#0B2545]/10 text-[#0B2545] border-0">
+                    <Badge className="w-fit mb-4 bg-muted text-foreground border-0">
                       {categories.find(c => c.id === featuredArticle.category)?.icon || "📰"}{" "}
                       {categories.find(c => c.id === featuredArticle.category)?.label || featuredArticle.category}
                     </Badge>
 
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#0B2545] mb-4 group-hover:text-[#D08B3D] transition-colors">
+                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
                       {featuredArticle.title}
                     </h2>
 
-                    <p className="text-[#4B5563] text-lg mb-6 line-clamp-3">
+                    <p className="text-muted-foreground text-lg mb-6 line-clamp-3">
                       {featuredArticle.excerpt}
                     </p>
 
-                    <div className="flex items-center gap-6 text-sm text-[#4B5563]">
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         <span>{format(new Date(featuredArticle.created_date), 'dd MMM yyyy', { locale: fr })}</span>
@@ -148,7 +138,7 @@ export default function Blog() {
                       </div>
                     </div>
 
-                    <Button className="mt-6 w-fit bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]">
+                    <Button className="mt-6 w-fit min-h-[44px]">
                       Lire l'Article
                     </Button>
                   </div>
@@ -158,11 +148,10 @@ export default function Blog() {
           </motion.div>
         )}
 
-        {/* Articles Grid */}
         {isLoading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="border-slate-200">
+              <Card key={i} className="border-foreground/10">
                 <Skeleton className="aspect-video w-full" />
                 <div className="p-6 space-y-3">
                   <Skeleton className="h-6 w-3/4" />
@@ -173,12 +162,12 @@ export default function Blog() {
             ))}
           </div>
         ) : regularArticles.length === 0 ? (
-          <div className="bg-card rounded-[12px] p-16 text-center border border-slate-200">
-            <BookOpen className="w-20 h-20 text-slate-300 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-[#0B2545] mb-3">
+          <div className={cn(stb.surface, 'p-16 text-center border-foreground/10')}>
+            <BookOpen className="w-20 h-20 text-muted-foreground mx-auto mb-6" />
+            <h3 className={cn(stb.uiHeading, 'text-2xl mb-3')}>
               Aucun article trouvé
             </h3>
-            <p className="text-[#4B5563]">
+            <p className="text-muted-foreground">
               Essayez de modifier votre recherche ou vos filtres
             </p>
           </div>
@@ -192,7 +181,7 @@ export default function Blog() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Link to={createPageUrl(`ArticleDetail?id=${article.id}`)}>
-                  <Card className="group rounded-[12px] border-2 border-slate-200 overflow-hidden hover:border-[#D08B3D] hover:shadow-2xl transition-all h-full flex flex-col">
+                  <Card className={cn(stb.surfaceHover, 'group overflow-hidden border-foreground/10 h-full flex flex-col')}>
                     <div className="relative aspect-video overflow-hidden bg-muted">
                       {article.image_url ? (
                         <img
@@ -201,27 +190,27 @@ export default function Blog() {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                       ) : (
-                        <div className="w-full h-full bg-[#D08B3D]/10 flex items-center justify-center">
-                          <BookOpen className="w-16 h-16 text-[#D08B3D]/30" />
+                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                          <BookOpen className="w-16 h-16 text-primary/30" />
                         </div>
                       )}
                     </div>
 
                     <div className="p-6 flex flex-col flex-1 bg-card">
-                      <Badge className="w-fit mb-3 bg-[#D08B3D]/10 text-[#D08B3D] border-0 text-xs">
+                      <Badge className="w-fit mb-3 bg-primary/10 text-primary border-0 text-xs">
                         {categories.find(c => c.id === article.category)?.icon || "📰"}{" "}
                         {categories.find(c => c.id === article.category)?.label || article.category}
                       </Badge>
 
-                      <h3 className="text-xl font-bold text-[#0B2545] mb-3 group-hover:text-[#D08B3D] transition-colors line-clamp-2">
+                      <h3 className={cn(stb.uiHeading, 'text-xl mb-3 group-hover:text-primary transition-colors line-clamp-2')}>
                         {article.title}
                       </h3>
 
-                      <p className="text-[#4B5563] mb-4 line-clamp-2 flex-1">
+                      <p className="text-muted-foreground mb-4 line-clamp-2 flex-1">
                         {article.excerpt}
                       </p>
 
-                      <div className="flex items-center gap-4 text-xs text-[#4B5563]">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           <span>{format(new Date(article.created_date), 'dd MMM', { locale: fr })}</span>
@@ -238,7 +227,7 @@ export default function Blog() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

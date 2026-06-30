@@ -44,7 +44,7 @@ export default function CancelBookingDialog({ bookingId, open, onOpenChange, onC
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Shield className="w-5 h-5 text-violet-600" />
+                        <Shield className="w-5 h-5 text-primary" />
                         Cancel appointment
                     </DialogTitle>
                     <DialogDescription>
@@ -64,16 +64,16 @@ export default function CancelBookingDialog({ bookingId, open, onOpenChange, onC
 
                 {preview && !isLoading && (
                     <div className="space-y-3 text-sm">
-                        <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-2">
+                        <div className={cn(stb.surfaceMuted, 'border border-border p-4 space-y-2')}>
                             <p className="font-semibold">{tierLabel(preview.tier)}</p>
                             <p className="text-muted-foreground">{preview.reason}</p>
                             {preview.refund_amount > 0 && (
-                                <p className="text-green-700">
+                                <p className="text-success">
                                     Refund: <strong>€{preview.refund_amount.toFixed(2)}</strong>
                                 </p>
                             )}
                             {preview.fee_amount > 0 && (
-                                <p className="text-amber-800 flex items-start gap-1.5">
+                                <p className="text-foreground flex items-start gap-1.5">
                                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                     Cancellation fee: <strong>€{preview.fee_amount.toFixed(2)}</strong>
                                     {preview.deposit_paid && preview.refund_amount === 0 && (

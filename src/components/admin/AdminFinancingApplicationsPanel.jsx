@@ -23,7 +23,7 @@ export default function AdminFinancingApplicationsPanel() {
     const apps = data?.applications ?? [];
 
     return (
-        <Card className="rounded-2xl border-border">
+        <Card className=" border-border">
             <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Banknote className="w-5 h-5" />
@@ -44,7 +44,7 @@ export default function AdminFinancingApplicationsPanel() {
                 {apps.length > 0 && (
                     <ul className="space-y-3">
                         {apps.map((app) => (
-                            <li key={app.id} className="flex flex-wrap items-start justify-between gap-3 p-4 rounded-xl border">
+                            <li key={app.id} className="flex flex-wrap items-start justify-between gap-3 p-4 rounded-lg border">
                                 <div>
                                     <p className="font-medium">
                                         €{(app.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}

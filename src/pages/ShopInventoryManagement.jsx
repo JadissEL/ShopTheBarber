@@ -1,8 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { stb } from '@/lib/stbUi';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Plus, Edit, Trash2, TrendingDown, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
+import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function ShopInventoryManagement() {
     const inventory = [
@@ -14,56 +18,61 @@ export default function ShopInventoryManagement() {
 
     const getStatusBadge = (status) => {
         const variants = {
-            in_stock: { bg: "bg-emerald-100", text: "text-emerald-800", label: "En Stock" },
-            low_stock: { bg: "bg-amber-100", text: "text-amber-800", label: "Stock Faible" },
-            out_of_stock: { bg: "bg-red-100", text: "text-red-800", label: "Rupture" }
+            in_stock: { bg: "bg-primary/10", text: "text-primary", label: "En Stock" },
+            low_stock: { bg: "bg-warning/15", text: "text-foreground", label: "Stock Faible" },
+            out_of_stock: { bg: "bg-destructive/10", text: "text-destructive", label: "Rupture" }
         };
         const variant = variants[status];
         return <Badge className={`${variant.bg} ${variant.text} border-0`}>{variant.label}</Badge>;
     };
 
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">Gestion des Stocks</h1>
-                        <p className="text-lg text-slate dark:text-matte-silver">Gérez votre inventaire de produits</p>
-                    </div>
-                    <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl h-12 px-6">
-                        <Plus className="w-5 h-5 mr-2" />
-                        Ajouter un Produit
-                    </Button>
-                </motion.div>
+        <div className="stb-page pb-16 font-sans">
+            <MetaTags title="Inventory" description="Manage shop product inventory" />
+            <PageHeader
+                label="Provider"
+                title="Inventory management"
+                subtitle="Gérez votre inventaire de produits"
+                compact
+                variant="light"
+                tier="app"
+            >
+                <Button className="h-11">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Ajouter un Produit
+                </Button>
+            </PageHeader>
+
+            <PageContent>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                    <Card className=" border-none shadow-sm bg-card ">
                         <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-2">
                                 <Package className="w-5 h-5 text-primary" />
-                                <span className="text-sm text-slate dark:text-matte-silver">Total Produits</span>
+                                <span className="text-sm text-muted-foreground">Total Produits</span>
                             </div>
-                            <p className="text-3xl font-bold text-charcoal dark:text-white">{inventory.length}</p>
+                            <p className="text-3xl font-bold text-foreground dark:text-white">{inventory.length}</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                    <Card className=" border-none shadow-sm bg-card ">
                         <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-2">
-                                <AlertTriangle className="w-5 h-5 text-amber-600" />
-                                <span className="text-sm text-slate dark:text-matte-silver">Stock Faible</span>
+                                <AlertTriangle className="w-5 h-5 text-primary" />
+                                <span className="text-sm text-muted-foreground">Stock Faible</span>
                             </div>
-                            <p className="text-3xl font-bold text-amber-600">{inventory.filter(i => i.status === 'low_stock').length}</p>
+                            <p className="text-3xl font-bold text-primary">{inventory.filter(i => i.status === 'low_stock').length}</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                    <Card className=" border-none shadow-sm bg-card ">
                         <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-2">
-                                <TrendingDown className="w-5 h-5 text-red-600" />
-                                <span className="text-sm text-slate dark:text-matte-silver">Ruptures</span>
+                                <TrendingDown className="w-5 h-5 text-destructive" />
+                                <span className="text-sm text-muted-foreground">Ruptures</span>
                             </div>
-                            <p className="text-3xl font-bold text-red-600">{inventory.filter(i => i.status === 'out_of_stock').length}</p>
+                            <p className="text-3xl font-bold text-destructive">{inventory.filter(i => i.status === 'out_of_stock').length}</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -71,30 +80,30 @@ export default function ShopInventoryManagement() {
                 <div className="space-y-4">
                     {inventory.map((item, idx) => (
                         <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                            <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                            <Card className=" border-none shadow-sm bg-card ">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4 flex-1">
-                                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                                            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                                                 <Package className="w-6 h-6 text-primary" />
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="font-bold text-charcoal dark:text-white mb-1">{item.name}</h3>
-                                                <p className="text-sm text-slate dark:text-matte-silver">{item.category}</p>
+                                                <h3 className="font-bold text-foreground dark:text-white mb-1">{item.name}</h3>
+                                                <p className="text-sm text-muted-foreground">{item.category}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-6">
                                             <div className="text-center">
-                                                <p className="text-sm text-slate dark:text-matte-silver mb-1">Stock</p>
-                                                <p className={`text-2xl font-bold ${item.stock <= item.minStock ? 'text-red-600' : 'text-charcoal dark:text-white'}`}>
+                                                <p className="text-sm text-muted-foreground mb-1">Stock</p>
+                                                <p className={`text-2xl font-bold ${item.stock <= item.minStock ? 'text-destructive' : 'text-foreground'}`}>
                                                     {item.stock}
                                                 </p>
                                             </div>
 
                                             <div className="text-center">
-                                                <p className="text-sm text-slate dark:text-matte-silver mb-1">Prix</p>
-                                                <p className="text-2xl font-bold text-charcoal dark:text-white">{item.price}€</p>
+                                                <p className="text-sm text-muted-foreground mb-1">Prix</p>
+                                                <p className="text-2xl font-bold text-foreground dark:text-white">{item.price}€</p>
                                             </div>
 
                                             <div className="w-32">
@@ -105,7 +114,7 @@ export default function ShopInventoryManagement() {
                                                 <Button variant="outline" size="sm" className="rounded-lg">
                                                     <Edit className="w-4 h-4" />
                                                 </Button>
-                                                <Button variant="outline" size="sm" className="rounded-lg border-red-200 text-red-600 hover:bg-red-50">
+                                                <Button variant="outline" size="sm" className="rounded-lg border-destructive/20 text-destructive hover:bg-destructive/10">
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
@@ -116,7 +125,7 @@ export default function ShopInventoryManagement() {
                         </motion.div>
                     ))}
                 </div>
-            </div>
+            </PageContent>
         </div>
     );
 }

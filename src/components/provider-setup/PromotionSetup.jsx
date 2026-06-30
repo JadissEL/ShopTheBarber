@@ -6,6 +6,9 @@ import { useMutation } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { FormField } from '@/components/ui/form-field';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
+import { useProviderSetupTheme } from '@/components/provider-setup/providerSetupTheme';
+import { stb } from '@/lib/stbUi';
 
 const simplePromoSchema = z.object({
   title: z.string().min(2, 'Title is required'),
@@ -14,6 +17,7 @@ const simplePromoSchema = z.object({
 });
 
 export default function PromotionSetup({ shopId, onComplete, onBack }) {
+  const theme = useProviderSetupTheme('light');
   const form = useForm({
     resolver: zodResolver(simplePromoSchema),
     defaultValues: {
@@ -47,18 +51,18 @@ export default function PromotionSetup({ shopId, onComplete, onBack }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-2">Create Your First Offer</h2>
-        <p className="text-muted-foreground/80">Attract new clients with a welcome discount.</p>
+        <h2 className={cn(stb.uiHeading, 'text-2xl mb-2')}>Create Your First Offer</h2>
+        <p className={theme.subtitle}>Attract new clients with a welcome discount.</p>
       </div>
 
-      <div className="bg-[#1A1D24] p-6 rounded-xl border border-white/10">
+      <div className={theme.panel}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                   control={form.control}
                   name="title"
                   label="Offer Title"
                   render={(field) => (
-                      <Input {...field} className="bg-slate-950 border-white/10 text-white" />
+                      <Input {...field} />
                   )}
               />
               
@@ -68,7 +72,7 @@ export default function PromotionSetup({ shopId, onComplete, onBack }) {
                       name="code"
                       label="Promo Code"
                       render={(field) => (
-                          <Input {...field} className="bg-slate-950 border-white/10 text-white uppercase" />
+                          <Input {...field} className="uppercase" />
                       )}
                   />
                   <FormField
@@ -76,16 +80,16 @@ export default function PromotionSetup({ shopId, onComplete, onBack }) {
                       name="discountAmount"
                       label="Discount (%)"
                       render={(field) => (
-                          <Input {...field} type="number" className="bg-slate-950 border-white/10 text-white" />
+                          <Input {...field} type="number" />
                       )}
                   />
               </div>
 
               <div className="pt-4 flex flex-col gap-3">
-                  <Button type="submit" disabled={createOfferMutation.isPending} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white">
+                  <Button type="submit" disabled={createOfferMutation.isPending} className={cn(stb.btn, 'w-full')}>
                       {createOfferMutation.isPending ? 'Creating...' : 'Launch Offer & Finish'}
                   </Button>
-                  <Button type="button" variant="ghost" onClick={onComplete} className="text-muted-foreground/80 hover:text-white">
+                  <Button type="button" variant="ghost" onClick={onComplete} className={theme.ghostBtn}>
                       Skip for now
                   </Button>
               </div>
@@ -93,7 +97,7 @@ export default function PromotionSetup({ shopId, onComplete, onBack }) {
       </div>
 
       <div className="flex justify-start">
-          <Button variant="ghost" onClick={onBack} className="text-muted-foreground/80 hover:text-white">
+          <Button variant="ghost" onClick={onBack} className={theme.ghostBtn}>
               Back
           </Button>
       </div>

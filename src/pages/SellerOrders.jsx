@@ -13,6 +13,9 @@ import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const STATUS_OPTIONS = [
     { value: 'confirmed', label: 'Confirmed' },
@@ -57,17 +60,19 @@ export default function SellerOrders() {
     if (isLoading) return <PageLoading message="Loading orders to fulfill…" />;
 
     return (
-        <div className="stb-page lg:pb-8">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="Marketplace orders" description="Manage shipments for your marketplace sales." />
 
-            <div className="border-b border-border bg-card sticky top-0 z-30">
-                <div className="max-w-4xl mx-auto px-4 lg:px-8 py-6">
-                    <h1 className="text-2xl font-bold">Orders to ship</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Update status and add tracking for your marketplace sales.</p>
-                </div>
-            </div>
+            <PageHeader
+                label="Marketplace"
+                title="Orders to ship"
+                subtitle="Update status and add tracking for your marketplace sales."
+                compact
+                variant="light"
+                tier="app"
+            />
 
-            <main className="max-w-4xl mx-auto px-4 lg:px-8 py-8 space-y-4">
+            <PageContent narrow className="space-y-4">
                 {orders.length === 0 ? (
                     <Card className="border-border">
                         <CardContent className="p-10 text-center text-muted-foreground">
@@ -96,7 +101,7 @@ export default function SellerOrders() {
                                             <p className="text-xs text-muted-foreground mt-0.5">
                                                 {order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}, {items.length} item(s)
                                             </p>
-                                            <span className="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded bg-sky-50 text-sky-700 capitalize">
+                                            <span className="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary capitalize">
                                                 {fulfillment.fulfillment_status?.replace('_', ' ')}
                                             </span>
                                         </div>
@@ -139,7 +144,7 @@ export default function SellerOrders() {
                                                             }))
                                                         }
                                                     >
-                                                        <SelectTrigger className="mt-1 rounded-xl">
+                                                        <SelectTrigger className="mt-1 rounded-lg">
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -160,7 +165,7 @@ export default function SellerOrders() {
                                                             }))
                                                         }
                                                         placeholder="UPS, FedEx, USPS…"
-                                                        className="mt-1 rounded-xl"
+                                                        className="mt-1 rounded-lg"
                                                     />
                                                 </div>
                                                 <div className="sm:col-span-2">
@@ -174,13 +179,13 @@ export default function SellerOrders() {
                                                             }))
                                                         }
                                                         placeholder="1Z999…"
-                                                        className="mt-1 rounded-xl"
+                                                        className="mt-1 rounded-lg"
                                                     />
                                                 </div>
                                             </div>
 
                                             <Button
-                                                className="rounded-xl w-full sm:w-auto"
+                                                className=" w-full sm:w-auto"
                                                 disabled={updateMutation.isPending}
                                                 onClick={() =>
                                                     updateMutation.mutate({
@@ -199,7 +204,7 @@ export default function SellerOrders() {
                         );
                     })
                 )}
-            </main>
+            </PageContent>
         </div>
     );
 }

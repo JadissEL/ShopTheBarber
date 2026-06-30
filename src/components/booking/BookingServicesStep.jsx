@@ -3,6 +3,7 @@ import { Scissors, Clock, Check, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import BookingOffersPanel from '@/components/booking/BookingOffersPanel';
 
 const categoryImages = {
@@ -66,7 +67,7 @@ export default function BookingServicesStep({
       className="space-y-8"
     >
       <div className="text-center mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
+        <h2 className={cn(stb.uiHeading, 'text-2xl md:text-3xl mb-2')}>
           {selectedBarber ? `Booking with ${selectedBarber.name}` : 'Choose Your Services'}
         </h2>
         <p className="text-muted-foreground text-sm">Select a category and pick your services</p>
@@ -101,7 +102,7 @@ export default function BookingServicesStep({
                   key={category}
                   onClick={() => onSelectCategory(category)}
                   className={cn(
-                    "relative h-32 rounded-[13px] overflow-hidden border-2 transition-all group",
+                    "relative h-32 rounded-lg overflow-hidden border-2 transition-all group",
                     selectedCategory === category
                       ? "border-primary ring-2 ring-primary/25"
                       : "border-border hover:border-primary/40"
@@ -114,7 +115,7 @@ export default function BookingServicesStep({
                     width={400}
                     imgClassName="object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4">
+                  <div className="absolute inset-0 bg-foreground/50 flex flex-col justify-end p-4">
                     <h3 className="text-lg font-bold text-white mb-1">{category}</h3>
                     <p className="text-white/80 text-xs">{count} {count === 1 ? 'service' : 'services'}</p>
                   </div>
@@ -144,7 +145,7 @@ export default function BookingServicesStep({
                     key={service.id}
                     onClick={() => onServiceToggle(service.id)}
                     className={cn(
-                      "group relative bg-card border-2 rounded-[13px] overflow-hidden cursor-pointer transition-all duration-200",
+                      "group relative bg-card border-2 rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
                       isSelected
                         ? "border-primary shadow-md shadow-primary/15 ring-1 ring-primary/20"
                         : "border-border hover:border-primary/30 hover:shadow-sm"
@@ -154,7 +155,7 @@ export default function BookingServicesStep({
                       "absolute top-2 right-2 z-20 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
                       isSelected
                         ? "bg-primary border-primary"
-                        : "bg-card border-gray-300 group-hover:border-primary/50"
+                        : "bg-card border-border group-hover:border-primary/50"
                     )}>
                       {isSelected && <Check className="w-3 h-3 text-white" />}
                     </div>
@@ -219,7 +220,7 @@ export default function BookingServicesStep({
                   <strong className="text-foreground ml-1">{totalDuration} min</strong> •
                   <strong className="text-primary ml-1">${totalPrice.toFixed(2)}</strong>
                   {comboSavings > 0 && bundleMatch && (
-                    <span className="text-emerald-600 ml-1 sm:ml-2">({bundleMatch.bundle_name}: -${comboSavings.toFixed(2)})</span>
+                    <span className="text-primary ml-1 sm:ml-2">({bundleMatch.bundle_name}: -${comboSavings.toFixed(2)})</span>
                   )}
                 </span>
               )}

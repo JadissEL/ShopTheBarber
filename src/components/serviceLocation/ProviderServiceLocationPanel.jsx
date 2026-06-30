@@ -50,7 +50,7 @@ function ServiceLocationToggles({ offersShop, offersMobile, onUpdate, isPending,
 
             )}
 
-            <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4 bg-muted/20">
+            <div className="flex items-start justify-between gap-4 stb-panel p-4 bg-muted/20">
 
                 <div className="space-y-1 flex-1">
 
@@ -84,13 +84,13 @@ function ServiceLocationToggles({ offersShop, offersMobile, onUpdate, isPending,
 
             </div>
 
-            <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4 bg-muted/20">
+            <div className="flex items-start justify-between gap-4 stb-panel p-4 bg-muted/20">
 
                 <div className="space-y-1 flex-1">
 
                     <div className="flex items-center gap-2 font-bold text-foreground">
 
-                        <Home className="w-5 h-5 text-violet-600" />
+                        <Home className="w-5 h-5 text-primary" />
 
                         {MOBILE_SERVICE_LABEL}
 
@@ -140,7 +140,7 @@ function ServiceLocationToggles({ offersShop, offersMobile, onUpdate, isPending,
 
             {!offersShop && offersMobile && (
 
-                <p className="text-xs text-violet-800 rounded-lg border border-violet-200 bg-violet-50/80 p-3">
+                <p className="text-xs text-foreground rounded-lg border border-primary/30 bg-primary/10 p-3">
 
                     At-home only, clients must enter their address; in-shop options are hidden.
 

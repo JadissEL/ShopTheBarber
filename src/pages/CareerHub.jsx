@@ -11,6 +11,9 @@ import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { EmptyState } from '@/components/ui/empty-state';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const CATEGORIES = [
   { id: 'artistry', label: 'Artistry' },
@@ -92,29 +95,24 @@ export default function CareerHub() {
   const recentJobs = useMemo(() => filteredJobs.slice(0, 10), [filteredJobs]);
 
   return (
-    <div className="stb-page pb-20 lg:pb-8">
+    <div className={stb.page + ' pb-20 lg:pb-8'}>
       <MetaTags title="Elite Career Hub | Shop The Barber" description="Jobs and employment in grooming and beyond." />
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to={createPageUrl('Dashboard')} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted" aria-label="Back">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </Link>
-          <h1 className="text-xl font-bold text-foreground tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Elite Career Hub</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link to={createPageUrl('AccountSettings')} className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Profile">
-            <User className="w-5 h-5" />
-          </Link>
-          <button type="button" className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Notifications">
-            <Bell className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
+      <PageHeader
+        label="Careers"
+        title="Elite Career Hub"
+        subtitle="Discover grooming industry roles and manage your applications"
+        compact
+        tier="display"
+        variant="dark"
+      >
+        <Link to={createPageUrl('AccountSettings')} className="p-2 rounded-full text-white/70 hover:bg-white/10" aria-label="Profile">
+          <User className="w-5 h-5" />
+        </Link>
+      </PageHeader>
 
       {isDesktop && (
-        <div className="max-w-6xl mx-auto px-4 pt-2 pb-2 border-b border-border bg-card">
+        <div className={stb.container + ' pt-2 pb-2 border-b border-border'}>
           <div className="flex gap-1">
             {[
               { id: 'explore', label: 'Explore', Icon: Compass },
@@ -130,8 +128,8 @@ export default function CareerHub() {
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        {tab === 'explore' && (
+      <PageContent>
+      {tab === 'explore' && (
           <>
             {isExploreLoading ? (
               <PageLoading message="Loading opportunities..." />
@@ -181,7 +179,7 @@ export default function CareerHub() {
               <p className="text-muted-foreground text-sm mb-4">Curated leadership roles for premium brands.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {featured.map((job) => (
-                  <Link key={job.id} to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`} className="group block bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all">
+                  <Link key={job.id} to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`} className="group block stb-panel overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all">
                     <div className="aspect-[4/3] relative bg-muted overflow-hidden">
                       {job.image_url ? (
                         <OptimizedImage src={job.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -225,9 +223,9 @@ export default function CareerHub() {
                   <li key={job.id}>
                     <Link
                       to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`}
-                      className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all"
+                      className="flex items-center gap-4 p-4 bg-card rounded-lg border border-border hover:border-primary/30 hover:shadow-sm transition-all"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
                         <Briefcase className="w-6 h-6 text-muted-foreground" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -271,7 +269,7 @@ export default function CareerHub() {
               <ul className="space-y-3">
                 {savedJobs.map((job) => (
                   <li key={job.id}>
-                    <Link to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:shadow-sm">
+                    <Link to={`${createPageUrl('JobDetail')  }?id=${  encodeURIComponent(job.id)}`} className="flex items-center gap-4 p-4 bg-card rounded-lg border border-border hover:shadow-sm">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-foreground">{job.title}</p>
                         <p className="text-sm text-muted-foreground">{job.employer_name} • {job.location_text}</p>
@@ -296,15 +294,15 @@ export default function CareerHub() {
               <ul className="space-y-3">
                 {applications.map((app) => (
                   <li key={app.id}>
-                    <div className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
+                    <div className="flex items-center gap-4 p-4 bg-card rounded-lg border border-border">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-foreground">{app.job_title}</p>
                         <p className="text-sm text-muted-foreground">{app.employer_name}</p>
                       </div>
                       <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${
-                        app.status === 'hired' ? 'bg-green-100 text-green-800' :
+                        app.status === 'hired' ? 'bg-success/10 text-success' :
                         app.status === 'shortlisted' ? 'bg-primary/10 text-primary' :
-                        app.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-muted text-foreground'
+                        app.status === 'rejected' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground'
                       }`}>
                         {app.status.replace('_', ' ')}
                       </span>
@@ -320,20 +318,20 @@ export default function CareerHub() {
           <section className="space-y-6">
             <div>
               <p className="text-muted-foreground mb-4">Manage your professional portfolio and credentials.</p>
-              <Button onClick={() => navigate(createPageUrl('ProfessionalPortfolio'))} className="bg-primary text-primary-foreground hover:opacity-95 rounded-xl">
+              <Button onClick={() => navigate(createPageUrl('ProfessionalPortfolio'))} className="bg-primary text-primary-foreground hover:opacity-95 rounded-lg">
                 Open Professional Portfolio
               </Button>
             </div>
             <div className="pt-6 border-t border-border">
               <p className="text-muted-foreground mb-2">Are you hiring?</p>
               <p className="text-sm text-muted-foreground mb-3">Create and manage job postings for your shop or company.</p>
-              <Button variant="outline" onClick={() => navigate(createPageUrl('MyJobs'))} className="rounded-xl border-border">
+              <Button variant="outline" onClick={() => navigate(createPageUrl('MyJobs'))} className=" border-border">
                 My job postings
               </Button>
             </div>
           </section>
         )}
-      </main>
+      </PageContent>
 
       {/* Career Hub bottom nav (mobile only) */}
       {!isDesktop && (

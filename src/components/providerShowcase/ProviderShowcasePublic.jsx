@@ -112,7 +112,7 @@ export default function ProviderShowcasePublic({
             {(hasMeta || display.member_since_label) && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {display.member_since_label && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className=" border border-border bg-card p-4">
                             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                                 <Calendar className="w-3.5 h-3.5" />
                                 Member since
@@ -121,7 +121,7 @@ export default function ProviderShowcasePublic({
                         </div>
                     )}
                     {display.years_experience != null && display.years_experience > 0 && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className=" border border-border bg-card p-4">
                             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                                 <Briefcase className="w-3.5 h-3.5" />
                                 Experience
@@ -130,7 +130,7 @@ export default function ProviderShowcasePublic({
                         </div>
                     )}
                     {display.career_started_year && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className=" border border-border bg-card p-4">
                             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                                 <Sparkles className="w-3.5 h-3.5" />
                                 Career since
@@ -139,7 +139,7 @@ export default function ProviderShowcasePublic({
                         </div>
                     )}
                     {display.founded_year && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className=" border border-border bg-card p-4">
                             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                                 <Store className="w-3.5 h-3.5" />
                                 Est.
@@ -148,7 +148,7 @@ export default function ProviderShowcasePublic({
                         </div>
                     )}
                     {display.mobile_service_started_year && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className=" border border-border bg-card p-4">
                             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                                 <Truck className="w-3.5 h-3.5" />
                                 Mobile since
@@ -160,14 +160,14 @@ export default function ProviderShowcasePublic({
             )}
 
             {bio && (
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="stb-panel p-6">
                     <h3 className="font-bold text-foreground mb-2">About</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{bio}</p>
                 </div>
             )}
 
             {hasHighlights && (
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="stb-panel p-6">
                     <h3 className="font-bold text-foreground mb-3">Highlights</h3>
                     <div className="flex flex-wrap gap-2">
                         {display.profile_highlights.map((tag) => (
@@ -180,7 +180,7 @@ export default function ProviderShowcasePublic({
             )}
 
             {skills.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="stb-panel p-6">
                     <h3 className="font-bold text-foreground mb-3">Specialties</h3>
                     <div className="flex flex-wrap gap-2">
                         {skills.map((s) => (
@@ -204,12 +204,12 @@ export default function ProviderShowcasePublic({
             )}
 
             {hasTimeline && (
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="stb-panel p-6">
                     <h3 className="font-bold text-foreground mb-4">Career & background</h3>
                     <div className="space-y-4">
                         {display.auto_milestones?.map((m) => (
                             <div key={m.label} className="flex gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                                     <Calendar className="w-4 h-4 text-primary" />
                                 </div>
                                 <div>
@@ -232,7 +232,7 @@ export default function ProviderShowcasePublic({
                             );
                             return (
                                 <div key={entry.id} className="flex gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                                         <Icon className="w-4 h-4 text-muted-foreground" />
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -268,7 +268,7 @@ export default function ProviderShowcasePublic({
             )}
 
             {hasPortfolio && (
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="stb-panel p-6">
                     <h3 className="font-bold text-foreground mb-4">Portfolio</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {display.portfolio.map((item) => (
@@ -277,7 +277,7 @@ export default function ProviderShowcasePublic({
                                 href={item.video_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="aspect-square rounded-2xl overflow-hidden bg-muted relative group border border-border"
+                                className="aspect-square rounded-lg overflow-hidden bg-muted relative group border border-border"
                             >
                                 <OptimizedImage
                                     src={
@@ -288,7 +288,7 @@ export default function ProviderShowcasePublic({
                                     fill
                                     imgClassName="group-hover:scale-105 transition-transform duration-500"
                                 />
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                                <div className="absolute inset-x-0 bottom-0 bg-foreground/75 p-3">
                                     <p className="text-white text-xs font-semibold line-clamp-2">{item.title}</p>
                                 </div>
                             </a>
@@ -310,7 +310,7 @@ export function ProviderShowcasePortfolioOnly({ showcase }) {
                     href={item.video_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="aspect-square rounded-2xl overflow-hidden bg-muted relative group border border-border"
+                    className="aspect-square rounded-lg overflow-hidden bg-muted relative group border border-border"
                 >
                     <OptimizedImage
                         src={

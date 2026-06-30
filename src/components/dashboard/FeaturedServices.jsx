@@ -13,6 +13,8 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { ChevronRight } from 'lucide-react';
 
 import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 
 
@@ -40,7 +42,7 @@ export default function FeaturedServices() {
 
       <div>
 
-        <h2 className="text-lg font-bold text-foreground mb-4 px-1 tracking-tight">Featured Services</h2>
+        <h2 className={cn(stb.title, 'text-lg mb-4 px-1')}>Featured Services</h2>
 
         <p className="text-sm text-muted-foreground px-1">Loading services…</p>
 
@@ -58,7 +60,7 @@ export default function FeaturedServices() {
 
       <div>
 
-        <h2 className="text-lg font-bold text-foreground mb-4 px-1 tracking-tight">Featured Services</h2>
+        <h2 className={cn(stb.title, 'text-lg mb-4 px-1')}>Featured Services</h2>
 
         <EmptyState
 
@@ -86,7 +88,7 @@ export default function FeaturedServices() {
 
       <div className="flex justify-between items-center mb-4 px-1">
 
-        <h2 className="text-lg font-bold text-foreground tracking-tight">Featured Services</h2>
+        <h2 className={cn(stb.title, 'text-lg tracking-tight')}>Featured Services</h2>
 
         <Link to={createPageUrl('Explore')} className="text-sm font-semibold text-primary hover:underline flex items-center gap-0.5">
 
@@ -114,7 +116,7 @@ export default function FeaturedServices() {
 
                 whileHover={{ y: -2 }}
 
-                className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-all h-full"
+                className={cn(stb.surface, stb.surfaceHover, 'overflow-hidden transition-all h-full')}
 
               >
 
@@ -134,7 +136,7 @@ export default function FeaturedServices() {
 
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-foreground/50" />
 
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
 

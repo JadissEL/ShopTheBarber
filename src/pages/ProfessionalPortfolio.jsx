@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const AVAILABILITY_OPTIONS = [
   { id: 'immediate', label: 'Available immediately' },
@@ -210,30 +213,30 @@ export default function ProfessionalPortfolio() {
         <MetaTags title="Professional Portfolio | Shop The Barber" />
         <p className="text-muted-foreground mb-4">Sign in to manage your professional portfolio.</p>
         <Link to={`${createPageUrl('SignIn')  }?return=${  encodeURIComponent('/ProfessionalPortfolio')}`}>
-          <Button className="bg-slate-900 text-white">Sign in</Button>
+          <Button className="bg-[hsl(var(--navy))] text-white">Sign in</Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="stb-page pb-24 lg:pb-12">
+    <div className={stb.page + ' pb-24 lg:pb-12'}>
       <MetaTags title="Professional Portfolio | Shop The Barber" description="Your credentials and career readiness." />
-      <header className="sticky top-0 z-40 bg-primary text-primary-foreground px-4 py-4 flex items-center justify-between">
-        <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/10" aria-label="Back">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="text-center">
-          <h1 className="text-lg font-bold">Professional Portfolio</h1>
-          <p className="text-primary-foreground/80 text-xs uppercase tracking-wider">Career profile</p>
-        </div>
-        <Link to={createPageUrl('PortfolioCredentials')} className="p-2 rounded-full hover:bg-white/10" aria-label="Upload">
-          <Upload className="w-5 h-5" />
+      <PageHeader
+        label="Careers"
+        title="Professional portfolio"
+        subtitle="Career profile — credentials, skills, and readiness"
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Link to={createPageUrl('PortfolioCredentials')} className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+          <Upload className="w-4 h-4" /> Upload
         </Link>
-      </header>
+      </PageHeader>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <div className="aspect-[4/3] rounded-2xl bg-muted overflow-hidden border border-slate-200">
+      <PageContent narrow className="space-y-6">
+        <div className="aspect-[4/3] rounded-lg bg-muted overflow-hidden border border-border">
           {showcaseImage ? (
             <PortfolioImagePreview credentialId={showcaseImage.id} alt="Portfolio showcase" />
           ) : profile?.portfolio_links?.[0]?.url ? (
@@ -255,9 +258,9 @@ export default function ProfessionalPortfolio() {
           <span><span className="font-semibold text-foreground">{form.skills.length || profile?.skills?.length || 0}</span> skills</span>
         </div>
 
-        <section className="bg-card rounded-2xl border border-slate-200 p-5">
+        <section className="stb-panel p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-foreground">Professional profile</h2>
+            <h2 className={stb.uiSubheading}>Professional profile</h2>
             {!editing ? (
               <Button size="sm" variant="outline" className="rounded-lg gap-1" onClick={() => setEditing(true)}>
                 <Pencil className="w-4 h-4" /> Edit
@@ -274,16 +277,16 @@ export default function ProfessionalPortfolio() {
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-foreground/90 mb-1">Professional summary</label>
-                <textarea value={form.professional_summary} onChange={(e) => setForm((f) => ({ ...f, professional_summary: e.target.value }))} className="w-full px-4 py-2 rounded-xl border border-slate-200 min-h-[100px]" placeholder="Overview of your experience, style, and career goals..." />
+                <textarea value={form.professional_summary} onChange={(e) => setForm((f) => ({ ...f, professional_summary: e.target.value }))} className="w-full px-4 py-2 rounded-lg border border-border min-h-[100px]" placeholder="Overview of your experience, style, and career goals..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-foreground/90 mb-1">Years of experience</label>
-                  <input type="number" min="0" value={form.years_experience} onChange={(e) => setForm((f) => ({ ...f, years_experience: e.target.value }))} className="w-full px-4 py-2 rounded-xl border border-slate-200" placeholder="e.g. 5" />
+                  <input type="number" min="0" value={form.years_experience} onChange={(e) => setForm((f) => ({ ...f, years_experience: e.target.value }))} className="w-full px-4 py-2 rounded-lg border border-border" placeholder="e.g. 5" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground/90 mb-1">Availability</label>
-                  <select value={form.availability} onChange={(e) => setForm((f) => ({ ...f, availability: e.target.value }))} className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-card">
+                  <select value={form.availability} onChange={(e) => setForm((f) => ({ ...f, availability: e.target.value }))} className="w-full px-4 py-2 rounded-lg border border-border bg-card">
                     <option value="">Select…</option>
                     {AVAILABILITY_OPTIONS.map((o) => (
                       <option key={o.id} value={o.id}>{o.label}</option>
@@ -296,7 +299,7 @@ export default function ProfessionalPortfolio() {
                 <label className="block text-sm font-medium text-foreground/90 mb-2">Preferred job types</label>
                 <div className="flex flex-wrap gap-2">
                   {JOB_TYPE_OPTIONS.map((o) => (
-                    <button key={o.id} type="button" onClick={() => toggleJobType(o.id)} className={`px-3 py-1.5 rounded-full text-sm border ${form.preferred_job_types.includes(o.id) ? 'bg-primary text-white border-primary' : 'bg-card text-foreground/90 border-slate-200'}`}>
+                    <button key={o.id} type="button" onClick={() => toggleJobType(o.id)} className={`px-3 py-1.5 rounded-full text-sm border ${form.preferred_job_types.includes(o.id) ? 'bg-primary text-white border-primary' : 'bg-card text-foreground/90 border-border'}`}>
                       {o.label}
                     </button>
                   ))}
@@ -309,17 +312,17 @@ export default function ProfessionalPortfolio() {
                   {form.skills.map((s) => (
                     <span key={s} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-sm">
                       {s}
-                      <button type="button" onClick={() => setForm((f) => ({ ...f, skills: f.skills.filter((x) => x !== s) }))} className="hover:text-red-600">×</button>
+                      <button type="button" onClick={() => setForm((f) => ({ ...f, skills: f.skills.filter((x) => x !== s) }))} className="hover:text-destructive">×</button>
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <input type="text" value={form.skillInput} onChange={(e) => setForm((f) => ({ ...f, skillInput: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())} className="flex-1 px-4 py-2 rounded-xl border border-slate-200" placeholder="Add a skill" />
+                  <input type="text" value={form.skillInput} onChange={(e) => setForm((f) => ({ ...f, skillInput: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())} className="flex-1 px-4 py-2 rounded-lg border border-border" placeholder="Add a skill" />
                   <Button type="button" size="sm" variant="outline" onClick={() => addSkill()}>Add</Button>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {SKILL_SUGGESTIONS.filter((s) => !form.skills.includes(s)).slice(0, 6).map((s) => (
-                    <button key={s} type="button" onClick={() => addSkill(s)} className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground hover:bg-slate-200">{s}</button>
+                    <button key={s} type="button" onClick={() => addSkill(s)} className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground hover:bg-muted">{s}</button>
                   ))}
                 </div>
               </div>
@@ -330,14 +333,14 @@ export default function ProfessionalPortfolio() {
                   <Button type="button" size="sm" variant="ghost" className="gap-1 h-8" onClick={addWorkEntry}><Plus className="w-4 h-4" /> Add</Button>
                 </div>
                 {form.work_experience.map((entry, i) => (
-                  <div key={i} className="mb-3 p-3 rounded-xl border border-slate-200 space-y-2">
+                  <div key={i} className="mb-3 p-3 rounded-lg border border-border space-y-2">
                     <div className="flex gap-2">
-                      <input value={entry.role} onChange={(e) => updateWorkEntry(i, 'role', e.target.value)} placeholder="Role" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                      <input value={entry.company} onChange={(e) => updateWorkEntry(i, 'company', e.target.value)} placeholder="Company / shop" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                      <button type="button" onClick={() => removeWorkEntry(i)} className="p-2 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      <input value={entry.role} onChange={(e) => updateWorkEntry(i, 'role', e.target.value)} placeholder="Role" className="flex-1 px-3 py-2 rounded-lg border border-border text-sm" />
+                      <input value={entry.company} onChange={(e) => updateWorkEntry(i, 'company', e.target.value)} placeholder="Company / shop" className="flex-1 px-3 py-2 rounded-lg border border-border text-sm" />
+                      <button type="button" onClick={() => removeWorkEntry(i)} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                     </div>
-                    <input value={entry.period || ''} onChange={(e) => updateWorkEntry(i, 'period', e.target.value)} placeholder="Period e.g. 2020 - 2024" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                    <textarea value={entry.description || ''} onChange={(e) => updateWorkEntry(i, 'description', e.target.value)} placeholder="What you did…" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm min-h-[60px]" />
+                    <input value={entry.period || ''} onChange={(e) => updateWorkEntry(i, 'period', e.target.value)} placeholder="Period e.g. 2020 - 2024" className="w-full px-3 py-2 rounded-lg border border-border text-sm" />
+                    <textarea value={entry.description || ''} onChange={(e) => updateWorkEntry(i, 'description', e.target.value)} placeholder="What you did…" className="w-full px-3 py-2 rounded-lg border border-border text-sm min-h-[60px]" />
                   </div>
                 ))}
               </div>
@@ -349,10 +352,10 @@ export default function ProfessionalPortfolio() {
                 </div>
                 {form.certifications.map((entry, i) => (
                   <div key={i} className="mb-2 flex gap-2 items-center">
-                    <input value={entry.name} onChange={(e) => updateCertEntry(i, 'name', e.target.value)} placeholder="Certificate name" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                    <input value={entry.issuer || ''} onChange={(e) => updateCertEntry(i, 'issuer', e.target.value)} placeholder="Issuer" className="w-28 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                    <input value={entry.year || ''} onChange={(e) => updateCertEntry(i, 'year', e.target.value)} placeholder="Year" className="w-16 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                    <button type="button" onClick={() => removeCertEntry(i)} className="p-2 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    <input value={entry.name} onChange={(e) => updateCertEntry(i, 'name', e.target.value)} placeholder="Certificate name" className="flex-1 px-3 py-2 rounded-lg border border-border text-sm" />
+                    <input value={entry.issuer || ''} onChange={(e) => updateCertEntry(i, 'issuer', e.target.value)} placeholder="Issuer" className="w-28 px-3 py-2 rounded-lg border border-border text-sm" />
+                    <input value={entry.year || ''} onChange={(e) => updateCertEntry(i, 'year', e.target.value)} placeholder="Year" className="w-16 px-3 py-2 rounded-lg border border-border text-sm" />
+                    <button type="button" onClick={() => removeCertEntry(i)} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
               </div>
@@ -364,16 +367,16 @@ export default function ProfessionalPortfolio() {
                 </div>
                 {form.portfolio_links.map((entry, i) => (
                   <div key={i} className="mb-2 flex gap-2">
-                    <input value={entry.label} onChange={(e) => updatePortfolioLink(i, 'label', e.target.value)} placeholder="Label" className="w-32 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                    <input value={entry.url} onChange={(e) => updatePortfolioLink(i, 'url', e.target.value)} placeholder="https://…" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-                    <button type="button" onClick={() => removePortfolioLink(i)} className="p-2 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    <input value={entry.label} onChange={(e) => updatePortfolioLink(i, 'label', e.target.value)} placeholder="Label" className="w-32 px-3 py-2 rounded-lg border border-border text-sm" />
+                    <input value={entry.url} onChange={(e) => updatePortfolioLink(i, 'url', e.target.value)} placeholder="https://…" className="flex-1 px-3 py-2 rounded-lg border border-border text-sm" />
+                    <button type="button" onClick={() => removePortfolioLink(i)} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
             <div className="text-muted-foreground text-sm space-y-3">
-              {profile?.professional_summary ? <p>{profile.professional_summary}</p> : <p className="text-slate-400 italic">No summary yet. Edit to add one.</p>}
+              {profile?.professional_summary ? <p>{profile.professional_summary}</p> : <p className="text-muted-foreground italic">No summary yet. Edit to add one.</p>}
               {profile?.skills?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {profile.skills.map((s) => (
@@ -413,7 +416,7 @@ export default function ProfessionalPortfolio() {
 
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-foreground">Credentials & documents</h2>
+            <h2 className={stb.uiSubheading}>Credentials & documents</h2>
             <Link to={createPageUrl('PortfolioCredentials')}>
               <Button size="sm" className="bg-primary text-white rounded-lg gap-1">
                 <Upload className="w-4 h-4" /> Upload
@@ -422,7 +425,7 @@ export default function ProfessionalPortfolio() {
           </div>
           <ul className="space-y-3">
             {credentials.map((c) => (
-              <li key={c.id} className="flex items-center gap-3 p-4 bg-card rounded-xl border border-slate-200">
+              <li key={c.id} className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border">
                 {c.type === 'cv' && <FileText className="w-5 h-5 text-primary shrink-0" />}
                 {c.type === 'certificate' && <Award className="w-5 h-5 text-primary shrink-0" />}
                 {c.type === 'portfolio' && <FileEdit className="w-5 h-5 text-primary shrink-0" />}
@@ -433,7 +436,7 @@ export default function ProfessionalPortfolio() {
                 <button type="button" onClick={() => sovereign.applicant.downloadCredential(c.id, c.file_name)} className="p-2 text-muted-foreground hover:text-primary" aria-label="Download">
                   <Download className="w-4 h-4" />
                 </button>
-                <button type="button" onClick={() => deleteCredentialMutation.mutate(c.id)} className="p-2 text-slate-400 hover:text-red-600" aria-label="Delete">
+                <button type="button" onClick={() => deleteCredentialMutation.mutate(c.id)} className="p-2 text-muted-foreground hover:text-destructive" aria-label="Delete">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </li>
@@ -444,7 +447,7 @@ export default function ProfessionalPortfolio() {
           )}
         </section>
 
-        <section className="bg-card rounded-2xl border border-slate-200 p-5">
+        <section className="stb-panel p-5">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Career readiness</h2>
           <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
             <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${percent}%` }} />
@@ -458,7 +461,7 @@ export default function ProfessionalPortfolio() {
               ['Certifications', checks.certifications],
               ['Availability', checks.availability],
             ].map(([label, done]) => (
-              <li key={label} className={done ? 'text-green-700' : 'text-slate-400'}>{done ? '✓' : '○'} {label}</li>
+              <li key={label} className={done ? 'text-success' : 'text-muted-foreground'}>{done ? '✓' : '○'} {label}</li>
             ))}
           </ul>
           <p className="text-sm text-muted-foreground">
@@ -470,11 +473,11 @@ export default function ProfessionalPortfolio() {
 
         <Button
           onClick={() => navigate(createPageUrl('CareerHub'))}
-          className="w-full bg-primary text-white hover:bg-primary/90 py-6 rounded-xl gap-2"
+          className="w-full bg-primary text-white hover:bg-primary/90 py-6 rounded-lg gap-2"
         >
           <Send className="w-5 h-5" /> Browse jobs & apply
         </Button>
-      </main>
+      </PageContent>
     </div>
   );
 }
@@ -495,7 +498,7 @@ function PortfolioImagePreview({ credentialId, alt }) {
     };
   }, [credentialId]);
   if (!src) {
-    return <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">Loading showcase…</div>;
+    return <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Loading showcase…</div>;
   }
   return <img src={src} alt={alt} className="w-full h-full object-cover" />;
 }

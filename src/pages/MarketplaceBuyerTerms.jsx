@@ -7,31 +7,38 @@ import {
   formatVatPercent,
   SHIPPING_LIABILITY_SUMMARY,
 } from '@/lib/marketplaceLegal';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function MarketplaceBuyerTerms() {
   const vatPct = formatVatPercent();
 
   return (
-    <div className="stb-page">
+    <div className={stb.page}>
       <MetaTags
         title="Marketplace Purchase Terms"
         description="Terms for customers buying grooming products on ShopTheBarber marketplace."
         canonicalUrl="/marketplace/buyer-terms"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <PageHeader
+        label="Legal"
+        title="Marketplace Purchase Terms"
+        subtitle="Customer edition • Effective June 26, 2026"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
         <Link
           to={createPageUrl('Marketplace')}
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8"
+          className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to marketplace
         </Link>
-
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Marketplace Purchase Terms</h1>
-          <p className="text-muted-foreground">Customer edition, Effective June 26, 2026</p>
-        </div>
 
         <Card className="prose prose-sm max-w-none">
           <CardContent className="pt-6 space-y-6 prose-headings:font-bold">
@@ -84,7 +91,7 @@ export default function MarketplaceBuyerTerms() {
             </section>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

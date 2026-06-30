@@ -5,7 +5,7 @@ import { resolveOptionalUserId } from '../auth/requestUser';
 import { resolveAddressForCheckout, computeShippingAmount, createFulfillmentsForOrder } from '../shipping/logic';
 import { computeMarketplaceVatAmount } from '../marketplace/legalConfig';
 import dotenv from 'dotenv';
-import { getStripeApiKey, getStripePublishableKey } from '../config/stripeKeys';
+import { getStripeApiKey, getStripePublishableKey, isUsableStripeApiKey } from '../config/stripeKeys';
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ function isStripeInvalidKeyError(e: any): boolean {
 
 const stripeApiKey = getStripeApiKey();
 let stripe: Stripe | null = null;
-if (stripeApiKey && stripeApiKey.startsWith('sk_')) {
+if (stripeApiKey && isUsableStripeApiKey(stripeApiKey)) {
     try {
         stripe = new Stripe(stripeApiKey, {
             apiVersion: '2025-01-27.acacia',

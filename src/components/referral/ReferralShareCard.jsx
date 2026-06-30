@@ -28,7 +28,7 @@ export default function ReferralShareCard({ title, subtitle, className = '' }) {
 
     if (!isAuthenticated || !code) {
         return (
-            <Card className={`border-primary/20 bg-gradient-to-br from-primary/5 to-transparent ${className}`}>
+            <Card className={`border-primary/20 bg-primary/5 ${className}`}>
                 <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <Gift className="w-8 h-8 text-primary shrink-0" />
@@ -37,7 +37,7 @@ export default function ReferralShareCard({ title, subtitle, className = '' }) {
                             <p className="text-sm text-muted-foreground">{subtitle || 'Sign in to get your personal invite link.'}</p>
                         </div>
                     </div>
-                    <Button asChild className="rounded-xl shrink-0">
+                    <Button asChild className=" shrink-0">
                         <Link to="/login">Sign in to share</Link>
                     </Button>
                 </CardContent>
@@ -71,7 +71,7 @@ export default function ReferralShareCard({ title, subtitle, className = '' }) {
     };
 
     return (
-        <Card className={`border-primary/20 bg-gradient-to-br from-primary/5 to-transparent ${className}`}>
+        <Card className={`border-primary/20 bg-primary/5 ${className}`}>
             <CardContent className="p-6">
                 <div className="flex items-start gap-3 mb-4">
                     <Gift className="w-8 h-8 text-primary shrink-0" />
@@ -84,13 +84,13 @@ export default function ReferralShareCard({ title, subtitle, className = '' }) {
                 </div>
                 <p className="font-mono text-sm bg-muted rounded-lg px-3 py-2 mb-4 truncate">{inviteUrl}</p>
                 <div className="flex flex-wrap gap-2">
-                    <Button onClick={handleShare} className="rounded-xl">
+                    <Button onClick={handleShare} className="">
                         <Share2 className="w-4 h-4 mr-2" /> Share invite
                     </Button>
-                    <Button onClick={handleCopy} variant="outline" className="rounded-xl">
+                    <Button onClick={handleCopy} variant="outline" className="">
                         {copied ? <><Check className="w-4 h-4 mr-2" />Copied</> : <><Copy className="w-4 h-4 mr-2" />Copy link</>}
                     </Button>
-                    <Button asChild variant="ghost" className="rounded-xl">
+                    <Button asChild variant="ghost" className="">
                         <Link to="/Referral">Referral dashboard</Link>
                     </Button>
                 </div>

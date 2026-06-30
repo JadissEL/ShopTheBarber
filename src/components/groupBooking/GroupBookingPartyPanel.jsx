@@ -27,13 +27,13 @@ export default function GroupBookingPartyPanel({
     };
 
     return (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-6 space-y-5">
+        <div className=" border border-primary/30 bg-primary/10/50 p-6 space-y-5">
             <div>
-                <h3 className="font-bold text-lg flex items-center gap-2 text-violet-950">
-                    <Users className="w-5 h-5 text-violet-600" />
+                <h3 className="font-bold text-lg flex items-center gap-2 text-foreground">
+                    <Users className="w-5 h-5 text-primary" />
                     Group party ({guests.length} guests)
                 </h3>
-                <p className="text-sm text-violet-800/80 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                     {min}-{max} guests, friends &amp; family, no account needed
                     {capabilities.group_discount_percent > 0
                         ? `, ${capabilities.group_discount_percent}% group discount applied`
@@ -72,13 +72,13 @@ export default function GroupBookingPartyPanel({
                     placeholder="e.g. Wedding groomsmen, Birthday party"
                     value={groupEventLabel}
                     onChange={(e) => onGroupEventLabelChange(e.target.value)}
-                    className="rounded-xl bg-card"
+                    className=" bg-card"
                 />
             </div>
 
             <div className="space-y-3">
                 <Label>Guest names</Label>
-                <p className="text-xs text-violet-800/70">
+                <p className="text-xs text-muted-foreground">
                     Enter each person&apos;s name, they do not need a ShopTheBarber account.
                 </p>
                 {guests.map((g, i) => (
@@ -91,19 +91,19 @@ export default function GroupBookingPartyPanel({
                             updated[i] = { ...updated[i], guest_name: e.target.value };
                             onGuestsChange(updated);
                         }}
-                        className="rounded-xl bg-card"
+                        className=" bg-card"
                     />
                 ))}
             </div>
 
             {groupQuote && (
-                <div className="text-sm border-t border-violet-200 pt-4 space-y-1">
+                <div className="text-sm border-t border-primary/30 pt-4 space-y-1">
                     <div className="flex justify-between">
                         <span>Group subtotal</span>
                         <span>€{groupQuote.group_subtotal?.toFixed(2)}</span>
                     </div>
                     {groupQuote.group_discount_amount > 0 && (
-                        <div className="flex justify-between text-violet-700">
+                        <div className="flex justify-between text-primary">
                             <span>Group discount</span>
                             <span>-€{groupQuote.group_discount_amount?.toFixed(2)}</span>
                         </div>

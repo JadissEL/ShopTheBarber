@@ -1,8 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { stb } from '@/lib/stbUi';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { motion } from "framer-motion";
+import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function AdminAuditLogs() {
     const logs = [
@@ -13,27 +17,33 @@ export default function AdminAuditLogs() {
     ];
 
     const severityConfig = {
-        info: { icon: FileText, color: "text-blue-600", bg: "bg-blue-100", label: "Info" },
-        success: { icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100", label: "Succès" },
-        warning: { icon: AlertCircle, color: "text-amber-600", bg: "bg-amber-100", label: "Attention" },
-        error: { icon: AlertCircle, color: "text-red-600", bg: "bg-red-100", label: "Erreur" }
+        info: { icon: FileText, color: "text-primary", bg: "bg-primary/10", label: "Info" },
+        success: { icon: CheckCircle, color: "text-success", bg: "bg-success/10", label: "Succès" },
+        warning: { icon: AlertCircle, color: "text-foreground", bg: "bg-warning/15", label: "Attention" },
+        error: { icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10", label: "Erreur" }
     };
 
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                    <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">Journaux d'Audit</h1>
-                    <p className="text-lg text-slate dark:text-matte-silver">Suivez toutes les activités de la plateforme</p>
-                </motion.div>
+        <div className="stb-page pb-16 font-sans">
+            <MetaTags title="Audit Logs" description="Track all platform activity" />
+            <PageHeader
+                label="Admin"
+                title="Audit logs"
+                subtitle="Suivez toutes les activités de la plateforme"
+                compact
+                variant="light"
+                tier="app"
+            />
+
+            <PageContent>
 
                 <div className="grid md:grid-cols-4 gap-6 mb-8">
                     {Object.entries(severityConfig).map(([key, config], _idx) => (
-                        <Card key={key} className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                        <Card key={key} className=" border-none shadow-sm bg-card ">
                             <CardContent className="p-6">
                                 <config.icon className={`w-8 h-8 ${config.color} mb-3`} />
-                                <p className="text-sm text-slate dark:text-matte-silver mb-1">{config.label}</p>
-                                <p className="text-3xl font-display font-bold text-charcoal dark:text-white">
+                                <p className="text-sm text-muted-foreground mb-1">{config.label}</p>
+                                <p className="stb.metricValue text-3xl">
                                     {logs.filter(l => l.severity === key).length}
                                 </p>
                             </CardContent>
@@ -41,11 +51,11 @@ export default function AdminAuditLogs() {
                     ))}
                 </div>
 
-                <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                <Card className=" border-none shadow-sm bg-card ">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-2xl font-bold text-charcoal dark:text-white">Activités Récentes</h3>
-                            <Button variant="outline" className="rounded-xl">Filtrer</Button>
+                            <h3 className="text-2xl font-bold text-foreground dark:text-white">Activités Récentes</h3>
+                            <Button variant="outline" className="">Filtrer</Button>
                         </div>
 
                         <div className="space-y-4">
@@ -57,24 +67,24 @@ export default function AdminAuditLogs() {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.1 }}
-                                        className="flex items-center justify-between p-4 bg-background-light dark:bg-background-dark rounded-xl"
+                                        className="flex items-center justify-between p-4 bg-background  rounded-lg"
                                     >
                                         <div className="flex items-center gap-4 flex-1">
-                                            <div className={`w-12 h-12 ${config.bg} rounded-xl flex items-center justify-center`}>
+                                            <div className={`w-12 h-12 ${config.bg} rounded-lg flex items-center justify-center`}>
                                                 <config.icon className={`w-6 h-6 ${config.color}`} />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-1">
-                                                    <h4 className="font-bold text-charcoal dark:text-white">{log.action}</h4>
+                                                    <h4 className="font-bold text-foreground dark:text-white">{log.action}</h4>
                                                     <Badge variant="default" className={`${config.bg} ${config.color} border-0`}>{config.label}</Badge>
                                                 </div>
-                                                <p className="text-sm text-slate dark:text-matte-silver">{log.details}</p>
+                                                <p className="text-sm text-muted-foreground">{log.details}</p>
                                             </div>
                                         </div>
 
                                         <div className="text-right">
-                                            <p className="text-sm font-medium text-charcoal dark:text-white">{log.user}</p>
-                                            <div className="flex items-center gap-2 text-sm text-slate dark:text-matte-silver">
+                                            <p className="text-sm font-medium text-foreground dark:text-white">{log.user}</p>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Clock className="w-4 h-4" />
                                                 <span>{log.timestamp}</span>
                                             </div>
@@ -85,7 +95,7 @@ export default function AdminAuditLogs() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+            </PageContent>
         </div>
     );
 }

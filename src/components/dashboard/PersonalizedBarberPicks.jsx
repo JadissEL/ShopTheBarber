@@ -4,6 +4,8 @@ import { sovereign } from '@/api/apiClient';
 import { Star, TrendingUp } from 'lucide-react';
 import BarberCard from '@/components/ui/barber-card';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function scoreBarber(barber, { favoriteIds, bookingLocations, reviewedIds }) {
     let score = (barber.rating ?? 0) * 10 + Math.min(barber.review_count ?? 0, 50) * 0.2;
@@ -106,11 +108,11 @@ export default function PersonalizedBarberPicks() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md">
+                <div className={cn(stb.iconBox, 'w-10 h-10 bg-primary text-primary-foreground')}>
                     <Star className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-foreground">Picked For You</h2>
+                    <h2 className={cn(stb.uiHeading, 'text-2xl')}>Picked For You</h2>
                     <p className="text-sm text-muted-foreground">Based on your bookings, favorites, and ratings</p>
                 </div>
             </div>
@@ -120,7 +122,7 @@ export default function PersonalizedBarberPicks() {
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className="h-80 bg-muted rounded-2xl animate-pulse border border-slate-200"
+                            className="h-80 bg-muted rounded-lg animate-pulse border border-border"
                         />
                     ))}
                 </div>
@@ -137,7 +139,7 @@ export default function PersonalizedBarberPicks() {
                                 className="relative"
                             >
                                 {reason && (
-                                    <div className="absolute -top-3 left-4 z-20 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                                    <div className="absolute -top-3 left-4 z-20 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
                                         <TrendingUp className="w-3 h-3" />
                                         {reason}
                                     </div>

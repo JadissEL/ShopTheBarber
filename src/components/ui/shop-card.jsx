@@ -1,20 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { motion } from 'framer-motion';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { Star, MapPin, Users, ArrowRight, Heart } from 'lucide-react';
-import SpokenLanguagesBadges from '@/components/languages/SpokenLanguagesBadges';
-import ChildrenFriendlyBadge from '@/components/childrenFriendly/ChildrenFriendlyBadge';
-import ProviderAttestationBadges from '@/components/providerAttestation/ProviderAttestationBadges';
-import { parseSpokenLanguages } from '@/lib/languages';
-import { parseChildrenFriendly } from '@/lib/childrenFriendly';
-import { parseAttestationFlag } from '@/lib/providerAttestation';
-import ServiceLocationBadges from '@/components/serviceLocation/ServiceLocationBadges';
+import { Star, MapPin, Heart } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { catalogCardClasses, stb } from '@/lib/stbUi';
 
 export default function ShopCard({ shop }) {
     const queryClient = useQueryClient();
@@ -40,15 +32,10 @@ export default function ShopCard({ shop }) {
         image_url: shop.image_url || "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800&auto=format&fit=crop",
         rating: shop.rating || 0,
         review_count: shop.review_count || 0,
-        spoken_languages: parseSpokenLanguages(shop.spoken_languages),
-        children_friendly: parseChildrenFriendly(shop.children_friendly),
-        licensed: parseAttestationFlag(shop.attestation_licensed),
-        insured: parseAttestationFlag(shop.attestation_insured),
-        offers_shop_service: shop.offers_shop_service,
-        offers_mobile_service: shop.offers_mobile_service === true,
     };
 
     const isFavorited = favorites.some(f => f.target_id === shopData.id && f.target_type === 'shop');
+    const ratingLabel = shopData.rating > 0 ? shopData.rating.toFixed(1) : 'New';
 
     const toggleFavorite = async (e) => {
         e.preventDefault();
@@ -79,79 +66,58 @@ export default function ShopCard({ shop }) {
     };
 
     return (
-        <Link to={createPageUrl(`ShopProfile?id=${shopData.id}`)} className="h-full block">
-            <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }} className="h-full">
-                <Card className="overflow-hidden border border-border/80 shadow-sm ring-1 ring-border/50 bg-card hover:shadow-md transition-all duration-300 h-full rounded-2xl group relative flex flex-col">
+        <Link to={createPageUrl(`ShopProfile?id=${shopData.id}`)} className="h-full block group">
+            <div className={catalogCardClasses('h-full flex flex-col p-0')}>
+                <div className={cn(stb.catalogMedia, 'aspect-[16/9]')}>
+                    <OptimizedImage
+                        src={shopData.image_url}
+                        alt={shopData.name}
+                        fill
+                        imgClassName="transition-transform duration-500 group-hover:scale-[1.03] object-cover"
+                        width={600}
+                        height={337}
+                        aspectRatio="16/9"
+                        fallbackSrc={shopData.image_url}
+                        className="w-full h-full"
+                    />
 
-                    {/* Image Section */}
-                    <div className="relative aspect-[16/9] overflow-hidden">
-                        <OptimizedImage
-                            src={shopData.image_url}
-                            alt={shopData.name}
-                            fill
-                            imgClassName="transition-transform duration-700 group-hover:scale-105 object-cover"
-                            width={600}
-                            height={337}
-                            aspectRatio="16/9"
-                            fallbackSrc={shopData.image_url}
-                            className="w-full h-full"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                    <button
+                        type="button"
+                        onClick={toggleFavorite}
+                        aria-label={isFavorited ? 'Remove from favorites' : 'Save shop'}
+                        className={cn(
+                            'absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-lg border border-foreground/10 bg-card/95 shadow-sm transition-colors duration-normal ease-out',
+                            isFavorited ? 'text-primary border-primary/30' : 'text-muted-foreground hover:text-primary'
+                        )}
+                    >
+                        <Heart className={cn('w-4 h-4', isFavorited && 'fill-current')} />
+                    </button>
+                </div>
 
-                        {/* Floating Action */}
-                        <div className="absolute top-3 right-3 z-20">
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={toggleFavorite}
-                                className={`w-10 h-10 rounded-full backdrop-blur-md transition-all border border-white/10 ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'bg-white/20 text-white hover:bg-card hover:text-red-500 dark:hover:bg-slate-800'}`}
-                            >
-                                <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-                            </Button>
-                        </div>
-
-                        {/* Rating Badge Overlay */}
-                        <div className="absolute bottom-3 right-3 z-10">
-                            <div className="flex items-center gap-1.5 bg-background/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm border border-border">
-                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                <span className="font-bold text-xs text-foreground">{shopData.rating > 0 ? shopData.rating.toFixed(1) : "New"}</span>
+                <div className={cn(stb.catalogBody, 'flex flex-col flex-1')}>
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <h3 className={cn(stb.title, 'text-lg leading-tight group-hover:text-primary transition-colors truncate')}>{shopData.name}</h3>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <span className="line-clamp-1">{shopData.location}</span>
                             </div>
                         </div>
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary shrink-0">
+                            <Star className="w-3.5 h-3.5 fill-primary" />
+                            {ratingLabel}
+                        </span>
                     </div>
 
-                    <div className="p-4 flex flex-col flex-1">
-                        <h3 className="font-bold text-lg text-foreground leading-tight group-hover:text-primary transition-colors mb-1">{shopData.name}</h3>
+                    {shopData.review_count > 0 && (
+                        <p className="text-xs text-muted-foreground">{shopData.review_count} reviews</p>
+                    )}
 
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-                            <MapPin className="w-3.5 h-3.5 text-muted-foreground/80" />
-                            <span className="line-clamp-1">{shopData.location}</span>
-                        </div>
-                        <SpokenLanguagesBadges languages={shopData.spoken_languages} size="xs" max={3} className="mb-3" />
-                        {shopData.children_friendly && (
-                            <ChildrenFriendlyBadge size="xs" className="mb-3" />
-                        )}
-                        {(shopData.licensed || shopData.insured) && (
-                            <ProviderAttestationBadges
-                                licensed={shopData.licensed}
-                                insured={shopData.insured}
-                                size="xs"
-                                className="mb-3"
-                            />
-                        )}
-                        <ServiceLocationBadges barber={shopData} size="xs" className="mb-3" />
-
-                        <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
-                            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                                <Users className="w-3.5 h-3.5" />
-                                <span>Team of experts</span>
-                            </div>
-                            <span className="text-xs text-primary font-semibold flex items-center">
-                                Visit Shop <ArrowRight className="w-3 h-3 ml-1" />
-                            </span>
-                        </div>
+                    <div className={cn(stb.cardCta, 'mt-auto -mx-4 -mb-4')}>
+                        Visit shop
                     </div>
-                </Card>
-            </motion.div>
+                </div>
+            </div>
         </Link>
     );
 }

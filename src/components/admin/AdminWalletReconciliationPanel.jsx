@@ -50,7 +50,7 @@ export default function AdminWalletReconciliationPanel() {
                     <p className="text-sm text-muted-foreground">No reconciliation runs yet — ensure Phase 2 migrations and cron are active.</p>
                 )}
                 {runs.length > 0 && (
-                    <div className="border rounded-xl overflow-x-auto">
+                    <div className="border rounded-lg overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-muted/40 border-b">
                                 <tr className="text-left text-muted-foreground text-xs uppercase">
@@ -64,12 +64,12 @@ export default function AdminWalletReconciliationPanel() {
                             </thead>
                             <tbody className="divide-y">
                                 {runs.map((run) => (
-                                    <tr key={run.id} className={run.status === 'mismatch' ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}>
+                                    <tr key={run.id} className={run.status === 'mismatch' ? 'bg-primary/10 dark:bg-primary/10' : ''}>
                                         <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{formatWhen(run.created_at)}</td>
                                         <td className="p-3 font-mono text-xs">{run.wallet_id?.slice(0, 8)}…</td>
                                         <td className="p-3 text-right tabular-nums">€{(run.expected_balance ?? 0).toFixed(2)}</td>
                                         <td className="p-3 text-right tabular-nums">€{(run.actual_balance ?? 0).toFixed(2)}</td>
-                                        <td className={`p-3 text-right tabular-nums font-medium ${Math.abs(run.delta ?? 0) >= 0.01 ? 'text-amber-700' : ''}`}>
+                                        <td className={`p-3 text-right tabular-nums font-medium ${Math.abs(run.delta ?? 0) >= 0.01 ? 'text-muted-foreground' : ''}`}>
                                             €{(run.delta ?? 0).toFixed(2)}
                                         </td>
                                         <td className="p-3">

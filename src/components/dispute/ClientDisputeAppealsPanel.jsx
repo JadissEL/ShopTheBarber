@@ -46,7 +46,7 @@ export default function ClientDisputeAppealsPanel() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {appealable.map((dispute) => (
-                    <div key={dispute.id} className="rounded-xl border p-4 space-y-3">
+                    <div key={dispute.id} className=" border p-4 space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="outline">{disputeStatusLabel(dispute.status)}</Badge>
                             {dispute.resolution_outcome && (

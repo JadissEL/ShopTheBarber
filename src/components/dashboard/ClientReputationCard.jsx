@@ -3,6 +3,8 @@ import { sovereign } from '@/api/apiClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Award, Shield, TrendingUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const LEVEL_COLORS = {
     new: 'secondary',
@@ -33,7 +35,7 @@ export default function ClientReputationCard({ className = '' }) {
     const variant = LEVEL_COLORS[level] ?? 'secondary';
 
     return (
-        <Card className={className}>
+        <Card className={cn(stb.panel, className)}>
             <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                     <Award className="w-4 h-4 text-primary" />
@@ -72,7 +74,7 @@ export default function ClientReputationCard({ className = '' }) {
                                     <span className="text-muted-foreground capitalize truncate">
                                         {(ev.event_type ?? 'event').replace(/_/g, ' ')}
                                     </span>
-                                    <span className={`font-semibold tabular-nums shrink-0 ${(ev.points_delta ?? 0) >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                                    <span className={`font-semibold tabular-nums shrink-0 ${(ev.points_delta ?? 0) >= 0 ? 'text-primary' : 'text-destructive'}`}>
                                         {(ev.points_delta ?? 0) >= 0 ? '+' : ''}{ev.points_delta ?? 0}
                                     </span>
                                 </li>

@@ -40,7 +40,7 @@ export default function ProviderFinancingApplyPanel() {
     const pending = applications.find((a) => a.status === 'pending');
 
     return (
-        <Card className="rounded-3xl border-border/60">
+        <Card className=" border-border/60">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Banknote className="w-5 h-5 text-primary" />
@@ -49,7 +49,7 @@ export default function ProviderFinancingApplyPanel() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-4 text-sm">
+                <div className="flex items-start gap-3 rounded-lg bg-muted/40 p-4 text-sm">
                     <Info className="w-4 h-4 shrink-0 mt-0.5 text-muted-foreground" />
                     <p className="text-muted-foreground">
                         Apply for equipment or expansion financing. This is an early-access program — approvals are manual.
@@ -57,7 +57,7 @@ export default function ProviderFinancingApplyPanel() {
                 </div>
 
                 {applications.length > 0 && (
-                    <ul className="text-sm space-y-2 border rounded-xl p-3">
+                    <ul className="text-sm space-y-2 border rounded-lg p-3">
                         {applications.slice(0, 3).map((app) => (
                             <li key={app.id} className="flex justify-between gap-2">
                                 <span>€{(app.amount ?? 0).toLocaleString()}</span>
@@ -94,7 +94,7 @@ export default function ProviderFinancingApplyPanel() {
                         <Button
                             disabled={applyMutation.isPending || !amount || parseFloat(amount) < 500}
                             onClick={() => applyMutation.mutate()}
-                            className="rounded-xl font-bold"
+                            className=" font-bold"
                         >
                             Submit application
                         </Button>

@@ -13,7 +13,7 @@ export default function GuestContactForm({
   const signInUrl = `${createPageUrl('SignIn')}?return=${encodeURIComponent(returnPath)}`;
 
   return (
-    <div className="bg-emerald-50/80 rounded-2xl border border-emerald-200 p-6 mb-6 space-y-4">
+    <div className="stb-notice-warm rounded-lg border border-primary/30 p-6 mb-6 space-y-4">
       <div>
         <p className="font-semibold text-emerald-950">Book without an account</p>
         <p className="text-sm text-emerald-800/90 mt-1">

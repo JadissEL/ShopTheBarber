@@ -134,48 +134,48 @@ export default function SavedAddressesManager({ compact = false, onSelect, selec
             </div>
 
             {showForm ? (
-                <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-border p-4 bg-muted/30">
+                <form onSubmit={handleSubmit} className="space-y-3 stb-panel p-4 bg-muted/30">
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <Label className="text-xs">Label</Label>
-                            <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="Home" className="mt-1 rounded-xl" />
+                            <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="Home" className="mt-1 rounded-lg" />
                         </div>
                         <div>
                             <Label className="text-xs">Full name</Label>
-                            <Input value={form.full_name} onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))} className="mt-1 rounded-xl" required />
+                            <Input value={form.full_name} onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))} className="mt-1 rounded-lg" required />
                         </div>
                     </div>
                     <div>
                         <Label className="text-xs">Street</Label>
-                        <Input value={form.street} onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))} className="mt-1 rounded-xl" required />
+                        <Input value={form.street} onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))} className="mt-1 rounded-lg" required />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                         <div>
                             <Label className="text-xs">City</Label>
-                            <Input value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} className="mt-1 rounded-xl" required />
+                            <Input value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} className="mt-1 rounded-lg" required />
                         </div>
                         <div>
                             <Label className="text-xs">State</Label>
-                            <Input value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))} className="mt-1 rounded-xl" />
+                            <Input value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))} className="mt-1 rounded-lg" />
                         </div>
                         <div>
                             <Label className="text-xs">Zip</Label>
-                            <Input value={form.zip} onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))} className="mt-1 rounded-xl" required />
+                            <Input value={form.zip} onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))} className="mt-1 rounded-lg" required />
                         </div>
                     </div>
                     <div>
                         <Label className="text-xs">Phone</Label>
-                        <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                     <div className="flex gap-2">
-                        <Button type="submit" disabled={createMutation.isPending} className="rounded-xl">
+                        <Button type="submit" disabled={createMutation.isPending} className="">
                             {createMutation.isPending ? <Loader className="w-4 h-4 animate-spin" /> : 'Save address'}
                         </Button>
-                        <Button type="button" variant="outline" className="rounded-xl" onClick={() => setShowForm(false)}>Cancel</Button>
+                        <Button type="button" variant="outline" className="" onClick={() => setShowForm(false)}>Cancel</Button>
                     </div>
                 </form>
             ) : (
-                <Button type="button" variant="outline" className="rounded-xl gap-2" onClick={() => setShowForm(true)}>
+                <Button type="button" variant="outline" className=" gap-2" onClick={() => setShowForm(true)}>
                     <Plus className="w-4 h-4" /> Add address
                 </Button>
             )}

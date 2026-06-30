@@ -2,6 +2,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCcw } from 'lucide-react';
 import { captureException } from '@/lib/sentry';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -14,7 +16,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    console.error('Uncaught error:', error, errorInfo);
     captureException(error, { componentStack: errorInfo?.componentStack });
     this.setState({ error, errorInfo });
   }
@@ -26,39 +28,36 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
-          <div className="max-w-md w-full bg-card rounded-2xl shadow-xl p-8 text-center border border-border/60">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="stb-page flex items-center justify-center p-4">
+          <div className={cn('max-w-md w-full p-8 text-center', stb.panel)}>
+            <div className={cn(stb.iconBox, 'w-16 h-16 mx-auto mb-6 border-destructive/30 bg-destructive/10 text-destructive')}>
+              <AlertTriangle className="w-8 h-8" />
             </div>
-            
-            <h1 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h1>
-            <p className="text-muted-foreground mb-8">
+
+            <h1 className={cn(stb.title, 'text-2xl mb-2')}>Something went wrong</h1>
+            <p className={cn(stb.body, 'mb-8')}>
               We encountered an unexpected error. Our team has been notified.
             </p>
 
             <div className="space-y-3">
-              <Button 
-                onClick={this.handleReload} 
-                className="w-full h-12 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-medium shadow-lg shadow-gray-200"
-              >
+              <Button onClick={this.handleReload} className="w-full h-12">
                 <RefreshCcw className="w-4 h-4 mr-2" />
                 Reload Page
               </Button>
-              
-              <Button 
-                variant="ghost" 
-                onClick={() => window.history.back()}
-                className="w-full text-muted-foreground hover:text-foreground"
+
+              <Button
+                variant="ghost"
+                onClick={() => (window.location.href = '/')}
+                className="w-full"
               >
-                Go Back
+                Go to homepage
               </Button>
             </div>
 
             {import.meta.env.DEV && this.state.error && (
-              <div className="mt-8 text-left bg-muted p-4 rounded-lg overflow-auto max-h-48 text-xs font-mono text-red-600">
+              <pre className="mt-6 text-left text-xs bg-muted p-4 overflow-auto max-h-40 border border-foreground/15">
                 {this.state.error.toString()}
-              </div>
+              </pre>
             )}
           </div>
         </div>

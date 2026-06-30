@@ -204,7 +204,7 @@ export default function BookingWaitlistDialog({
 
         <Dialog open={open} onOpenChange={handleClose}>
 
-            <DialogContent className="rounded-2xl max-w-md overflow-hidden overscroll-contain">
+            <DialogContent className=" max-w-md overflow-hidden overscroll-contain">
 
                 <AnimatePresence mode="wait">
 
@@ -214,9 +214,9 @@ export default function BookingWaitlistDialog({
 
                             <div className="text-center py-4" role="status" aria-live="polite">
 
-                                <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                                <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
 
-                                    <CheckCircle2 className="w-8 h-8 text-green-600" aria-hidden />
+                                    <CheckCircle2 className="w-8 h-8 text-success" aria-hidden />
 
                                 </div>
 
@@ -238,7 +238,7 @@ export default function BookingWaitlistDialog({
 
                             <DialogFooter className="flex-col sm:flex-col gap-2 mt-2">
 
-                                <Button asChild className="w-full rounded-xl">
+                                <Button asChild className="w-full rounded-lg">
 
                                     <Link to={`${createPageUrl('UserBookings')}?tab=waitlist`} onClick={() => handleClose(false)}>
 
@@ -248,7 +248,7 @@ export default function BookingWaitlistDialog({
 
                                 </Button>
 
-                                <Button variant="outline" className="w-full rounded-xl" onClick={() => handleClose(false)}>
+                                <Button variant="outline" className="w-full rounded-lg" onClick={() => handleClose(false)}>
 
                                     Choose Another Time
 
@@ -282,7 +282,7 @@ export default function BookingWaitlistDialog({
 
                             {!canJoin && (
 
-                                <p className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 rounded-xl px-3 py-2 my-3">
+                                <p className="text-sm text-muted-foreground dark:text-primary bg-primary/10 dark:bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 my-3">
 
                                     Select a date first, then join the waitlist.
 
@@ -292,7 +292,7 @@ export default function BookingWaitlistDialog({
 
 
 
-                            <div className="rounded-xl border border-border bg-muted/40 p-4 my-4 space-y-3">
+                            <div className=" border border-border bg-muted/40 p-4 my-4 space-y-3">
 
                                 <div className="flex items-center gap-3 min-w-0">
 
@@ -386,7 +386,7 @@ export default function BookingWaitlistDialog({
 
                             <DialogFooter className="gap-2 sm:gap-0">
 
-                                <Button variant="outline" onClick={() => handleClose(false)} className="rounded-xl">
+                                <Button variant="outline" onClick={() => handleClose(false)} className="">
 
                                     Pick Another Time
 
@@ -398,7 +398,7 @@ export default function BookingWaitlistDialog({
 
                                     disabled={joinMutation.isPending || !canJoin}
 
-                                    className="rounded-xl min-w-[132px]"
+                                    className=" min-w-[132px]"
 
                                 >
 

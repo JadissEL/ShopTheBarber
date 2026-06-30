@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { AlertCircle, Filter, Search, Clock, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Filter, Clock, CheckCircle2 } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
@@ -11,6 +11,8 @@ import DisputeCard from '@/components/dispute/DisputeCard';
 import AdminDisputeAppealsPanel from '@/components/admin/AdminDisputeAppealsPanel';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { normalizeDisputeStatus, disputeStatusLabel } from '@/utils/disputeStatus';
 
 function toCardDispute(row) {
@@ -86,11 +88,16 @@ export default function AdminDisputes() {
         description="Manage and resolve customer disputes"
       />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Dispute Resolution</h1>
-          <p className="text-muted-foreground">Review and resolve customer disputes and claims</p>
-        </div>
+      <PageHeader
+        label="Admin"
+        title="Dispute resolution"
+        subtitle="Review and resolve customer disputes and claims"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent>
 
         <div className="mb-8">
           <AdminDisputeAppealsPanel />
@@ -116,7 +123,7 @@ export default function AdminDisputes() {
                   <p className="text-sm text-muted-foreground">In Review</p>
                   <h3 className="text-3xl font-bold">{reviewCount}</h3>
                 </div>
-                <Clock className="w-8 h-8 text-amber-600 opacity-50" />
+                <Clock className="w-8 h-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -128,7 +135,7 @@ export default function AdminDisputes() {
                   <p className="text-sm text-muted-foreground">Resolved</p>
                   <h3 className="text-3xl font-bold">{resolvedCount}</h3>
                 </div>
-                <CheckCircle2 className="w-8 h-8 text-green-600 opacity-50" />
+                <CheckCircle2 className="w-8 h-8 text-success opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -140,7 +147,7 @@ export default function AdminDisputes() {
                   <p className="text-sm text-muted-foreground">Total At Risk</p>
                   <h3 className="text-3xl font-bold">${totalAmount.toFixed(0)}</h3>
                 </div>
-                <AlertCircle className="w-8 h-8 text-orange-600 opacity-50" />
+                <AlertCircle className="w-8 h-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -148,15 +155,14 @@ export default function AdminDisputes() {
 
         <div className="space-y-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by client, barber, or reason..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <SearchField
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
+              placeholder="Search by client, barber, or reason..."
+              className="flex-1"
+              aria-label="Search disputes"
+            />
             <div className="flex gap-2">
               <Filter className="w-4 h-4 text-muted-foreground mt-3" />
               <select
@@ -189,7 +195,7 @@ export default function AdminDisputes() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

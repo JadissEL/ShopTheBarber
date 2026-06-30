@@ -5,7 +5,7 @@ export default function BarberCardSkeleton({ className, compact = false }) {
     <div
       className={cn(
         'border border-border/60 bg-card overflow-hidden animate-pulse ring-1 ring-border/50',
-        compact ? 'rounded-xl max-h-[min(22rem,calc(100dvh-15.5rem))]' : 'rounded-2xl',
+        compact ? 'rounded-lg max-h-[min(22rem,calc(100dvh-15.5rem))]' : 'rounded-lg',
         className
       )}
       aria-hidden
@@ -24,7 +24,7 @@ export default function BarberCardSkeleton({ className, compact = false }) {
             <div className="h-6 bg-muted rounded-full w-14" />
           </div>
         ) : null}
-        <div className={compact ? 'h-9 bg-muted rounded-lg w-full' : 'h-10 bg-muted rounded-xl w-full mt-2'} />
+        <div className={compact ? 'h-9 bg-muted rounded-lg w-full' : 'h-10 bg-muted rounded-lg w-full mt-2'} />
       </div>
     </div>
   );

@@ -59,7 +59,7 @@ export default function ProviderCheckInDialog({ booking, open, onOpenChange }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="rounded-2xl max-w-md overscroll-contain max-h-[90vh] overflow-y-auto">
+            <DialogContent className=" max-w-md overscroll-contain max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Check In Client</DialogTitle>
                     <DialogDescription>
@@ -67,7 +67,7 @@ export default function ProviderCheckInDialog({ booking, open, onOpenChange }) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm space-y-1">
+                <div className=" border border-border bg-muted/30 p-3 text-sm space-y-1">
                     <p className="font-medium flex items-center gap-2 min-w-0">
                         <User className="w-4 h-4 shrink-0 text-muted-foreground" aria-hidden />
                         <span className="truncate">{booking.client_name || booking.guest_name || 'Client'}</span>

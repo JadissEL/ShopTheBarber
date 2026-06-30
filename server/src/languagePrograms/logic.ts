@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import Stripe from 'stripe';
 import { prisma } from '../db/prisma';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import { parseSpokenLanguages, serializeLanguageOptions } from '../languages/logic';
 import { SUPPORTED_LANGUAGE_CODES } from '../languages/config';
 import {
@@ -322,7 +322,7 @@ export async function createWaitlistCheckout(
     if (!entry) throw new Error('Failed to create waitlist entry');
 
     const stripeKey = getStripeApiKey();
-    if (!stripeKey?.startsWith('sk_')) {
+    if (!isUsableStripeApiKey(stripeKey)) {
         throw new Error('Stripe is not configured for waitlist deposits');
     }
 

@@ -4,8 +4,11 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { sovereign } from '@/api/apiClient';
 import { getAnalyticsSessionId } from '@/lib/analyticsSession';
-import { Search, MapPin, Bell, Menu, Calendar, Award, DollarSign, UserCheck, Check, MessageSquare } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
+import { MapPin, Bell, Menu, Calendar, Award, DollarSign, UserCheck, Check, MessageSquare } from 'lucide-react';
 import { createPageUrl } from '@/utils';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { RefreshIndicator } from '@/components/ui/refresh-indicator';
 import { MetaTags } from '@/components/seo/MetaTags';
@@ -20,6 +23,8 @@ import ClientReputationCard from '@/components/dashboard/ClientReputationCard';
 import MonthlySpendingCard from '@/components/dashboard/MonthlySpendingCard';
 import BarberCard from '@/components/ui/barber-card';
 import SidebarMenu from '@/components/dashboard/SidebarMenu';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import InsightBanner from '@/components/dashboard/InsightBanner';
 import QuickInsights from '@/components/dashboard/QuickInsights';
 import PersonalizedBarberPicks from '@/components/dashboard/PersonalizedBarberPicks';
@@ -210,13 +215,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="stb-page font-sans lg:pb-8 selection:bg-primary/20">
+    <div className={stb.page + ' font-sans lg:pb-8 selection:bg-primary/20'}>
       <MetaTags
         title="Dashboard"
         description="Control center for your grooming life."
       />
 
-      {/* Client dashboard header: profile, elite status, gold badge, notifications */}
+      <PageHeader
+        label="Client"
+        title="Dashboard"
+        subtitle="Your grooming hub — bookings, loyalty, and quick actions"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      {/* Client dashboard toolbar: profile, search, notifications */}
       <header className="sticky top-0 z-40 stb-glass border-b border-border/80 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-start gap-3">
@@ -237,7 +251,7 @@ export default function Dashboard() {
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   {isEliteClient ? 'Elite Client' : 'Member'}
                 </p>
-                <h1 className="text-lg font-bold text-foreground truncate">{user?.full_name || 'Guest'}</h1>
+                <h1 className={cn(stb.uiHeading, 'text-lg truncate')}>{user?.full_name || 'Guest'}</h1>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
                     <Award className="w-3.5 h-3.5" /> {(loyaltyProfile?.tier || 'Bronze').replace(/^./, (c) => c.toUpperCase())} Member
@@ -253,31 +267,31 @@ export default function Dashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground relative"
+                className=" text-muted-foreground hover:bg-muted hover:text-foreground relative"
                 aria-label="Messages"
                 onClick={() => setIsMessagesOpen(true)}
               >
                 <MessageSquare className="w-5 h-5" />
                 {hasUnreadMessages && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive/100 rounded-full border-2 border-white" />
                 )}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground relative"
+                className=" text-muted-foreground hover:bg-muted hover:text-foreground relative"
                 aria-label="Notifications"
                 onClick={() => setIsNotificationsOpen(true)}
               >
                 <Bell className="w-5 h-5" />
                 {hasUnreadNotifications && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive/100 rounded-full border-2 border-white" />
                 )}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+                className=" text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
                 onClick={() => setIsMenuOpen(true)}
               >
                 <Menu className="w-5 h-5" />
@@ -285,21 +299,19 @@ export default function Dashboard() {
             </div>
           </div>
           <form className="flex gap-2 mt-4" onSubmit={handleSearchSubmit}>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Find a barber, service, or shop..."
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-              />
-            </div>
+            <SearchField
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              placeholder="Find a barber, service, or shop..."
+              className="flex-1"
+              aria-label="Search barbers and services"
+            />
             <Link to={createPageUrl('Marketplace')} className="hidden sm:inline-flex items-center self-center text-sm font-semibold text-muted-foreground hover:text-primary whitespace-nowrap">
               Marketplace
             </Link>
             <Link to={createPageUrl('Explore')}>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm h-auto py-2.5 px-4 rounded-xl shadow-sm">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm h-auto py-2.5 px-4 rounded-lg shadow-sm">
                 Book
               </Button>
             </Link>
@@ -311,7 +323,7 @@ export default function Dashboard() {
       <MessagesPanel isOpen={isMessagesOpen} onClose={() => setIsMessagesOpen(false)} />
       <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+      <PageContent>
 
         <OnboardingSetupBanner autoOpenModal audience="client" />
         <PendingReviewBanner />
@@ -321,21 +333,21 @@ export default function Dashboard() {
           <section>
             <NextAppointmentCard booking={nextBooking} />
             {!nextBooking && lastCompletedForRebook && (
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-primary/20 bg-primary/5">
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 stb-notice-warm bg-primary/5">
                 <p className="text-sm text-foreground">
                   Time to rebook with <span className="font-semibold">{lastCompletedForRebook.barber_name || 'your barber'}</span>?
                 </p>
-                <RebookButton booking={lastCompletedForRebook} className="rounded-xl shrink-0" />
+                <RebookButton booking={lastCompletedForRebook} className=" shrink-0" />
               </div>
             )}
             <div className="flex gap-3 mt-4">
               <Link to={createPageUrl('UserBookings')} className="flex-1">
-                <Button variant="outline" className="w-full border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 text-xs font-semibold h-9 rounded-xl">
+                <Button variant="outline" className="w-full border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 text-xs font-semibold h-9 rounded-lg">
                   View All Bookings
                 </Button>
               </Link>
               <Link to={`${createPageUrl('UserBookings')}?tab=past`} className="flex-1">
-                <Button variant="outline" className="w-full border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 text-xs font-semibold h-9 rounded-xl">
+                <Button variant="outline" className="w-full border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 text-xs font-semibold h-9 rounded-lg">
                   View History
                 </Button>
               </Link>
@@ -391,7 +403,7 @@ export default function Dashboard() {
           {/* Recommended For You */}
           <section>
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground tracking-tight">Recommended for You</h2>
+              <h2 className={cn(stb.uiHeading, 'text-xl')}>Recommended for You</h2>
               <p className="text-sm text-muted-foreground mt-1">Based on your recent style.</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -409,11 +421,11 @@ export default function Dashboard() {
                 const price = serviceData.price || parseFloat((serviceData.price_text || '0').replace(/[^0-9.]/g, '')) || 0;
                 return (
                   <Link key={serviceData.id || serviceData.name} to={createPageUrl(`Explore?q=${encodeURIComponent(serviceData.name)}`)}>
-                    <div className="group cursor-pointer bg-card border border-border rounded-2xl p-3 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex gap-4 items-center sm:block sm:text-center h-full">
+                    <div className="group cursor-pointer stb-panel p-3 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex gap-4 items-center sm:block sm:text-center h-full">
                       <OptimizedImage
                         src={serviceData.image_url}
                         alt={serviceData.name}
-                        className="w-16 h-16 sm:w-full sm:h-32 object-cover rounded-xl sm:mb-3"
+                        className="w-16 h-16 sm:w-full sm:h-32 object-cover rounded-lg sm:mb-3"
                         width={300}
                       />
                       <div className="flex-1 text-left sm:text-center min-w-0">
@@ -432,7 +444,7 @@ export default function Dashboard() {
           <section>
             <div className="mb-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-foreground tracking-tight">Book with Your Top Barbers</h2>
+                <h2 className={cn(stb.uiHeading, 'text-xl')}>Book with Your Top Barbers</h2>
                 <Link to={createPageUrl('Explore')} className="text-sm text-primary hover:underline font-medium">View All</Link>
               </div>
               <p className="text-sm text-muted-foreground mt-1">Professionals you've booked with before.</p>
@@ -476,14 +488,14 @@ export default function Dashboard() {
           {/* Loyalty & Wallet */}
           <section>
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground tracking-tight">Loyalty & Wallet</h2>
+              <h2 className={cn(stb.uiHeading, 'text-xl')}>Loyalty & Wallet</h2>
               <p className="text-sm text-muted-foreground mt-1">Earn points, unlock rewards, and manage your payment methods.</p>
             </div>
 
             {loyaltyProfile ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl p-6 text-primary-foreground shadow-lg">
+                  <div className="stb-panel bg-primary text-primary-foreground p-6 border-primary">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <p className="text-primary-foreground/80 text-sm mb-1">Your Points</p>
@@ -509,7 +521,7 @@ export default function Dashboard() {
                     </p>
                   </div>
 
-                  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                  <div className="stb-panel p-6 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <p className="text-muted-foreground text-sm mb-1">Wallet Balance</p>
@@ -543,7 +555,7 @@ export default function Dashboard() {
                         {loyaltyTransactions.slice(0, 5).map((tx, i) => (
                           <div key={i} className="flex justify-between items-center text-sm py-2 border-b border-border last:border-0">
                             <span className="text-muted-foreground">{tx.description}</span>
-                            <span className={`font-bold ${tx.points > 0 ? 'text-primary' : 'text-rose-600'}`}>
+                            <span className={`font-bold ${tx.points > 0 ? 'text-primary' : 'text-destructive'}`}>
                               {tx.points > 0 ? '+' : ''}{tx.points}
                             </span>
                           </div>
@@ -566,7 +578,7 @@ export default function Dashboard() {
           {/* Featured Studios */}
           <section className="pb-4">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground tracking-tight">Featured Studios Nearby You</h2>
+              <h2 className={cn(stb.uiHeading, 'text-xl')}>Featured Studios Nearby You</h2>
               <p className="text-sm text-muted-foreground mt-1">Top-rated spots in your area.</p>
             </div>
             {shops.length === 0 ? (
@@ -582,7 +594,7 @@ export default function Dashboard() {
                 const rating = shop.rating ?? shop.average_rating;
                 return (
                 <Link key={shop.id} to={createPageUrl(`ShopProfile?id=${shop.id}`)}>
-                  <div className="group relative aspect-[16/9] rounded-2xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-all">
+                  <div className="group relative aspect-[16/9] stb-panel overflow-hidden bg-card shadow-sm hover:shadow-md transition-all">
                     <OptimizedImage
                       src={shop.image_url}
                       alt={shop.name}
@@ -590,7 +602,7 @@ export default function Dashboard() {
                       imgClassName="group-hover:scale-105 transition-transform duration-700"
                       width={800}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-foreground/40" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <div className="flex justify-between items-end">
                         <div>
@@ -613,7 +625,7 @@ export default function Dashboard() {
             )}
           </section>
         </div>
-      </main>
+      </PageContent>
     </div>
   );
 }

@@ -4,10 +4,10 @@ import { Mail, Shield, ChevronRight } from 'lucide-react';
 
 export default function UserModerationCard({ user }) {
   const statusConfig = {
-    'active': { color: 'bg-green-50 text-green-700', label: 'Active' },
-    'flagged': { color: 'bg-orange-50 text-orange-700', label: 'Flagged' },
-    'suspended': { color: 'bg-amber-50 text-amber-700', label: 'Suspended' },
-    'banned': { color: 'bg-red-50 text-red-700', label: 'Banned' }
+    'active': { color: 'bg-success/10 text-success', label: 'Active' },
+    'flagged': { color: 'bg-warning/15 text-foreground', label: 'Flagged' },
+    'suspended': { color: 'bg-primary/10 text-muted-foreground', label: 'Suspended' },
+    'banned': { color: 'bg-destructive/10 text-destructive', label: 'Banned' }
   };
 
   const status = user.moderation_status || 'active';

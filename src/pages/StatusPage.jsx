@@ -8,20 +8,23 @@ import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
 import { createPageUrl } from '@/utils';
-import { Activity, CheckCircle2, AlertTriangle, XCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Activity, CheckCircle2, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const STATUS_STYLE = {
-    operational: { icon: CheckCircle2, badge: 'bg-emerald-100 text-emerald-800', label: 'Operational' },
-    degraded: { icon: AlertTriangle, badge: 'bg-amber-100 text-amber-800', label: 'Degraded' },
-    outage: { icon: XCircle, badge: 'bg-red-100 text-red-800', label: 'Outage' },
+    operational: { icon: CheckCircle2, badge: 'stb-chip stb-chip-active', label: 'Operational' },
+    degraded: { icon: AlertTriangle, badge: 'bg-warning/15 text-foreground', label: 'Degraded' },
+    outage: { icon: XCircle, badge: 'bg-destructive/10 text-destructive', label: 'Outage' },
     unknown: { icon: Activity, badge: 'bg-muted text-foreground/90', label: 'Unknown' },
 };
 
 const INCIDENT_STYLE = {
-    investigating: 'bg-red-100 text-red-800',
-    identified: 'bg-amber-100 text-amber-800',
-    monitoring: 'bg-sky-100 text-sky-800',
-    resolved: 'bg-emerald-100 text-emerald-800',
+    investigating: 'bg-destructive/10 text-destructive',
+    identified: 'bg-warning/15 text-foreground',
+    monitoring: 'bg-primary/10 text-primary',
+    resolved: 'stb-chip stb-chip-active',
 };
 
 export default function StatusPage() {
@@ -39,32 +42,21 @@ export default function StatusPage() {
     const OverallIcon = overall.icon;
 
     return (
-        <div className="stb-page py-12 px-4">
+        <div className={stb.page}>
             <MetaTags title="System Status" description="ShopTheBarber platform status and uptime" />
-            <div className="max-w-2xl mx-auto">
-                <Link
-                    to={createPageUrl('Home')}
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
-                >
-                    <ArrowLeft className="w-4 h-4" /> Home
-                </Link>
-
-                <div className="flex items-start justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                            <Activity className="w-8 h-8 text-primary" />
-                            System status
-                        </h1>
-                        <p className="text-muted-foreground mt-1">
-                            Live health from our API, updated{' '}
-                            {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '-'}
-                        </p>
-                    </div>
-                    <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
-                        <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-                    </Button>
-                </div>
-
+            <PageHeader
+                label="Platform"
+                title="System status"
+                subtitle={`Live health from our API, updated ${dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '-'}`}
+                compact
+                tier="display"
+                variant="dark"
+            >
+                <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching} className="border-white/20 text-white hover:bg-white/10">
+                    <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                </Button>
+            </PageHeader>
+            <PageContent narrow>
                 <Card className="mb-6">
                     <CardContent className="pt-6 flex items-center gap-4">
                         <OverallIcon className="w-10 h-10 text-primary shrink-0" />
@@ -78,9 +70,9 @@ export default function StatusPage() {
 
                 {(data.active_incidents ?? []).length > 0 && (
                     <div className="space-y-3 mb-6">
-                        <h2 className="font-semibold text-lg">Active incidents</h2>
+                        <h2 className={stb.uiSubheading}>Active incidents</h2>
                         {data.active_incidents.map((inc, i) => (
-                            <Card key={i} className="border-amber-200">
+                            <Card key={i} className="border-primary/30">
                                 <CardHeader className="pb-2">
                                     <div className="flex items-center justify-between gap-2">
                                         <CardTitle className="text-base">{inc.title}</CardTitle>
@@ -136,7 +128,7 @@ export default function StatusPage() {
                         Contact support
                     </Link>
                 </p>
-            </div>
+            </PageContent>
         </div>
     );
 }

@@ -25,6 +25,7 @@ import { shouldShowClientBottomNav } from '@/lib/mobileLayout';
 import { getClientMoreItems, isFeatureEnabled } from '@/lib/featureRegistry';
 import { isNavActive } from '@/lib/navActive';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import {
   Sheet,
   SheetContent,
@@ -51,10 +52,8 @@ function NavTab({ to, active, children, className }) {
     <Link
       to={to}
       className={cn(
-        'flex flex-1 flex-col items-center justify-center gap-0.5 py-2 rounded-2xl transition-all tap-highlight-none touch-target max-w-[72px]',
-        active
-          ? 'text-primary bg-primary/10 scale-[1.02]'
-          : 'text-muted-foreground active:bg-muted/80',
+        stb.navTab,
+        active ? stb.navTabActive : stb.navTabIdle,
         className,
       )}
     >
@@ -97,7 +96,7 @@ export default function ClientBottomNav() {
     <>
       <nav
         aria-label="Main navigation"
-        className="fixed bottom-0 left-0 right-0 z-50 stb-glass border-t border-border/80 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] lg:hidden safe-area-pb"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-foreground lg:hidden safe-area-pb font-sans"
       >
         <div className="mx-auto flex h-16 max-w-lg items-end justify-around px-1">
           <NavTab to={createPageUrl('Dashboard')} active={isActive('Dashboard')}>
@@ -115,7 +114,7 @@ export default function ClientBottomNav() {
             className="relative -mt-5 flex flex-col items-center tap-highlight-none touch-target"
             aria-label="Book appointment"
           >
-            <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full stb-gradient-cta text-primary-foreground shadow-lg shadow-primary/30 transition-transform active:scale-95 ring-4 ring-background">
+            <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:translate-y-px border border-foreground ring-4 ring-background">
               <Plus className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <span className="mt-1 text-[11px] font-medium text-muted-foreground">Book</span>
@@ -141,8 +140,8 @@ export default function ClientBottomNav() {
             type="button"
             onClick={() => setMoreOpen(true)}
             className={cn(
-              'flex flex-1 max-w-[72px] flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors tap-highlight-none touch-target',
-              isMoreActive ? 'text-primary' : 'text-muted-foreground active:bg-muted/80',
+              stb.navTab,
+              isMoreActive ? stb.navTabActive : stb.navTabIdle,
             )}
             aria-label="More options"
             aria-expanded={moreOpen}
@@ -154,7 +153,7 @@ export default function ClientBottomNav() {
       </nav>
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl safe-area-pb">
+        <SheetContent side="bottom" className="rounded-t-2xl safe-area-pb border-t border-foreground font-sans">
           <SheetHeader className="text-left pb-2">
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
@@ -168,10 +167,9 @@ export default function ClientBottomNav() {
                   to={createPageUrl(item.page)}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
-                    'flex items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-colors tap-highlight-none touch-target',
-                    active
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground active:bg-muted',
+                    stb.listItem,
+                    'text-base font-sans',
+                    active && stb.navItemActive,
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />

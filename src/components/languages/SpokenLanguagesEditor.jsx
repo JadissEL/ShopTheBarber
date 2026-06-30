@@ -54,10 +54,10 @@ export default function SpokenLanguagesEditor({
                             key={lang.code}
                             type="button"
                             onClick={() => toggle(lang.code)}
-                            className={`px-3 py-2 rounded-xl text-sm border transition-all ${
+                            className={`px-3 py-2 rounded-lg text-sm border transition-all ${
                                 active
                                     ? 'bg-primary text-white border-primary shadow-sm'
-                                    : 'bg-card text-foreground/90 border-slate-200 hover:border-primary/40'
+                                    : 'bg-card text-foreground/90 border-border hover:border-primary/40'
                             }`}
                         >
                             {getLanguageDisplay(lang.code, options)}
@@ -75,7 +75,7 @@ export default function SpokenLanguagesEditor({
                     type="button"
                     onClick={() => onSave(selected)}
                     disabled={isSaving}
-                    className="rounded-xl"
+                    className=""
                 >
                     {isSaving ? 'Saving…' : 'Save languages'}
                 </Button>

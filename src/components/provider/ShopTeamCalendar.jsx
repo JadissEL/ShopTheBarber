@@ -47,8 +47,8 @@ export default function ShopTeamCalendar({ members = [], shifts = [], bookings =
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {enriched.map(({ member, name, image, shifts: dayShifts, bookings: dayBookings }) => (
-          <Card key={member.id} className="p-4 rounded-2xl border-slate-200 bg-card">
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+          <Card key={member.id} className="p-4 rounded-lg border-border bg-card">
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border">
               <UserAvatar src={image} name={name} className="w-10 h-10" />
               <div>
                 <p className="font-bold text-sm">{name}</p>
@@ -57,7 +57,7 @@ export default function ShopTeamCalendar({ members = [], shifts = [], bookings =
             </div>
 
             <div className="mb-4">
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Shifts</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Shifts</p>
               {dayShifts.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">Off today</p>
               ) : (
@@ -71,12 +71,12 @@ export default function ShopTeamCalendar({ members = [], shifts = [], bookings =
             </div>
 
             <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Appointments</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Appointments</p>
               {dayBookings.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">No bookings</p>
               ) : (
                 dayBookings.map((b) => (
-                  <div key={b.id} className="flex justify-between items-center py-2 border-b border-dashed border-slate-100 last:border-0">
+                  <div key={b.id} className="flex justify-between items-center py-2 border-b border-dashed border-border last:border-0">
                     <div>
                       <p className="text-xs font-bold">{format(parseISO(b.start_time), 'HH:mm')}</p>
                       <p className="text-[10px] text-muted-foreground truncate max-w-[140px]">

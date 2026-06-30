@@ -6,7 +6,7 @@ import {
 } from '@/lib/providerAttestation';
 
 const badgeStyles = {
-    licensed: 'bg-sky-100 text-sky-900 border-sky-200',
+    licensed: 'bg-primary/10 text-sky-900 border-sky-200',
     insured: 'bg-indigo-100 text-indigo-900 border-indigo-200',
 };
 

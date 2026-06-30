@@ -62,7 +62,7 @@ export default function OnboardingSetupBanner({ autoOpenModal = false, audience 
     <>
       <Card className="mb-6 border-salmon/30 stb-onboarding-soft overflow-hidden">
         <CardContent className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Sparkles className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0 space-y-2">
@@ -77,15 +77,15 @@ export default function OnboardingSetupBanner({ autoOpenModal = false, audience 
             <Progress value={displayPercent} className="h-1.5 max-w-xs" />
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">
-            <Button asChild size="sm" className="rounded-xl">
+            <Button asChild size="sm" className="">
               <Link to={getSetupGuidePath()}>
                 Continue guide <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
-            <Button size="sm" variant="outline" className="rounded-xl" onClick={openModal}>
+            <Button size="sm" variant="outline" className="" onClick={openModal}>
               Quick tour
             </Button>
-            <Button size="sm" variant="ghost" className="rounded-xl text-muted-foreground" onClick={handleDismiss}>
+            <Button size="sm" variant="ghost" className=" text-muted-foreground" onClick={handleDismiss}>
               <X className="w-4 h-4" />
             </Button>
           </div>

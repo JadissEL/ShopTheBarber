@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function MetricCard({ title, value, subValue, trend, trendValue, icon: Icon, className, delay = 0, children }) {
     const isPositive = trend === 'up';
@@ -14,26 +15,26 @@ export default function MetricCard({ title, value, subValue, trend, trendValue, 
             transition={{ delay }}
             className={cn("h-full", className)}
         >
-            <Card className="h-full p-5 border border-border bg-card shadow-sm hover:shadow-md transition-all rounded-[13px] flex flex-col justify-between group stb-card-lift">
+            <Card className={cn('h-full p-5 flex flex-col justify-between group', stb.surface, stb.surfaceInteractive)}>
                 <div className="flex justify-between items-start mb-2">
-                    <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{title}</p>
+                    <p className={stb.label}>{title}</p>
                     {Icon && (
-                        <div className="p-2 bg-muted rounded-lg text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                        <div className={cn(stb.iconBox, 'w-9 h-9 p-0 group-hover:bg-primary/15 transition-colors')}>
                             <Icon className="w-4 h-4" />
                         </div>
                     )}
                 </div>
 
                 <div>
-                    <h3 className="text-2xl font-bold text-foreground mb-1">{value}</h3>
-                    {subValue && <p className="text-xs text-muted-foreground mb-2">{subValue}</p>}
+                    <h3 className={cn(stb.uiHeading, 'text-2xl mb-1')}>{value}</h3>
+                    {subValue && <p className={cn(stb.body, 'mb-2')}>{subValue}</p>}
 
                     {(trendValue) && (
                         <div className={cn(
-                            "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border",
-                            isPositive ? "bg-success/10 text-success border-success/20" :
-                                isNeutral ? "bg-muted text-muted-foreground border-border" :
-                                    "bg-rose-50 text-rose-700 border-rose-100"
+                            'stb-chip text-[10px]',
+                            isPositive ? 'stb-chip-active border-success/30 bg-success/10 text-success' :
+                                isNeutral ? 'bg-muted text-muted-foreground' :
+                                    'border-destructive/30 bg-destructive/10 text-destructive'
                         )}>
                             {isPositive ? <ArrowUpRight className="w-3 h-3" /> : isNeutral ? <Minus className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                             {trendValue}

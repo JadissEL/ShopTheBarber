@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 export default function StaffSetup({ shopId, onNext, onBack }) {
   const queryClient = useQueryClient();
@@ -75,21 +77,20 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
         <p className="text-muted-foreground/80">Add your staff members so they can be booked.</p>
       </div>
 
-      <div className="bg-[#1A1D24] p-6 rounded-xl border border-white/10 mb-6">
+      <div className={cn(stb.panel, 'p-6 mb-6')}>
           <form onSubmit={handleAdd} className="flex gap-4 items-end">
               <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium text-gray-300">Name</label>
+                  <label className={stb.formLabel}>Name</label>
                   <Input 
                       value={newStaffName}
                       onChange={(e) => setNewStaffName(e.target.value)}
                       placeholder="e.g. Alex Smith"
-                      className="bg-slate-950 border-white/10 text-white"
                   />
               </div>
               <div className="w-32 space-y-2">
-                  <label className="text-sm font-medium text-gray-300">Role</label>
+                  <label className={stb.formLabel}>Role</label>
                   <Select value={newStaffRole} onValueChange={setNewStaffRole}>
-                      <SelectTrigger className="bg-slate-950 border-white/10 text-white">
+                      <SelectTrigger>
                           <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -99,7 +100,7 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
                       </SelectContent>
                   </Select>
               </div>
-              <Button type="submit" disabled={!newStaffName || addStaffMutation.isPending} className="bg-slate-800 hover:bg-slate-700">
+              <Button type="submit" disabled={!newStaffName || addStaffMutation.isPending} className="bg-muted hover:bg-muted">
                   <Plus className="w-4 h-4 mr-2" /> Add
               </Button>
           </form>
@@ -107,12 +108,12 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
 
       <div className="space-y-3">
           {staffMembers.map(member => (
-              <div key={member.id} className="bg-[#1A1D24] p-4 rounded-xl border border-white/5 flex justify-between items-center">
+              <div key={member.id} className={cn(stb.panel, 'p-4 flex justify-between items-center')}>
                   <div className="flex items-center gap-4">
                       <UserAvatar src={member.barber?.image_url} name={member.barber?.name || 'Staff'} className="w-10 h-10" />
                       <div>
-                          <h3 className="font-bold text-white">{member.barber?.name}</h3>
-                          <div className="text-xs text-emerald-400 capitalize">{member.role}</div>
+                          <h3 className={stb.uiSubheading}>{member.barber?.name}</h3>
+                          <div className={`${stb.caption} text-primary capitalize`}>{member.role}</div>
                       </div>
                   </div>
                   {member.role !== 'owner' && (
@@ -120,7 +121,7 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
                           variant="ghost" 
                           size="icon"
                           onClick={() => removeMemberMutation.mutate(member.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                       >
                           <Trash2 className="w-4 h-4" />
                       </Button>
@@ -136,7 +137,7 @@ export default function StaffSetup({ shopId, onNext, onBack }) {
           <Button variant="ghost" onClick={onBack} className="text-muted-foreground/80 hover:text-white">
               Back
           </Button>
-          <Button onClick={onNext} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8">
+          <Button onClick={onNext} className="px-8">
               Continue
           </Button>
       </div>

@@ -22,6 +22,9 @@ import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
 import { useCart } from '@/components/context/CartContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 // Default specs for API products missing detail fields
 const DEFAULT_SPECS = [
@@ -81,7 +84,7 @@ export default function ProductDetail() {
         <MetaTags title="Product not found" description="This product could not be found." />
         <p className="text-muted-foreground font-medium mb-4">Product not found.</p>
         <Link to={createPageUrl('Marketplace')}>
-          <Button variant="outline" className="rounded-xl">Back to Marketplace</Button>
+          <Button variant="outline" className="">Back to Marketplace</Button>
         </Link>
       </div>
     );
@@ -101,7 +104,7 @@ export default function ProductDetail() {
         <MetaTags title="Product not found" description="This product could not be found." />
         <p className="text-muted-foreground font-medium mb-4">Product not found.</p>
         <Link to={createPageUrl('Marketplace')}>
-          <Button variant="outline" className="rounded-xl">Back to Marketplace</Button>
+          <Button variant="outline" className="">Back to Marketplace</Button>
         </Link>
       </div>
     );
@@ -110,7 +113,7 @@ export default function ProductDetail() {
   const SpecIcon = ({ icon: Icon, label, value }) => {
     const IconComp = Icon || Sparkles;
     return (
-      <div className="rounded-xl border border-slate-200 bg-card p-4 flex flex-col items-start gap-2">
+      <div className=" border border-border bg-card p-4 flex flex-col items-start gap-2">
         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
           <IconComp className="w-5 h-5" />
         </div>
@@ -121,20 +124,29 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className="stb-page pb-24 lg:pb-8">
+    <div className={stb.page + ' pb-24 lg:pb-8'}>
       <MetaTags
         title={`${product.name} - ${product.brand}`}
         description={product.description || `Premium ${product.category} product from ${product.brand}.`}
       />
 
-      {/* Top bar: back + share/favorite, desktop: full nav via sidebar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100">
-        <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between">
+      <PageHeader
+        label={product.brand}
+        title={product.name}
+        subtitle={product.category ? `${product.category} · $${product.price}` : `$${product.price}`}
+        compact
+        tier="display"
+        variant="dark"
+      />
+
+      {/* Top bar: share/favorite */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border lg:hidden">
+        <div className="w-full max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link
             to={createPageUrl('Marketplace')}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium text-sm"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Marketplace
+            <ArrowLeft className="w-4 h-4" /> Back
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground/90" aria-label="Share">
@@ -145,14 +157,14 @@ export default function ProductDetail() {
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-8">
+      <PageContent>
         {/* Desktop: two-column | Mobile: single column */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
           {/* Product image */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-slate-200 shadow-sm">
+            <div className="aspect-square rounded-lg overflow-hidden bg-card border border-border shadow-sm">
               <OptimizedImage
                 src={product.image_url}
                 alt={product.name}
@@ -162,7 +174,7 @@ export default function ProductDetail() {
             </div>
             <div className="flex justify-center gap-2 mt-4">
               {[1, 2, 3].map((i) => (
-                <span key={i} className={`w-2 h-2 rounded-full ${i === 1 ? 'bg-primary' : 'bg-slate-200'}`} aria-hidden />
+                <span key={i} className={`w-2 h-2 rounded-full ${i === 1 ? 'bg-primary' : 'bg-muted'}`} aria-hidden />
               ))}
             </div>
           </div>
@@ -193,7 +205,7 @@ export default function ProductDetail() {
             {/* Ingredients, collapsible on mobile, open on desktop */}
             <Collapsible open={ingredientsOpen} onOpenChange={setIngredientsOpen} className="mb-4">
               <CollapsibleTrigger asChild>
-                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-slate-200 text-left font-semibold text-foreground hover:text-foreground/90">
+                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-border text-left font-semibold text-foreground hover:text-foreground/90">
                   Ingredients
                   {ingredientsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
@@ -206,7 +218,7 @@ export default function ProductDetail() {
             {/* Shipping & Returns */}
             <Collapsible open={shippingOpen} onOpenChange={setShippingOpen} className="mb-8">
               <CollapsibleTrigger asChild>
-                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-slate-200 text-left font-semibold text-foreground hover:text-foreground/90">
+                <button type="button" className="flex items-center justify-between w-full py-3 border-b border-border text-left font-semibold text-foreground hover:text-foreground/90">
                   Shipping & Returns
                   {shippingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
@@ -217,17 +229,17 @@ export default function ProductDetail() {
             </Collapsible>
 
             {/* Add to Bag, in-flow on desktop */}
-            <div className="mt-auto pt-6 border-t border-slate-200 hidden lg:flex flex-col sm:flex-row gap-4">
+            <div className="mt-auto pt-6 border-t border-border hidden lg:flex flex-col sm:flex-row gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground">Qty</span>
-                <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden">
+                <div className="flex items-center border border-border rounded-lg overflow-hidden">
                   <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted" aria-label="Decrease quantity">−</button>
                   <span className="w-12 text-center font-semibold text-foreground">{quantity}</span>
                   <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted" aria-label="Increase quantity">+</button>
                 </div>
               </div>
               <Button
-                className="flex-1 rounded-xl bg-primary text-primary-foreground hover:opacity-95 font-semibold h-12 gap-2"
+                className="flex-1 rounded-lg bg-primary text-primary-foreground hover:opacity-95 font-semibold h-12 gap-2"
                 size="lg"
                 onClick={async () => {
                   try {
@@ -245,23 +257,23 @@ export default function ProductDetail() {
         </div>
 
         {/* Continue shopping CTA */}
-        <div className="mt-12 pt-8 border-t border-slate-200 text-center">
+        <div className="mt-12 pt-8 border-t border-border text-center">
           <Link to={createPageUrl('Marketplace')} className="text-primary font-semibold hover:underline">
             ← Continue shopping
           </Link>
         </div>
-      </main>
+      </PageContent>
 
       {/* Sticky bottom bar, mobile only (desktop has in-flow CTA) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-slate-200 p-4 lg:hidden safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border p-4 lg:hidden safe-area-pb">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-card">
+          <div className="flex items-center border border-border rounded-lg overflow-hidden bg-card">
             <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-12 h-12 flex items-center justify-center text-muted-foreground" aria-label="Decrease quantity">−</button>
             <span className="w-10 text-center font-semibold text-foreground">{quantity}</span>
             <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-12 h-12 flex items-center justify-center text-muted-foreground" aria-label="Increase quantity">+</button>
           </div>
           <Button
-            className="flex-1 rounded-xl bg-primary text-primary-foreground hover:opacity-95 font-semibold h-12 gap-2"
+            className="flex-1 rounded-lg bg-primary text-primary-foreground hover:opacity-95 font-semibold h-12 gap-2"
             size="lg"
             onClick={async () => {
               try {

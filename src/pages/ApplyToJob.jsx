@@ -7,6 +7,10 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function ApplyToJob() {
   const [searchParams] = useSearchParams();
@@ -72,18 +76,23 @@ export default function ApplyToJob() {
   }
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page + ' lg:pb-8'}>
       <MetaTags title={`Apply - ${job?.title || 'Job'} | Shop The Barber`} />
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Apply to {job?.title}</h1>
-        <p className="text-muted-foreground mb-6">{job?.employer_name}</p>
-
-        <div className={`rounded-xl border p-4 mb-6 ${ready ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
+      <PageHeader
+        label="Careers"
+        title={`Apply to ${job?.title || 'role'}`}
+        subtitle={job?.employer_name}
+        compact
+        variant="light"
+        tier="app"
+      />
+      <PageContent narrow>
+        <div className={cn(stb.panel, 'p-4 mb-6', ready ? 'border-primary/30 bg-primary/5' : 'border-primary/30 bg-primary/10')}>
           <div className="flex gap-3">
             {ready ? (
-              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             )}
             <div className="text-sm">
               <p className="font-medium text-foreground">Profile {percent}% complete</p>
@@ -100,7 +109,7 @@ export default function ApplyToJob() {
         </div>
 
         {profile?.professional_summary && (
-          <section className="mb-6 p-4 rounded-xl border border-slate-200 bg-card">
+          <section className={cn(stb.panel, 'mb-6 p-4')}>
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Profile preview</p>
             <p className="text-sm text-foreground/90 line-clamp-4">{profile.professional_summary}</p>
             {profile.skills?.length > 0 && (
@@ -120,7 +129,7 @@ export default function ApplyToJob() {
               value={coverLetter}
               onChange={(e) => setCoverLetter(e.target.value)}
               placeholder="Introduce yourself and why you're a fit for this role…"
-              className="w-full min-h-[120px] px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground"
+              className="w-full min-h-[120px] px-4 py-3 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground"
               rows={5}
             />
           </div>
@@ -145,7 +154,7 @@ export default function ApplyToJob() {
               <ul className="space-y-2">
                 {credentials.map((c) => (
                   <li key={c.id}>
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-card cursor-pointer hover:bg-muted/50">
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card cursor-pointer hover:bg-muted/50">
                       <input
                         type="checkbox"
                         checked={attachAll || selectedCredentialIds.includes(c.id)}
@@ -163,20 +172,20 @@ export default function ApplyToJob() {
           )}
 
           {credentials.length === 0 && (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+            <p className="text-sm text-muted-foreground bg-primary/10 border border-amber-100 rounded-lg p-3">
               No documents uploaded yet. You can still apply, but adding a CV improves your match score.{' '}
               <Link to={createPageUrl('PortfolioCredentials')} className="font-medium underline">Upload now</Link>
             </p>
           )}
 
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" onClick={() => navigate(-1)} className="flex-1 rounded-xl">Cancel</Button>
-            <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending} className="flex-1 bg-primary text-white hover:bg-primary/90 rounded-xl">
+            <Button variant="outline" onClick={() => navigate(-1)} className="flex-1 rounded-lg">Cancel</Button>
+            <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending} className="flex-1 bg-primary text-white hover:bg-primary/90 rounded-lg">
               {applyMutation.isPending ? 'Submitting…' : 'Submit application'}
             </Button>
           </div>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

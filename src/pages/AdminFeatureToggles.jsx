@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { stb } from '@/lib/stbUi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -7,6 +8,9 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
+import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import {
   FEATURE_MODULES,
   isFeatureEnabled,
@@ -70,15 +74,18 @@ export default function AdminFeatureToggles() {
   };
 
   return (
-    <div className="min-h-screen py-12 bg-background font-sans">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-4xl font-display font-bold text-foreground mb-2">Feature modules</h1>
-          <p className="text-lg text-muted-foreground">
-            Toggle optional product modules at runtime. Build-time{' '}
-            <code className="text-sm bg-muted px-1.5 py-0.5 rounded">VITE_FEATURE_*=false</code> still wins when set.
-          </p>
-        </motion.div>
+    <div className="stb-page pb-16 font-sans">
+      <MetaTags title="Feature Modules" description="Toggle optional product modules at runtime" />
+      <PageHeader
+        label="Admin"
+        title="Feature modules"
+        subtitle="Toggle optional product modules at runtime. Build-time VITE_FEATURE_*=false still wins when set."
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
 
         <Card className="mb-8 border-primary/20 bg-primary/5">
           <CardContent className="p-4 flex gap-3 items-start">
@@ -105,15 +112,15 @@ export default function AdminFeatureToggles() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {[
-            { label: 'Modules enabled', value: enabledCount, icon: Zap, color: 'text-emerald-600' },
+            { label: 'Modules enabled', value: enabledCount, icon: Zap, color: 'text-primary' },
             { label: 'Optional modules', value: optionalModules.length, icon: Shield, color: 'text-muted-foreground' },
-            { label: 'Total modules', value: modules.length, icon: ToggleLeft, color: 'text-blue-600' },
+            { label: 'Total modules', value: modules.length, icon: ToggleLeft, color: 'text-primary' },
           ].map((stat) => (
-            <Card key={stat.label} className="rounded-2xl shadow-sm">
+            <Card key={stat.label} className=" shadow-sm">
               <CardContent className="p-6">
                 <stat.icon className={`w-10 h-10 ${stat.color} mb-3`} />
                 <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                <p className="text-4xl font-display font-bold text-foreground">{stat.value}</p>
+                <p className="stb.metricValue text-4xl">{stat.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -122,21 +129,21 @@ export default function AdminFeatureToggles() {
         <div className="space-y-4">
           {modules.map((mod, idx) => (
             <motion.div key={mod.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <Card className="rounded-2xl shadow-sm">
+              <Card className=" shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${mod.enabled ? 'bg-emerald-100' : 'bg-muted'}`}>
-                        <ToggleLeft className={`w-6 h-6 ${mod.enabled ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${mod.enabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                        <ToggleLeft className={`w-6 h-6 ${mod.enabled ? 'text-primary' : 'text-muted-foreground'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
                           <h3 className="font-bold text-foreground text-lg">{mod.label}</h3>
                           {mod.alwaysOn && (
-                            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-0">Always on</Badge>
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-0">Always on</Badge>
                           )}
                           {mod.envLocked && (
-                            <Badge variant="outline" className="bg-amber-100 text-amber-800 border-0">Env locked off</Badge>
+                            <Badge variant="outline" className="bg-warning/15 text-foreground border-0">Env locked off</Badge>
                           )}
                           <Badge variant="secondary">{mod.pageCount} pages</Badge>
                         </div>
@@ -148,7 +155,7 @@ export default function AdminFeatureToggles() {
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0">
-                      <Badge variant="secondary" className={mod.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}>
+                      <Badge variant="secondary" className={mod.enabled ? 'stb-chip stb-chip-active' : 'bg-muted text-muted-foreground'}>
                         {mod.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                       <Switch
@@ -164,7 +171,7 @@ export default function AdminFeatureToggles() {
             </motion.div>
           ))}
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

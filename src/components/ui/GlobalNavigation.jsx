@@ -25,20 +25,13 @@ import {
 } from '@/components/navigation/navigationVisibility';
 import { shouldHideGlobalNavOnMobile } from '@/lib/mobileLayout';
 import { isNavActive } from '@/lib/navActive';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 /**
  * GLOBAL NAVIGATION COMPONENT
- * 
+ *
  * POSITIONING STRATEGY: sticky (not fixed)
- * 
- * Why sticky?
- * - Stays in normal document flow (reserves space)
- * - Does NOT overlap content below it
- * - Becomes "stuck" at top only when scrolling
- * - No need for padding/margin compensation hacks
- * 
- * z-index: 50 is used to ensure header stays above
- * content that may have its own z-index (modals, etc)
  */
 export default function GlobalNavigation() {
   const location = useLocation();
@@ -48,12 +41,10 @@ export default function GlobalNavigation() {
   const zone = getZoneFromPath(path);
   const isDesktop = useIsDesktop();
 
-  // On desktop, client zone uses ClientLayout sidebar, hide top nav to avoid duplication
   if (zone === APP_ZONES.CLIENT && isDesktop) {
     return null;
   }
 
-  // Mobile clients use bottom tab bar, hide redundant top icon row
   if (
     shouldHideGlobalNavOnMobile({
       pathname: path,
@@ -66,7 +57,6 @@ export default function GlobalNavigation() {
     return null;
   }
 
-  // Get centralized visibility rules
   const visibility = getNavigationVisibility({
     pathname: path,
     isAuthenticated,
@@ -74,7 +64,6 @@ export default function GlobalNavigation() {
     zone
   });
 
-  // Determine header style based on context
   const isDark = shouldUseDarkHeader(zone, path);
 
   const handleBack = () => {
@@ -85,55 +74,32 @@ export default function GlobalNavigation() {
     }
   };
 
-  // Hide GlobalNavigation on Dashboard pages (they have their own headers)
   if (path === '/dashboard' || path === '/providerdashboard') {
     return null;
   }
 
-  // STICKY HEADER STYLES
-  // Using position: sticky ensures the header:
-  // 1. Takes up space in the document flow
-  // 2. Does not overlap content below it
-  // 3. Sticks to top when scrolling
-  const headerBaseClasses = `
-    w-full px-4 h-14 flex items-center
-    sticky top-0 z-50
-    transition-all duration-300 ease-out
-  `;
+  const headerBaseClasses = cn(
+    'w-full px-4 h-14 flex items-center sticky top-0 z-50 transition-all duration-300 ease-out font-sans',
+    stb.glass,
+  );
 
-  const headerDarkStyles = `
-    bg-primary
-    border-b border-primary/20
-    backdrop-blur-md
-    shadow-sm
-  `;
-
-  const headerLightStyles = `
-    bg-primary
-    border-b border-primary/20
-    shadow-sm
-  `;
-
-  // During auth loading, show minimal branded header
   if (isLoading) {
     return (
-      <header className={`${headerBaseClasses} ${isDark ? headerDarkStyles : headerLightStyles}`}>
-        <div className="max-w-7xl mx-auto flex items-center">
+      <header className={headerBaseClasses}>
+        <div className={cn(stb.container, 'flex items-center max-w-7xl')}>
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-lg border border-white/20 flex items-center justify-center">
               <Scissors className="w-4 h-4 text-primary-foreground transform -rotate-45" />
             </div>
-            <span className="text-white font-semibold text-lg tracking-tight">ShopTheBarber</span>
+            <span className="text-white font-display uppercase text-lg tracking-wider">ShopTheBarber</span>
           </Link>
         </div>
       </header>
     );
   }
 
-  // Generate navigation items based on visibility rules
   const navigationItems = [];
 
-  // Home item
   if (visibility[NAV_ITEMS.HOME]) {
     navigationItems.push({
       icon: Home,
@@ -142,7 +108,6 @@ export default function GlobalNavigation() {
     });
   }
 
-  // Dashboard (only for authenticated users; skip if same path as Home to avoid duplicate key)
   const dashboardPath = getDashboardPath(role);
   if (visibility[NAV_ITEMS.DASHBOARD]) {
     const homePath = isAuthenticated ? dashboardPath : 'Home';
@@ -155,7 +120,6 @@ export default function GlobalNavigation() {
     }
   }
 
-  // Explore barbers (clients)
   if (visibility[NAV_ITEMS.EXPLORE]) {
     navigationItems.push({
       icon: Store,
@@ -164,7 +128,6 @@ export default function GlobalNavigation() {
     });
   }
 
-  // Bookings (provider only)
   if (visibility[NAV_ITEMS.BOOKINGS]) {
     navigationItems.push({
       icon: Calendar,
@@ -173,7 +136,6 @@ export default function GlobalNavigation() {
     });
   }
 
-  // Loyalty (client only)
   if (visibility[NAV_ITEMS.LOYALTY]) {
     navigationItems.push({
       icon: Gift,
@@ -182,7 +144,6 @@ export default function GlobalNavigation() {
     });
   }
 
-  // Profile
   if (visibility[NAV_ITEMS.PROFILE]) {
     navigationItems.push({
       icon: User,
@@ -191,7 +152,6 @@ export default function GlobalNavigation() {
     });
   }
 
-  // Settings (provider/admin only)
   if (visibility[NAV_ITEMS.SETTINGS]) {
     navigationItems.push({
       icon: Settings,
@@ -204,15 +164,14 @@ export default function GlobalNavigation() {
   const hoverBg = 'hover:bg-white/10';
 
   return (
-    <header className={`${headerBaseClasses} ${isDark ? headerDarkStyles : headerLightStyles}`}>
-      <div className="max-w-7xl mx-auto flex items-center gap-2">
-        {/* Back Arrow - Only for non-root pages */}
+    <header className={headerBaseClasses}>
+      <div className={cn(stb.container, 'flex items-center gap-2 max-w-7xl')}>
         {visibility[NAV_ITEMS.BACK_BUTTON] && (
           <Button
             variant="ghost"
             size="sm"
             onClick={handleBack}
-            className={`gap-2 ${hoverBg} ${textColor} transition-colors`}
+            className={cn('gap-2 rounded-lg font-sans', hoverBg, textColor, 'transition-colors')}
             title="Go Back"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -220,19 +179,17 @@ export default function GlobalNavigation() {
           </Button>
         )}
 
-        {/* Logo (always centered or left) */}
         {visibility[NAV_ITEMS.LOGO] && (
           <Link to="/" className="flex items-center gap-2 ml-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md">
+            <div className="w-8 h-8 bg-primary rounded-lg border border-white/20 flex items-center justify-center shadow-md">
               <Scissors className="w-4 h-4 text-primary-foreground transform -rotate-45" />
             </div>
-            <span className="text-white font-semibold text-lg tracking-tight hidden sm:block">ShopTheBarber</span>
+            <span className="text-white font-display uppercase text-lg tracking-wider hidden sm:block">ShopTheBarber</span>
           </Link>
         )}
 
         <div className="flex-1" />
 
-        {/* Contextual Navigation Items */}
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = isNavActive(location.pathname, item.path);
@@ -241,11 +198,12 @@ export default function GlobalNavigation() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`gap-2 rounded-[13px] transition-colors ${
+                className={cn(
+                  'gap-2 rounded-lg font-sans transition-colors',
                   active
-                    ? 'bg-white/20 text-white font-semibold'
-                    : `${hoverBg} ${textColor}`
-                }`}
+                    ? 'text-primary border-b-2 border-primary bg-transparent hover:bg-white/5'
+                    : cn(hoverBg, textColor),
+                )}
                 title={item.label}
               >
                 <Icon className="w-4 h-4" />
@@ -255,13 +213,12 @@ export default function GlobalNavigation() {
           );
         })}
 
-        {/* Sign In Button (only for unauthenticated users) */}
         {visibility[NAV_ITEMS.SIGN_IN] && (
           <Link to={createPageUrl('SignIn')}>
             <Button
               variant="ghost"
               size="sm"
-              className={`gap-2 ${hoverBg} ${textColor} transition-colors`}
+              className={cn('gap-2 rounded-lg font-sans', hoverBg, textColor, 'transition-colors')}
             >
               <LogIn className="w-4 h-4" />
               <span className="hidden sm:inline-block">Sign In</span>
@@ -269,9 +226,8 @@ export default function GlobalNavigation() {
           </Link>
         )}
 
-        {/* Notification Center (only for authenticated users) */}
         {visibility[NAV_ITEMS.NOTIFICATIONS] && (
-          <NotificationCenter isDark={true} />
+          <NotificationCenter isDark={isDark} />
         )}
       </div>
     </header>

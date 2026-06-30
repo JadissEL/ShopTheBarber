@@ -73,7 +73,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
       );
     }
     return (
-      <div className="rounded-2xl border bg-card p-4 md:p-6">
+      <div className=" border bg-card p-4 md:p-6">
         <ProfileSetup
           shop={shop}
           variant="light"
@@ -90,7 +90,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
   if (stepId === 'services') {
     const context = shopId ? 'shop' : 'independent';
     return (
-      <div className="rounded-2xl border bg-card p-4 md:p-6">
+      <div className=" border bg-card p-4 md:p-6">
         <ServiceSetup
           shopId={shopId}
           barberId={barber?.id}
@@ -123,7 +123,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
       );
     }
     return (
-      <div className="rounded-2xl border bg-card p-4 md:p-6">
+      <div className=" border bg-card p-4 md:p-6">
         <AvailabilitySetup
           shopId={shopId}
           variant="light"
@@ -144,7 +144,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
       <Card>
         <CardContent className="p-6 space-y-4">
           {active ? (
-            <div className="flex items-start gap-3 text-emerald-700">
+            <div className="flex items-start gap-3 text-primary">
               <CheckCircle className="w-6 h-6 shrink-0" />
               <div>
                 <p className="font-semibold">Stripe Connect is active</p>
@@ -154,7 +154,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
           ) : (
             <>
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+                <AlertCircle className="w-6 h-6 text-primary shrink-0" />
                 <div>
                   <p className="font-semibold">Connect your bank account</p>
                   <p className="text-sm text-muted-foreground">
@@ -198,7 +198,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
       );
     }
     return (
-      <div className="rounded-2xl border bg-card p-4 md:p-6">
+      <div className=" border bg-card p-4 md:p-6">
         <ProviderFixedFeePanel shopId={shopId} isShopOwner />
       </div>
     );

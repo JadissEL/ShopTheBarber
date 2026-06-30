@@ -49,3 +49,13 @@ export function getStripeWebhookSecret(): string {
     const fromFile = getKeysFromFile()?.STRIPE_WEBHOOK_SECRET;
     return (fromFile && typeof fromFile === 'string' ? fromFile : '').trim();
 }
+
+/** Secret (`sk_`) or restricted (`rk_`) keys work with the Stripe SDK. */
+export function isUsableStripeApiKey(key?: string | null): boolean {
+    const k = (key || '').trim();
+    return k.startsWith('sk_') || k.startsWith('rk_');
+}
+
+export function isStripeConfigured(): boolean {
+    return isUsableStripeApiKey(getStripeApiKey());
+}

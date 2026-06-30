@@ -5,6 +5,9 @@ import { createPageUrl } from '@/utils';
 import { DISCOVERY_ROUTES } from '@/lib/discoveryRoutes';
 import { MapPin, Smartphone, Star, Tag, ArrowRight } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
+
 const QUICK_LINKS = [
   {
     label: 'By city',
@@ -42,12 +45,12 @@ export default function HomeQuickFind() {
   const cities = (data?.cities ?? []).slice(0, 8);
 
   return (
-    <section className="py-14 md:py-16 bg-muted/40 border-b border-border/60">
+    <section className="py-14 md:py-16 bg-muted/40 border-b border-foreground/10">
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Find your barber</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Search by city or style</h2>
+            <p className={cn(stb.label, 'mb-2')}>Find your barber</p>
+            <h2 className={cn(stb.uiHeading, 'text-2xl md:text-3xl')}>Search by city or style</h2>
             <p className="text-muted-foreground mt-2 max-w-lg">
               Jump straight to what matters, location, mobile service, ratings, or today&apos;s deals.
             </p>
@@ -65,9 +68,9 @@ export default function HomeQuickFind() {
             <Link
               key={label}
               to={path.startsWith('/') ? path : createPageUrl(path)}
-              className="group flex flex-col gap-2 p-4 rounded-2xl bg-card border border-border/80 stb-card-lift no-underline"
+              className="group flex flex-col gap-2 p-4 rounded-lg bg-card border border-foreground/10 stb-surface-hover no-underline"
             >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                 <Icon className="w-5 h-5" />
               </div>
               <span className="font-semibold text-foreground group-hover:text-primary transition-colors">{label}</span>
@@ -84,7 +87,7 @@ export default function HomeQuickFind() {
                 <Link
                   key={city.slug}
                   to={`/barbers-in/${city.slug}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-card border border-border hover:border-primary/40 hover:text-primary transition-colors no-underline"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-card border border-foreground/10 hover:border-primary/40 hover:text-primary transition-colors no-underline"
                 >
                   <MapPin className="w-3.5 h-3.5 opacity-60" />
                   {city.name}

@@ -18,6 +18,9 @@ import {
 import { Languages, Loader2, Plus, Users, Pencil, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const EMPTY = {
     title: '',
@@ -122,25 +125,28 @@ export default function AdminLanguagePrograms() {
     };
 
     if (user?.role !== 'admin') {
-        return <p className="p-6 text-muted-foreground">Admin access required.</p>;
+        return (
+            <div className={stb.page + ' p-6'}>
+                <p className="text-muted-foreground">Admin access required.</p>
+            </div>
+        );
     }
     if (isLoading) return <PageLoading />;
 
     return (
-        <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="Admin, Language Programs" />
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <Languages className="w-7 h-7" />
-                        Language programs
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Manage training programs and paid waitlists ({config?.deposit_percent ?? 20}% non-refundable deposit).
-                    </p>
-                </div>
+            <PageHeader
+                label="Admin"
+                title="Language programs"
+                subtitle={`Manage training programs and paid waitlists (${config?.deposit_percent ?? 20}% non-refundable deposit).`}
+                compact
+                variant="light"
+                tier="app"
+            >
                 <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />New program</Button>
-            </div>
+            </PageHeader>
+            <PageContent narrow className="space-y-6">
 
             <div className="space-y-3">
                 {programs.map((p) => (
@@ -172,6 +178,7 @@ export default function AdminLanguagePrograms() {
                     </Card>
                 ))}
             </div>
+            </PageContent>
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

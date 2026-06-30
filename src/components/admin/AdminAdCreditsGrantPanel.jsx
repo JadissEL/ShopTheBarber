@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Megaphone, Search } from 'lucide-react';
+import { Megaphone } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
 import { toast } from 'sonner';
 import { formatMoney } from '@/lib/formatMoney';
 
@@ -52,7 +53,7 @@ export default function AdminAdCreditsGrantPanel() {
 
     return (
         <div className="space-y-6 max-w-xl">
-            <Card className="rounded-2xl border-border">
+            <Card className=" border-border">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                         <Megaphone className="w-5 h-5 text-primary" />
@@ -66,19 +67,17 @@ export default function AdminAdCreditsGrantPanel() {
 
                     <div className="space-y-2">
                         <Label htmlFor="ad-user-search">Find user</Label>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-                            <Input
-                                id="ad-user-search"
-                                value={userSearch}
-                                onChange={(e) => setUserSearch(e.target.value)}
-                                placeholder="user@email.com or name…"
-                                className="pl-9"
-                            />
-                        </div>
+                        <SearchField
+                            id="ad-user-search"
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            onClear={() => setUserSearch('')}
+                            placeholder="user@email.com or name…"
+                            aria-label="Find user for ad credits"
+                        />
                         {searching && <p className="text-xs text-muted-foreground">Searching…</p>}
                         {users.length > 0 && (
-                            <div className="border rounded-xl divide-y max-h-48 overflow-y-auto">
+                            <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
                                 {users.map((u) => (
                                     <button
                                         key={u.id}
@@ -152,7 +151,7 @@ export default function AdminAdCreditsGrantPanel() {
             </Card>
 
             {grants.length > 0 && (
-                <Card className="rounded-2xl border-border">
+                <Card className=" border-border">
                     <CardHeader>
                         <CardTitle className="text-base">Recent ad credit grants</CardTitle>
                     </CardHeader>

@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
+import SearchField from '@/components/ui/search-field';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
@@ -16,6 +16,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { FileText, Eye, CheckCircle2, XCircle, Star, Ban } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
@@ -30,10 +34,10 @@ const STATUS_TABS = [
 ];
 
 const STATUS_STYLES = {
-  draft: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Draft' },
-  pending_review: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Pending review' },
-  published: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Published' },
-  rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+  draft: { bg: 'bg-warning/15', text: 'text-foreground', label: 'Draft' },
+  pending_review: { bg: 'bg-primary/10', text: 'text-primary', label: 'Pending review' },
+  published: { bg: 'bg-success/10', text: 'text-success', label: 'Published' },
+  rejected: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Rejected' },
 };
 
 export default function AdminContentManagement() {
@@ -99,16 +103,16 @@ export default function AdminContentManagement() {
       : 0;
 
   return (
-    <div className="min-h-screen py-8 bg-background font-sans">
+    <div className={stb.page}>
       <MetaTags title="Content management | Admin" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Blog content</h1>
-          <p className="text-muted-foreground">
-            Review articles submitted by barbers and shop owners. Only approved articles appear on the public blog.
-          </p>
-        </motion.div>
+      <PageHeader
+        tier="app"
+        variant="light"
+        title="Blog content"
+        subtitle="Review articles submitted by barbers and shop owners. Only approved articles appear on the public blog."
+      />
 
+      <PageContent>
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           {[
             { label: 'In queue', value: pendingCount },
@@ -118,10 +122,10 @@ export default function AdminContentManagement() {
               value: filtered.reduce((sum, a) => sum + (a.views || 0), 0).toLocaleString(),
             },
           ].map((stat) => (
-            <Card key={stat.label} className="rounded-2xl">
+            <Card key={stat.label} className={stb.panel}>
               <CardContent className="p-5">
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className={stb.caption}>{stat.label}</p>
+                <p className={stb.metricValue}>{stat.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -140,18 +144,20 @@ export default function AdminContentManagement() {
               </Button>
             ))}
           </div>
-          <Input
+          <SearchField
             placeholder="Search title, author, category…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
             className="sm:max-w-xs sm:ml-auto"
+            aria-label="Search blog articles"
           />
         </div>
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading articles…</p>
         ) : filtered.length === 0 ? (
-          <Card className="rounded-2xl">
+          <Card className="">
             <CardContent className="py-12 text-center text-muted-foreground">
               No articles in this view.
             </CardContent>
@@ -167,11 +173,11 @@ export default function AdminContentManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.03 }}
                 >
-                  <Card className="rounded-2xl">
+                  <Card className="">
                     <CardContent className="p-5">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div className="flex gap-4 flex-1 min-w-0">
-                          <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                          <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                             <FileText className="w-5 h-5 text-primary" />
                           </div>
                           <div className="min-w-0">
@@ -193,7 +199,7 @@ export default function AdminContentManagement() {
                               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.excerpt}</p>
                             )}
                             {item.rejection_reason && item.status === 'rejected' && (
-                              <p className="text-sm text-red-600 mt-1">{item.rejection_reason}</p>
+                              <p className="text-sm text-destructive mt-1">{item.rejection_reason}</p>
                             )}
                           </div>
                         </div>
@@ -218,7 +224,7 @@ export default function AdminContentManagement() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600"
+                                className="text-destructive"
                                 onClick={() => unpublishMutation.mutate(item.id)}
                               >
                                 <Ban className="w-4 h-4" />
@@ -230,7 +236,7 @@ export default function AdminContentManagement() {
                             <>
                               <Button
                                 size="sm"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                                className="bg-primary hover:bg-primary/90 text-white gap-1"
                                 disabled={approveMutation.isPending}
                                 onClick={() => approveMutation.mutate(item.id)}
                               >
@@ -239,7 +245,7 @@ export default function AdminContentManagement() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-red-600 gap-1"
+                                className="text-destructive gap-1"
                                 onClick={() => setRejectTarget(item)}
                               >
                                 <XCircle className="w-4 h-4" /> Reject
@@ -255,7 +261,7 @@ export default function AdminContentManagement() {
             })}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <Dialog open={!!rejectTarget} onOpenChange={(open) => !open && setRejectTarget(null)}>
         <DialogContent>
@@ -274,7 +280,7 @@ export default function AdminContentManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectTarget(null)}>Cancel</Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              variant="destructive"
               disabled={rejectMutation.isPending}
               onClick={() => rejectMutation.mutate({ id: rejectTarget.id, reason: rejectReason })}
             >

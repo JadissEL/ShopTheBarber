@@ -8,6 +8,8 @@ import CategoryGrid from '@/components/help/CategoryGrid';
 import FAQAccordion from '@/components/help/FAQAccordion';
 import { filterHelpContent } from '@/components/help/helpCenterContent';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function HelpCenter() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +22,7 @@ export default function HelpCenter() {
   const isSearching = searchQuery.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-card">
+    <div className="stb-page min-h-screen bg-background">
       <MetaTags
         title="Help Center"
         description="How can we help? Search guides for bookings, payments, account settings, and contact ShopTheBarber support."
@@ -32,7 +34,7 @@ export default function HelpCenter() {
         <HelpQuickActions />
 
         {isSearching && categories.length === 0 && faqs.length === 0 ? (
-          <div className="text-center py-16 rounded-xl border border-dashed border-border bg-muted/50/50">
+          <div className="text-center py-16 rounded-lg border border-dashed border-foreground/10 bg-muted/50">
             <p className="text-foreground font-medium mb-2">No results for &ldquo;{searchQuery}&rdquo;</p>
             <p className="text-sm text-muted-foreground mb-6">
               Try another keyword or reach out to our team directly.
@@ -51,8 +53,8 @@ export default function HelpCenter() {
           </>
         )}
 
-        <section className="rounded-2xl border border-border bg-muted/50 px-6 py-10 md:py-12 text-center">
-          <h2 className="text-lg font-semibold text-foreground mb-2">Still need help?</h2>
+        <section className={cn(stb.surface, 'border-foreground/10 px-6 py-10 md:py-12 text-center')}>
+          <h2 className={cn(stb.uiHeading, 'text-lg mb-2')}>Still need help?</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
             Our support team is available for bookings, payments, and account issues.
           </p>

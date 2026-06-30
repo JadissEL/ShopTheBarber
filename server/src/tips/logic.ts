@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import Stripe from 'stripe';
 import { prisma } from '../db/prisma';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import { TIP_CONFIG } from './config';
 
 let stripe: Stripe | null = null;
@@ -9,7 +9,7 @@ let stripe: Stripe | null = null;
 function getStripe(): Stripe | null {
     if (stripe) return stripe;
     const apiKey = getStripeApiKey();
-    if (!apiKey || !apiKey.startsWith('sk_')) return null;
+    if (!isUsableStripeApiKey(apiKey)) return null;
     stripe = new Stripe(apiKey, { apiVersion: '2025-01-27.acacia', typescript: true });
     return stripe;
 }

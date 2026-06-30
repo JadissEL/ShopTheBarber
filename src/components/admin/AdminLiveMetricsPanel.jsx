@@ -5,7 +5,7 @@ import { AlertTriangle, Calendar, CreditCard, Wallet, Users } from 'lucide-react
 
 function Metric({ icon: Icon, label, value, alert }) {
     return (
-        <div className={`rounded-xl border p-4 ${alert ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-950/20' : 'border-border'}`}>
+        <div className={`rounded-lg border p-4 ${alert ? 'border-primary/40 bg-primary/10 dark:bg-primary/10' : 'border-border'}`}>
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                 <Icon className="w-3.5 h-3.5" />
                 {label}

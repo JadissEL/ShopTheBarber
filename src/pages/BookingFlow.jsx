@@ -16,6 +16,9 @@ import {
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import confetti from 'canvas-confetti';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import BookingServicesStep from '@/components/booking/BookingServicesStep';
@@ -1893,20 +1896,25 @@ export default function BookingFlow() {
   };
 
   return (
-    <div className="stb-page pb-24 lg:pb-8 stb-page">
+    <div className={stb.page + ' pb-24 lg:pb-8'}>
       <MetaTags
         title="Book Appointment"
         description="Find and book with the best barbers in your area"
       />
 
+      <PageHeader
+        label="Booking"
+        title="Book appointment"
+        subtitle={`Step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`}
+        compact
+        variant="light"
+        tier="app"
+      />
+
       {/* Progress Header */}
       <div className="sticky top-0 z-30 stb-glass border-b border-border/80 bg-background/95 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-5">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-0.5">Booking</p>
-              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight">Book Appointment</h1>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-end mb-4">
             {currentStep > 0 && currentStep < 3 && !isContextValidating && (
               <Button variant="ghost" size="sm" onClick={handleBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
@@ -1915,31 +1923,29 @@ export default function BookingFlow() {
           </div>
 
           {/* Step Indicator, compact on mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {STEPS.map((step, index) => (
               <React.Fragment key={step}>
                 <div className={cn(
-                  "flex shrink-0 items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all font-semibold",
-                  index === currentStep ? "stb-step-active" :
-                    index < currentStep ? "stb-step-done" : "bg-muted/60 text-muted-foreground"
+                  "flex shrink-0 items-center gap-2 px-1 sm:px-2 py-1 transition-all duration-200",
+                  index === currentStep ? "text-foreground" :
+                    index < currentStep ? "text-primary" : "text-muted-foreground"
                 )}>
                   {index < currentStep ? (
-                    <Check className="w-4 h-4 shrink-0" />
+                    <Check className="w-4 h-4 shrink-0 text-primary" />
                   ) : (
                     <span className={cn(
-                      "w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold",
-                      index === currentStep ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background/80 text-muted-foreground"
-                    )}>
-                      {index + 1}
-                    </span>
+                      "w-2.5 h-2.5 shrink-0 rounded-full transition-colors",
+                      index === currentStep ? "bg-primary ring-4 ring-primary/20" : "bg-muted-foreground/35"
+                    )} aria-hidden />
                   )}
-                  <span className="text-xs sm:text-sm font-semibold hidden sm:inline">{step}</span>
+                  <span className="text-xs sm:text-sm font-medium hidden sm:inline">{step}</span>
                   <span className="sr-only sm:hidden">{step}</span>
                 </div>
                 {index < STEPS.length - 1 && (
                   <div className={cn(
-                    "h-0.5 shrink-0 w-4 sm:flex-1 sm:max-w-12",
-                    index < currentStep ? "bg-primary" : "bg-muted"
+                    "h-px shrink-0 w-4 sm:flex-1 sm:max-w-10",
+                    index < currentStep ? "bg-primary/60" : "bg-border"
                   )} />
                 )}
               </React.Fragment>
@@ -1949,24 +1955,24 @@ export default function BookingFlow() {
           {/* Progress bar */}
           <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={currentStep + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
             <div
-              className="h-full bg-primary transition-all duration-300 rounded-full"
+              className="h-full bg-primary transition-all duration-200 ease-out rounded-full"
               style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
             />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <PageContent>
         {activeBarberId && selectedBarberFetched && !selectedBarber && !isContextValidating ? (
           <div className="flex flex-col items-center justify-center py-20 min-h-[50vh] text-center">
-            <h2 className="text-xl font-bold mb-2">Professional not found</h2>
+            <h2 className={cn(stb.uiHeading, 'text-xl mb-2')}>Professional not found</h2>
             <p className="text-muted-foreground mb-4 max-w-md">This barber may no longer be listed or the link is invalid. Choose someone from Find a Barber to continue.</p>
             <Button asChild><Link to={createPageUrl('Explore')}>Find a Barber</Link></Button>
           </div>
         ) : isContextValidating ? (
           <div className="flex flex-col items-center justify-center py-20 min-h-[50vh]">
             <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-            <h2 className="text-xl font-bold mb-2">Verifying Availability...</h2>
+            <h2 className={cn(stb.uiHeading, 'text-xl mb-2')}>Verifying availability…</h2>
             <p className="text-muted-foreground">Checking barber schedule and location</p>
           </div>
         ) : (
@@ -2035,7 +2041,7 @@ export default function BookingFlow() {
 
                 <div className="max-w-3xl mx-auto space-y-6">
                   {groupMode && (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+                    <div className=" border border-primary/30 bg-primary/10/80 p-4 text-sm text-primary-foreground">
                       <p className="font-semibold mb-1">Group booking, friends &amp; family</p>
                       <p>
                         Book multiple guests in one visit at the shop (default) or at home if you choose mobile.
@@ -2044,7 +2050,7 @@ export default function BookingFlow() {
                     </div>
                   )}
                   {/* Location */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-primary" />
                       Location
@@ -2087,7 +2093,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Minimum Rating */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Star className="w-5 h-5 text-primary" />
                       Minimum Rating
@@ -2114,7 +2120,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Location Preference */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-primary" />
                       Service Location
@@ -2179,7 +2185,7 @@ export default function BookingFlow() {
                       <p className="text-xs text-muted-foreground mt-3">This barber only accepts in-shop visits.</p>
                     )}
                     {activeBarberId && effectiveServiceModes.mobile_only && (
-                      <p className="text-xs text-violet-700 mt-3">
+                      <p className="text-xs text-primary mt-3">
                         {normalizedSelectedBarber?.is_vip
                           ? 'VIP at-home specialist, enter your address at checkout for visits to your location.'
                           : 'This barber only offers at-home visits, you\u2019ll enter your address at checkout.'}
@@ -2188,7 +2194,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Spoken language */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Globe className="w-5 h-5 text-primary" />
                       Spoken language
@@ -2223,7 +2229,7 @@ export default function BookingFlow() {
                     </div>
                   </div>
 
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Baby className="w-5 h-5 text-primary" />
                       {CHILDREN_FRIENDLY_LABEL}
@@ -2244,7 +2250,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Provider Type */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Scissors className="w-5 h-5 text-primary" />
                       Provider Type
@@ -2290,7 +2296,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Acceptance Type */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <Check className="w-5 h-5 text-primary" />
                       Booking Confirmation
@@ -2325,8 +2331,8 @@ export default function BookingFlow() {
                             : "border-border hover:border-primary/50"
                         )}
                       >
-                        <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-5 h-5 text-green-600" />
+                        <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-5 h-5 text-success" />
                         </div>
                         <div className="flex-1">
                           <div className="font-semibold">Instant Confirmation</div>
@@ -2342,8 +2348,8 @@ export default function BookingFlow() {
                             : "border-border hover:border-primary/50"
                         )}
                       >
-                        <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                          <Clock className="w-5 h-5 text-amber-600" />
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Clock className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1">
                           <div className="font-semibold">Pending Confirmation</div>
@@ -2354,7 +2360,7 @@ export default function BookingFlow() {
                   </div>
 
                   {/* Sort Preference */}
-                  <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="stb-panel p-6">
                     <h3 className="font-bold mb-2 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-primary" />
                       Sort Results By
@@ -2523,7 +2529,7 @@ export default function BookingFlow() {
             )}
           </AnimatePresence>
         )}
-      </div>
+      </PageContent>
 
       {/* Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>

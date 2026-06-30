@@ -1,8 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { stb } from '@/lib/stbUi';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Activity, AlertCircle, CheckCircle, Database, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function AdminPlatformHealth() {
     const healthMetrics = [
@@ -19,46 +23,49 @@ export default function AdminPlatformHealth() {
     ];
 
     const severityColors = {
-        critical: { bg: "bg-red-100", text: "text-red-800", label: "Critique" },
-        warning: { bg: "bg-amber-100", text: "text-amber-800", label: "Attention" },
-        info: { bg: "bg-blue-100", text: "text-blue-800", label: "Info" }
+        critical: { bg: "bg-destructive/10", text: "text-destructive", label: "Critique" },
+        warning: { bg: "bg-warning/15", text: "text-foreground", label: "Attention" },
+        info: { bg: "bg-primary/10", text: "text-primary", label: "Info" }
     };
 
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                        <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white">Santé de la Plateforme</h1>
-                    </div>
-                    <p className="text-lg text-slate dark:text-matte-silver">Surveillez les performances du système</p>
-                </motion.div>
+        <div className="stb-page pb-16 font-sans">
+            <MetaTags title="Platform Health" description="Monitor system performance and uptime" />
+            <PageHeader
+                label="Admin"
+                title="Platform health"
+                subtitle="Surveillez les performances du système"
+                compact
+                variant="light"
+                tier="app"
+            />
+
+            <PageContent>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {healthMetrics.map((metric, idx) => (
                         <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                            <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                            <Card className=" border-none shadow-sm bg-card ">
                                 <CardContent className="p-6">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
-                                            <metric.icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <metric.icon className="w-6 h-6 text-primary dark:text-primary" />
                                         </div>
-                                        <Badge className="bg-emerald-100 text-emerald-800 border-0">Healthy</Badge>
+                                        <Badge className="stb-chip stb-chip-active border-0">Healthy</Badge>
                                     </div>
-                                    <p className="text-sm text-slate dark:text-matte-silver mb-1">{metric.label}</p>
-                                    <p className="text-3xl font-display font-bold text-charcoal dark:text-white">{metric.value}</p>
+                                    <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
+                                    <p className="stb.metricValue text-3xl">{metric.value}</p>
                                 </CardContent>
                             </Card>
                         </motion.div>
                     ))}
                 </div>
 
-                <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                <Card className=" border-none shadow-sm bg-card ">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-2xl font-bold text-charcoal dark:text-white">Incidents Récents</h3>
-                            <Button variant="outline" className="rounded-xl">Voir Tous</Button>
+                            <h3 className="text-2xl font-bold text-foreground dark:text-white">Incidents Récents</h3>
+                            <Button variant="outline" className="">Voir Tous</Button>
                         </div>
 
                         <div className="space-y-4">
@@ -68,13 +75,13 @@ export default function AdminPlatformHealth() {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: idx * 0.1 }}
-                                    className="flex items-center justify-between p-4 bg-background-light dark:bg-background-dark rounded-xl"
+                                    className="flex items-center justify-between p-4 bg-background  rounded-lg"
                                 >
                                     <div className="flex items-center gap-4">
                                         <AlertCircle className={`w-6 h-6 ${issue.resolved ? 'text-slate' : severityColors[issue.severity].text.replace('text-', 'text-')}`} />
                                         <div>
-                                            <h4 className="font-bold text-charcoal dark:text-white">{issue.title}</h4>
-                                            <p className="text-sm text-slate dark:text-matte-silver">{issue.time}</p>
+                                            <h4 className="font-bold text-foreground dark:text-white">{issue.title}</h4>
+                                            <p className="text-sm text-muted-foreground">{issue.time}</p>
                                         </div>
                                     </div>
 
@@ -83,9 +90,9 @@ export default function AdminPlatformHealth() {
                                             {severityColors[issue.severity].label}
                                         </Badge>
                                         {issue.resolved ? (
-                                            <Badge className="bg-emerald-100 text-emerald-800 border-0">Résolu</Badge>
+                                            <Badge className="stb-chip stb-chip-active border-0">Résolu</Badge>
                                         ) : (
-                                            <Badge className="bg-amber-100 text-amber-800 border-0">En Cours</Badge>
+                                            <Badge className="bg-warning/15 text-foreground border-0">En Cours</Badge>
                                         )}
                                     </div>
                                 </motion.div>
@@ -93,7 +100,7 @@ export default function AdminPlatformHealth() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+            </PageContent>
         </div>
     );
 }

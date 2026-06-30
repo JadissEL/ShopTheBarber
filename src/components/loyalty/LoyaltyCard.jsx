@@ -1,75 +1,76 @@
 import { Progress } from '@/components/ui/progress';
 import { Award, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import { motion } from 'framer-motion';
 
+const TIER_STYLES = {
+  Bronze: 'border-primary/40 bg-primary/5',
+  Silver: 'border-foreground/25 bg-muted',
+  Gold: 'border-primary bg-primary/10',
+  Platinum: 'border-foreground bg-[hsl(var(--navy))] text-white',
+};
+
 export default function LoyaltyCard({ profile, nextTierPoints, progress }) {
-    const tierProgressLabel =
-        profile.tier === 'Platinum' || !nextTierPoints
-            ? `${profile.lifetime_points} lifetime pts`
-            : `${profile.lifetime_points} / ${nextTierPoints} Lifetime Pts`;
+  const tierProgressLabel =
+    profile.tier === 'Platinum' || !nextTierPoints
+      ? `${profile.lifetime_points} lifetime pts`
+      : `${profile.lifetime_points} / ${nextTierPoints} Lifetime Pts`;
 
-    const pointsToNext =
-        profile.tier !== 'Platinum' && nextTierPoints
-            ? Math.max(0, nextTierPoints - profile.lifetime_points)
-            : null;
-    const getTierColor = (tier) => {
-        switch(tier) {
-            case 'Silver': return 'from-slate-300 to-slate-400 text-foreground';
-            case 'Gold': return 'from-yellow-300 to-amber-500 text-amber-950';
-            case 'Platinum': return 'from-slate-800 to-black text-white border-slate-700';
-            default: return 'from-orange-100 to-orange-200 text-orange-900'; // Bronze
-        }
-    };
+  const pointsToNext =
+    profile.tier !== 'Platinum' && nextTierPoints
+      ? Math.max(0, nextTierPoints - profile.lifetime_points)
+      : null;
 
-    const getIconColor = (tier) => {
-        if (tier === 'Platinum') return 'text-slate-200';
-        return 'text-current opacity-50';
-    };
+  const tierStyle = TIER_STYLES[profile.tier] ?? TIER_STYLES.Bronze;
+  const isPlatinum = profile.tier === 'Platinum';
 
-    return (
-        <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full"
-        >
-            <div className={cn(
-                "relative overflow-hidden rounded-2xl p-6 shadow-xl bg-gradient-to-br min-h-[220px] flex flex-col justify-between",
-                getTierColor(profile.tier)
-            )}>
-                {/* Background Pattern */}
-                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 rounded-full bg-white/20 blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 rounded-full bg-black/5 blur-3xl"></div>
+  return (
+    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full">
+      <div
+        className={cn(
+          stb.surface,
+          stb.surfaceInteractive,
+          'relative overflow-hidden p-6 min-h-[220px] flex flex-col justify-between',
+          tierStyle,
+          isPlatinum && '[&_.stb-tier-label]:text-white/70 [&_.stb-tier-value]:text-white [&_.stb-tier-body]:text-white/75',
+        )}
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" aria-hidden />
 
-                <div className="relative z-10 flex justify-between items-start">
-                    <div>
-                        <p className="text-sm font-medium opacity-80 uppercase tracking-wider">Member Status</p>
-                        <h2 className="text-3xl font-bold flex items-center gap-2 mt-1">
-                            {profile.tier}
-                            <Award className={cn("w-6 h-6", getIconColor(profile.tier))} />
-                        </h2>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-sm font-medium opacity-80 uppercase tracking-wider">Current Balance</p>
-                        <h3 className="text-4xl font-extrabold mt-1">{profile.current_points.toLocaleString()}</h3>
-                        <p className="text-xs opacity-70">pts</p>
-                    </div>
-                </div>
+        <div className="relative z-10 flex justify-between items-start gap-4">
+          <div>
+            <p className="stb-tier-label stb-section-label mb-1">Member Status</p>
+            <h2 className={cn(stb.title, 'text-3xl flex items-center gap-2')}>
+              {profile.tier}
+              <Award className={cn('w-6 h-6', isPlatinum ? 'text-primary' : 'text-primary')} />
+            </h2>
+          </div>
+          <div className="text-right">
+            <p className="stb-tier-label stb-section-label mb-1">Current Balance</p>
+            <h3 className={cn(stb.metricValue, 'text-4xl tracking-wide')}>{profile.current_points.toLocaleString()}</h3>
+            <p className="stb-tier-body text-xs uppercase tracking-wider">pts</p>
+          </div>
+        </div>
 
-                <div className="relative z-10 mt-8">
-                    <div className="flex justify-between text-sm font-medium mb-2 opacity-90">
-                        <span>Progress to {profile.tier === 'Platinum' ? 'Max Level' : 'Next Tier'}</span>
-                        <span>{tierProgressLabel}</span>
-                    </div>
-                    <Progress value={progress} className="h-3 bg-black/10" indicatorClassName="bg-current opacity-80" />
-                    {pointsToNext != null && pointsToNext > 0 && (
-                        <p className="text-xs mt-2 opacity-75 flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" />
-                            Only {pointsToNext} more lifetime points to reach next level
-                        </p>
-                    )}
-                </div>
-            </div>
-        </motion.div>
-    );
+        <div className="relative z-10 mt-8">
+          <div className="flex justify-between text-sm font-medium mb-2 stb-tier-body">
+            <span>Progress to {profile.tier === 'Platinum' ? 'Max Level' : 'Next Tier'}</span>
+            <span>{tierProgressLabel}</span>
+          </div>
+          <Progress
+            value={progress}
+            className={cn('h-2.5', isPlatinum ? 'bg-white/15' : 'bg-foreground/10')}
+            indicatorClassName="bg-primary"
+          />
+          {pointsToNext != null && pointsToNext > 0 && (
+            <p className="stb-tier-body text-xs mt-2 flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-primary" />
+              Only {pointsToNext} more lifetime points to reach next level
+            </p>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
 }

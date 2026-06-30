@@ -10,12 +10,15 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Plus, Package, Send, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const STATUS_LABELS = {
-  draft: { label: 'Draft', className: 'bg-amber-100 text-amber-800' },
-  pending_review: { label: 'Pending review', className: 'bg-blue-100 text-blue-800' },
-  published: { label: 'Live', className: 'bg-emerald-100 text-emerald-800' },
-  rejected: { label: 'Rejected', className: 'bg-red-100 text-red-800' },
+  draft: { label: 'Draft', className: 'bg-warning/15 text-foreground' },
+  pending_review: { label: 'Pending review', className: 'bg-primary/10 text-primary' },
+  published: { label: 'Live', className: 'stb-chip stb-chip-active' },
+  rejected: { label: 'Rejected', className: 'bg-destructive/10 text-destructive' },
 };
 
 export default function ProviderMarketplaceProducts() {
@@ -59,31 +62,34 @@ export default function ProviderMarketplaceProducts() {
   }
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page + ' lg:pb-8'}>
       <MetaTags title="My marketplace products | Shop The Barber" />
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Marketplace listings</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-              List grooming products for sale. Admin approval is required before they appear on the marketplace.{' '}
-              <Link to="/marketplace/seller-terms" className="text-primary hover:underline">
-                Seller terms (VAT & shipping)
-              </Link>
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate(createPageUrl('MarketplaceProductEditor'))}
-            className="bg-primary text-white rounded-xl gap-2"
-          >
-            <Plus className="w-5 h-5" /> New product
-          </Button>
-        </div>
+      <PageHeader
+        label="Provider"
+        title="Marketplace listings"
+        subtitle="List grooming products for sale. Admin approval is required before they appear on the marketplace."
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Button
+          onClick={() => navigate(createPageUrl('MarketplaceProductEditor'))}
+          className="gap-2"
+        >
+          <Plus className="w-5 h-5" /> New product
+        </Button>
+      </PageHeader>
+      <PageContent narrow>
+        <p className="text-sm text-muted-foreground mb-6">
+          <Link to="/marketplace/seller-terms" className="text-primary hover:underline">
+            Seller terms (VAT & shipping)
+          </Link>
+        </p>
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : products.length === 0 ? (
-          <Card className="rounded-2xl">
+          <Card className="">
             <CardContent className="py-12 text-center">
               <Package className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground mb-4">No listings yet.</p>
@@ -96,11 +102,11 @@ export default function ProviderMarketplaceProducts() {
               const status = STATUS_LABELS[product.status] || STATUS_LABELS.draft;
               const canEdit = product.status === 'draft' || product.status === 'rejected';
               return (
-                <Card key={product.id} className="rounded-2xl">
+                <Card key={product.id} className="">
                   <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex gap-4 flex-1 min-w-0">
                       {product.image_url && (
-                        <img src={product.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                        <img src={product.image_url} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />
                       )}
                       <div className="min-w-0">
                         <h2 className="font-semibold text-lg truncate">{product.name}</h2>
@@ -114,7 +120,7 @@ export default function ProviderMarketplaceProducts() {
                           </span>
                         </div>
                         {product.status === 'rejected' && product.rejection_reason && (
-                          <p className="text-sm text-red-600 mt-2">{product.rejection_reason}</p>
+                          <p className="text-sm text-destructive mt-2">{product.rejection_reason}</p>
                         )}
                       </div>
                     </div>
@@ -136,7 +142,7 @@ export default function ProviderMarketplaceProducts() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-600"
+                            className="text-destructive"
                             onClick={() => deleteMutation.mutate(product.id)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -158,7 +164,7 @@ export default function ProviderMarketplaceProducts() {
             })}
           </div>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

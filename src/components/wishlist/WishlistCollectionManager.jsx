@@ -24,6 +24,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { CHART_COLORS } from '@/lib/stbUi';
+
+const COLLECTION_COLORS = [1, 2, 3, 4, 5, 1, 2, 3].map((n) => CHART_COLORS[n]);
 
 export default function WishlistCollectionManager({ open, onOpenChange, collections, products }) {
   const queryClient = useQueryClient();
@@ -33,15 +36,12 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
     name: '',
     description: '',
     icon: '📁',
-    color: '#3B82F6',
+    color: CHART_COLORS[1],
     is_public: false
   });
 
   const icons = ['📁', '❤️', '⭐', '🎁', '🛍️', '💎', '🔥', '✨', '🎯', '🏆'];
-  const colors = [
-    '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', 
-    '#10B981', '#EF4444', '#6366F1', '#14B8A6'
-  ];
+  const colors = COLLECTION_COLORS;
 
   const createCollectionMutation = useMutation({
     mutationFn: async (collectionData) => {
@@ -60,7 +60,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
         name: '',
         description: '',
         icon: '📁',
-        color: '#3B82F6',
+        color: CHART_COLORS[1],
         is_public: false
       });
     }
@@ -130,7 +130,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-            <FolderPlus className="w-6 h-6 text-[#D08B3D]" />
+            <FolderPlus className="w-6 h-6 text-primary" />
             Gérer les Collections
           </DialogTitle>
           <DialogDescription>
@@ -147,7 +147,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                <Card className="rounded-[12px] border-2 border-[#D08B3D] bg-[#D08B3D]/5">
+                <Card className="rounded-lg border-2 border-primary bg-primary/5">
                   <CardContent className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-semibold text-lg">Nouvelle Collection</h4>
@@ -190,7 +190,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                               className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-all ${
                                 newCollection.icon === icon
                                   ? 'bg-blue-600 scale-110'
-                                  : 'bg-muted hover:bg-slate-200'
+                                  : 'bg-muted hover:bg-muted'
                               }`}
                             >
                               {icon}
@@ -218,7 +218,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                       <Button
                         onClick={handleCreate}
                         disabled={!newCollection.name.trim() || createCollectionMutation.isPending}
-                        className="w-full bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]"
+                        className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg min-h-[44px]"
                       >
                         <Check className="w-4 h-4 mr-2" />
                         Créer la Collection
@@ -234,7 +234,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
             <Button
               onClick={() => setIsCreating(true)}
               variant="outline"
-              className="w-full border-2 border-dashed border-slate-300 h-14 hover:border-[#D08B3D] hover:bg-[#D08B3D]/5 rounded-[10px]"
+              className="w-full border-2 border-dashed border-foreground/20 h-14 hover:border-primary hover:bg-primary/5 rounded-lg"
             >
               <Plus className="w-5 h-5 mr-2" />
               Nouvelle Collection
@@ -262,10 +262,10 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
                         >
-                          <Card className={`rounded-[12px] border-2 transition-all ${
+                          <Card className={`rounded-lg border-2 transition-all ${
                             snapshot.isDragging
-                              ? 'border-[#D08B3D] shadow-2xl'
-                              : 'border-slate-200'
+                              ? 'border-primary shadow-elevation-lg'
+                              : 'border-border'
                           }`}>
                             <CardContent className="p-6">
                               <div className="flex items-start justify-between mb-4">
@@ -298,7 +298,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                                   <Button
                                     size="icon"
                                     variant="ghost"
-                                    className="text-red-600 hover:bg-red-50"
+                                    className="text-destructive hover:bg-destructive/10"
                                     onClick={() => handleDelete(collection.id)}
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -310,7 +310,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                                 <motion.div
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
-                                  className="mt-4 pt-4 border-t border-slate-200"
+                                  className="mt-4 pt-4 border-t border-border"
                                 >
                                   <Label className="mb-3 block font-semibold">
                                     Produits dans cette collection
@@ -323,7 +323,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                                         className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
                                           collection.product_ids?.includes(product.id)
                                             ? 'border-blue-500 bg-blue-50'
-                                            : 'border-slate-200 hover:border-blue-300'
+                                            : 'border-border hover:border-blue-300'
                                         }`}
                                       >
                                         {product.image_url ? (
@@ -344,7 +344,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
                                           </p>
                                         </div>
                                         {collection.product_ids?.includes(product.id) && (
-                                          <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                          <Check className="w-5 h-5 text-primary flex-shrink-0" />
                                         )}
                                       </button>
                                     ))}
@@ -365,7 +365,7 @@ export default function WishlistCollectionManager({ open, onOpenChange, collecti
 
           {collections.length === 0 && !isCreating && (
             <div className="text-center py-12">
-              <FolderPlus className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <FolderPlus className="w-16 h-16 text-white/70 mx-auto mb-4" />
               <p className="text-muted-foreground">
                 Créez votre première collection pour mieux organiser votre wishlist
               </p>

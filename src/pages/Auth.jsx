@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageLoading } from '@/components/ui/page-loading';
 import { createPageUrl } from '@/utils';
 
 /**
@@ -11,5 +12,5 @@ export default function Auth() {
   useEffect(() => {
     navigate(createPageUrl('SignIn'), { replace: true });
   }, [navigate]);
-  return null;
+  return <PageLoading message="Redirecting…" />;
 }

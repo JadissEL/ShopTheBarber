@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function PromotionList({ barberId }) {
   const { data: promotions = [], isLoading } = useQuery({
@@ -51,23 +52,23 @@ export default function PromotionList({ barberId }) {
         };
       case 'platform_targeted': 
         return {
-          container: 'bg-black border-zinc-800', // Dark black
+          container: 'bg-black border-white/15', // Dark black
           text: 'text-white',
-          subtext: 'text-zinc-400',
+          subtext: 'text-white/70',
           badge: 'bg-white/10 text-white border-white/20',
           code: 'bg-white/10 text-white border-white/20',
-          label: 'bg-zinc-800 text-white border-zinc-700',
-          discountBox: 'bg-zinc-800 text-white' // Dark grey for black card
+          label: 'bg-[hsl(var(--navy))] text-white border-foreground/25',
+          discountBox: 'bg-[hsl(var(--navy))] text-white' // Dark grey for black card
         };
       case 'general': 
         return {
-          container: 'bg-[#E6D2B5] border-[#D4BFA3]', // Strong creamy beige
-          text: 'text-[#4A3B2A]', // Dark brown text for contrast
-          subtext: 'text-[#6B5D4D]',
-          badge: 'bg-[#4A3B2A]/10 text-[#4A3B2A] border-[#4A3B2A]/20',
-          code: 'bg-white/40 text-[#4A3B2A] border-[#4A3B2A]/20',
-          label: 'bg-[#D4BFA3] text-[#4A3B2A] border-[#C2AD91]',
-          discountBox: 'bg-[#5D4037] text-white' // Dark brown for contrast on beige
+          container: 'bg-muted border-border',
+          text: 'text-foreground',
+          subtext: 'text-muted-foreground',
+          badge: 'bg-primary/10 text-primary border-primary/20',
+          code: 'bg-card text-foreground border-foreground/20',
+          label: 'bg-secondary text-secondary-foreground border-foreground/20',
+          discountBox: 'bg-[hsl(var(--navy))] text-white'
         };
       default: 
         return {
@@ -75,7 +76,7 @@ export default function PromotionList({ barberId }) {
           text: 'text-foreground',
           subtext: 'text-muted-foreground',
           badge: 'bg-primary/10 text-primary border-primary/20',
-          code: 'bg-muted text-foreground border-gray-300',
+          code: 'bg-muted text-foreground border-foreground/20',
           label: 'bg-muted text-foreground border-border',
           discountBox: 'bg-primary text-white'
         };
@@ -84,7 +85,7 @@ export default function PromotionList({ barberId }) {
 
   return (
     <div className="mb-8 space-y-4">
-      <h3 className="font-bold text-lg flex items-center gap-2">
+      <h3 className={cn(stb.title, "text-lg flex items-center gap-2")}>
         <Sparkles className="w-5 h-5 text-primary" />
         Available Promotions
       </h3>
@@ -98,7 +99,8 @@ export default function PromotionList({ barberId }) {
             <div 
               key={promo.id || i} 
               className={cn(
-                "relative rounded-2xl flex overflow-hidden group hover:shadow-lg transition-all border",
+                "relative flex overflow-hidden group transition-all border",
+                stb.cardInteractive,
                 styles.container
               )}
             >
@@ -116,7 +118,7 @@ export default function PromotionList({ barberId }) {
                 styles.discountBox
               )}>
                  <div>
-                   <span className="block text-3xl font-black leading-none">
+                   <span className={cn(stb.metricValue, 'block text-3xl leading-none')}>
                      {(promoData.discount_text || 'Sale').replace(/[^0-9%]/g, '') || "Sale"}
                    </span>
                    {(promoData.discount_text || '').toUpperCase().includes('OFF') && (

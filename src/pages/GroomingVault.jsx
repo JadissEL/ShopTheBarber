@@ -17,10 +17,14 @@ import { useAuth } from '@/lib/AuthContext';
 import { useCart } from '@/components/context/CartContext';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 function statusBadge(fulfillment_status) {
   const s = (fulfillment_status || '').toLowerCase();
   if (s === 'delivered') return { label: 'DELIVERED', className: 'text-primary bg-primary/10', icon: '✔' };
-  if (s === 'in_transit') return { label: 'REFILL READY', className: 'text-sky-600 bg-sky-50', icon: '♻' };
+  if (s === 'in_transit') return { label: 'REFILL READY', className: 'text-primary bg-primary/10', icon: '♻' };
   return { label: 'IN VAULT', className: 'text-muted-foreground bg-muted', icon: '📦' };
 }
 
@@ -95,58 +99,59 @@ export default function GroomingVault() {
   }
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page + ' lg:pb-8'}>
       <MetaTags
         title="Grooming Vault - Shop The Barber"
         description="Your past luxury acquisitions and quick replenish."
       />
 
-      <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
-        <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Back">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Grooming Vault</h1>
-          <Link to={createPageUrl('AccountSettings')} className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Settings">
-            <Settings className="w-5 h-5" />
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        label="Marketplace"
+        title="Grooming Vault"
+        subtitle="Your past acquisitions and quick replenish"
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Link to={createPageUrl('AccountSettings')} className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Settings">
+          <Settings className="w-5 h-5" />
+        </Link>
+      </PageHeader>
 
-      <main className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-6">
+      <PageContent narrow>
         {isLoading ? (
           <PageLoading message="Loading your vault..." />
         ) : !summary ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">Unable to load your vault.</p>
-            <Button variant="outline" className="rounded-xl" onClick={() => navigate(-1)}>Go back</Button>
+            <Button variant="outline" className="" onClick={() => navigate(-1)}>Go back</Button>
           </div>
         ) : (
           <>
-            <section className="rounded-2xl bg-primary text-primary-foreground p-5 mb-8 shadow-lg">
+            <section className=" bg-primary text-primary-foreground p-5 mb-8 shadow-lg">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Vault Net Worth</p>
               <p className="text-3xl font-bold">${Number(summary.total_investment || 0).toFixed(2)}</p>
-              <p className="text-sm text-sky-200 mt-2">📈 +{Number(summary.points_earned || 0)} points earned</p>
+              <p className="text-sm text-primary/80 mt-2">📈 +{Number(summary.points_earned || 0)} points earned</p>
             </section>
 
             <section className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-foreground">Quick Replenish</h2>
-                <Link to={createPageUrl('Marketplace')} className="text-sm font-medium text-sky-600 hover:underline">View All</Link>
+                <h2 className={stb.uiSubheading}>Quick Replenish</h2>
+                <Link to={createPageUrl('Marketplace')} className="text-sm font-medium text-primary hover:underline">View All</Link>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 scrollbar-hide">
                 {(summary.quick_replenish || []).map((p) => (
                   <Link
                     key={p.product_id}
                     to={`${createPageUrl('ProductDetail')  }?id=${  encodeURIComponent(p.product_id)}`}
-                    className="shrink-0 w-[140px] rounded-xl border border-slate-200 bg-card overflow-hidden hover:shadow-md transition-shadow"
+                    className="shrink-0 w-[140px] rounded-lg border border-border bg-card overflow-hidden hover:shadow-md transition-shadow"
                   >
                     <div className="aspect-square bg-muted">
                       <OptimizedImage src={p.product_image_url || ''} alt={p.product_name} className="w-full h-full object-cover" width={140} />
                     </div>
                     <div className="p-3">
                       <p className="font-semibold text-foreground text-sm line-clamp-2">{p.product_name}</p>
-                      <p className="text-xs text-sky-600 font-medium mt-0.5">{p.replenish_frequency}</p>
+                      <p className="text-xs text-primary font-medium mt-0.5">{p.replenish_frequency}</p>
                     </div>
                   </Link>
                 ))}
@@ -158,7 +163,7 @@ export default function GroomingVault() {
 
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-foreground">Vault History</h2>
+                <h2 className={stb.uiSubheading}>Vault History</h2>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button type="button" className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Filter history">
@@ -178,8 +183,8 @@ export default function GroomingVault() {
                 {filteredHistory.map((item) => {
                   const badge = statusBadge(item.fulfillment_status);
                   return (
-                    <li key={item.id} className="rounded-2xl border border-slate-200 bg-card p-4 flex gap-4 shadow-sm">
-                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
+                    <li key={item.id} className={cn(stb.panel, 'p-4 flex gap-4')}>
+                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                         <OptimizedImage src={item.product_image_url || ''} alt={item.product_name} className="w-full h-full object-cover" width={80} />
                       </div>
                       <div className="flex-1 min-w-0 flex flex-col">
@@ -190,7 +195,7 @@ export default function GroomingVault() {
                         </span>
                         <Button
                           size="sm"
-                          className="mt-3 w-fit rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium"
+                          className="mt-3 w-fit rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-medium"
                           onClick={() => handleReorder(item)}
                         >
                           {item.fulfillment_status === 'delivered' ? 'Buy Again' : 'Reorder'}
@@ -201,7 +206,7 @@ export default function GroomingVault() {
                 })}
               </ul>
               {filteredHistory.length === 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-muted/50 py-12 text-center">
+                <div className=" border border-border bg-muted/50 py-12 text-center">
                   <p className="text-muted-foreground font-medium mb-2">
                     {(summary.vault_history?.length ?? 0) > 0 ? 'No items match this filter' : 'No vault history yet'}
                   </p>
@@ -210,7 +215,7 @@ export default function GroomingVault() {
                   </p>
                   {(summary.vault_history?.length ?? 0) === 0 && (
                     <Link to={createPageUrl('Marketplace')}>
-                      <Button className="rounded-xl bg-primary text-primary-foreground hover:opacity-95">Shop Marketplace</Button>
+                      <Button className=" bg-primary text-primary-foreground hover:opacity-95">Shop Marketplace</Button>
                     </Link>
                   )}
                 </div>
@@ -218,7 +223,7 @@ export default function GroomingVault() {
             </section>
           </>
         )}
-      </main>
+      </PageContent>
     </div>
   );
 }

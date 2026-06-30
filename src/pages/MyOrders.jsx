@@ -8,6 +8,10 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 const STATUS_LABELS = {
   confirmed: 'Preparing',
   preparing: 'Preparing',
@@ -58,14 +62,16 @@ export default function MyOrders() {
         description="View and track your premium grooming orders."
       />
 
-      <header className="sticky top-0 z-40 bg-card border-b border-border">
-        <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-4">
-          <h1 className="text-xl font-bold text-foreground">My Orders</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Track your marketplace orders</p>
-        </div>
-      </header>
+      <PageHeader
+        label="Marketplace"
+        title="My orders"
+        subtitle="Track your marketplace orders"
+        compact
+        variant="light"
+        tier="app"
+      />
 
-      <main className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-6">
+      <PageContent narrow className="max-w-2xl">
         {isLoading ? (
           <PageLoading message="Loading orders..." />
         ) : orders.length === 0 ? (
@@ -87,18 +93,18 @@ export default function MyOrders() {
                 <li key={order.id}>
                   <Link
                     to={`${createPageUrl('OrderTracking')  }?id=${  encodeURIComponent(order.id)}`}
-                    className="block rounded-2xl border border-border bg-card p-4 hover:border-primary/30 hover:shadow-sm transition-all"
+                    className={cn(stb.panel, stb.surfaceHover, 'block p-4 transition-all hover:border-primary/30')}
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground">Order {orderNum}</p>
                         <p className="text-sm text-muted-foreground mt-0.5">{dateStr}</p>
                         <p className="text-sm font-medium text-foreground mt-1">${Number(order.total).toFixed(2)}</p>
-                        <span className="inline-block mt-2 text-xs font-medium text-sky-600 bg-sky-50 px-2 py-1 rounded">
+                        <span className="inline-block mt-2 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
                           {statusLabel}
                         </span>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                     </div>
                   </Link>
                 </li>
@@ -106,7 +112,7 @@ export default function MyOrders() {
             })}
           </ul>
         )}
-      </main>
+      </PageContent>
     </div>
   );
 }

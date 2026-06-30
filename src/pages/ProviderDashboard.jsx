@@ -19,6 +19,8 @@ import ProviderSetupProgressCard from '@/components/onboarding/ProviderSetupProg
 import ProviderTrustScoreCard from '@/components/provider/ProviderTrustScoreCard';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import { stb, chartColor, chartFill } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 export default function ProviderDashboard() {
     const { data: user, isLoading: isUserLoading } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
@@ -105,14 +107,16 @@ export default function ProviderDashboard() {
 
             <PageHeader
                 label="Provider"
-                title="Shop Console"
+                title="Shop console"
                 subtitle="Monitoring platform health and booking velocity."
                 compact
+                variant="light"
+                tier="app"
             >
-                <Button onClick={handleExport} variant="outline" className="rounded-xl border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white font-bold h-11">
+                <Button onClick={handleExport} variant="outline" className="h-11">
                     <Download className="w-4 h-4 mr-2" /> Export
                 </Button>
-                <Button className="rounded-xl stb-btn-glow font-bold px-6 h-11">
+                <Button className="h-11">
                     <Zap className="w-4 h-4 mr-2" /> Upgrade
                 </Button>
             </PageHeader>
@@ -203,7 +207,7 @@ export default function ProviderDashboard() {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <Card className="lg:col-span-2 border-border shadow-sm overflow-hidden bg-card rounded-2xl">
+                    <Card className="lg:col-span-2 border-border shadow-sm overflow-hidden bg-card rounded-lg">
                         <div className="pt-6 px-6 flex justify-between items-center">
                             <div>
                                 <h3 className="text-lg font-bold text-foreground">Revenue Velocity</h3>
@@ -215,23 +219,23 @@ export default function ProviderDashboard() {
                                 <AreaChart data={revenueChartData}>
                                     <defs>
                                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
-                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                            <stop offset="5%" stopColor={chartColor(1)} stopOpacity={0.15} />
+                                            <stop offset="95%" stopColor={chartColor(1)} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
+                                        contentStyle={{ backgroundColor: 'hsl(var(--foreground))', border: 'none', borderRadius: '12px', color: 'hsl(var(--background))' }}
                                     />
-                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
                                     <YAxis hide={true} />
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
+                                    <Area type="monotone" dataKey="revenue" stroke={chartColor(1)} strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                     </Card>
 
-                    <Card className="border-border shadow-sm bg-card rounded-2xl p-6">
+                    <Card className="border-border shadow-sm bg-card rounded-lg p-6">
                         <h3 className="text-lg font-bold text-foreground mb-6">Staff Performance</h3>
                         <div className="space-y-5">
                             {staffData.length > 0 ? staffData.sort((a, b) => b.revenue - a.revenue).slice(0, 5).map((member) => (
@@ -240,22 +244,22 @@ export default function ProviderDashboard() {
                                         <UserAvatar src={member.image_url} name={member.name} className="w-10 h-10" />
                                         <div>
                                             <p className="text-sm font-bold text-foreground">{member.name}</p>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase">{member.bookings} Bookings</p>
+                                            <p className="text-[10px] text-muted-foreground font-bold uppercase">{member.bookings} Bookings</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-black text-foreground">${member.revenue?.toLocaleString()}</p>
+                                        <p className={cn(stb.metricValue, 'text-sm text-foreground')}>${member.revenue?.toLocaleString()}</p>
                                     </div>
                                 </div>
                             )) : (
-                                <div className="py-12 text-center text-slate-400 text-sm">No data available</div>
+                                <div className="py-12 text-center text-muted-foreground text-sm">No data available</div>
                             )}
                         </div>
                     </Card>
                 </div>
 
                 <Tabs defaultValue="upcoming" className="w-full">
-                    <TabsList className="bg-muted p-1 rounded-xl mb-6">
+                    <TabsList className="bg-muted p-1 rounded-lg mb-6">
                         <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                         <TabsTrigger value="history">History</TabsTrigger>
                         <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -272,16 +276,16 @@ export default function ProviderDashboard() {
                     <TabsContent value="history">
                         <div className="space-y-4">
                             {bookings.filter(b => b.status === 'completed' || (b.status === 'confirmed' && new Date(b.start_time) < new Date())).slice(0, 10).map((b) => (
-                                <div key={b.id} className="flex items-center justify-between p-4 bg-card border border-border rounded-2xl">
+                                <div key={b.id} className="flex items-center justify-between p-4 stb-panel">
                                     <div className="flex items-center gap-4">
                                         <UserAvatar user={{ full_name: b.created_by?.split('@')[0] }} className="w-10 h-10" />
                                         <div>
                                             <p className="text-sm font-bold text-foreground">{b.created_by?.split('@')[0] || 'Guest'}</p>
-                                            <p className="text-[11px] text-slate-400 font-medium">{format(new Date(b.start_time), 'MMM dd, HH:mm')}</p>
+                                            <p className="text-[11px] text-muted-foreground font-medium">{format(new Date(b.start_time), 'MMM dd, HH:mm')}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-black text-foreground">${b.price_at_booking}</p>
+                                        <p className={cn(stb.metricValue, 'text-sm text-foreground')}>${b.price_at_booking}</p>
                                         <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase">Settled</span>
                                     </div>
                                 </div>
@@ -304,26 +308,26 @@ export default function ProviderDashboard() {
 
 function BookingCard({ booking }) {
     return (
-        <Card className="hover:shadow-md transition-all p-5 border-border group bg-card rounded-3xl stb-card-lift">
+        <Card className="hover:shadow-md transition-all p-5 border-border group bg-card  stb-surface-hover">
             <div className="flex justify-between items-start mb-4">
                 <div className="text-right">
-                    <p className="text-sm font-black text-foreground">{format(parseISO(booking.start_time), 'HH:mm')}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">{format(parseISO(booking.start_time), 'EEE dd')}</p>
+                    <p className={cn(stb.metricValue, 'text-sm text-foreground')}>{format(parseISO(booking.start_time), 'HH:mm')}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{format(parseISO(booking.start_time), 'EEE dd')}</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
                     <Clock className="w-5 h-5" />
                 </div>
             </div>
             <div className="mb-4">
                 <p className="text-sm font-bold text-foreground truncate">{booking.client_name || 'Guest User'}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{booking.service_snapshot?.name || 'Standard Service'}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{booking.service_snapshot?.name || 'Standard Service'}</p>
             </div>
             <div className="flex items-center justify-between pt-4 border-t border-dashed border-border">
                 <div className="flex items-center gap-2">
                     <UserAvatar user={{ full_name: booking.barber_name }} className="w-6 h-6" />
                     <span className="text-[10px] font-bold text-muted-foreground uppercase truncate max-w-[80px]">{booking.barber_name}</span>
                 </div>
-                <span className="text-xs font-black text-foreground">${booking.price_at_booking}</span>
+                <span className={cn(stb.metricValue, 'text-xs text-foreground')}>${booking.price_at_booking}</span>
             </div>
         </Card>
     );

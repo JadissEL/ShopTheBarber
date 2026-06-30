@@ -1,24 +1,28 @@
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Scissors } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function ServicesPricing() {
   return (
-    <div className="stb-page">
+    <div className="stb-page pb-16 font-sans">
       <MetaTags title="Services & Pricing" description="View our services and pricing at ShopTheBarber" />
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        <Link to={createPageUrl('Home')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8">
+      <PageHeader
+        label="Provider"
+        title="Services & pricing"
+        subtitle="Rates vary by barber and location. Book to see exact prices."
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
+        <Link to={createPageUrl('Home')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </Link>
-        <div className="flex items-center gap-3 mb-8">
-          <Scissors className="w-10 h-10 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Services & Pricing</h1>
-            <p className="text-muted-foreground">Rates vary by barber and location. Book to see exact prices.</p>
-          </div>
-        </div>
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground mb-6">
@@ -33,7 +37,7 @@ export default function ServicesPricing() {
             </Link>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

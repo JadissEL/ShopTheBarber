@@ -50,18 +50,18 @@ export default function BackupHealthDashboard() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'HEALTHY': return 'bg-green-50 border-green-200';
-      case 'WARNING': return 'bg-yellow-50 border-yellow-200';
-      case 'FAILED': return 'bg-red-50 border-red-200';
+      case 'HEALTHY': return 'bg-success/10 border-success/20';
+      case 'WARNING': return 'bg-warning/15 border-warning/30';
+      case 'FAILED': return 'bg-destructive/10 border-destructive/20';
       default: return 'bg-muted/50 border-border';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'HEALTHY': return <CheckCircle2 className="w-6 h-6 text-green-600" />;
-      case 'WARNING': return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
-      case 'FAILED': return <XCircle className="w-6 h-6 text-red-600" />;
+      case 'HEALTHY': return <CheckCircle2 className="w-6 h-6 text-success" />;
+      case 'WARNING': return <AlertTriangle className="w-6 h-6 text-warning" />;
+      case 'FAILED': return <XCircle className="w-6 h-6 text-destructive" />;
       default: return <AlertCircle className="w-6 h-6 text-muted-foreground" />;
     }
   };
@@ -69,11 +69,11 @@ export default function BackupHealthDashboard() {
   const getCheckStatusBadge = (checkStatus) => {
     switch (checkStatus) {
       case 'PASS':
-        return <Badge className="bg-green-100 text-green-800 border-green-300">Pass</Badge>;
+        return <Badge className="bg-success/10 text-success border-success/30">Pass</Badge>;
       case 'WARNING':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Warning</Badge>;
+        return <Badge className="bg-warning/15 text-foreground border-warning/30">Warning</Badge>;
       case 'FAIL':
-        return <Badge className="bg-red-100 text-red-800 border-red-300">Failed</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive border-destructive/30">Failed</Badge>;
       case 'SKIPPED':
         return <Badge variant="outline">Skipped</Badge>;
       default:
@@ -192,9 +192,9 @@ export default function BackupHealthDashboard() {
               {backupStatus.checks.map((check, idx) => (
                 <div key={idx} className="flex items-start gap-4 p-3 bg-muted/50 rounded-lg">
                   <div className="mt-1">
-                    {check.status === 'PASS' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-                    {check.status === 'WARNING' && <AlertTriangle className="w-5 h-5 text-yellow-600" />}
-                    {check.status === 'FAIL' && <XCircle className="w-5 h-5 text-red-600" />}
+                    {check.status === 'PASS' && <CheckCircle2 className="w-5 h-5 text-success" />}
+                    {check.status === 'WARNING' && <AlertTriangle className="w-5 h-5 text-warning" />}
+                    {check.status === 'FAIL' && <XCircle className="w-5 h-5 text-destructive" />}
                     {check.status === 'SKIPPED' && <Info className="w-5 h-5 text-muted-foreground" />}
                   </div>
                   <div className="flex-1">
@@ -267,11 +267,11 @@ export default function BackupHealthDashboard() {
       </Card>
 
       {/* Emergency Contact */}
-      <Card className="border-amber-200 bg-amber-50">
+      <Card className="border-primary/30 bg-primary/10">
         <CardHeader>
-          <CardTitle className="text-amber-900">Emergency Support</CardTitle>
+          <CardTitle className="text-foreground">Emergency Support</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-amber-900">
+        <CardContent className="text-sm text-foreground">
           For backup-related emergencies, contact sovereign support immediately:<br />
           <strong>backup-emergency@sovereign.io</strong>
         </CardContent>

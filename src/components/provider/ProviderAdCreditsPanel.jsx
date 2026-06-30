@@ -12,14 +12,14 @@ export default function ProviderAdCreditsPanel() {
     });
 
     if (isLoading) {
-        return <div className="h-20 rounded-2xl bg-muted/40 animate-pulse" aria-busy="true" />;
+        return <div className="h-20 rounded-lg bg-muted/40 animate-pulse" aria-busy="true" />;
     }
     if (isError || !data) return null;
 
     const balance = data.balance ?? 0;
 
     return (
-        <Card className="rounded-2xl border-border/60">
+        <Card className=" border-border/60">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Megaphone className="w-5 h-5 text-primary" />

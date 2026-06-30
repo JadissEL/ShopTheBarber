@@ -18,11 +18,14 @@ import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageLoading } from '@/components/ui/page-loading';
+import PageHeader from '@/components/layout/PageHeader';
+import SearchField from '@/components/ui/search-field';
+import { stb } from '@/lib/stbUi';
 
 const STATUS_COLORS = {
-    open: 'bg-amber-100 text-amber-800',
-    in_progress: 'bg-sky-100 text-sky-800',
-    resolved: 'bg-emerald-100 text-emerald-800',
+    open: 'bg-warning/15 text-foreground',
+    in_progress: 'bg-primary/10 text-primary',
+    resolved: 'stb-chip stb-chip-active',
     closed: 'bg-muted text-muted-foreground',
 };
 
@@ -121,26 +124,34 @@ export default function AdminSupportInbox() {
     if (isLoading && !tickets.length) return <PageLoading message="Loading support inbox…" />;
 
     return (
-        <div className="stb-page flex flex-col">
+        <div className={cn(stb.page, 'flex flex-col')}>
             <MetaTags title="Support Inbox" description="Platform support tickets" />
 
-            <header className="border-b border-border bg-card px-4 lg:px-8 py-4">
-                <div className="flex items-center gap-3 mb-4">
-                    <Inbox className="w-6 h-6 text-primary" />
-                    <h1 className="text-xl font-bold">Support Inbox</h1>
+            <PageHeader
+                tier="app"
+                variant="light"
+                compact
+                title="Support Inbox"
+                subtitle="Manage platform support tickets"
+            >
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full lg:w-auto">
+                    <Card><CardContent className="p-3 flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><div><p className="text-xs text-muted-foreground">Open</p><p className={stb.metricValue}>{stats?.open ?? 0}</p></div></CardContent></Card>
+                    <Card><CardContent className="p-3 flex items-center gap-2"><Headphones className="w-4 h-4 text-primary" /><div><p className="text-xs text-muted-foreground">In progress</p><p className={stb.metricValue}>{stats?.in_progress ?? 0}</p></div></CardContent></Card>
+                    <Card><CardContent className="p-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-success" /><div><p className="text-xs text-muted-foreground">Resolved</p><p className={stb.metricValue}>{stats?.resolved ?? 0}</p></div></CardContent></Card>
+                    <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Total</p><p className={stb.metricValue}>{stats?.total ?? 0}</p></CardContent></Card>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <Card><CardContent className="p-3 flex items-center gap-2"><Clock className="w-4 h-4 text-amber-600" /><div><p className="text-xs text-muted-foreground">Open</p><p className="font-bold">{stats?.open ?? 0}</p></div></CardContent></Card>
-                    <Card><CardContent className="p-3 flex items-center gap-2"><Headphones className="w-4 h-4 text-sky-600" /><div><p className="text-xs text-muted-foreground">In progress</p><p className="font-bold">{stats?.in_progress ?? 0}</p></div></CardContent></Card>
-                    <Card><CardContent className="p-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><div><p className="text-xs text-muted-foreground">Resolved</p><p className="font-bold">{stats?.resolved ?? 0}</p></div></CardContent></Card>
-                    <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{stats?.total ?? 0}</p></CardContent></Card>
-                </div>
-            </header>
+            </PageHeader>
 
             <div className="flex-1 flex min-h-0">
                 <aside className="w-full lg:w-96 border-r border-border flex flex-col bg-card">
                     <div className="p-3 space-y-2 border-b border-border">
-                        <Input placeholder="Search tickets…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                        <SearchField
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            onClear={() => setSearch('')}
+                            placeholder="Search tickets…"
+                            aria-label="Search support tickets"
+                        />
                         <Select value={filterStatus} onValueChange={setFilterStatus}>
                             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                             <SelectContent>
@@ -226,7 +237,7 @@ export default function AdminSupportInbox() {
                                             return (
                                                 <div key={msg.id} className={cn('flex', isSupport ? 'justify-end' : 'justify-start')}>
                                                     <div className={cn(
-                                                        'max-w-[85%] rounded-2xl px-4 py-2 text-sm',
+                                                        'max-w-[85%] rounded-lg px-4 py-2 text-sm',
                                                         isSupport ? 'bg-primary text-primary-foreground' : 'bg-muted'
                                                     )}>
                                                         <p className="text-[10px] opacity-70 mb-0.5">{msg.sender_display_name}</p>

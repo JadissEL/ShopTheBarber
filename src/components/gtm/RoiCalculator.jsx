@@ -36,7 +36,7 @@ export function RoiCalculator({
   const oneNoShowCovers = roi.recoveredPerNoShow >= roi.monthlyFee;
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background overflow-hidden">
+    <Card className="border-primary/20 bg-primary/5 overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-xl">
           <Calculator className="w-5 h-5 text-primary" />
@@ -58,7 +58,7 @@ export function RoiCalculator({
               step={1}
               value={avgPrice}
               onChange={(e) => setAvgPrice(e.target.value)}
-              className="rounded-xl"
+              className=""
             />
           </div>
           <div className="space-y-2">
@@ -70,21 +70,21 @@ export function RoiCalculator({
               step={1}
               value={noShows}
               onChange={(e) => setNoShows(e.target.value)}
-              className="rounded-xl"
+              className=""
             />
           </div>
         </div>
 
         <div
-          className={`rounded-xl border p-5 space-y-3 ${
+          className={`rounded-lg border p-5 space-y-3 ${
             oneNoShowCovers
-              ? 'border-emerald-200 bg-emerald-50/80 dark:bg-emerald-950/20'
+              ? 'border-primary/30 stb-notice-warm dark:bg-emerald-950/20'
               : 'border-border bg-card'
           }`}
         >
           <div className="flex items-start gap-3">
             <TrendingUp
-              className={`w-5 h-5 shrink-0 mt-0.5 ${oneNoShowCovers ? 'text-emerald-600' : 'text-muted-foreground'}`}
+              className={`w-5 h-5 shrink-0 mt-0.5 ${oneNoShowCovers ? 'text-primary' : 'text-muted-foreground'}`}
             />
             <div>
               <p className="font-semibold text-foreground">

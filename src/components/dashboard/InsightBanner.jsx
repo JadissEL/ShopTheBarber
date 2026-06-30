@@ -33,7 +33,7 @@ export default function InsightBanner({ message, actionText, onAction, actionHre
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8"
+            className="bg-primary/5 border border-primary/10 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8"
         >
             <div className="flex items-start gap-3">
                 <div className="p-2 bg-primary/10 rounded-full shrink-0">

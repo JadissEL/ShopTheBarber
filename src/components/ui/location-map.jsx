@@ -16,7 +16,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 export default function LocationMap({ center = [33.15, -96.96], zoom = 13, popupText, className }) {
   return (
-    <div className={`h-48 w-full rounded-2xl overflow-hidden bg-muted border border-border relative z-0 ${className}`}>
+    <div className={`h-48 w-full rounded-lg overflow-hidden bg-muted border border-border relative z-0 ${className}`}>
          <MapContainer center={center} zoom={zoom} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
             <MapTileLayer />
             <Marker position={center}>

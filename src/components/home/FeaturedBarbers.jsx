@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { motion } from 'framer-motion';
 import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function FeaturedBarbers() {
   const { data: barbers = [], isLoading } = useQuery({
@@ -29,12 +31,12 @@ export default function FeaturedBarbers() {
   });
 
   return (
-    <div className="py-24 bg-card relative">
+    <div className="py-24 bg-background relative stb-marketing-prose">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12">
             <div>
-                 <div className="text-primary font-semibold uppercase tracking-wider text-xs mb-2">Talent Showcase</div>
-                 <h2 className="text-3xl font-bold text-foreground mb-2 tracking-tight">Featured Professionals</h2>
+                 <p className={cn(stb.label, 'mb-2')}>Talent Showcase</p>
+                 <h2 className={cn(stb.heading, 'text-3xl mb-2')}>Featured Professionals</h2>
                  <p className="text-muted-foreground font-light text-lg">Curated experts who are redefining the craft.</p>
             </div>
             <Link to={createPageUrl('Explore')}>
@@ -65,14 +67,14 @@ export default function FeaturedBarbers() {
                     className="group cursor-pointer"
                 >
                     <Link to={createPageUrl(`BarberProfile?id=${barber.id}`)}>
-                        <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] bg-muted mb-6 shadow-sm group-hover:shadow-2xl group-hover:shadow-primary/10 transition-all duration-500">
+                        <div className={cn(stb.surfaceHover, 'relative aspect-[3/4] overflow-hidden mb-6 group')}>
                             <OptimizedImage 
                                 src={barber.image_url} 
                                 alt={barber.name} 
                                 fill 
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                            <div className="absolute inset-0 bg-foreground/50 opacity-60 group-hover:opacity-80 transition-opacity"></div>
                             
                             <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-foreground flex items-center gap-1 shadow-lg transform group-hover:scale-105 transition-transform">
                                 <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
@@ -84,7 +86,7 @@ export default function FeaturedBarbers() {
                                     <MapPin className="w-3 h-3" />
                                     {barber.location}
                                 </div>
-                                <h3 className="text-2xl font-bold mb-1">{barber.name}</h3>
+                                <h3 className={cn(stb.title, 'text-2xl mb-1 text-white')}>{barber.name}</h3>
                                 <p className="text-white/80 text-sm font-light">{barber.title}</p>
                             </div>
                         </div>

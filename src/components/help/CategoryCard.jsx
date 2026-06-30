@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function resolveHref(item) {
   if (item.external) return item.href;
@@ -16,17 +17,17 @@ export default function CategoryCard({ category }) {
   const href = resolveHref(category);
 
   const className = cn(
-    'group flex flex-col h-full p-6 rounded-xl border border-border bg-card',
-    'transition-all duration-200 hover:border-foreground/15 hover:shadow-md hover:-translate-y-0.5',
+    stb.surfaceHover,
+    'group flex flex-col h-full p-6 rounded-lg border border-foreground/10',
     'focus-within:ring-2 focus-within:ring-primary/20'
   );
 
   const content = (
     <>
-      <div className="w-10 h-10 rounded-lg border border-border flex items-center justify-center text-foreground mb-4 group-hover:border-primary/30 transition-colors duration-200">
+      <div className="w-10 h-10 rounded-lg border border-foreground/10 flex items-center justify-center text-foreground mb-4 group-hover:border-primary/30 transition-colors duration-200">
         <Icon className="w-5 h-5 stroke-[1.5]" aria-hidden />
       </div>
-      <h3 className="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-200">
+      <h3 className={cn(stb.uiHeading, 'text-base mb-2 group-hover:text-primary transition-colors duration-200')}>
         {category.title}
       </h3>
       <p className="text-sm text-muted-foreground leading-relaxed flex-1">{category.description}</p>

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import SearchField from '@/components/ui/search-field';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,23 +13,24 @@ import {
     Scale,
     RefreshCw,
     Wallet,
-    Search,
     ChevronRight,
 } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 function StatTile({ label, value, sub, tone = 'default' }) {
     const tones = {
         default: 'text-foreground',
-        danger: 'text-red-600',
-        success: 'text-green-600',
-        warn: 'text-amber-600',
+        danger: 'text-destructive',
+        success: 'text-primary',
+        warn: 'text-primary',
     };
     return (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className=" border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
             <p className={`text-2xl font-bold ${tones[tone] ?? tones.default}`}>{value}</p>
             {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
@@ -38,9 +39,9 @@ function StatTile({ label, value, sub, tone = 'default' }) {
 }
 
 function HealthBadge({ score, flags = [] }) {
-    let color = 'bg-green-100 text-green-800';
-    if (score < 60) color = 'bg-red-100 text-red-800';
-    else if (score < 80) color = 'bg-amber-100 text-amber-800';
+    let color = 'bg-primary/10 text-primary';
+    if (score < 60) color = 'bg-destructive/10 text-destructive';
+    else if (score < 80) color = 'bg-warning/15 text-foreground';
     return (
         <div className="space-y-1">
             <Badge className={color}>Health {score}/100</Badge>
@@ -232,20 +233,20 @@ export default function AdminProviderInsights() {
         <div className="stb-page pb-16">
             <MetaTags title="Provider Insights" description="Admin operational metrics per service provider" />
 
-            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-                <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Provider Insights</h1>
-                        <p className="text-muted-foreground mt-2 max-w-2xl">
-                            Operational health per barber and shop, completions, cancellations, cash issues,
-                            disputes, refunds, and platform penalties. Industry benchmarks: keep cancellation
-                            under 8-15%, no-shows under 5-10%, and dispute rate under 2%.
-                        </p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => refetch()}>
-                        <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-                    </Button>
-                </div>
+            <PageHeader
+                label="Admin"
+                title="Provider insights"
+                subtitle="Operational health per barber and shop — completions, cancellations, cash issues, disputes, and penalties."
+                compact
+                variant="light"
+                tier="app"
+            >
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                    <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+                </Button>
+            </PageHeader>
+
+            <PageContent>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <StatTile
@@ -271,15 +272,14 @@ export default function AdminProviderInsights() {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search providers..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10"
-                        />
-                    </div>
+                    <SearchField
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onClear={() => setSearch('')}
+                        placeholder="Search providers..."
+                        className="flex-1"
+                        aria-label="Search providers"
+                    />
                     <select
                         value={typeFilter}
                         onChange={(e) => {
@@ -314,7 +314,7 @@ export default function AdminProviderInsights() {
                                     setSelectedId(p.id);
                                     setSelectedType(p.type);
                                 }}
-                                className={`w-full text-left rounded-xl border p-4 transition-all hover:border-primary/40 ${
+                                className={`w-full text-left rounded-lg border p-4 transition-all hover:border-primary/40 ${
                                     selectedId === p.id && selectedType === p.type ? 'border-primary bg-primary/5' : 'border-border bg-card'
                                 }`}
                             >
@@ -326,7 +326,7 @@ export default function AdminProviderInsights() {
                                             <span>{p.completed_services} completed</span>
                                             <span>, {p.cancelled_bookings} cancelled</span>
                                             {p.disputes_total > 0 && (
-                                                <span className="text-amber-700">{p.disputes_total} disputes</span>
+                                                <span className="text-muted-foreground">{p.disputes_total} disputes</span>
                                             )}
                                         </p>
                                     </div>
@@ -345,7 +345,7 @@ export default function AdminProviderInsights() {
                         <ProviderDetailPanel providerId={selectedId} providerType={selectedType} />
                     </div>
                 </div>
-            </div>
+            </PageContent>
         </div>
     );
 }

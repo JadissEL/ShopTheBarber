@@ -93,7 +93,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-            <Share2 className="w-6 h-6 text-[#D08B3D]" />
+            <Share2 className="w-6 h-6 text-primary" />
             Partager ma Wishlist
           </DialogTitle>
           <DialogDescription>
@@ -108,7 +108,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
             <div className="grid grid-cols-3 gap-3">
               <Button
                 variant="outline"
-                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="border-2 border-primary text-primary hover:bg-primary/10"
                 onClick={() => shareOnSocial('facebook')}
               >
                 <Facebook className="w-5 h-5 mr-2" />
@@ -117,7 +117,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
 
               <Button
                 variant="outline"
-                className="border-2 border-sky-500 text-sky-500 hover:bg-sky-50"
+                className="border-2 border-primary text-primary hover:bg-primary/10"
                 onClick={() => shareOnSocial('twitter')}
               >
                 <Twitter className="w-5 h-5 mr-2" />
@@ -126,7 +126,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
 
               <Button
                 variant="outline"
-                className="border-2 border-green-600 text-green-600 hover:bg-green-50"
+                className="border-2 border-success text-success hover:bg-success/10"
                 onClick={() => shareOnSocial('whatsapp')}
               >
                 <MessageSquare className="w-5 h-5 mr-2" />
@@ -146,7 +146,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
               />
               <Button
                 onClick={copyToClipboard}
-                className="bg-[#D08B3D] hover:bg-[#D08B3D]/90 text-white rounded-[10px] min-h-[44px]"
+                className="bg-primary hover:bg-primary/90 text-white rounded-lg min-h-[44px]"
               >
                 {copied ? (
                   <>
@@ -178,7 +178,7 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
                 onClick={sendByEmail}
                 disabled={!email || sending}
                 variant="outline"
-                className="border-slate-300"
+                className="border-foreground/20"
               >
                 <Mail className="w-4 h-4 mr-2" />
                 {sending ? 'Envoi...' : 'Envoyer'}
@@ -189,10 +189,10 @@ export default function ShareWishlistDialog({ open, onOpenChange, products }) {
           {/* Preview */}
           <div>
             <h4 className="font-semibold mb-4">Aperçu du partage</h4>
-            <Card className="rounded-[12px] border-2 border-slate-200 p-6">
+            <Card className="rounded-lg border-2 border-border p-6">
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 bg-[#0B2545] rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <Share2 className="w-10 h-10 text-[#D08B3D]" />
+                <div className="w-20 h-20 bg-[hsl(var(--navy))] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Share2 className="w-10 h-10 text-primary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-2">Ma Wishlist ShopTheBarber</h3>

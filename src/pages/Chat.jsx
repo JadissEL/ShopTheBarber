@@ -6,8 +6,9 @@ import { useMessageStream } from '@/hooks/useMessageStream';
 import BookingChatBanner from '@/components/messages/BookingChatBanner';
 import RescheduleProposalCard from '@/components/messages/RescheduleProposalCard';
 import {
-    Send, Search, MessageSquare, ChevronLeft, Scissors, Store, ShieldCheck, CheckCheck, Loader2,
+    Send, MessageSquare, ChevronLeft, Scissors, Store, ShieldCheck, CheckCheck, Loader2,
 } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +20,9 @@ import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
+import PageHeader from '@/components/layout/PageHeader';
 
 function readChatParams() {
     const params = new URLSearchParams(window.location.search);
@@ -201,7 +205,7 @@ export default function Chat() {
                 <MetaTags title="Messages" description="Chat with your barber or clients" />
                 <div className="text-center space-y-4 max-w-sm">
                     <MessageSquare className="w-12 h-12 text-primary mx-auto" />
-                    <h2 className="text-2xl font-bold">Sign in for Messages</h2>
+                    <h2 className={cn(stb.uiHeading, 'text-2xl')}>Sign in for Messages</h2>
                     <p className="text-muted-foreground">Coordinate appointments and reschedule in real time.</p>
                     <Button asChild>
                         <a href={signInUrlWithReturn('/Chat')}>Sign in</a>
@@ -212,21 +216,26 @@ export default function Chat() {
     }
 
     return (
-        <div className="stb-page flex flex-col lg:pb-8">
+        <div className={stb.page + ' flex flex-col lg:pb-8'}>
             <MetaTags title="Messages" description="Secure booking chat" />
+            <PageHeader
+                label="Inbox"
+                title="Messages"
+                subtitle="Coordinate appointments and reschedule in real time"
+                compact
+                variant="light"
+                tier="app"
+            />
             <div className="flex-1 flex overflow-hidden min-h-0">
                 <div className={`w-full md:w-80 lg:w-96 bg-card border-r border-border flex flex-col ${selectedContactId ? 'hidden md:flex' : 'flex'}`}>
                     <div className="p-4 border-b flex flex-col gap-4">
-                        <h1 className="text-xl font-bold">Messages</h1>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 rounded-xl h-10"
-                            />
-                        </div>
+                        <SearchField
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
+                            placeholder="Search conversations..."
+                            aria-label="Search messages"
+                        />
                     </div>
                     <ScrollArea className="flex-1">
                         <div className="p-2 space-y-1">
@@ -243,7 +252,7 @@ export default function Chat() {
                                         setSelectedContactId(contact.contact_user_id);
                                         if (contact.booking_id) setActiveBookingId(contact.booking_id);
                                     }}
-                                    className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
+                                    className={`w-full p-3 rounded-lg flex items-center gap-3 transition-all ${
                                         selectedContactId === contact.contact_user_id ? 'bg-muted' : 'hover:bg-muted/60'
                                     }`}
                                 >
@@ -298,7 +307,7 @@ export default function Chat() {
                                     </p>
                                 </div>
                                 {activeBookingId && (
-                                    <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setActiveBookingId(null)}>
+                                    <Button variant="outline" size="sm" className=" text-xs" onClick={() => setActiveBookingId(null)}>
                                         All messages
                                     </Button>
                                 )}
@@ -342,7 +351,7 @@ export default function Chat() {
                                                         className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                                                     >
                                                         <div
-                                                            className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
+                                                            className={`max-w-[85%] p-3 rounded-lg text-sm shadow-sm ${
                                                                 isMe
                                                                     ? 'bg-primary text-primary-foreground rounded-tr-sm'
                                                                     : 'bg-card border rounded-tl-sm'
@@ -368,9 +377,9 @@ export default function Chat() {
                                         placeholder="Type a message..."
                                         value={messageText}
                                         onChange={(e) => setMessageText(e.target.value)}
-                                        className="rounded-xl h-11"
+                                        className=" h-11"
                                     />
-                                    <Button type="submit" disabled={!messageText.trim() || sendMutation.isPending} className="rounded-xl h-11 w-11 p-0 shrink-0">
+                                    <Button type="submit" disabled={!messageText.trim() || sendMutation.isPending} className=" h-11 w-11 p-0 shrink-0">
                                         <Send className="w-5 h-5" />
                                     </Button>
                                 </form>
@@ -386,7 +395,7 @@ export default function Chat() {
             </div>
 
             <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
-                <DialogContent className="rounded-2xl">
+                <DialogContent className="">
                     <DialogHeader>
                         <DialogTitle>Propose a new time</DialogTitle>
                     </DialogHeader>

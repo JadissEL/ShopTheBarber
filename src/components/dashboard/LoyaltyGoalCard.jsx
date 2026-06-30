@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentPoints = 8420, nextTier = 'Platinum', pointsToNext = 1500 }) {
   const circumference = 2 * Math.PI * 36;
@@ -7,7 +9,7 @@ export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentP
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-      <Card className="h-full p-5 border border-slate-200 bg-card shadow-sm rounded-2xl flex flex-col items-center justify-center text-center">
+      <Card className={cn(stb.panel, 'h-full p-5 flex flex-col items-center justify-center text-center')}>
         <div className="relative w-24 h-24 mb-3">
           <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
             <circle
@@ -15,7 +17,7 @@ export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentP
               cy="48"
               r="36"
               fill="none"
-              stroke="rgb(226 232 240)"
+              stroke="hsl(var(--muted))"
               strokeWidth="8"
             />
             <circle
@@ -23,7 +25,7 @@ export default function LoyaltyGoalCard({ percent = 75, currentPoints: _currentP
               cy="48"
               r="36"
               fill="none"
-              stroke="rgb(249 115 22)"
+              stroke="hsl(var(--primary))"
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={circumference}

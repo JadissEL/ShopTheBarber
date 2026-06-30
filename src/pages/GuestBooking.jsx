@@ -17,6 +17,9 @@ import { Calendar, MapPin, Scissors, Loader2, UserPlus, XCircle } from 'lucide-r
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { toast } from 'sonner';
 import { addGuestClaimToken } from '@/lib/guestBooking';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function GuestBooking() {
   const [params] = useSearchParams();
@@ -59,13 +62,21 @@ export default function GuestBooking() {
   const signUpUrl = `${createPageUrl('SignUp')}?return=${encodeURIComponent('/UserBookings')}`;
 
   return (
-    <div className="stb-page">
+    <div className={stb.page}>
       <MetaTags title="Your booking" description="View your guest booking confirmation." />
 
-      <div className="max-w-lg mx-auto px-4 py-12">
+      <PageHeader
+        label="Booking"
+        title={!token || token.length < 20 ? 'Guest booking' : isLoading ? 'Loading…' : error || !booking ? 'Booking not found' : booking.status === 'cancelled' ? 'Booking cancelled' : "You're booked"}
+        subtitle={booking?.id ? `Reference #${booking.id.slice(0, 8)}` : 'View your appointment details'}
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
         {!token || token.length < 20 ? (
           <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold">Invalid link</h1>
             <p className="text-muted-foreground">Use the link from your confirmation screen or SMS.</p>
             <Link to={createPageUrl('Explore')}>
               <Button>Find a barber</Button>
@@ -77,7 +88,6 @@ export default function GuestBooking() {
           </div>
         ) : error || !booking ? (
           <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold">Booking not found</h1>
             <p className="text-muted-foreground">
               This link may have expired, was linked to an account, or is incorrect.
             </p>
@@ -87,17 +97,10 @@ export default function GuestBooking() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-2">
-                {booking.status === 'cancelled' ? 'Booking cancelled' : "You're booked"}
-              </h1>
-              <p className="text-muted-foreground text-sm">Reference #{booking.id?.slice(0, 8)}</p>
-            </div>
-
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+            <div className={stb.panel + ' p-6 space-y-4'}>
               {booking.barber ? (
                 <div className="flex items-center gap-4">
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0">
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-muted shrink-0">
                     {booking.barber.image_url ? (
                       <OptimizedImage src={booking.barber.image_url} alt="" fill className="object-cover" />
                     ) : (
@@ -171,7 +174,7 @@ export default function GuestBooking() {
             </div>
           </div>
         )}
-      </div>
+      </PageContent>
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="sm:max-w-md">
@@ -181,7 +184,7 @@ export default function GuestBooking() {
               <div className="space-y-2 text-sm text-muted-foreground">
                 {cancelPreview?.reason ? <p>{cancelPreview.reason}</p> : null}
                 {cancelPreview?.policy_note ? (
-                  <p className="text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-foreground bg-primary/10 border border-primary/30 rounded-lg p-3">
                     {cancelPreview.policy_note}
                   </p>
                 ) : null}

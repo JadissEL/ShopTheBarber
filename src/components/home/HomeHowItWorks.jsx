@@ -3,6 +3,8 @@ import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Search, CalendarCheck, Scissors, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const STEPS = [
   {
@@ -30,17 +32,17 @@ const STEPS = [
 
 export default function HomeHowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 bg-card border-y border-border">
+    <section id="how-it-works" className={cn(stb.sectionDark, 'border-y border-white/10 stb-marketing-prose')}>
       <div className="container mx-auto px-4 md:px-6 max-w-6xl">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 rounded-lg bg-primary text-primary-foreground border border-white/20 px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-6">
             <Shield className="w-4 h-4" />
             Simple, secure booking
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground tracking-tight mb-4">
+          <h2 className={cn(stb.heading, 'text-white mb-4')}>
             How ShopTheBarber works
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-white/70 font-sans normal-case">
             From search to fresh cut in three steps, with transparent pricing and EU-compliant promotions built in.
           </p>
         </div>
@@ -53,14 +55,14 @@ export default function HomeHowItWorks() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="relative rounded-3xl border border-border bg-card p-8 hover:border-primary/30 hover:shadow-lg transition-all"
+              className="relative rounded-lg border border-white/15 bg-white/5 p-8 hover:border-primary/40 transition-all stb-surface-hover"
             >
-              <div className="text-5xl font-black text-primary/15 absolute top-6 right-6">{item.step}</div>
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6">
+              <div className={cn(stb.display, 'text-5xl text-primary/30 absolute top-6 right-6')}>{item.step}</div>
+              <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground border border-white/20 flex items-center justify-center mb-6">
                 <item.icon className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-3">{item.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6">{item.description}</p>
+              <h3 className={cn(stb.title, 'text-xl text-white mb-3')}>{item.title}</h3>
+              <p className="text-white/65 text-sm leading-relaxed mb-6 font-sans normal-case">{item.description}</p>
               <Link
                 to={createPageUrl(item.link)}
                 className="text-sm font-semibold text-primary hover:underline no-underline"
@@ -73,7 +75,7 @@ export default function HomeHowItWorks() {
 
         <div className="text-center">
           <Link to={createPageUrl('Explore')}>
-            <Button size="lg" className="rounded-xl px-10 h-12 font-semibold">
+            <Button size="lg" className={cn(stb.btn, 'px-10 h-12')}>
               Find a barber near you
             </Button>
           </Link>

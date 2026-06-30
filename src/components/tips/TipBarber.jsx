@@ -37,7 +37,7 @@ export default function TipBarber({ bookingId, returnPath, compact = false }) {
 
     if (isLoading) {
         return (
-            <Card className={compact ? 'border-border' : 'border-amber-200/60 bg-amber-50/30'}>
+            <Card className={compact ? 'border-border' : 'border-primary/30 bg-primary/10/30'}>
                 <CardContent className="p-6 flex items-center justify-center gap-2 text-muted-foreground">
                     <Loader className="w-4 h-4 animate-spin" /> Loading tip options…
                 </CardContent>
@@ -58,12 +58,12 @@ export default function TipBarber({ bookingId, returnPath, compact = false }) {
 
     if (tipStatus?.already_tipped) {
         return (
-            <Card className="border-green-200 bg-green-50/50">
+            <Card className="border-success/20 bg-success/10">
                 <CardContent className={`${compact ? 'p-4' : 'p-6'} flex items-center gap-3`}>
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                     <div>
-                        <p className="font-semibold text-green-800">Tip sent, thank you!</p>
-                        <p className="text-sm text-green-700">
+                        <p className="font-semibold text-success">Tip sent, thank you!</p>
+                        <p className="text-sm text-success/80">
                             {formatMoney(tipStatus.tip?.amount)} to {tipStatus.recipient_name || 'your barber'}
                         </p>
                     </div>
@@ -86,10 +86,10 @@ export default function TipBarber({ bookingId, returnPath, compact = false }) {
     };
 
     return (
-        <Card className={compact ? 'border-border' : 'border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-card shadow-md'}>
+        <Card className={compact ? 'border-border' : 'border-primary/30 bg-primary/10 shadow-md'}>
             <CardHeader className={compact ? 'p-4 pb-2' : 'p-6 pb-3'}>
                 <CardTitle className={`flex items-center gap-2 ${compact ? 'text-base' : 'text-xl'}`}>
-                    <Heart className="w-5 h-5 text-amber-600 fill-amber-500/30" />
+                    <Heart className="w-5 h-5 text-primary fill-amber-500/30" />
                     Say thanks with a tip
                 </CardTitle>
                 {!compact && (
@@ -106,7 +106,7 @@ export default function TipBarber({ bookingId, returnPath, compact = false }) {
                             key={preset.percent}
                             type="button"
                             variant={selectedPreset === preset.percent ? 'default' : 'outline'}
-                            className="rounded-xl font-bold min-w-[4.5rem]"
+                            className=" font-bold min-w-[4.5rem]"
                             disabled={checkoutMutation.isPending}
                             onClick={() => {
                                 setSelectedPreset(preset.percent);
@@ -139,14 +139,14 @@ export default function TipBarber({ bookingId, returnPath, compact = false }) {
                                     setCustomAmount(e.target.value);
                                     setSelectedPreset(null);
                                 }}
-                                className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-background text-sm"
+                                className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-sm"
                             />
                         </div>
                     </div>
                     <Button
                         type="button"
                         variant="secondary"
-                        className="rounded-xl shrink-0"
+                        className=" shrink-0"
                         disabled={checkoutMutation.isPending || !customAmount}
                         onClick={handleCustomTip}
                     >
@@ -165,7 +165,7 @@ export default function TipBarber({ bookingId, returnPath, compact = false }) {
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             maxLength={280}
-                            className="mt-1 rounded-xl resize-none"
+                            className="mt-1 rounded-lg resize-none"
                             rows={2}
                         />
                     </div>

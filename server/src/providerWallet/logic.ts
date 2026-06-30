@@ -9,7 +9,7 @@ import {
     MIN_TOP_UP_AMOUNT,
     PROVIDER_ROLES,
 } from './config';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import { shouldWaiveCommissionForBooking, getActiveFixedFeePlanForProvider } from '../fixedFee/logic';
 import { blocksCashBookings, computeWalletHealthStatus, walletHealthLabel } from '../domain/wallet/health';
 import { syncProviderWalletHealth } from '../domain/wallet/syncHealth';
@@ -413,7 +413,7 @@ export async function createTopUpCheckoutSession(userId: string, amount: number,
     }
 
     const stripeKey = getStripeApiKey();
-    if (!stripeKey?.startsWith('sk_')) {
+    if (!isUsableStripeApiKey(stripeKey)) {
         throw new Error('Stripe is not configured for top-ups');
     }
 

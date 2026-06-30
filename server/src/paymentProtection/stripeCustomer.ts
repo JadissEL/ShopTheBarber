@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import Stripe from 'stripe';
 import { prisma } from '../db/prisma';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey, isStripeConfigured } from '../config/stripeKeys';
 import { logger } from '../lib/logger';
 import { isPaymentProtectionSchemaError } from './schemaGuard';
 
@@ -10,7 +10,7 @@ let stripe: Stripe | null = null;
 export function getStripeClient(): Stripe {
     if (!stripe) {
         const key = getStripeApiKey();
-        if (!key?.startsWith('sk_')) {
+        if (!isUsableStripeApiKey(key)) {
             throw new Error('Stripe is not configured');
         }
         stripe = new Stripe(key, { apiVersion: '2025-01-27.acacia', typescript: true });
@@ -18,10 +18,7 @@ export function getStripeClient(): Stripe {
     return stripe;
 }
 
-export function isStripeConfigured(): boolean {
-    const key = getStripeApiKey();
-    return !!key?.startsWith('sk_');
-}
+export { isStripeConfigured } from '../config/stripeKeys';
 
 export async function getOrCreateStripeCustomer(userId: string): Promise<string> {
     const user = await prisma.users.findUnique({

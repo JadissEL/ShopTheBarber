@@ -16,20 +16,22 @@ import HomeMarketplacePreview from '../components/home/HomeMarketplacePreview';
 import Testimonials from '../components/home/Testimonials';
 import HomeFinalCta from '../components/home/HomeFinalCta';
 import { siteOrigin } from '@/lib/seoUtils';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function AuthenticatedHomeQuickStart() {
   return (
-    <section className="py-10 bg-gradient-to-r from-primary/8 via-accent/50 to-chart-2/8 border-b border-border/60">
+    <section className="py-10 bg-background border-b border-foreground/10">
       <div className="container mx-auto px-6 max-w-6xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p className="stb-section-label mb-1">Welcome back</p>
-          <h2 className="text-xl font-bold text-foreground">Ready for your next appointment?</h2>
+          <p className={cn(stb.overline, 'mb-1')}>Welcome back</p>
+          <h2 className={cn(stb.uiHeading, 'text-xl')}>Ready for your next appointment?</h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild className="stb-btn-primary">
+          <Button asChild className={stb.btn}>
             <Link to={createPageUrl('Explore')}>Book a barber</Link>
           </Button>
-          <Button asChild variant="outline" className="rounded-xl bg-card/80">
+          <Button asChild variant="outline" className="bg-card/80">
             <Link to={createPageUrl('Dashboard')}>Dashboard</Link>
           </Button>
         </div>

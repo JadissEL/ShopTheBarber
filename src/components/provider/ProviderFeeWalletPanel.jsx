@@ -26,8 +26,8 @@ function WalletHealthBar({ status, label, cashBlocked }) {
     const barColor = cashBlocked
         ? 'bg-destructive'
         : status === 'warning' || status === 'critical'
-          ? 'bg-amber-500'
-          : 'bg-emerald-500';
+          ? 'bg-primary/100'
+          : 'bg-primary/100';
 
     return (
         <div className="mt-3 space-y-1.5" aria-label={`Wallet health: ${label}`}>
@@ -86,8 +86,8 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
     if (isLoading) {
         return (
             <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Loading wallet…">
-                <div className="h-48 rounded-3xl bg-muted/50" />
-                <div className="h-28 rounded-3xl bg-muted/40" />
+                <div className="h-48  bg-muted/50" />
+                <div className="h-28  bg-muted/40" />
             </div>
         );
     }
@@ -107,7 +107,7 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
 
     return (
         <div className="space-y-6">
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent rounded-3xl">
+            <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Wallet className="w-5 h-5 text-primary" />
@@ -127,7 +127,7 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
                                     <span>Purchased: {formatAmount(wallet.purchased_balance)}</span>
                                 )}
                                 {wallet.promotional_balance > 0 && (
-                                    <span className="text-amber-700 dark:text-amber-400">
+                                    <span className="text-muted-foreground dark:text-primary">
                                         Promotional: {formatAmount(wallet.promotional_balance)} (used first)
                                     </span>
                                 )}
@@ -150,7 +150,7 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
                             </p>
                         )}
                         {wallet.promotional_expires_at && (wallet.promotional_balance ?? 0) > 0 && (
-                            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                            <p className="text-xs text-muted-foreground dark:text-primary mt-1">
                                 Promotional credit expires{' '}
                                 {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
                                     new Date(wallet.promotional_expires_at)
@@ -187,7 +187,7 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
                                 inputMode="decimal"
                                 min={data?.min_top_up ?? 10}
                                 step="0.01"
-                                className="mt-1 rounded-xl tabular-nums"
+                                className="mt-1 rounded-lg tabular-nums"
                                 value={customAmount}
                                 onChange={(e) => setCustomAmount(e.target.value)}
                             />
@@ -202,12 +202,12 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
                 </CardContent>
             </Card>
 
-            <Card className="rounded-3xl">
+            <Card className="">
                 <CardContent className="p-6">
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                                <Banknote className="w-5 h-5 text-emerald-700" />
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Banknote className="w-5 h-5 text-primary" />
                             </div>
                             <div>
                                 <Label htmlFor="cash-toggle" className="text-base font-semibold">Accept pay-at-shop bookings</Label>
@@ -216,7 +216,7 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
                                     to enable this; ShopTheBarber commission is taken from your balance when you confirm each booking.
                                 </p>
                                 {!wallet.can_enable_cash && !wallet.accepts_cash_in_store && (
-                                    <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                                    <p className="text-xs text-primary mt-2 flex items-center gap-1">
                                         <Info className="w-3.5 h-3.5" /> Top up your commission credit to enable pay-at-shop bookings.
                                     </p>
                                 )}
@@ -233,13 +233,13 @@ export default function ProviderFeeWalletPanel({ shopId, isShopOwner }) {
             </Card>
 
             {data?.transactions?.length > 0 && (
-                <Card className="rounded-3xl">
+                <Card className="">
                     <CardHeader><CardTitle className="text-base">Recent activity</CardTitle></CardHeader>
                     <CardContent className="space-y-2 max-h-64 overflow-y-auto">
                         {data.transactions.map((tx) => (
                             <div key={tx.id} className="flex justify-between gap-3 text-sm py-2 border-b border-border last:border-0 min-w-0">
                                 <span className="text-muted-foreground truncate">{tx.description || tx.type}</span>
-                                <span className={`shrink-0 tabular-nums font-medium ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                <span className={`shrink-0 tabular-nums font-medium ${tx.amount >= 0 ? 'text-primary' : 'text-destructive'}`}>
                                     {tx.amount >= 0 ? '+' : '−'}
                                     {formatAmount(Math.abs(tx.amount))}
                                 </span>

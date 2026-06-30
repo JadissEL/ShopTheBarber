@@ -23,6 +23,8 @@ import { mergeShowcaseWithFallback } from '@/utils/showcaseFallback';
 import { parseSpokenLanguages } from '@/lib/languages';
 import { parseChildrenFriendly } from '@/lib/childrenFriendly';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 export default function ShopProfile() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -173,13 +175,13 @@ export default function ShopProfile() {
             />
 
             {/* Shop Header */}
-            <div className="h-64 md:h-96 w-full rounded-[40px] overflow-hidden mb-10 relative group shadow-2xl">
+            <div className="h-64 md:h-96 w-full rounded-lg overflow-hidden mb-10 relative group shadow-elevation-lg">
                 <div className="absolute top-6 right-6 z-20 flex gap-3">
                     <Button
                         variant="secondary"
                         size="icon"
                         onClick={() => toggleFavoriteMutation.mutate()}
-                        className={`rounded-full backdrop-blur-md border-white/20 transition-all ${isFavorited ? 'bg-red-500 text-white border-red-500' : 'bg-white/20 text-white hover:bg-white/40'}`}
+                        className={`rounded-full backdrop-blur-md border-white/20 transition-all ${isFavorited ? 'bg-destructive text-white border-destructive' : 'bg-white/20 text-white hover:bg-white/40'}`}
                     >
                         <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
                     </Button>
@@ -193,11 +195,11 @@ export default function ShopProfile() {
                     alt={displayShop.name}
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-foreground/60"></div>
 
                 <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white w-full flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                        <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">{displayShop.name}</h1>
+                        <h1 className={cn(stb.display, 'text-4xl md:text-6xl mb-4')}>{displayShop.name}</h1>
                         <div className="flex flex-wrap items-center gap-4 text-sm md:text-base font-medium">
                             <div className="flex items-center gap-2">
                                 <MapPin className="w-5 h-5 text-primary" />
@@ -251,7 +253,7 @@ export default function ShopProfile() {
                     <Button
                         size="lg"
                         onClick={initiateChat}
-                        className="bg-primary text-primary-foreground hover:opacity-90 font-black rounded-2xl h-14 px-8 shadow-xl shadow-black/20"
+                        className={cn(stb.btn, 'h-14 px-8 shadow-elevation-md')}
                     >
                         <MessageSquare className="w-5 h-5 mr-3" />
                         Message Shop
@@ -277,34 +279,34 @@ export default function ShopProfile() {
                     {/* Team */}
                     <div>
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-black text-foreground">Select Expert</h2>
+                            <h2 className={cn(stb.uiHeading, 'text-2xl text-foreground')}>Select Expert</h2>
                             <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{shopBarbers.length} Available</span>
                         </div>
 
                         {shopBarbers.length === 0 ? (
-                            <div className="p-12 text-center bg-muted/50 rounded-[32px] border-2 border-dashed border-border">
+                            <div className="p-12 text-center bg-muted/50 rounded-lg border-2 border-dashed border-border">
                                 <p className="text-muted-foreground font-bold">No barbers listed for this shop yet.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {shopBarbers.map((barberRecord, i) => (
                                     <Link key={i} to={createPageUrl(`BarberProfile?id=${barberRecord.id}`)} className="group">
-                                        <div className="bg-card p-6 rounded-[32px] border border-border group-hover:border-primary group-hover:shadow-2xl group-hover:shadow-primary/10 transition-all duration-300 text-center flex flex-col items-center">
+                                        <div className="bg-card p-6 rounded-lg border border-border group-hover:border-primary group-hover:shadow-elevation-lg group-hover:shadow-primary/10 transition-all duration-normal text-center flex flex-col items-center">
                                             <div className="relative mb-4 group-hover:scale-105 transition-transform">
                                                 <UserAvatar
                                                     src={barberRecord.image_url}
                                                     name={barberRecord.name}
-                                                    className="w-24 h-24 border-4 border-white shadow-xl"
+                                                    className="w-24 h-24 border-4 border-white shadow-elevation-lg"
                                                 />
-                                                <div className="absolute -bottom-1 -right-1 bg-card rounded-full px-2 py-1 shadow-lg text-xs font-black flex items-center gap-1 border border-border">
-                                                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> {barberRecord.rating || 'New'}
+                                                <div className="absolute -bottom-1 -right-1 bg-card rounded-full px-2 py-1 shadow-elevation-sm text-xs font-semibold tabular-nums flex items-center gap-1 border border-border">
+                                                    <Star className="w-3 h-3 text-primary fill-primary" /> {barberRecord.rating || 'New'}
                                                 </div>
                                             </div>
-                                            <h3 className="font-black text-lg text-foreground group-hover:text-primary transition-colors mb-1">{barberRecord.name}</h3>
+                                            <h3 className={cn(stb.uiHeading, 'text-lg text-foreground group-hover:text-primary transition-colors mb-1')}>{barberRecord.name}</h3>
                                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight mb-4 text-center">
                                                 {barberRecord.shopRole ? `${barberRecord.shopRole} • ` : ''}{barberRecord.title || 'Barber'}
                                             </span>
-                                            <Button variant="outline" className="w-full rounded-2xl border-border group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all font-bold">
+                                            <Button variant="outline" className="w-full rounded-lg border-border group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all font-semibold">
                                                 View Profile
                                             </Button>
                                         </div>
@@ -316,7 +318,7 @@ export default function ShopProfile() {
 
                     {/* Services */}
                     <div>
-                        <h2 className="text-2xl font-black text-foreground mb-8">Popular Services</h2>
+                        <h2 className={cn(stb.uiHeading, 'text-2xl text-foreground mb-8')}>Popular Services</h2>
                         {services.length === 0 ? (
                             <p className="text-muted-foreground font-bold">No services available at this shop.</p>
                         ) : (
@@ -325,17 +327,17 @@ export default function ShopProfile() {
                                     const sData = service.data || service;
                                     return (
                                         <Link key={service.id} to={createPageUrl(`BookingFlow?shopId=${shopId}&serviceId=${service.id}`)}>
-                                            <div className="bg-card border border-border rounded-2xl p-6 hover:border-primary hover:bg-muted/50 transition-all flex items-center justify-between group">
+                                            <div className="stb-panel p-6 hover:border-primary hover:bg-muted/50 transition-all flex items-center justify-between group">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-xl">✂️</div>
+                                                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-xl">✂️</div>
                                                     <div>
-                                                        <h3 className="font-black text-foreground mb-1">{sData.name}</h3>
+                                                        <h3 className={cn(stb.uiHeading, 'text-base text-foreground mb-1')}>{sData.name}</h3>
                                                         <p className="text-sm font-bold text-muted-foreground">{sData.duration_minutes || sData.duration_min || 30} mins</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-xl font-black text-foreground">${(sData.price || 0).toFixed(2)}</p>
-                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Book Now</p>
+                                                    <p className={cn(stb.metricValue, 'text-xl text-foreground')}>${(sData.price || 0).toFixed(2)}</p>
+                                                    <p className="text-[10px] font-semibold text-primary uppercase tracking-widest">Book Now</p>
                                                 </div>
                                             </div>
                                         </Link>
@@ -348,9 +350,9 @@ export default function ShopProfile() {
 
                 <div className="lg:col-span-4 space-y-8">
                     {/* Location Card */}
-                    <div className="bg-card rounded-[32px] border border-border overflow-hidden shadow-sm">
+                    <div className={cn(stb.panel, 'overflow-hidden p-0')}>
                         <div className="p-6 border-b border-border">
-                            <h2 className="text-xl font-black text-foreground">Find Us</h2>
+                            <h2 className={cn(stb.uiHeading, 'text-xl text-foreground')}>Find Us</h2>
                         </div>
                         <div className="h-64">
                             <LocationMap
@@ -360,15 +362,15 @@ export default function ShopProfile() {
                         </div>
                         <div className="p-6">
                             <p className="text-muted-foreground font-medium mb-4">{displayShop.location || displayShop.address}</p>
-                            <Button variant="outline" className="w-full rounded-2xl border-border font-bold" onClick={() => window.open(`https://maps.google.com/?q=${displayShop.location || displayShop.address}`, '_blank')}>
+                            <Button variant="outline" className="w-full rounded-lg border-border font-semibold" onClick={() => window.open(`https://maps.google.com/?q=${displayShop.location || displayShop.address}`, '_blank')}>
                                 Get Directions
                             </Button>
                         </div>
                     </div>
 
                     {/* Hours / Info */}
-                    <div className="bg-primary rounded-[32px] p-8 text-primary-foreground">
-                        <h2 className="text-xl font-black mb-6">Store Integrity</h2>
+                    <div className="bg-primary rounded-lg p-8 text-primary-foreground">
+                        <h2 className={cn(stb.uiHeading, 'text-xl mb-6')}>Store Integrity</h2>
                         <div className="space-y-4">
                             {[
                                 { label: 'Sanitation Protocol', value: 'Level 5' },
@@ -378,7 +380,7 @@ export default function ShopProfile() {
                             ].map((item, i) => (
                                 <div key={i} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
                                     <span className="text-white/60 font-bold text-xs uppercase tracking-widest">{item.label}</span>
-                                    <span className="font-black text-primary">{item.value}</span>
+                                    <span className={cn(stb.metricValue, 'text-primary')}>{item.value}</span>
                                 </div>
                             ))}
                         </div>
@@ -388,7 +390,7 @@ export default function ShopProfile() {
 
             {reviews.length > 0 && (
                 <section className="mt-16">
-                    <h2 className="text-2xl font-black text-foreground mb-6">Client Reviews</h2>
+                    <h2 className={cn(stb.uiHeading, 'text-2xl text-foreground mb-6')}>Client Reviews</h2>
                     <div className="grid gap-4 md:grid-cols-2">
                         {reviews.map((review) => (
                             <ReviewCard key={review.id} review={review} />

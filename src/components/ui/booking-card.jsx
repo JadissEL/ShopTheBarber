@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal, MapPin, Calendar, Clock, Scissors, Home, Users, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function BookingCard({ booking, actions, variant: _variant = 'default', className }) {
     if (!booking) return null;
@@ -19,8 +20,9 @@ export default function BookingCard({ booking, actions, variant: _variant = 'def
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ y: -2 }}
             className={cn(
-                "relative overflow-hidden rounded-2xl p-5 border transition-all duration-300",
-                "bg-card border-border text-foreground hover:shadow-lg hover:border-primary/30",
+                stb.surfaceHover,
+                "relative overflow-hidden rounded-lg p-5 border border-foreground/10 transition-all duration-normal ease-out",
+                "bg-card text-foreground hover:shadow-md hover:border-primary/30",
                 className
             )}
         >
@@ -31,7 +33,7 @@ export default function BookingCard({ booking, actions, variant: _variant = 'def
 
             <div className="flex flex-col lg:flex-row items-center gap-6">
                 {/* Time & Date Block */}
-                <div className="flex flex-col items-center lg:items-start min-w-[120px] lg:border-r lg:border-border lg:pr-6">
+                <div className="flex flex-col items-center lg:items-start min-w-[120px] lg:border-r lg:border-foreground/10 lg:pr-6">
                     <div className="flex items-center gap-2 text-primary font-bold text-lg mb-1 lg:mb-0">
                         <Clock className="w-4 h-4" />
                         <span>{bookingData.time_text || 'Time TBD'}</span>
@@ -56,30 +58,30 @@ export default function BookingCard({ booking, actions, variant: _variant = 'def
                     </div>
 
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg truncate group-hover:text-primary transition-colors">
+                        <h3 className={cn(stb.uiHeading, 'text-lg truncate group-hover:text-primary transition-colors duration-normal ease-out')}>
                             {bookingData.service_name || 'Barber Service'}
                         </h3>
                         <div className="flex flex-wrap gap-1.5 mb-1.5">
                             {(bookingData.is_at_home || bookingData.visit_type === 'mobile') && (
-                                <Badge variant="outline" className="text-[10px] border-violet-300 text-violet-800 bg-violet-50">
+                                <Badge variant="outline" className="text-[10px] border-primary/30 text-foreground bg-primary/10">
                                     <Home className="w-3 h-3 mr-1" /> At home
                                 </Badge>
                             )}
                             {!bookingData.is_at_home &&
                                 bookingData.visit_type !== 'mobile' &&
                                 (bookingData.visit_type === 'shop' || bookingData.location) && (
-                                <Badge variant="outline" className="text-[10px] border-slate-300 text-foreground bg-muted/50">
+                                <Badge variant="outline" className="text-[10px] border-foreground/20 text-foreground bg-muted/50">
                                     <Store className="w-3 h-3 mr-1" /> At shop
                                 </Badge>
                             )}
                             {(bookingData.is_group || bookingData.booking_type === 'group') && (
-                                <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-900 bg-amber-50">
+                                <Badge variant="outline" className="text-[10px] border-primary/40 text-foreground bg-primary/10">
                                     <Users className="w-3 h-3 mr-1" />
                                     Group{bookingData.party_size ? `, ${bookingData.party_size}` : ''}
                                 </Badge>
                             )}
                             {bookingData.is_guest_booking && (
-                                <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-900 bg-emerald-50">
+                                <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-900 bg-primary/10">
                                     Guest, no account
                                 </Badge>
                             )}
@@ -105,7 +107,7 @@ export default function BookingCard({ booking, actions, variant: _variant = 'def
                             {(bookingData.travel_fee_amount > 0 || bookingData.travel_zone_label) && (
                                 <>
                                     <span className="hidden sm:inline opacity-30">•</span>
-                                    <span className="flex items-center gap-1 text-violet-700 text-xs font-medium">
+                                    <span className="flex items-center gap-1 text-primary text-xs font-medium">
                                         Travel
                                         {bookingData.travel_fee_amount > 0
                                             ? ` +$${Number(bookingData.travel_fee_amount).toFixed(2)}`
@@ -119,11 +121,11 @@ export default function BookingCard({ booking, actions, variant: _variant = 'def
                 </div>
 
                 {/* Status & Actions Section */}
-                <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end mt-4 lg:mt-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-border">
+                <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end mt-4 lg:mt-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-foreground/10">
                     <div className="flex flex-col items-end gap-1">
                         <StatusBadge
                             status={bookingData.status || 'pending'}
-                            className="px-4 py-1.5 uppercase text-[10px] tracking-widest font-black rounded-lg"
+                            className="px-4 py-1.5 uppercase text-[10px] tracking-widest font-semibold rounded-lg"
                         />
                         <BookingPaymentBadge booking={booking} />
                     </div>
@@ -133,7 +135,7 @@ export default function BookingCard({ booking, actions, variant: _variant = 'def
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-white/5 rounded-xl transition-all"
+                                className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all duration-normal ease-out"
                             >
                                 <MoreHorizontal className="w-5 h-5" />
                             </Button>

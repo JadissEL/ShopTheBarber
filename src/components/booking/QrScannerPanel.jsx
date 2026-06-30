@@ -44,7 +44,7 @@ export default function QrScannerPanel({ onScan, className }) {
 
     return (
         <div className={cn('space-y-3', className)}>
-            <div className="relative aspect-[4/3] max-h-52 rounded-xl overflow-hidden bg-muted border border-border">
+            <div className="relative aspect-[4/3] max-h-52 rounded-lg overflow-hidden bg-muted border border-border">
                 <video ref={videoRef} className="w-full h-full object-cover" muted playsInline aria-label="QR scanner camera preview" />
                 {!active && !starting && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/80">

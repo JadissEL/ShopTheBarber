@@ -18,14 +18,14 @@ export default function PendingReviewBanner() {
     const next = pending[0];
 
     return (
-        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50/80 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="border border-primary/30 bg-primary/10 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
             <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-primary/100 text-white flex items-center justify-center shrink-0">
                     <Star className="w-5 h-5 fill-current" />
                 </div>
                 <div>
-                    <p className="font-semibold text-amber-950">How was your visit?</p>
-                    <p className="text-sm text-amber-900/80">
+                    <p className="font-semibold text-primary-foreground">How was your visit?</p>
+                    <p className="text-sm text-foreground/80">
                         Rate {next.barber_name || 'your barber'}
                         {next.date_text ? `, ${next.date_text}` : ''}
                         {pending.length > 1 ? ` (+${pending.length - 1} more)` : ''}
@@ -33,7 +33,7 @@ export default function PendingReviewBanner() {
                 </div>
             </div>
             <Link to={createPageUrl(`Review?bookingId=${next.booking_id}`)}>
-                <Button className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+                <Button className="bg-primary hover:bg-primary/90 text-white shrink-0">
                     Leave review
                 </Button>
             </Link>

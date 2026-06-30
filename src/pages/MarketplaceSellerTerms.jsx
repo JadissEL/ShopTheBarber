@@ -9,40 +9,46 @@ import {
   getMarketplaceVatRate,
   SHIPPING_LIABILITY_SUMMARY,
 } from '@/lib/marketplaceLegal';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function MarketplaceSellerTerms() {
   const vatPct = formatVatPercent();
 
   return (
-    <div className="stb-page">
+    <div className={stb.page}>
       <MetaTags
         title="Marketplace Seller Terms"
         description="Terms for barbers, shops, and brands selling physical products on ShopTheBarber."
         canonicalUrl="/marketplace/seller-terms"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <PageHeader
+        label="Legal"
+        title="Marketplace Seller Terms"
+        subtitle={`Version ${MARKETPLACE_SELLER_TERMS_VERSION} • Effective June 26, 2026`}
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
         <Link
           to={createPageUrl('ProviderMarketplaceProducts')}
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8"
+          className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to marketplace listings
         </Link>
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Marketplace Seller Terms</h1>
-          <p className="text-muted-foreground">
-            Version {MARKETPLACE_SELLER_TERMS_VERSION}, Effective June 26, 2026
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Applies when the marketplace module is enabled. Service bookings remain under{' '}
-            <Link to={createPageUrl('ProviderTermsOfService')} className="text-primary hover:underline">
-              Provider Terms of Service
-            </Link>
-            .
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground mb-6">
+          Applies when the marketplace module is enabled. Service bookings remain under{' '}
+          <Link to={createPageUrl('ProviderTermsOfService')} className="text-primary hover:underline">
+            Provider Terms of Service
+          </Link>
+          .
+        </p>
 
         <Card className="prose prose-sm max-w-none">
           <CardContent className="pt-6 space-y-6 prose-headings:font-bold prose-headings:mt-6">
@@ -124,7 +130,7 @@ export default function MarketplaceSellerTerms() {
             </section>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

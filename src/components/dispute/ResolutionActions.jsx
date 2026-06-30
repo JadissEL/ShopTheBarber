@@ -14,19 +14,19 @@ import {
 const RESOLUTION_TYPES = {
   'Approve Claim': {
     icon: CheckCircle2,
-    color: 'bg-green-50 text-green-700 hover:bg-green-100',
+    color: 'bg-success/10 text-success hover:bg-success/15',
     action: 'approved',
     showRefund: true
   },
   'Reject Claim': {
     icon: XCircle,
-    color: 'bg-red-50 text-red-700 hover:bg-red-100',
+    color: 'bg-destructive/10 text-destructive hover:bg-destructive/15',
     action: 'rejected',
     showRefund: false
   },
   'Request More Info': {
     icon: null,
-    color: 'bg-amber-50 text-amber-700 hover:bg-amber-100',
+    color: 'bg-primary/10 text-muted-foreground hover:bg-primary/15',
     action: 'info_requested',
     showRefund: false
   }
@@ -194,13 +194,13 @@ export default function ResolutionActions({ dispute, onResolved }) {
 
       {/* Resolved Status */}
       {disputeStatus === 'resolved' && (
-        <Card className="border-green-200 bg-green-50/50">
+        <Card className="border-success/20 bg-success/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <CheckCircle2 className="w-5 h-5 text-success" />
               <div>
                 <p className="font-semibold text-green-900">Case Closed</p>
-                <p className="text-xs text-green-700">{dispute.resolution_notes}</p>
+                <p className="text-xs text-success">{dispute.resolution_notes}</p>
               </div>
             </div>
           </CardContent>

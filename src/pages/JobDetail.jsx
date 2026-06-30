@@ -9,6 +9,7 @@ import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 import { PageError } from '@/components/ui/page-error';
+import { stb } from '@/lib/stbUi';
 
 function formatSalary(job) {
   if (job.salary_min != null || job.salary_max != null) {
@@ -118,7 +119,7 @@ export default function JobDetail() {
     <div className="stb-page pb-24 lg:pb-12">
       <MetaTags title={`${job.title} - ${job.employer_name || 'Job'} | Shop The Barber`} description={job.description} />
 
-      <header className="sticky top-0 z-40 bg-card border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-card border-b border-border shadow-elevation-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-full text-muted-foreground hover:bg-muted" aria-label="Back">
             <ArrowLeft className="w-5 h-5" />
@@ -139,7 +140,7 @@ export default function JobDetail() {
         <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-semibold uppercase">
           {job.category}
         </span>
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">{job.title}</h1>
+        <h1 className={stb.uiHeading}>{job.title}</h1>
         <div className="flex flex-wrap gap-4 text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <MapPin className="w-4 h-4" />
@@ -156,7 +157,7 @@ export default function JobDetail() {
         </div>
 
         {job.description && (
-          <section className="bg-card rounded-2xl border border-slate-200 p-5">
+          <section className="stb-panel p-5">
             <h2 className="flex items-center gap-2 font-bold text-foreground mb-3">
               <Sparkles className="w-5 h-5 text-primary" />
               The Mission
@@ -166,7 +167,7 @@ export default function JobDetail() {
         )}
 
         {job.responsibilities && (
-          <section className="bg-card rounded-2xl border border-slate-200 p-5">
+          <section className="stb-panel p-5">
             <h2 className="flex items-center gap-2 font-bold text-foreground mb-3">
               <BarChart3 className="w-5 h-5 text-primary" />
               Operational Excellence
@@ -176,25 +177,25 @@ export default function JobDetail() {
         )}
 
         {(job.required_experience_skills || salaryStr) && (
-          <section className="bg-primary rounded-2xl border border-primary/30 p-5 text-primary-foreground">
+          <section className="bg-primary rounded-lg border border-primary/30 p-5 text-primary-foreground">
             <h2 className="flex items-center gap-2 font-bold mb-3">
               <Handshake className="w-5 h-5 text-primary" />
               The Partnership
             </h2>
             {salaryStr && <p className="font-semibold mb-2">Base: {salaryStr}</p>}
-            {job.required_experience_skills && <p className="text-slate-300 text-sm">{job.required_experience_skills}</p>}
+            {job.required_experience_skills && <p className="text-white/70 text-sm">{job.required_experience_skills}</p>}
           </section>
         )}
 
         <div className="flex flex-col gap-3 pt-4">
           {myApplication ? (
-            <div className="rounded-xl border border-slate-200 bg-muted/50 px-4 py-4 text-center">
+            <div className=" border border-border bg-muted/50 px-4 py-4 text-center">
               <p className="font-semibold text-foreground">You applied</p>
               <p className="text-sm text-muted-foreground capitalize mt-0.5">{myApplication.status.replace('_', ' ')}</p>
               <Link to={`${createPageUrl('CareerHub')  }?tab=applied`} className="text-sm font-medium text-primary hover:underline mt-2 inline-block">View all applications</Link>
             </div>
           ) : (
-            <Button onClick={handleApply} className="w-full bg-primary text-white hover:bg-primary/90 py-6 text-base font-semibold rounded-xl">
+            <Button onClick={handleApply} className="w-full bg-primary text-white hover:bg-primary/90 py-6 text-base font-semibold rounded-lg">
               Apply with Elite Profile
             </Button>
           )}

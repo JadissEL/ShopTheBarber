@@ -7,8 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Gift, ShoppingBag, Plus, Minus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function GiftCards() {
     const queryClient = useQueryClient();
@@ -66,26 +70,31 @@ export default function GiftCards() {
     });
 
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
-                    <Gift className="w-16 h-16 text-primary mx-auto mb-4" />
-                    <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">Gift Cards</h1>
-                    <p className="text-lg text-slate dark:text-matte-silver">Give the gift of a perfect cut</p>
-                </motion.div>
+        <div className="stb-page pb-24 lg:pb-8">
+            <MetaTags title="Gift Cards" description="Give the gift of a perfect cut with ShopTheBarber digital gift cards." />
 
-                <div className="grid lg:grid-cols-2 gap-8">
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
-                        <CardContent className="p-8">
-                            <h2 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Buy a gift card</h2>
+            <PageHeader
+                label="Gifts"
+                title="Gift cards"
+                subtitle="Digital cards they can redeem with any barber on the platform."
+            />
+
+            <PageContent>
+                <div className="grid lg:grid-cols-2 gap-6">
+                    <Card className={cn(stb.surface, 'p-0')}>
+                        <CardContent className="p-6 md:p-8">
+                            <h2 className={cn(stb.uiHeading, 'text-xl mb-6')}>Buy a gift card</h2>
                             <div className="space-y-6">
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="grid grid-cols-4 gap-2">
                                     {presetAmounts.map((preset) => (
                                         <button
                                             key={preset}
                                             type="button"
                                             onClick={() => setAmount(preset)}
-                                            className={`py-3 rounded-xl font-bold transition-all ${amount === preset ? 'bg-primary text-white shadow-md' : 'bg-background-light dark:bg-background-dark'}`}
+                                            className={cn(
+                                                'py-3 rounded-lg text-sm font-semibold transition-all duration-200',
+                                                amount === preset ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-foreground hover:bg-muted/80',
+                                            )}
                                         >
                                             {preset}€
                                         </button>
@@ -95,21 +104,13 @@ export default function GiftCards() {
                                     <Button type="button" variant="outline" size="icon" onClick={() => setAmount(Math.max(10, amount - 10))}>
                                         <Minus className="w-4 h-4" />
                                     </Button>
-                                    <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="text-center text-2xl font-bold" />
+                                    <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="text-center text-xl font-semibold" />
                                     <Button type="button" variant="outline" size="icon" onClick={() => setAmount(Math.min(500, amount + 10))}>
                                         <Plus className="w-4 h-4" />
                                     </Button>
                                 </div>
-                                <Input
-                                    placeholder="Recipient email (optional)"
-                                    value={recipientEmail}
-                                    onChange={(e) => setRecipientEmail(e.target.value)}
-                                />
-                                <Button
-                                    className="w-full h-14 text-lg font-bold rounded-xl"
-                                    disabled={purchaseMutation.isPending}
-                                    onClick={() => purchaseMutation.mutate()}
-                                >
+                                <Input placeholder="Recipient email (optional)" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} />
+                                <Button className="w-full h-12" disabled={purchaseMutation.isPending} onClick={() => purchaseMutation.mutate()}>
                                     <ShoppingBag className="w-5 h-5 mr-2" />
                                     Pay €{amount} with card
                                 </Button>
@@ -117,9 +118,9 @@ export default function GiftCards() {
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
-                        <CardContent className="p-8">
-                            <h2 className="text-2xl font-bold mb-4">Redeem to wallet</h2>
+                    <Card className={cn(stb.surface, 'p-0')}>
+                        <CardContent className="p-6 md:p-8">
+                            <h2 className={cn(stb.uiHeading, 'text-xl mb-4')}>Redeem to wallet</h2>
                             <div className="space-y-3">
                                 <Input placeholder="GIFT-XXXX" value={redeemCode} onChange={(e) => setRedeemCode(e.target.value)} />
                                 <Input type="number" placeholder="Amount" value={redeemAmount} onChange={(e) => setRedeemAmount(Number(e.target.value))} />
@@ -133,13 +134,13 @@ export default function GiftCards() {
 
                 {myGiftCards.length > 0 && (
                     <div className="mt-12">
-                        <h2 className="text-2xl font-bold mb-6">Your gift cards</h2>
+                        <h2 className={cn(stb.uiHeading, 'text-xl mb-6')}>Your gift cards</h2>
                         <div className="grid md:grid-cols-2 gap-4">
                             {myGiftCards.map((card) => (
-                                <Card key={card.id} className="rounded-xl">
-                                    <CardContent className="p-6 flex justify-between items-center">
+                                <Card key={card.id} className={stb.surfaceHover}>
+                                    <CardContent className="p-5 flex justify-between items-center gap-4">
                                         <div>
-                                            <p className="font-mono font-bold">{card.code}</p>
+                                            <p className="font-mono font-semibold">{card.code}</p>
                                             <p className="text-sm text-muted-foreground">Balance: €{card.balance} / €{card.original_amount}</p>
                                         </div>
                                         <Badge variant={card.status === 'active' ? 'default' : 'secondary'}>{card.status}</Badge>
@@ -149,7 +150,7 @@ export default function GiftCards() {
                         </div>
                     </div>
                 )}
-            </div>
+            </PageContent>
         </div>
     );
 }

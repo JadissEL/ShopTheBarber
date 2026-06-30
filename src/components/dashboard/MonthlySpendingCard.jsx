@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, BarChart3, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const BAR_HEIGHTS = [40, 65, 55, 90];
 
@@ -15,9 +17,9 @@ export default function MonthlySpendingCard({
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-      <Card className="h-full p-5 border border-slate-200 bg-card shadow-sm rounded-2xl flex flex-col justify-between">
+      <Card className={cn(stb.panel, 'h-full p-5 flex flex-col justify-between')}>
         <div className="flex justify-between items-start mb-3">
-          <BarChart3 className="w-5 h-5 text-slate-400" />
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           ) : (
@@ -34,11 +36,11 @@ export default function MonthlySpendingCard({
           {BAR_HEIGHTS.map((h, i) => (
             <div
               key={i}
-              className="flex-1 rounded-t min-w-[6px] max-w-[12px] transition-all duration-500"
-              style={{
-                height: `${h}%`,
-                backgroundColor: i === BAR_HEIGHTS.length - 1 ? 'rgb(124 58 237)' : i === BAR_HEIGHTS.length - 2 ? 'rgb(196 181 253)' : 'rgb(226 232 240)',
-              }}
+              className={cn(
+                'flex-1 rounded-t min-w-[6px] max-w-[12px] transition-all duration-500',
+                i === BAR_HEIGHTS.length - 1 ? 'bg-primary' : i === BAR_HEIGHTS.length - 2 ? 'bg-primary/40' : 'bg-muted'
+              )}
+              style={{ height: `${h}%` }}
             />
           ))}
         </div>

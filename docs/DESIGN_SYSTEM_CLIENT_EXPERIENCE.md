@@ -1,5 +1,7 @@
 # ShopTheBarber — Unified Design System & Client Experience
 
+> **Living spec:** See `src/lib/stbUi.js` and `src/index.css` for the current Complete Visual System v2 tokens. This document is retained for journey/UX reference; hex values below may be outdated.
+
 **Purpose**: One coherent visual language and UX for the entire client journey. Light mode only.
 
 ---

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { LocalBusinessSchema } from '@/components/seo/SchemaMarkup';
@@ -328,8 +330,8 @@ export default function BarberProfile() {
                     priority
                     imgClassName="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--navy))] via-[hsl(var(--navy)/0.55)] to-[hsl(var(--primary)/0.15)]"></div>
-                <div className="absolute inset-0 stb-mesh-bg opacity-30 pointer-events-none" aria-hidden />
+                <div className="absolute inset-0 bg-[hsl(var(--navy))]/70"></div>
+                <div className="absolute inset-0 bg-primary/5 pointer-events-none" aria-hidden />
 
                 {/* Navigation / Actions Overlay */}
                 <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-20">
@@ -342,7 +344,7 @@ export default function BarberProfile() {
                             variant="outline"
                             size="icon"
                             onClick={() => toggleFavoriteMutation.mutate()}
-                            className={`rounded-full border-white/20 backdrop-blur-md ${isFavorited ? 'bg-red-500/80 text-white border-red-500' : 'bg-white/20 text-white hover:bg-white/40'}`}
+                            className={`rounded-full border-white/20 backdrop-blur-md ${isFavorited ? 'bg-destructive/80 text-white border-destructive' : 'bg-white/20 text-white hover:bg-white/40'}`}
                         >
                             <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
                         </Button>
@@ -355,8 +357,8 @@ export default function BarberProfile() {
 
                     {/* Left Column: Profile Card */}
                     <div className="w-full md:w-1/3 lg:w-1/4">
-                        <div className="bg-card rounded-3xl p-6 border border-border/80 shadow-lg shadow-primary/5 relative overflow-hidden group stb-card-lift">
-                            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white overflow-hidden shadow-xl mx-auto md:mx-0 mb-4">
+                        <div className="bg-card  p-6 border border-border/80 shadow-lg shadow-primary/5 relative overflow-hidden group stb-surface-hover">
+                            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white overflow-hidden shadow-elevation-lg mx-auto md:mx-0 mb-4">
                                 <OptimizedImage
                                     src={barber.image_url}
                                     alt={barber.name}
@@ -367,7 +369,7 @@ export default function BarberProfile() {
                             </div>
 
                             <div className="text-center md:text-left">
-                                <h1 className="text-2xl font-bold text-foreground mb-1 flex items-center justify-center md:justify-start gap-2">
+                                <h1 className={cn(stb.uiHeading, 'text-2xl text-foreground mb-1 flex items-center justify-center md:justify-start gap-2')}>
                                     {barber.name}
                                     <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-500/10" />
                                 </h1>
@@ -395,11 +397,11 @@ export default function BarberProfile() {
 
                                 <div className="flex items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground mb-6">
                                     <div className="flex items-center gap-1">
-                                        <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                                        <Star className="w-4 h-4 text-primary fill-primary" />
                                         <span className="font-bold text-foreground">{barber.rating}</span>
                                         <span className="text-muted-foreground">({barber.review_count})</span>
                                     </div>
-                                    <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+                                    <div className="w-1 h-1 bg-muted-foreground/40 rounded-full"></div>
                                     <div className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4 text-muted-foreground" />
                                         <span>{barber.location || "San Francisco"}</span>
@@ -457,7 +459,7 @@ export default function BarberProfile() {
                                         "https://images.unsplash.com/photo-1635273051932-a56976a4a49c",
                                         "https://images.unsplash.com/photo-1605497788044-5a32c7078486"
                                     ].map((url, i) => (
-                                        <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-muted relative group cursor-pointer border border-border">
+                                        <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer border border-border">
                                             <OptimizedImage
                                                 src={`${url}?w=400&auto=format&fit=crop`}
                                                 fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&fit=crop"
@@ -489,7 +491,7 @@ export default function BarberProfile() {
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] md:hidden">
                 <Button
                     onClick={() => handleBookContext()}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-14 rounded-2xl shadow-xl shadow-primary/20 text-lg flex items-center justify-center gap-2"
+                    className={cn(stb.btn, 'w-full h-14 rounded-lg shadow-elevation-md text-lg flex items-center justify-center gap-2')}
                 >
                     <CalendarDays className="w-5 h-5" /> {selectedServiceIds.length > 0 ? 'Continue to Date' : 'Book Appointment'}
                 </Button>

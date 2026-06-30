@@ -38,14 +38,18 @@ import {
     Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { stb, CHART_COLORS, chartColor, chartFill } from '@/lib/stbUi';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
-const PIE_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444'];
+const PIE_COLORS = [CHART_COLORS[1], CHART_COLORS[4], CHART_COLORS[2], CHART_COLORS[5]];
 
 function retentionHeatColor(pct) {
-    if (pct >= 60) return 'bg-emerald-500/25 text-emerald-800 dark:text-emerald-200';
-    if (pct >= 40) return 'bg-emerald-500/15 text-emerald-900 dark:text-emerald-100';
-    if (pct >= 25) return 'bg-amber-500/15 text-amber-900 dark:text-amber-100';
-    if (pct >= 10) return 'bg-orange-500/10 text-orange-900 dark:text-orange-100';
+    if (pct >= 60) return 'bg-primary/25 text-primary text-primary';
+    if (pct >= 40) return 'bg-primary/15 text-foreground text-primary';
+    if (pct >= 25) return 'bg-primary/15 text-foreground dark:text-primary-foreground';
+    if (pct >= 10) return 'bg-warning/15 text-foreground';
     return 'bg-muted text-muted-foreground';
 }
 
@@ -55,10 +59,10 @@ function BenchmarkPill({ value, good, great, suffix = '%' }) {
     const label = tier === 'great' ? 'Top quartile' : tier === 'good' ? 'On track' : 'Below benchmark';
     const cls =
         tier === 'great'
-            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+            ? 'bg-primary/15 text-primary dark:text-primary'
             : tier === 'good'
               ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300'
-              : 'bg-amber-500/15 text-amber-800 dark:text-amber-200';
+              : 'bg-primary/15 text-foreground dark:text-primary/80';
     return (
         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
             {label}, {value}{suffix} (good {good}{suffix}, great {great}{suffix})
@@ -77,7 +81,7 @@ function StatCard({ label, value, sub, icon: Icon }) {
                         {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
                     </div>
                     {Icon && (
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                             <Icon className="w-5 h-5" />
                         </div>
                     )}
@@ -182,32 +186,34 @@ export default function AdminProductAnalytics() {
     const retentionMonths = data.cohorts?.retention_months ?? [0, 1, 2, 3, 6];
 
     return (
-        <div className="stb-page pb-16">
+        <div className="stb-page pb-16 font-sans">
             <MetaTags title="Product Analytics" description="Funnel, cohorts, LTV, and marketplace metrics" />
-            <div className="container mx-auto px-6 py-8 max-w-7xl">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground">Data & Analytics</h1>
-                        <p className="text-muted-foreground mt-1">
-                            Funnel, cohort retention, customer LTV, fee adoption, and marketplace attachment.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Select value={days} onValueChange={setDays}>
-                            <SelectTrigger className="w-[140px]">
-                                <SelectValue placeholder="Period" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="7">Last 7 days</SelectItem>
-                                <SelectItem value="30">Last 30 days</SelectItem>
-                                <SelectItem value="90">Last 90 days</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
-                            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-                        </Button>
-                    </div>
+            <PageHeader
+                label="Admin"
+                title="Data & analytics"
+                subtitle="Funnel, cohort retention, customer LTV, fee adoption, and marketplace attachment."
+                compact
+                variant="light"
+                tier="app"
+            >
+                <div className="flex items-center gap-2">
+                    <Select value={days} onValueChange={setDays}>
+                        <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Period" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="7">Last 7 days</SelectItem>
+                            <SelectItem value="30">Last 30 days</SelectItem>
+                            <SelectItem value="90">Last 90 days</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
+                        <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                    </Button>
                 </div>
+            </PageHeader>
+
+            <PageContent>
 
                 <div className="mb-6">
                     <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-2">
@@ -363,8 +369,8 @@ export default function AdminProductAnalytics() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Bar dataKey="sessions" fill="#6366f1" name="Sessions (loose)" radius={[6, 6, 0, 0]} />
-                                            <Bar dataKey="strict" fill="#312e81" name="Strict sessions" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="sessions" fill={chartColor(1)} name="Sessions (loose)" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="strict" fill={chartColor(3)} name="Strict sessions" radius={[6, 6, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -378,14 +384,14 @@ export default function AdminProductAnalytics() {
                                                 <YAxis />
                                                 <Tooltip />
                                                 <Legend />
-                                                <Line type="monotone" dataKey="home" stroke="#6366f1" name="Home" dot={false} />
-                                                <Line type="monotone" dataKey="paid_booking" stroke="#10b981" name="Paid" dot={false} />
+                                                <Line type="monotone" dataKey="home" stroke={chartColor(1)} name="Home" dot={false} />
+                                                <Line type="monotone" dataKey="paid_booking" stroke={chartColor(2)} name="Paid" dot={false} />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
                                 )}
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className={cn(stb.dataTable, '[&_tbody_tr]:border-b [&_tbody_tr]:border-border/60 [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                                         <thead>
                                             <tr className="border-b border-border text-left text-muted-foreground">
                                                 <th className="py-2 pr-4">Step</th>
@@ -417,7 +423,7 @@ export default function AdminProductAnalytics() {
                                 {stepTiming.length > 0 && (
                                     <div className="mt-8 overflow-x-auto">
                                         <p className="text-sm font-medium mb-3">Median time between steps (hours)</p>
-                                        <table className="w-full text-sm">
+                                        <table className={cn(stb.dataTable, '[&_tbody_tr]:border-b [&_tbody_tr]:border-border/60 [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                                             <thead>
                                                 <tr className="border-b text-muted-foreground text-left">
                                                     <th className="py-2">Transition</th>
@@ -456,7 +462,7 @@ export default function AdminProductAnalytics() {
                                                 <XAxis dataKey="label" />
                                                 <YAxis unit="%" domain={[0, 100]} />
                                                 <Tooltip formatter={(v) => `${v}%`} />
-                                                <Line type="monotone" dataKey="avg_retention_pct" stroke="#6366f1" name="Retention" strokeWidth={2} dot />
+                                                <Line type="monotone" dataKey="avg_retention_pct" stroke={chartColor(1)} name="Retention" strokeWidth={2} dot />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     ) : (
@@ -478,9 +484,9 @@ export default function AdminProductAnalytics() {
                                                 <YAxis unit="%" />
                                                 <Tooltip formatter={(v) => `${v}%`} />
                                                 <Legend />
-                                                <Bar dataKey="m1" fill="#a5b4fc" name="M+1" radius={[4, 4, 0, 0]} />
-                                                <Bar dataKey="m3" fill="#6366f1" name="M+3" radius={[4, 4, 0, 0]} />
-                                                <Bar dataKey="m6" fill="#312e81" name="M+6" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="m1" fill={chartFill(1, 0.45)} name="M+1" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="m3" fill={chartColor(1)} name="M+3" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="m6" fill={chartColor(3)} name="M+6" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     ) : (
@@ -523,7 +529,7 @@ export default function AdminProductAnalytics() {
                                             <XAxis dataKey="label" />
                                             <YAxis unit="%" domain={[0, 100]} />
                                             <Tooltip formatter={(v) => `${v}%`} />
-                                            <Line type="monotone" dataKey="avg_retention_pct" stroke="#10b981" strokeWidth={2} dot name="Retention" />
+                                            <Line type="monotone" dataKey="avg_retention_pct" stroke={chartColor(2)} strokeWidth={2} dot name="Retention" />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -534,7 +540,7 @@ export default function AdminProductAnalytics() {
                                 <CardTitle>Signup cohort heatmap, monthly retention</CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
-                                <table className="w-full text-xs">
+                                <table className={cn(stb.dataTable, 'text-xs [&_tbody_tr]:border-b [&_tbody_tr]:border-border/60 [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                                     <thead>
                                         <tr className="text-muted-foreground border-b">
                                             <th className="py-2 text-left">Cohort</th>
@@ -569,7 +575,7 @@ export default function AdminProductAnalytics() {
                                     <CardTitle>Revenue retention by signup cohort (% of M0)</CardTitle>
                                 </CardHeader>
                                 <CardContent className="overflow-x-auto">
-                                    <table className="w-full text-xs">
+                                    <table className={cn(stb.dataTable, 'text-xs [&_tbody_tr]:border-b [&_tbody_tr]:border-border/60 [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                                         <thead>
                                             <tr className="text-muted-foreground border-b">
                                                 <th className="py-2 text-left">Cohort</th>
@@ -606,7 +612,7 @@ export default function AdminProductAnalytics() {
                                     <CardDescription>% of signups with a paid booking in each week after signup</CardDescription>
                                 </CardHeader>
                                 <CardContent className="overflow-x-auto">
-                                    <table className="w-full text-xs">
+                                    <table className={cn(stb.dataTable, 'text-xs [&_tbody_tr]:border-b [&_tbody_tr]:border-border/60 [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                                         <thead>
                                             <tr className="text-muted-foreground border-b">
                                                 <th className="py-2 text-left">Cohort</th>
@@ -641,7 +647,7 @@ export default function AdminProductAnalytics() {
                                     <CardDescription>Clients who return for another paid booking</CardDescription>
                                 </CardHeader>
                                 <CardContent className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className={cn(stb.dataTable, '[&_tbody_tr]:border-b [&_tbody_tr]:border-border/60 [&_tbody_tr]:transition-colors [&_tbody_tr]:hover:bg-muted/50')}>
                                         <thead>
                                             <tr className="text-muted-foreground border-b">
                                                 <th className="py-2 text-left">First booking</th>
@@ -686,7 +692,7 @@ export default function AdminProductAnalytics() {
                                             <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                                             <YAxis allowDecimals={false} />
                                             <Tooltip />
-                                            <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="count" fill={chartColor(2)} radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -718,9 +724,9 @@ export default function AdminProductAnalytics() {
                                             <YAxis />
                                             <Tooltip formatter={(v) => `€${v}`} />
                                             <Legend />
-                                            <Area type="monotone" dataKey="booking_gmv_eur" stackId="1" fill="#6366f1" stroke="#6366f1" name="Bookings" />
-                                            <Area type="monotone" dataKey="marketplace_gmv_eur" stackId="1" fill="#10b981" stroke="#10b981" name="Marketplace" />
-                                            <Area type="monotone" dataKey="tips_gmv_eur" stackId="1" fill="#f59e0b" stroke="#f59e0b" name="Tips" />
+                                            <Area type="monotone" dataKey="booking_gmv_eur" stackId="1" fill={chartColor(1)} stroke={chartColor(1)} name="Bookings" />
+                                            <Area type="monotone" dataKey="marketplace_gmv_eur" stackId="1" fill={chartColor(2)} stroke={chartColor(2)} name="Marketplace" />
+                                            <Area type="monotone" dataKey="tips_gmv_eur" stackId="1" fill={chartColor(4)} stroke={chartColor(4)} name="Tips" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -740,8 +746,8 @@ export default function AdminProductAnalytics() {
                                             <YAxis />
                                             <Tooltip formatter={(v) => `€${v}`} />
                                             <Legend />
-                                            <Bar dataKey="avg_ltv_eur" fill="#6366f1" name="Avg LTV" radius={[4, 4, 0, 0]} />
-                                            <Bar dataKey="median_ltv_eur" fill="#a5b4fc" name="Median LTV" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="avg_ltv_eur" fill={chartColor(1)} name="Avg LTV" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="median_ltv_eur" fill={chartFill(1, 0.45)} name="Median LTV" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -757,19 +763,19 @@ export default function AdminProductAnalytics() {
                                 </CardHeader>
                                 <CardContent className="space-y-4 text-sm">
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="rounded-xl bg-muted/50 p-3">
+                                        <div className=" bg-muted/50 p-3">
                                             <p className="text-muted-foreground text-xs">Unique providers</p>
                                             <p className="text-xl font-bold">{data.fee_adoption?.providers?.total_unique_providers ?? 0}</p>
                                         </div>
-                                        <div className="rounded-xl bg-muted/50 p-3">
+                                        <div className=" bg-muted/50 p-3">
                                             <p className="text-muted-foreground text-xs">On fixed fee</p>
                                             <p className="text-xl font-bold">{data.fee_adoption?.providers?.on_fixed_fee_plan ?? 0}</p>
                                         </div>
-                                        <div className="rounded-xl bg-muted/50 p-3">
+                                        <div className=" bg-muted/50 p-3">
                                             <p className="text-muted-foreground text-xs">Est. MRR (active plans)</p>
                                             <p className="text-xl font-bold">€{data.fee_adoption?.fixed_fee_plans?.active_plan_mrr_estimate_eur ?? 0}</p>
                                         </div>
-                                        <div className="rounded-xl bg-muted/50 p-3">
+                                        <div className=" bg-muted/50 p-3">
                                             <p className="text-muted-foreground text-xs">Commission revenue</p>
                                             <p className="text-xl font-bold">€{data.fee_adoption?.bookings?.estimated_commission_revenue_eur ?? 0}</p>
                                         </div>
@@ -807,7 +813,7 @@ export default function AdminProductAnalytics() {
                                             <XAxis dataKey="name" />
                                             <YAxis />
                                             <Tooltip formatter={(v) => `€${v}`} />
-                                            <Bar dataKey="value" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="value" fill={chartColor(4)} radius={[6, 6, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -830,10 +836,10 @@ export default function AdminProductAnalytics() {
                                             <YAxis yAxisId="right" orientation="right" unit="%" />
                                             <Tooltip />
                                             <Legend />
-                                            <Bar yAxisId="left" dataKey="commission_revenue_eur" fill="#6366f1" name="Commission €" radius={[4, 4, 0, 0]} />
-                                            <Bar yAxisId="left" dataKey="fixed_fee_revenue_eur" fill="#f59e0b" name="Fixed fee €" radius={[4, 4, 0, 0]} />
-                                            <Line yAxisId="right" type="monotone" dataKey="waived_share_pct" stroke="#10b981" name="Waived %" dot={false} />
-                                            <Line yAxisId="left" type="monotone" dataKey="enrollments_db" stroke="#312e81" name="Enrollments (DB)" dot />
+                                            <Bar yAxisId="left" dataKey="commission_revenue_eur" fill={chartColor(1)} name="Commission €" radius={[4, 4, 0, 0]} />
+                                            <Bar yAxisId="left" dataKey="fixed_fee_revenue_eur" fill={chartColor(4)} name="Fixed fee €" radius={[4, 4, 0, 0]} />
+                                            <Line yAxisId="right" type="monotone" dataKey="waived_share_pct" stroke={chartColor(2)} name="Waived %" dot={false} />
+                                            <Line yAxisId="left" type="monotone" dataKey="enrollments_db" stroke={chartColor(3)} name="Enrollments (DB)" dot />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -915,9 +921,9 @@ export default function AdminProductAnalytics() {
                                             <YAxis yAxisId="right" orientation="right" unit="%" />
                                             <Tooltip />
                                             <Legend />
-                                            <Bar yAxisId="left" dataKey="paid_orders" fill="#6366f1" name="Paid orders" radius={[4, 4, 0, 0]} />
-                                            <Line yAxisId="left" type="monotone" dataKey="marketplace_gmv_eur" stroke="#10b981" name="GMV €" dot={false} />
-                                            <Line yAxisId="right" type="monotone" dataKey="attachment_within_30d_pct" stroke="#f59e0b" name="30d attach %" dot />
+                                            <Bar yAxisId="left" dataKey="paid_orders" fill={chartColor(1)} name="Paid orders" radius={[4, 4, 0, 0]} />
+                                            <Line yAxisId="left" type="monotone" dataKey="marketplace_gmv_eur" stroke={chartColor(2)} name="GMV €" dot={false} />
+                                            <Line yAxisId="right" type="monotone" dataKey="attachment_within_30d_pct" stroke={chartColor(4)} name="30d attach %" dot />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -929,7 +935,7 @@ export default function AdminProductAnalytics() {
                 <p className="text-xs text-muted-foreground mt-8 text-center">
                     Generated {new Date(data.generated_at).toLocaleString()}, Events stored in product_analytics_events
                 </p>
-            </div>
+            </PageContent>
         </div>
     );
 }

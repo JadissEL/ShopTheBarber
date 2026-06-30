@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { ArrowLeft, AlertCircle, Mail, Calendar, Shield } from 'lucide-react';
+import ModerationActions from '@/components/moderation/ModerationActions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertCircle, Mail, Calendar, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
-import ModerationActions from '@/components/moderation/ModerationActions';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { ArrowLeft } from 'lucide-react';
 
 export default function UserModerationDetail() {
   const { data: currentUser } = useQuery({
@@ -25,10 +29,10 @@ export default function UserModerationDetail() {
   });
 
   const statusConfig = {
-    'active': { color: 'bg-green-50 text-green-700', label: 'Active' },
-    'flagged': { color: 'bg-orange-50 text-orange-700', label: 'Flagged' },
-    'suspended': { color: 'bg-amber-50 text-amber-700', label: 'Suspended' },
-    'banned': { color: 'bg-red-50 text-red-700', label: 'Banned' }
+    'active': { color: 'bg-success/10 text-success', label: 'Active' },
+    'flagged': { color: 'bg-warning/15 text-foreground', label: 'Flagged' },
+    'suspended': { color: 'bg-primary/10 text-muted-foreground', label: 'Suspended' },
+    'banned': { color: 'bg-destructive/10 text-destructive', label: 'Banned' }
   };
 
   const status = targetUser?.moderation_status || 'active';
@@ -65,26 +69,30 @@ export default function UserModerationDetail() {
   }
 
   return (
-    <div className="stb-page pb-16">
+    <div className={stb.page}>
       <MetaTags 
         title={`Moderation: ${targetUser.full_name}`}
         description="User moderation details"
       />
 
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to={createPageUrl('AdminUserModeration')}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{targetUser.full_name}</h1>
-            <p className="text-muted-foreground text-sm mt-1">{targetUser.email}</p>
-          </div>
-          <Badge className={config.color}>{config.label}</Badge>
-        </div>
+      <PageHeader
+        label="Admin"
+        title={targetUser.full_name}
+        subtitle={targetUser.email}
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Badge className={config.color}>{config.label}</Badge>
+      </PageHeader>
+
+      <PageContent narrow>
+        <Link
+          to={createPageUrl('AdminUserModeration')}
+          className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to moderation
+        </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -173,7 +181,7 @@ export default function UserModerationDetail() {
             <ModerationActions targetUser={targetUser} />
           </div>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

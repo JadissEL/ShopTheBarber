@@ -19,7 +19,7 @@ export function GroupBookingBadge({ discountPercent, className = '' }) {
         discountPercent > 0 ? `Group, ${discountPercent}% off` : 'Group booking';
     return (
         <Badge
-            className={`bg-violet-600/90 text-white border-0 font-semibold ${className}`}
+            className={`bg-primary/90 text-white border-0 font-semibold ${className}`}
             variant="secondary"
         >
             {label}

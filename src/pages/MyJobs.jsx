@@ -7,12 +7,16 @@ import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 const STATUS_STYLES = {
-  draft: 'bg-amber-100 text-amber-800',
-  pending_review: 'bg-blue-100 text-blue-800',
-  published: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  draft: 'bg-warning/15 text-foreground',
+  pending_review: 'bg-primary/10 text-primary',
+  published: 'bg-success/10 text-success',
+  rejected: 'bg-destructive/10 text-destructive',
   closed: 'bg-muted text-muted-foreground',
 };
 
@@ -77,36 +81,39 @@ export default function MyJobs() {
   }
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page}>
       <MetaTags title="My job postings | Shop The Barber" />
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-foreground">My job postings</h1>
-          <Button onClick={() => navigate(createPageUrl('CreateJob'))} className="bg-primary text-white rounded-xl gap-2">
-            <Plus className="w-5 h-5" /> New opening
-          </Button>
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Create a draft, submit for review, and an admin will approve before it goes live on Career Hub.
-        </p>
+      <PageHeader
+        label="Careers"
+        title="My job postings"
+        subtitle="Create a draft, submit for review, and an admin will approve before it goes live on Career Hub."
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Button onClick={() => navigate(createPageUrl('CreateJob'))} className={cn(stb.btn, 'gap-2')}>
+          <Plus className="w-5 h-5" /> New opening
+        </Button>
+      </PageHeader>
+      <PageContent narrow>
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : jobs.length === 0 ? (
-          <div className="bg-card rounded-2xl border border-slate-200 p-8 text-center">
-            <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <div className={cn(stb.panel, 'p-8 text-center')}>
+            <Briefcase className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground mb-4">No job postings yet.</p>
-            <Button onClick={() => navigate(createPageUrl('CreateJob'))} className="bg-primary text-white">Create your first job</Button>
+            <Button onClick={() => navigate(createPageUrl('CreateJob'))} className={stb.btn}>Create your first job</Button>
           </div>
         ) : (
           <ul className="space-y-3">
             {jobs.map((job) => (
-              <li key={job.id} className="p-4 bg-card rounded-xl border border-slate-200 hover:shadow-sm">
+              <li key={job.id} className={cn(stb.panel, 'p-4 hover:shadow-elevation-sm transition-shadow')}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <Link to={`${createPageUrl('ApplicantReview')  }?jobId=${  encodeURIComponent(job.id)}`} className="min-w-0 flex-1">
                     <p className="font-semibold text-foreground">{job.title}</p>
                     <p className="text-sm text-muted-foreground">{job.employer_name}</p>
                     {job.status === 'rejected' && job.rejection_reason && (
-                      <p className="text-xs text-red-600 mt-1">Feedback: {job.rejection_reason}</p>
+                      <p className="text-xs text-destructive mt-1">Feedback: {job.rejection_reason}</p>
                     )}
                   </Link>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -126,7 +133,7 @@ export default function MyJobs() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="rounded-lg text-red-600"
+                          className="rounded-lg text-destructive"
                           onClick={(e) => { e.preventDefault(); deleteMutation.mutate(job.id); }}
                           disabled={deleteMutation.isPending}
                         >
@@ -145,14 +152,14 @@ export default function MyJobs() {
                         <Ban className="w-3.5 h-3.5" /> Close
                       </Button>
                     )}
-                    <Link to={`${createPageUrl('ApplicantReview')  }?jobId=${  encodeURIComponent(job.id)}`} className="text-slate-400 hover:text-muted-foreground px-1" aria-label="Review applicants"></Link>
+                    <Link to={`${createPageUrl('ApplicantReview')  }?jobId=${  encodeURIComponent(job.id)}`} className="text-muted-foreground hover:text-muted-foreground px-1" aria-label="Review applicants"></Link>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { cn } from '@/lib/utils';
+import { catalogCardClasses, stb } from '@/lib/stbUi';
 
 export default function ServiceCard({ service, variant = 'full', index = 0 }) {
   const isCompact = variant === 'compact';
@@ -12,12 +14,15 @@ export default function ServiceCard({ service, variant = 'full', index = 0 }) {
         <motion.div 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[1.5rem] border transition-all duration-300 cursor-pointer min-w-[100px] md:min-w-0 flex-1 h-full group ${service.bg || 'bg-white/5 border-white/5'} hover:bg-white/10 hover:border-white/20`}
+            className={cn(
+              stb.surfaceHover,
+              'flex flex-col items-center justify-center gap-3 p-6 cursor-pointer min-w-[100px] md:min-w-0 flex-1 h-full group'
+            )}
         >
-            <div className="p-3 rounded-full bg-white/5 group-hover:bg-primary/20 transition-colors duration-300">
-                {service.icon && <service.icon className={`w-6 h-6 ${service.color || 'text-muted-foreground/80'} group-hover:text-primary transition-colors duration-300`} />}
+            <div className="p-3 rounded-full bg-muted transition-colors duration-normal ease-out group-hover:bg-primary/20">
+                {service.icon && <service.icon className={cn('w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors duration-normal ease-out', service.color)} />}
             </div>
-            <span className="text-xs font-medium tracking-wide text-muted-foreground/80 group-hover:text-white uppercase transition-colors">{service.name || service.label}</span>
+            <span className="text-xs font-medium tracking-wide text-muted-foreground group-hover:text-foreground uppercase transition-colors duration-normal ease-out">{service.name || service.label}</span>
         </motion.div>
     );
   }
@@ -37,30 +42,31 @@ export default function ServiceCard({ service, variant = 'full', index = 0 }) {
         >
             <motion.div 
                 whileHover={{ y: -8 }}
-                className="relative overflow-hidden bg-card rounded-3xl border border-border h-full group isolate"
+                className={catalogCardClasses('relative h-full group isolate p-0')}
             >
-                {/* Background Image if available */}
                 {service.image_url && (
                     <div className="absolute inset-0 z-0">
                         <OptimizedImage 
                             src={service.image_url} 
                             alt={service.label || service.name}
                             fill
-                            className="opacity-40 group-hover:opacity-60 transition-opacity duration-500 group-hover:scale-105 transform"
-                            imgClassName="transition-transform duration-700"
+                            className="opacity-40 group-hover:opacity-60 transition-opacity duration-normal ease-out group-hover:scale-105 transform"
+                            imgClassName="transition-transform duration-normal ease-out"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/70 to-foreground/20"></div>
+                        <div className="absolute inset-0 bg-foreground/70" />
                     </div>
                 )}
 
-                <div className="relative z-10 p-6 flex flex-col h-full items-start min-h-[160px]">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${service.color ? service.color.replace('bg-', 'bg-opacity-20 bg-') : 'bg-white/10 text-white'} backdrop-blur-md mb-auto border border-white/10 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={cn(stb.catalogBody, 'relative z-10 flex flex-col h-full items-start min-h-[160px]')}>
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-card/20 text-foreground backdrop-blur-md mb-auto border border-foreground/10 group-hover:scale-110 transition-transform duration-normal ease-out">
                         {service.icon && <service.icon className="w-6 h-6" />}
                     </div>
                     
                     <div>
-                        <h3 className="font-bold text-white text-xl mb-1">{service.label || service.name}</h3>
-                        <p className="text-sm text-muted-foreground/80 group-hover:text-gray-300 transition-colors">Book Now <span className="inline-block ml-1 transition-transform group-hover:translate-x-1"></span></p>
+                        <h3 className={cn(stb.title, 'text-white text-xl mb-1')}>{service.label || service.name}</h3>
+                        <p className={cn(stb.body, 'text-muted-foreground group-hover:text-foreground transition-colors duration-normal ease-out')}>
+                          Book Now
+                        </p>
                     </div>
                 </div>
             </motion.div>

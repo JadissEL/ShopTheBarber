@@ -12,7 +12,7 @@ export default function FilterGroup({ title, icon: Icon, children, className = '
         className={cn(
           'flex gap-2',
           scrollable
-            ? 'overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible pb-0.5 snap-x snap-mandatory [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] md:[mask-image:none]'
+            ? 'overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible pb-0.5 snap-x snap-mandatory'
             : 'flex-wrap'
         )}
       >

@@ -9,6 +9,9 @@ import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
 import { createPageUrl } from '@/utils';
 import { KeyRound, ExternalLink, RefreshCw, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const GROUP_LABELS = {
     core: 'Core platform',
@@ -36,24 +39,24 @@ export default function AdminKeysWalkthrough() {
     }, {});
 
     return (
-        <div className="max-w-3xl mx-auto py-6">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="API keys walkthrough" description="Production secrets readiness checklist" />
 
-            <div className="flex items-start justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-2">
-                        <KeyRound className="w-8 h-8 text-primary" />
-                        Keys finalization
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Server-side readiness on <strong>{data.environment}</strong>, values are never shown.
-                    </p>
-                </div>
+            <PageHeader
+                label="Admin"
+                title="Keys finalization"
+                subtitle={`Server-side readiness on ${data.environment} — values are never shown.`}
+                compact
+                variant="light"
+                tier="app"
+            >
                 <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
                     <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                     Refresh
                 </Button>
-            </div>
+            </PageHeader>
+
+            <PageContent narrow>
 
             <Card className="mb-8">
                 <CardContent className="pt-6">
@@ -67,8 +70,8 @@ export default function AdminKeysWalkthrough() {
                         <Badge
                             className={
                                 data.ready_for_production
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-amber-100 text-amber-800'
+                                    ? 'stb-chip stb-chip-active'
+                                    : 'bg-warning/15 text-foreground'
                             }
                         >
                             {data.summary.configured}/{data.summary.total} configured, {' '}
@@ -90,9 +93,9 @@ export default function AdminKeysWalkthrough() {
                                 className="flex items-start gap-3 py-2 border-b border-border last:border-0"
                             >
                                 {c.configured ? (
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                                 ) : c.required_production ? (
-                                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                    <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                                 ) : (
                                     <Circle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                                 )}
@@ -138,6 +141,7 @@ export default function AdminKeysWalkthrough() {
                     </Link>
                 </CardContent>
             </Card>
+            </PageContent>
         </div>
     );
 }

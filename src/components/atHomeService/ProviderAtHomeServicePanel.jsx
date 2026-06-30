@@ -37,7 +37,7 @@ function ZoneEditor({ zones, onChange, radiusKm }) {
             {zones.map((zone, index) => (
                 <div
                     key={`zone-${index}`}
-                    className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_80px_auto] gap-2 items-end rounded-xl border border-border p-3 bg-muted/20"
+                    className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_80px_auto] gap-2 items-end rounded-lg border border-border p-3 bg-muted/20"
                 >
                     <div>
                         <Label className="text-xs">Label</Label>
@@ -136,7 +136,7 @@ function AtHomeAreaForm({ title, description, area, defaultZones, onSave, isSavi
 
     if (!mobileEnabled) {
         return (
-            <div className="rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+            <div className=" border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
                 Enable at-home visits in service location settings to configure travel zones for {title}.
             </div>
         );
@@ -195,7 +195,7 @@ function AtHomeAreaForm({ title, description, area, defaultZones, onSave, isSavi
                     step={1}
                     value={radiusKm}
                     onChange={(e) => setRadiusKm(Number(e.target.value))}
-                    className="w-full accent-violet-600"
+                    className="w-full accent-primary"
                 />
                 <p className="text-xs text-muted-foreground">
                     Clients outside this radius cannot book at-home visits.
@@ -208,7 +208,7 @@ function AtHomeAreaForm({ title, description, area, defaultZones, onSave, isSavi
                 serviceRadiusKm={radiusKm}
             />
 
-            <div className="flex items-center justify-between rounded-xl border border-border p-4 bg-muted/20">
+            <div className="flex items-center justify-between rounded-lg border border-border p-4 bg-muted/20">
                 <div>
                     <p className="font-bold">Travel fees by zone</p>
                     <p className="text-sm text-muted-foreground">
@@ -268,7 +268,7 @@ export function ProviderAtHomeServicePanel() {
 
     if (!showBarber && !showShop) {
         return (
-            <p className="text-sm text-muted-foreground rounded-xl border border-border bg-muted/20 p-4">
+            <p className="text-sm text-muted-foreground rounded-lg border border-border bg-muted/20 p-4">
                 At-home travel zones apply only when you offer at-home visits. Enable at-home service in
                 &ldquo;Where you serve clients&rdquo; above.
             </p>

@@ -8,7 +8,7 @@ export default function BookingChatBanner({ context, onProposeReschedule }) {
     const start = context.start_time ? parseISO(context.start_time) : null;
 
     return (
-        <div className="mx-4 mt-3 p-3 rounded-xl bg-card border border-border shadow-sm">
+        <div className="mx-4 mt-3 p-3 rounded-lg bg-card border border-border shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

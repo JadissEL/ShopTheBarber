@@ -18,6 +18,7 @@ import {
   Package
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 export default function ProductComparison({ products, onClose }) {
   if (!products || products.length < 2) {
@@ -48,7 +49,7 @@ export default function ProductComparison({ products, onClose }) {
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-            <TrendingUp className="w-6 h-6 text-[#D08B3D]" />
+            <TrendingUp className="w-6 h-6 text-primary" />
             Comparaison de Produits
           </DialogTitle>
         </DialogHeader>
@@ -63,7 +64,7 @@ export default function ProductComparison({ products, onClose }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="rounded-[12px] border-2 border-slate-200 overflow-hidden">
+                <Card className="rounded-lg border-2 border-border overflow-hidden">
                   <div className="relative aspect-square bg-muted">
                     {product.image_url ? (
                       <img
@@ -73,11 +74,11 @@ export default function ProductComparison({ products, onClose }) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-16 h-16 text-slate-300" />
+                        <Package className="w-16 h-16 text-white/70" />
                       </div>
                     )}
                     {product.is_featured && (
-                      <Badge className="absolute top-3 right-3 bg-[#D08B3D] border-0 text-white">
+                      <Badge className="absolute top-3 right-3 bg-primary border-0 text-white">
                         <Award className="w-3 h-3 mr-1" />
                         Top
                       </Badge>
@@ -93,7 +94,7 @@ export default function ProductComparison({ products, onClose }) {
                           className={`w-4 h-4 ${
                             i < Math.floor(product.rating || 5)
                               ? 'text-yellow-400 fill-current'
-                              : 'text-slate-200'
+                              : 'text-muted-foreground'
                           }`}
                         />
                       ))}
@@ -114,12 +115,12 @@ export default function ProductComparison({ products, onClose }) {
           </div>
 
           {/* Comparison Table */}
-          <Card className="rounded-[12px] border-2 border-slate-200">
+          <Card className="rounded-lg border-2 border-border">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b-2 border-slate-200 bg-muted/50">
+                    <tr className="border-b-2 border-border bg-muted/50">
                       <th className="text-left p-4 font-bold sticky left-0 bg-muted/50 z-10">
                         Caractéristiques
                       </th>
@@ -141,7 +142,7 @@ export default function ProductComparison({ products, onClose }) {
                       const bestValue = getBestValue(feature.key);
                       return (
                         <tr key={feature.key} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/50'}>
-                          <td className="p-4 font-semibold sticky left-0 bg-inherit z-10 border-r-2 border-slate-200">
+                          <td className="p-4 font-semibold sticky left-0 bg-inherit z-10 border-r-2 border-border">
                             <div className="flex items-center gap-2">
                               <span className="text-xl">{feature.icon}</span>
                               <span>{feature.label}</span>
@@ -152,9 +153,10 @@ export default function ProductComparison({ products, onClose }) {
                             const isBest = bestValue !== null && value === bestValue;
                             return (
                               <td key={product.id} className="p-4 text-center">
-                                <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-[8px] ${
-                                  isBest ? 'bg-[#1E7A4B]/10 text-[#1E7A4B] font-bold' : ''
-                                }`}>
+                                <div className={cn(
+                                  'inline-flex items-center gap-2 px-3 py-2 rounded-lg',
+                                  isBest && 'bg-success/10 text-success font-bold',
+                                )}>
                                   {isBest && <Check className="w-4 h-4" />}
                                   <span>{feature.format(value)}</span>
                                 </div>
@@ -167,7 +169,7 @@ export default function ProductComparison({ products, onClose }) {
 
                     {/* Description Row */}
                     <tr className="bg-card">
-                      <td className="p-4 font-semibold sticky left-0 bg-card z-10 border-r-2 border-slate-200">
+                      <td className="p-4 font-semibold sticky left-0 bg-card z-10 border-r-2 border-border">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">📝</span>
                           <span>Description</span>
@@ -188,9 +190,9 @@ export default function ProductComparison({ products, onClose }) {
           </Card>
 
           {/* Summary */}
-          <div className="mt-6 p-6 bg-[#0B2545]/5 rounded-[12px] border-2 border-[#0B2545]/20">
-            <h4 className="font-bold text-lg mb-4 flex items-center gap-2 text-[#0B2545]">
-              <Award className="w-5 h-5 text-[#D08B3D]" />
+          <div className="mt-6 p-6 bg-[hsl(var(--navy))]/5 rounded-lg border-2 border-foreground/20">
+            <h4 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
+              <Award className="w-5 h-5 text-primary" />
               Recommandation
             </h4>
             {(() => {
@@ -201,19 +203,19 @@ export default function ProductComparison({ products, onClose }) {
               return (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-[#1E7A4B]">Meilleur Prix</Badge>
-                    <span className="font-semibold text-[#0B2545]">{lowestPrice.name}</span>
-                    <span className="text-[#1E7A4B] font-bold">{lowestPrice.price}€</span>
+                    <Badge className="bg-success text-success-foreground">Meilleur Prix</Badge>
+                    <span className="font-semibold text-foreground">{lowestPrice.name}</span>
+                    <span className="text-success font-bold">{lowestPrice.price}€</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-[#D08B3D]">Mieux Noté</Badge>
-                    <span className="font-semibold text-[#0B2545]">{highestRated.name}</span>
-                    <span className="text-[#D08B3D] font-bold">{highestRated.rating?.toFixed(1)}/5</span>
+                    <Badge className="bg-primary">Mieux Noté</Badge>
+                    <span className="font-semibold text-foreground">{highestRated.name}</span>
+                    <span className="text-primary font-bold">{highestRated.rating?.toFixed(1)}/5</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-[#0B2545]">Plus Populaire</Badge>
-                    <span className="font-semibold text-[#0B2545]">{mostReviewed.name}</span>
-                    <span className="text-[#0B2545] font-bold">{mostReviewed.total_reviews} avis</span>
+                    <Badge className="bg-[hsl(var(--navy))]">Plus Populaire</Badge>
+                    <span className="font-semibold text-foreground">{mostReviewed.name}</span>
+                    <span className="text-foreground font-bold">{mostReviewed.total_reviews} avis</span>
                   </div>
                 </div>
               );

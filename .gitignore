@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+secrets.local.env
+render.secrets.local.env
+ci.secrets.local.env
 server/.stripe-keys.json
 
 # Logs

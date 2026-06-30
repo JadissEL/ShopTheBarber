@@ -179,9 +179,9 @@ export default function ServiceSelection({
                                 key={service.id}
                                 onClick={() => onToggleService(service)}
                                 className={cn(
-                                    "relative rounded-2xl p-5 border transition-all cursor-pointer h-full flex flex-col justify-between group",
+                                    "relative rounded-lg p-5 border transition-all cursor-pointer h-full flex flex-col justify-between group",
                                     isSelected 
-                                        ? "bg-black text-white border-black shadow-xl" 
+                                        ? "bg-black text-white border-black shadow-elevation-lg" 
                                         : "bg-card border-border hover:border-black/30 hover:shadow-md"
                                 )}
                             >
@@ -217,7 +217,7 @@ export default function ServiceSelection({
 
             {/* Sidebar Summary */}
             <div className="w-full lg:w-[340px] shrink-0 sticky top-24">
-                <div className="bg-[#0A0A0A] text-white rounded-3xl p-6 shadow-2xl border border-white/5 overflow-hidden relative">
+                <div className="bg-[hsl(var(--navy))] text-white p-6 shadow-elevation-lg border border-white/10 overflow-hidden relative rounded-lg">
                      {/* Decorative Elements */}
                      <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
 
@@ -228,7 +228,7 @@ export default function ServiceSelection({
                         </h3>
 
                         {selectedServiceIds.length === 0 ? (
-                            <div className="text-center py-10 text-white/30 border-2 border-dashed border-white/10 rounded-2xl bg-white/5">
+                            <div className="text-center py-10 text-white/30 border-2 border-dashed border-white/10 rounded-lg bg-white/5">
                                 <Scissors className="w-8 h-8 mx-auto mb-3 opacity-50" />
                                 <p className="text-sm font-medium">No services selected</p>
                                 <p className="text-xs mt-1 opacity-60">Choose from the list</p>
@@ -240,14 +240,14 @@ export default function ServiceSelection({
                                     if (!s) return null;
                                     const sData = getServiceDetails(s); // Use overridden details
                                     return (
-                                        <div key={id} className="group flex justify-between items-center gap-3 bg-white/5 hover:bg-white/10 p-3.5 rounded-2xl transition-colors border border-transparent hover:border-white/10">
+                                        <div key={id} className="group flex justify-between items-center gap-3 bg-white/5 hover:bg-white/10 p-3.5 rounded-lg transition-colors border border-transparent hover:border-white/10">
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold text-sm truncate mb-0.5">{sData.name}</div>
                                                 <div className="text-xs text-white/50">{sData.duration_text} • {sData.price_text}</div>
                                             </div>
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onToggleService(s); }}
-                                                className="text-white/30 hover:text-white hover:bg-red-500/20 p-2 rounded-xl transition-all"
+                                                className="text-white/30 hover:text-white hover:bg-destructive/100/20 p-2 rounded-lg transition-all"
                                                 title="Remove service"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -268,7 +268,7 @@ export default function ServiceSelection({
                             </div>
 
                             <Button 
-                                className="w-full bg-card text-black hover:bg-muted font-bold h-14 rounded-xl text-base shadow-lg transition-transform active:scale-[0.98]"
+                                className="w-full bg-card text-black hover:bg-muted font-bold h-14 rounded-lg text-base shadow-lg transition-transform active:scale-[0.98]"
                                 disabled={selectedServiceIds.length === 0}
                                 onClick={onBookNow}
                             >

@@ -68,7 +68,7 @@ export default function WeeklySchedule({ shopId, staffMembers, context = 'shop',
                 </div>
                 <div className="p-2 space-y-2 flex-1">
                     {scheduleMatrix[day].sort((a,b) => a.start_time.localeCompare(b.start_time)).map(shift => (
-                        <div key={shift.id} className="bg-card dark:bg-slate-900 border rounded p-2 text-xs relative group hover:shadow-md transition-shadow">
+                        <div key={shift.id} className="bg-card bg-card border rounded p-2 text-xs relative group hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-2 mb-1">
                                 <UserAvatar src={shift.memberImage} name={shift.memberName || '?'} className="w-5 h-5 text-[8px]" />
                                 <span className="font-medium truncate">{shift.memberName || 'Unknown'}</span>

@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { AlertCircle, Search, Shield, Ban, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Shield, Ban, CheckCircle2 } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import UserModerationCard from '@/components/moderation/UserModerationCard';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function AdminUserModeration() {
   const { data: user } = useQuery({
@@ -70,12 +72,16 @@ export default function AdminUserModeration() {
         description="Manage and moderate platform users"
       />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">User Moderation</h1>
-          <p className="text-muted-foreground">Monitor and manage user accounts across the platform</p>
-        </div>
+      <PageHeader
+        label="Admin"
+        title="User moderation"
+        subtitle="Monitor and manage user accounts across the platform"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent>
 
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -86,7 +92,7 @@ export default function AdminUserModeration() {
                   <p className="text-sm text-muted-foreground">Suspended</p>
                   <h3 className="text-3xl font-bold">{suspendedCount}</h3>
                 </div>
-                <AlertCircle className="w-8 h-8 text-amber-600 opacity-50" />
+                <AlertCircle className="w-8 h-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -110,7 +116,7 @@ export default function AdminUserModeration() {
                   <p className="text-sm text-muted-foreground">Flagged</p>
                   <h3 className="text-3xl font-bold">{flaggedCount}</h3>
                 </div>
-                <Shield className="w-8 h-8 text-orange-600 opacity-50" />
+                <Shield className="w-8 h-8 text-warning opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -119,15 +125,14 @@ export default function AdminUserModeration() {
         {/* Search & Filters */}
         <div className="space-y-4 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by email or name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <SearchField
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
+              placeholder="Search by email or name..."
+              className="flex-1"
+              aria-label="Search users"
+            />
             <div className="flex gap-2 flex-wrap">
               <select 
                 value={filterStatus}
@@ -170,7 +175,7 @@ export default function AdminUserModeration() {
             </Card>
           )}
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

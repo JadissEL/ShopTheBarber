@@ -9,6 +9,10 @@ import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '@/utils';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 const JOURNEY_STEPS = [
   { key: 'confirmed', label: 'Order Confirmed', sub: null, icon: Check },
@@ -85,43 +89,35 @@ export default function OrderTracking() {
   const items = order.items || [];
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page + ' lg:pb-8'}>
       <MetaTags
         title={`Tracking - Order ${orderNumber}`}
         description="Track your premium grooming order."
       />
 
-      <header className="sticky top-0 z-40 bg-card border-b border-slate-100">
-        <div className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="p-2 -ml-2 rounded-full text-sky-600 hover:bg-sky-50"
-            aria-label="Back"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-semibold text-foreground uppercase tracking-[0.2em]" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
-            Tracking
-          </h1>
-          <span className="w-9" />
-        </div>
-      </header>
+      <PageHeader
+        label="Marketplace"
+        title="Order tracking"
+        subtitle={`Order ${orderNumber}${estimatedDate ? ` · Est. ${estimatedDate}` : ''}`}
+        compact
+        variant="light"
+        tier="app"
+      />
 
-      <main className="w-full max-w-2xl mx-auto px-4 lg:px-8 py-8">
+      <PageContent narrow>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center mx-auto mb-4">
-            <Check className="w-8 h-8 text-sky-600" strokeWidth={2.5} />
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-primary" strokeWidth={2.5} />
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-1" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
+          <h2 className={stb.uiSubheading + ' mb-1'}>
             Thank You, {customerName}
           </h2>
           <p className="text-sm text-muted-foreground font-medium">ORDER {orderNumber}</p>
         </div>
 
         {estimatedDate && (
-          <section className="rounded-2xl border border-slate-200 bg-card p-5 mb-8 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-sky-600 mb-1">Estimated Arrival</p>
+          <section className={cn(stb.panel, 'p-5 mb-8')}>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Estimated Arrival</p>
             <p className="text-xl font-bold text-foreground mb-0.5" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
               {estimatedDate}
             </p>
@@ -130,8 +126,8 @@ export default function OrderTracking() {
         )}
 
         {(order.tracking_number || fulfillments.some((f) => f.tracking_number)) && (
-          <section className="rounded-2xl border border-slate-200 bg-card p-5 mb-8 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-sky-600 mb-2">Tracking</p>
+          <section className={cn(stb.panel, 'p-5 mb-8')}>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">Tracking</p>
             {fulfillments.filter((f) => f.tracking_number).length > 0 ? (
               <ul className="space-y-2">
                 {fulfillments.filter((f) => f.tracking_number).map((f) => (
@@ -149,8 +145,8 @@ export default function OrderTracking() {
         )}
 
         {(order.shipping_street || order.shipping_full_name) && (
-          <section className="rounded-2xl border border-slate-200 bg-card p-5 mb-8 shadow-sm text-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-sky-600 mb-2">Deliver to</p>
+          <section className="stb-card p-5 mb-8 shadow-sm text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">Deliver to</p>
             <p className="font-medium">{order.shipping_full_name}</p>
             <p className="text-muted-foreground">{order.shipping_street}</p>
             <p className="text-muted-foreground">
@@ -163,7 +159,7 @@ export default function OrderTracking() {
           <h3 className="text-lg font-bold text-foreground mb-5" style={{ fontFamily: 'var(--font-serif, Georgia, serif)' }}>
             Order Journey
           </h3>
-          <div className="relative pl-8 border-l-2 border-slate-200 ml-1">
+          <div className="relative pl-8 border-l-2 border-border ml-1">
             {JOURNEY_STEPS.map((step, i) => {
               const isDone = i < currentStepIndex;
               const isCurrent = i === currentStepIndex;
@@ -171,19 +167,19 @@ export default function OrderTracking() {
               const Icon = step.icon;
               return (
                 <div key={step.key} className="relative pb-6 last:pb-0">
-                  <div className="absolute -left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-card border-2 border-slate-200">
+                  <div className="absolute -left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-card border-2 border-border">
                     {isDone ? (
-                      <Check className="w-3.5 h-3.5 text-sky-600" strokeWidth={2.5} />
+                      <Check className="w-3.5 h-3.5 text-primary" strokeWidth={2.5} />
                     ) : isCurrent ? (
-                      <Circle className="w-3.5 h-3.5 text-sky-600 fill-sky-600" strokeWidth={2} />
+                      <Circle className="w-3.5 h-3.5 text-primary fill-primary" strokeWidth={2} />
                     ) : (
-                      <Icon className={`w-3.5 h-3.5 ${isPending ? 'text-slate-300' : 'text-sky-600'}`} strokeWidth={2} />
+                      <Icon className={`w-3.5 h-3.5 ${isPending ? 'text-white/70' : 'text-primary'}`} strokeWidth={2} />
                     )}
                   </div>
                   <div className={`${isPending ? 'text-muted-foreground' : 'text-foreground'}`}>
                     <p className="font-semibold text-sm">{step.label}</p>
                     {step.sub && (
-                      <p className={`text-xs mt-0.5 ${isCurrent ? 'text-sky-600 italic' : 'text-muted-foreground'}`}>{step.sub}</p>
+                      <p className={`text-xs mt-0.5 ${isCurrent ? 'text-primary italic' : 'text-muted-foreground'}`}>{step.sub}</p>
                     )}
                     {i === 0 && order?.created_at && (
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -203,8 +199,8 @@ export default function OrderTracking() {
           </h3>
           <ul className="space-y-4">
             {items.map((item) => (
-              <li key={item.id} className="rounded-2xl border border-slate-200 bg-card p-4 flex gap-4 shadow-sm">
-                <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
+              <li key={item.id} className={cn(stb.panel, 'p-4 flex gap-4')}>
+                <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                   <OptimizedImage
                     src={item.product_image_url || ''}
                     alt={item.product_name}
@@ -228,7 +224,7 @@ export default function OrderTracking() {
             Your personal grooming consultant is available for any delivery adjustments or styling advice.
           </p>
           <Link to={createPageUrl('SupportChat') + (order?.id ? `?order_id=${order.id}&new=1` : '?new=1')}>
-            <Button className="w-full rounded-xl h-12 bg-card border-2 border-sky-600 text-sky-600 hover:bg-sky-50 font-semibold gap-2" variant="outline">
+            <Button className="w-full rounded-lg h-12 bg-card border-2 border-primary text-primary hover:bg-primary/10 font-semibold gap-2" variant="outline">
               <Headphones className="w-5 h-5" />
               Contact Concierge
             </Button>
@@ -238,7 +234,7 @@ export default function OrderTracking() {
         <p className="text-center text-xs text-muted-foreground uppercase tracking-[0.25em]">
           Elite Grooming Marketplace
         </p>
-      </main>
+      </PageContent>
     </div>
   );
 }

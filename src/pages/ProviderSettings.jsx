@@ -33,6 +33,10 @@ import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
 import { ReplaySetupGuideLink } from '@/components/onboarding/ReplaySetupGuideLink';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UserAvatar } from '@/components/ui/user-avatar';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 import { shopDetailsSchema, serviceSchema, clientProfileSchema } from '@/lib/validations';
 
 export default function ProviderSettings() {
@@ -224,37 +228,42 @@ export default function ProviderSettings() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+        <div className="stb-page pb-16 font-sans">
             <MetaTags title="Provider Settings" description="Manage your professional shop profile and account." />
 
-            <div className="flex items-center justify-between mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight">Console Settings</h1>
-                    <p className="text-muted-foreground font-medium">Configure your professional presence and financial rails.</p>
-                </div>
+            <PageHeader
+                label="Provider"
+                title="Console settings"
+                subtitle="Configure your professional presence and financial rails."
+                compact
+                variant="light"
+                tier="app"
+            >
                 <div className="flex items-center gap-3 shrink-0">
                     <ReplaySetupGuideLink />
                     <UserAvatar src={user?.avatar_url} name={user?.full_name} className="w-12 h-12 border-2 border-border shadow-sm" />
                 </div>
-            </div>
+            </PageHeader>
+
+            <PageContent>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="bg-muted/50 p-1.5 rounded-2xl mb-8 flex-wrap">
-                    <TabsTrigger value="general" className="rounded-xl px-5">General</TabsTrigger>
-                    <TabsTrigger value="story" className="rounded-xl px-5">Profile Story</TabsTrigger>
-                    <TabsTrigger value="business" className="rounded-xl px-5">Business</TabsTrigger>
-                    <TabsTrigger value="services" className="rounded-xl px-5">Services</TabsTrigger>
-                    <TabsTrigger value="pricing" className="rounded-xl px-5">Pricing</TabsTrigger>
-                    <TabsTrigger value="hours" className="rounded-xl px-5">Hours</TabsTrigger>
-                    <TabsTrigger value="capacity" className="rounded-xl px-5">Chairs</TabsTrigger>
-                    <TabsTrigger value="payments" className="rounded-xl px-5">Payments</TabsTrigger>
-                    <TabsTrigger value="shipping" className="rounded-xl px-5">Shipping</TabsTrigger>
-                    <TabsTrigger value="notifications" className="rounded-xl px-5">Alerts</TabsTrigger>
+                <TabsList className="bg-muted/50 p-1.5 rounded-lg mb-8 flex-wrap">
+                    <TabsTrigger value="general" className=" px-5">General</TabsTrigger>
+                    <TabsTrigger value="story" className=" px-5">Profile Story</TabsTrigger>
+                    <TabsTrigger value="business" className=" px-5">Business</TabsTrigger>
+                    <TabsTrigger value="services" className=" px-5">Services</TabsTrigger>
+                    <TabsTrigger value="pricing" className=" px-5">Pricing</TabsTrigger>
+                    <TabsTrigger value="hours" className=" px-5">Hours</TabsTrigger>
+                    <TabsTrigger value="capacity" className=" px-5">Chairs</TabsTrigger>
+                    <TabsTrigger value="payments" className=" px-5">Payments</TabsTrigger>
+                    <TabsTrigger value="shipping" className=" px-5">Shipping</TabsTrigger>
+                    <TabsTrigger value="notifications" className=" px-5">Alerts</TabsTrigger>
                 </TabsList>
 
                 {/* GENERAL PROFILE */}
                 <TabsContent value="general">
-                    <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card">
+                    <Card className="border-border shadow-sm  overflow-hidden bg-card">
                         <CardHeader className="border-b border-border">
                             <CardTitle className="text-xl font-bold">Personal Profile</CardTitle>
                         </CardHeader>
@@ -263,20 +272,20 @@ export default function ProviderSettings() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Display Name</Label>
-                                        <Input {...profileForm.register('full_name')} className="rounded-xl border-border hover:border-slate-300 transition-colors" />
-                                        {profileForm.formState.errors.full_name && <p className="text-red-500 text-xs mt-1">{profileForm.formState.errors.full_name.message}</p>}
+                                        <Input {...profileForm.register('full_name')} className=" border-border hover:border-foreground/20 transition-colors" />
+                                        {profileForm.formState.errors.full_name && <p className="text-destructive text-xs mt-1">{profileForm.formState.errors.full_name.message}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Email Address</Label>
-                                        <Input {...profileForm.register('email')} className="rounded-xl border-border" disabled />
+                                        <Input {...profileForm.register('email')} className=" border-border" disabled />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Phone</Label>
-                                        <Input {...profileForm.register('phone')} className="rounded-xl border-border" placeholder="10 digits number" />
+                                        <Input {...profileForm.register('phone')} className=" border-border" placeholder="10 digits number" />
                                     </div>
                                 </div>
                                 <div className="pt-4 border-t border-border flex justify-end">
-                                    <Button type="submit" className="rounded-xl px-8 font-bold shadow-lg" disabled={updateProfileMutation.isPending}>
+                                    <Button type="submit" className=" px-8 font-bold shadow-lg" disabled={updateProfileMutation.isPending}>
                                         {updateProfileMutation.isPending ? 'Syncing...' : 'Update Profile'}
                                     </Button>
                                 </div>
@@ -285,7 +294,7 @@ export default function ProviderSettings() {
                     </Card>
 
                     {(barber || shopId || providerLanguages?.shop) && (
-                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                        <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderLanguagesPanel
                                     barberLanguages={providerLanguages?.barber?.spoken_languages ?? []}
@@ -298,7 +307,7 @@ export default function ProviderSettings() {
                     )}
 
                     {(barber || shopId || childrenFriendlySettings?.shop) && (
-                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                        <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderChildrenFriendlyPanel
                                     barberFriendly={childrenFriendlySettings?.barber?.children_friendly ?? false}
@@ -311,7 +320,7 @@ export default function ProviderSettings() {
                     )}
 
                     {(barber || shopId || attestationSettings?.shop) && (
-                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                        <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderAttestationPanel
                                     barberLicensed={attestationSettings?.barber?.licensed ?? false}
@@ -326,7 +335,7 @@ export default function ProviderSettings() {
                     )}
 
                     {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
-                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                        <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderServiceLocationPanel />
                             </CardContent>
@@ -334,7 +343,7 @@ export default function ProviderSettings() {
                     )}
 
                     {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
-                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                        <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderAtHomeServicePanel />
                             </CardContent>
@@ -342,7 +351,7 @@ export default function ProviderSettings() {
                     )}
 
                     {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
-                        <Card className="border-border shadow-sm rounded-3xl overflow-hidden bg-card mt-6">
+                        <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderGroupBookingPanel />
                             </CardContent>
@@ -357,7 +366,7 @@ export default function ProviderSettings() {
                 {/* BUSINESS INFO */}
                 <TabsContent value="business">
                     {barber && (
-                        <Card className="border-border shadow-sm rounded-3xl bg-card mb-6">
+                        <Card className="border-border shadow-sm  bg-card mb-6">
                             <CardHeader className="border-b border-border">
                                 <CardTitle className="text-xl font-bold">Barber location & SEO</CardTitle>
                             </CardHeader>
@@ -366,7 +375,7 @@ export default function ProviderSettings() {
                             </CardContent>
                         </Card>
                     )}
-                    <Card className="border-border shadow-sm rounded-3xl bg-card">
+                    <Card className="border-border shadow-sm  bg-card">
                         <CardHeader className="border-b border-border">
                             <CardTitle className="text-xl font-bold">Shop Identity</CardTitle>
                         </CardHeader>
@@ -375,7 +384,7 @@ export default function ProviderSettings() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Shop Name</Label>
-                                        <Input {...businessForm.register('name')} className="rounded-xl border-border" />
+                                        <Input {...businessForm.register('name')} className=" border-border" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Physical Address</Label>
@@ -384,16 +393,16 @@ export default function ProviderSettings() {
                                             onChange={(value) => businessForm.setValue('location', value)}
                                             onSelect={(item) => businessForm.setValue('location', item.formatted_address)}
                                             placeholder="Shop street address"
-                                            inputClassName="rounded-xl h-11"
+                                            inputClassName="rounded-lg h-11"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="font-bold text-foreground/90">Public Description</Label>
-                                    <textarea {...businessForm.register('description')} className="w-full min-h-[120px] rounded-2xl border-border border p-4 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Tell your clients about your vibe..." />
+                                    <textarea {...businessForm.register('description')} className="w-full min-h-[120px] rounded-lg border-border border p-4 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Tell your clients about your vibe..." />
                                 </div>
                                 <div className="flex justify-end pt-4">
-                                    <Button type="submit" className="rounded-xl px-8 font-bold" disabled={updateShopMutation.isPending}>
+                                    <Button type="submit" className=" px-8 font-bold" disabled={updateShopMutation.isPending}>
                                         Save Changes
                                     </Button>
                                 </div>
@@ -404,22 +413,22 @@ export default function ProviderSettings() {
 
                 {/* SERVICES MENU */}
                 <TabsContent value="services">
-                    <Card className="border-border shadow-sm rounded-3xl bg-card">
+                    <Card className="border-border shadow-sm  bg-card">
                         <CardHeader className="flex flex-row items-center justify-between p-8">
                             <div>
                                 <CardTitle className="text-xl font-bold">Service Menu</CardTitle>
                                 <p className="text-muted-foreground text-sm mt-1">Manage what you offer and for how much.</p>
                             </div>
-                            <Button onClick={() => { setSelectedService(null); serviceForm.reset(); setIsServiceDialogOpen(true); }} className="rounded-xl bg-primary text-primary-foreground font-bold">
+                            <Button onClick={() => { setSelectedService(null); serviceForm.reset(); setIsServiceDialogOpen(true); }} className=" bg-primary text-primary-foreground font-bold">
                                 <Plus className="w-4 h-4 mr-2" /> Add Service
                             </Button>
                         </CardHeader>
                         <CardContent className="px-8 pb-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {services.length > 0 ? services.map((svc) => (
-                                    <div key={svc.id} className="group p-5 border border-border rounded-2xl flex items-center justify-between hover:border-primary/30 hover:shadow-sm transition-all bg-muted/30">
+                                    <div key={svc.id} className="group p-5 stb-panel flex items-center justify-between hover:border-primary/30 hover:shadow-sm transition-all bg-muted/30">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center font-bold text-muted-foreground group-hover:text-primary">
+                                            <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center font-bold text-muted-foreground group-hover:text-primary">
                                                 {svc.category?.charAt(0) || 'S'}
                                             </div>
                                             <div>
@@ -428,16 +437,16 @@ export default function ProviderSettings() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" onClick={() => handleServiceEdit(svc)} className="h-9 w-9 rounded-full hover:bg-card border border-transparent hover:border-slate-100">
+                                            <Button variant="ghost" size="icon" onClick={() => handleServiceEdit(svc)} className="h-9 w-9 rounded-full hover:bg-card border border-transparent hover:border-border">
                                                 <Edit3 className="w-4 h-4 text-muted-foreground" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => deleteServiceMutation.mutate(svc.id)} className="h-9 w-9 rounded-full hover:bg-red-50 border border-transparent hover:border-red-100">
-                                                <Trash2 className="w-4 h-4 text-red-400" />
+                                            <Button variant="ghost" size="icon" onClick={() => deleteServiceMutation.mutate(svc.id)} className="h-9 w-9 rounded-full hover:bg-destructive/10 border border-transparent hover:border-destructive/20">
+                                                <Trash2 className="w-4 h-4 text-destructive" />
                                             </Button>
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="col-span-full py-12 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-3xl text-slate-400 font-medium">
+                                    <div className="col-span-full py-12 flex flex-col items-center justify-center border border-dashed border-border  text-muted-foreground font-medium">
                                         No services yet. Define your first service.
                                     </div>
                                 )}
@@ -446,36 +455,36 @@ export default function ProviderSettings() {
                     </Card>
 
                     <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
-                        <DialogContent className="rounded-3xl border-none shadow-2xl p-0 overflow-hidden max-w-md">
+                        <DialogContent className="border-none shadow-elevation-lg p-0 overflow-hidden max-w-md">
                             <div className="bg-primary p-8 text-primary-foreground">
-                                <h2 className="text-2xl font-black">{selectedService ? 'Update' : 'Add'} Service</h2>
-                                <p className="text-slate-400 text-sm">Define pricing and duration for this offering.</p>
+                                <h2 className={cn(stb.uiHeading, 'text-2xl')}>{selectedService ? 'Update' : 'Add'} Service</h2>
+                                <p className="text-muted-foreground text-sm">Define pricing and duration for this offering.</p>
                             </div>
                             <form onSubmit={serviceForm.handleSubmit((d) => saveServiceMutation.mutate(d))} className="p-8 space-y-5 bg-card">
                                 <div className="space-y-2">
                                     <Label className="font-bold text-foreground/90">Display Name</Label>
-                                    <Input {...serviceForm.register('name')} placeholder="e.g. Sharp Cut" className="rounded-xl" />
+                                    <Input {...serviceForm.register('name')} placeholder="e.g. Sharp Cut" className="" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Price ($)</Label>
-                                        <Input {...serviceForm.register('price', { valueAsNumber: true })} type="number" className="rounded-xl" />
+                                        <Input {...serviceForm.register('price', { valueAsNumber: true })} type="number" className="" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="font-bold text-foreground/90">Duration (Min)</Label>
-                                        <Input {...serviceForm.register('duration_min', { valueAsNumber: true })} type="number" className="rounded-xl" />
+                                        <Input {...serviceForm.register('duration_min', { valueAsNumber: true })} type="number" className="" />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="font-bold text-foreground/90">Category</Label>
-                                    <select {...serviceForm.register('category')} className="w-full rounded-xl border-border border p-2 text-sm outline-none">
+                                    <select {...serviceForm.register('category')} className="w-full rounded-lg border-border border p-2 text-sm outline-none">
                                         <option value="Hair">Hair</option>
                                         <option value="Beard">Beard</option>
                                         <option value="Shave">Shave</option>
                                         <option value="Kids">Kids</option>
                                     </select>
                                 </div>
-                                <Button type="submit" className="w-full rounded-xl h-12 bg-primary text-primary-foreground font-bold tracking-tight" disabled={saveServiceMutation.isPending}>
+                                <Button type="submit" className="w-full rounded-lg h-12 bg-primary text-primary-foreground font-bold tracking-tight" disabled={saveServiceMutation.isPending}>
                                     {saveServiceMutation.isPending ? 'Processing...' : (selectedService ? 'Update Service' : 'Confirm Service')}
                                 </Button>
                             </form>
@@ -489,7 +498,7 @@ export default function ProviderSettings() {
 
                 {/* PAYMENTS & STRIPE */}
                 <TabsContent value="payments">
-                    <Card className="border-border shadow-sm rounded-3xl bg-card">
+                    <Card className="border-border shadow-sm  bg-card">
                         <CardHeader className="p-8 pb-4">
                             <CardTitle className="text-xl font-bold">Financial Rails</CardTitle>
                         </CardHeader>
@@ -505,34 +514,34 @@ export default function ProviderSettings() {
                                 isShopOwner={myShopMembership?.role === 'owner'}
                             />
                             {user?.stripe_account_id ? (
-                                <div className={`p-6 rounded-2xl border transition-colors ${user.stripe_connect_status === 'active' ? 'bg-primary/5 border-primary/20' : 'bg-amber-50/50 border-amber-100'}`}>
+                                <div className={`p-6 rounded-lg border transition-colors ${user.stripe_connect_status === 'active' ? 'bg-primary/5 border-primary/20' : 'bg-warning/10 border-warning/30'}`}>
                                     <div className="flex items-start gap-4">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${user.stripe_connect_status === 'active' ? 'bg-primary text-primary-foreground' : 'bg-amber-500 text-white'}`}>
+                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${user.stripe_connect_status === 'active' ? 'bg-primary text-primary-foreground' : 'bg-primary text-primary-foreground'}`}>
                                             {user.stripe_connect_status === 'active' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
                                         </div>
                                         <div className="flex-1">
-                                            <h4 className={`text-lg font-bold ${user.stripe_connect_status === 'active' ? 'text-primary' : 'text-amber-900'}`}>
+                                            <h4 className={`text-lg font-bold ${user.stripe_connect_status === 'active' ? 'text-primary' : 'text-foreground'}`}>
                                                 {user.stripe_connect_status === 'active' ? 'Payment Engine Active' : 'Account Onboarding'}
                                             </h4>
-                                            <p className={`text-sm font-medium ${user.stripe_connect_status === 'active' ? 'text-primary/90' : 'text-amber-700'}`}>
+                                            <p className={`text-sm font-medium ${user.stripe_connect_status === 'active' ? 'text-primary/90' : 'text-muted-foreground'}`}>
                                                 {user.stripe_connect_status === 'active'
                                                     ? 'Your bank account is successfully linked and verified.'
                                                     : 'Your account setup is incomplete. Complete onboarding to receive payouts.'}
                                             </p>
                                         </div>
-                                        <Button variant="outline" onClick={() => checkStripeStatusMutation.mutate()} className="rounded-xl font-bold" disabled={checkStripeStatusMutation.isPending}>
+                                        <Button variant="outline" onClick={() => checkStripeStatusMutation.mutate()} className=" font-bold" disabled={checkStripeStatusMutation.isPending}>
                                             Refetch Status
                                         </Button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-10 text-center border-2 border-dashed border-slate-100 rounded-3xl">
-                                    <div className="w-16 h-16 bg-muted flex items-center justify-center rounded-3xl mx-auto mb-6 text-muted-foreground">
+                                <div className="p-10 text-center border-2 border-dashed border-border ">
+                                    <div className="w-16 h-16 bg-muted flex items-center justify-center  mx-auto mb-6 text-muted-foreground">
                                         <AlertCircle className="w-8 h-8" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-foreground mb-2">Setup Payouts</h3>
+                                    <h3 className={cn(stb.uiHeading, 'text-2xl text-foreground mb-2')}>Setup Payouts</h3>
                                     <p className="text-muted-foreground max-w-sm mx-auto mb-8 font-medium">Link your bank account via Stripe to accept automatic credit card payments from clients.</p>
-                                    <Button onClick={() => initiateStripeMutation.mutate()} className="bg-primary text-primary-foreground rounded-2xl h-14 px-10 font-bold transition-transform active:scale-95" disabled={initiateStripeMutation.isPending}>
+                                    <Button onClick={() => initiateStripeMutation.mutate()} className={cn(stb.btn, 'h-14 px-10 transition-transform active:scale-95')} disabled={initiateStripeMutation.isPending}>
                                         <CheckCircle className="w-5 h-5 mr-3" /> Connect Stripe Account
                                     </Button>
                                 </div>
@@ -549,7 +558,7 @@ export default function ProviderSettings() {
                             shopId={shopId && myShopMembership?.role === 'owner' ? shopId : undefined}
                         />
                     ) : (
-                        <Card className="border-border shadow-sm rounded-3xl bg-card p-8">
+                        <Card className="border-border shadow-sm  bg-card p-8">
                             <p className="text-muted-foreground">Complete your provider profile to configure shipping.</p>
                         </Card>
                     )}
@@ -560,7 +569,7 @@ export default function ProviderSettings() {
                     {shopId && myShopMembership && ['owner', 'manager'].includes(myShopMembership.role) ? (
                         <AvailabilityManager barber={barber} shopId={shopId} />
                     ) : (
-                        <Card className="border-border shadow-sm rounded-3xl bg-card">
+                        <Card className="border-border shadow-sm  bg-card">
                             <CardHeader className="p-8">
                                 <CardTitle className="text-xl font-bold">Standard Availability</CardTitle>
                                 <p className="text-muted-foreground text-sm mt-1">Define your weekly operating routine.</p>
@@ -577,6 +586,7 @@ export default function ProviderSettings() {
                     <ShopChairsPanel shopId={shopId} barberId={barber?.id} />
                 </TabsContent>
             </Tabs>
+            </PageContent>
         </div>
     );
 }

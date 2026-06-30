@@ -11,6 +11,10 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        sans: ['"DM Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Bebas Neue"', 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -70,6 +74,10 @@ export default {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
         },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         vip: {
           DEFAULT: "hsl(var(--vip))",
           foreground: "hsl(var(--vip-foreground))",
@@ -83,6 +91,40 @@ export default {
           foreground: "hsl(var(--highlight-foreground))",
         },
         navy: "hsl(var(--navy))",
+      },
+      boxShadow: {
+        'elevation-0': 'var(--elevation-0)',
+        'elevation-sm': 'var(--elevation-1)',
+        'elevation-md': 'var(--elevation-2)',
+        'elevation-lg': 'var(--elevation-3)',
+        'elevation-xl': 'var(--elevation-4)',
+      },
+      spacing: {
+        1: 'var(--space-1)',
+        2: 'var(--space-2)',
+        3: 'var(--space-3)',
+        4: 'var(--space-4)',
+        5: 'var(--space-5)',
+        6: 'var(--space-6)',
+        8: 'var(--space-8)',
+        10: 'var(--space-10)',
+        12: 'var(--space-12)',
+        16: 'var(--space-16)',
+      },
+      zIndex: {
+        dropdown: 'var(--z-dropdown)',
+        sticky: 'var(--z-sticky)',
+        modal: 'var(--z-modal)',
+        toast: 'var(--z-toast)',
+      },
+      transitionDuration: {
+        fast: 'var(--duration-fast)',
+        normal: 'var(--duration-normal)',
+        slow: 'var(--duration-slow)',
+      },
+      transitionTimingFunction: {
+        out: 'var(--ease-out)',
+        spring: 'var(--ease-spring)',
       },
       keyframes: {
         "accordion-down": {

@@ -73,7 +73,7 @@ export function BookingPaymentActionButton({ booking, onSuccess }) {
     return (
         <Button
             size="sm"
-            className="h-9 bg-violet-600 hover:bg-violet-700 text-white"
+            className="h-9 bg-primary hover:bg-primary/90 text-white"
             disabled={payMutation.isPending}
             onClick={() => payMutation.mutate()}
         >
@@ -93,7 +93,7 @@ export function BookingCardOnFileHint({ booking }) {
     const d = booking.data || booking;
     if (d.saved_payment_method_id || d.payment_status === 'paid') return null;
     return (
-        <p className="text-xs text-violet-700 flex items-center gap-1 mt-2">
+        <p className="text-xs text-primary flex items-center gap-1 mt-2">
             <Shield className="w-3.5 h-3.5" />
             Card on file may be required, complete payment to secure this slot.
         </p>

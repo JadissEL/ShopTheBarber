@@ -37,7 +37,7 @@ function TargetPicker({ audience, targetIds, onChange, users = [], shops = [], b
     const needsTargets = ['specific_users', 'specific_shops', 'specific_barbers'].includes(audience);
     if (!needsTargets) {
         return (
-            <p className="text-sm text-muted-foreground rounded-xl border border-dashed p-4">
+            <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-4">
                 No targets needed, this audience applies broadly per the rule you selected.
             </p>
         );
@@ -55,7 +55,7 @@ function TargetPicker({ audience, targetIds, onChange, users = [], shops = [], b
     };
 
     return (
-        <div className="max-h-48 overflow-y-auto border rounded-xl p-3 space-y-2">
+        <div className="max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2">
             {options.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No options loaded.</p>
             ) : (
@@ -214,7 +214,7 @@ export default function AdminPromotionsPanel() {
                                 return (
                                     <div
                                         key={promo.id}
-                                        className="flex flex-wrap items-start justify-between gap-3 p-4 border rounded-xl"
+                                        className="flex flex-wrap items-start justify-between gap-3 p-4 border rounded-lg"
                                     >
                                         <div className="space-y-1 min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">
@@ -377,7 +377,7 @@ export default function AdminPromotionsPanel() {
                             />
                         </div>
 
-                        <div className="flex items-center justify-between rounded-xl border p-3">
+                        <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <p className="text-sm font-medium">Bypass platform discount caps</p>
                                 <p className="text-xs text-muted-foreground">For special campaigns above pricing rules</p>
@@ -389,7 +389,7 @@ export default function AdminPromotionsPanel() {
                         </div>
 
                         {editing && (
-                            <div className="flex items-center justify-between rounded-xl border p-3">
+                            <div className="flex items-center justify-between rounded-lg border p-3">
                                 <Label>Active</Label>
                                 <Switch
                                     checked={form.is_active}

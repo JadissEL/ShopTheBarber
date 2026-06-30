@@ -103,7 +103,7 @@ export default function BookingConfirmationStep({
                 <p className="text-muted-foreground">Double check your booking details</p>
               </div>
 
-              <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm mb-6">
+              <div className="stb-panel overflow-hidden shadow-sm mb-6">
                 <div className="p-6 border-b border-border bg-muted/50/50">
                   <div className="flex items-center gap-4">
                     <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md">
@@ -135,7 +135,7 @@ export default function BookingConfirmationStep({
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-700 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -160,19 +160,19 @@ export default function BookingConfirmationStep({
                             </p>
                           )}
                           {travelOutOfArea && (
-                            <p className="text-xs text-red-600 font-medium flex items-center gap-1.5">
+                            <p className="text-xs text-destructive font-medium flex items-center gap-1.5">
                               <AlertTriangle className="w-3.5 h-3.5" />
                               This address is outside the provider&apos;s service area.
                             </p>
                           )}
                           {!travelOutOfArea && travelFee > 0 && travelZoneLabel && (
-                            <p className="text-xs text-violet-700 font-medium">
+                            <p className="text-xs text-primary font-medium">
                               Travel zone: {travelZoneLabel}
                               {travelDistanceKm != null && `, ${travelDistanceKm.toFixed(1)} km`}
                             </p>
                           )}
                           {groupMode && (
-                            <p className="text-xs text-violet-700 font-medium">
+                            <p className="text-xs text-primary font-medium">
                               Group at-home, ensure space for {groupGuests.length} guests.
                               {selectedBarber?.is_vip && (
                                 <> VIP specialist, full studio-quality setup at your location.</>
@@ -186,7 +186,7 @@ export default function BookingConfirmationStep({
                             {address || selectedBarber?.location || 'At the barber shop'}
                           </div>
                           {groupMode && (
-                            <p className="text-xs text-amber-800 font-medium">
+                            <p className="text-xs text-foreground font-medium">
                               Your whole party visits together. No accounts needed for guests, names only.
                             </p>
                           )}
@@ -243,7 +243,7 @@ export default function BookingConfirmationStep({
                           <>
                             {loyaltyRewardCodes.length > 0 && !appliedPromotion && (
                               <div className="mb-3">
-                                <p className="text-xs font-semibold text-amber-700 mb-2">Your reward codes</p>
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">Your reward codes</p>
                                 <div className="flex flex-wrap gap-2">
                                   {loyaltyRewardCodes.map((p) => (
                                     <button
@@ -253,7 +253,7 @@ export default function BookingConfirmationStep({
                                         onPromoCodeChange(p.code);
                                         onApplyPromoFromOffer?.(p.code);
                                       }}
-                                      className="px-2.5 py-1 rounded-lg border border-amber-400/50 bg-amber-50 text-xs font-mono font-bold hover:bg-amber-100 text-amber-900"
+                                      className="px-2.5 py-1 rounded-lg border border-primary/50 bg-primary/10 text-xs font-mono font-bold hover:bg-primary/15 text-foreground"
                                     >
                                       {p.code}, {p.discount_text}
                                     </button>
@@ -294,7 +294,7 @@ export default function BookingConfirmationStep({
                           </div>
                           </>
                         ) : (
-                          <div className="flex justify-between items-center bg-green-50 p-2 rounded text-sm text-green-700 border border-green-200">
+                          <div className="flex justify-between items-center bg-success/10 p-2 rounded text-sm text-success border border-success/20">
                             <span className="font-medium flex items-center gap-1">
                               <Check className="w-4 h-4" /> {appliedPromotion.code} applied
                             </span>
@@ -303,7 +303,7 @@ export default function BookingConfirmationStep({
                             </button>
                           </div>
                         )}
-                        {promoError && <p className="text-red-500 text-xs mt-1">{promoError}</p>}
+                        {promoError && <p className="text-destructive text-xs mt-1">{promoError}</p>}
                       </div>
 
                       <div className="border-t border-border mt-3 pt-3">
@@ -312,25 +312,25 @@ export default function BookingConfirmationStep({
                           <span>${basePrice.toFixed(2)}</span>
                         </div>
                         {groupMode && groupDiscountAmount > 0 && (
-                          <div className="flex justify-between text-violet-600 mb-1">
+                          <div className="flex justify-between text-primary mb-1">
                             <span>Group discount</span>
                             <span>-${groupDiscountAmount.toFixed(2)}</span>
                           </div>
                         )}
                         {comboSavings > 0 && bundleMatch && (
-                          <div className="flex justify-between text-emerald-600 mb-1">
+                          <div className="flex justify-between text-primary mb-1">
                             <span>Combo ({bundleMatch.bundle_name})</span>
                             <span>-${comboSavings.toFixed(2)}</span>
                           </div>
                         )}
                         {appliedPromotion && discountAmount > 0 && (
-                          <div className="flex justify-between text-green-600 mb-2">
+                          <div className="flex justify-between text-success mb-2">
                             <span>Promo ({appliedPromotion.discount_text || appliedPromotion.code})</span>
                             <span>-${discountAmount.toFixed(2)}</span>
                           </div>
                         )}
                         {atHomeVisit && travelFee > 0 && (
-                          <div className="flex justify-between text-violet-700 mb-1">
+                          <div className="flex justify-between text-primary mb-1">
                             <span className="flex items-center gap-1">
                               <Car className="w-3.5 h-3.5" />
                               Travel fee{travelZoneLabel ? ` (${travelZoneLabel})` : ''}
@@ -358,7 +358,7 @@ export default function BookingConfirmationStep({
                           <span>${(grandTotal ?? totalPrice).toFixed(2)}</span>
                         </div>
                         {pointsEarnedPreview > 0 && (
-                          <p className="text-sm text-green-700 mt-2">
+                          <p className="text-sm text-success mt-2">
                             Earn ~{pointsEarnedPreview} loyalty points when this visit is completed
                           </p>
                         )}
@@ -383,37 +383,37 @@ export default function BookingConfirmationStep({
               {paymentProtectionPreview?.next_step &&
                 paymentProtectionPreview.next_step !== 'none' &&
                 paymentProtectionPreview.next_step !== 'full_payment' && (
-                <div className="bg-violet-50 rounded-2xl border border-violet-200 p-6 mb-6 space-y-2">
-                  <p className="font-semibold flex items-center gap-2 text-violet-900">
+                <div className="stb-notice-warm border border-primary/30 p-6 mb-6 space-y-2">
+                  <p className="font-semibold flex items-center gap-2 text-foreground">
                     <Shield className="w-5 h-5" />
                     Payment protection
                   </p>
                   {paymentProtectionPreview.next_step === 'deposit' && paymentMethod !== 'cash_at_store' && (
-                    <p className="text-sm text-violet-800">
+                    <p className="text-sm text-foreground">
                       Deposit of <strong>€{(paymentProtectionPreview.deposit_amount ?? 0).toFixed(2)}</strong> due now.
                       Balance of €{(paymentProtectionPreview.balance_due ?? 0).toFixed(2)} at your visit.
                     </p>
                   )}
                   {paymentProtectionPreview.next_step === 'auth_hold' && (
-                    <p className="text-sm text-violet-800">
+                    <p className="text-sm text-foreground">
                       Your card will be <strong>authorized</strong> for €{(grandTotal ?? totalPrice).toFixed(2)}, charged after your visit.
                     </p>
                   )}
                   {paymentProtectionPreview.next_step === 'save_card' && (
-                    <p className="text-sm text-violet-800">
+                    <p className="text-sm text-foreground">
                       {paymentMethod === 'cash_at_store'
                         ? 'Pay at the shop (cash or POS), but a card on file may be required to secure this appointment.'
                         : 'This barber requires a card on file to secure your appointment.'}
                     </p>
                   )}
                   {paymentProtectionPreview.policy?.no_show_protection_enabled && (
-                    <p className="text-xs text-violet-700 flex items-center gap-1">
+                    <p className="text-xs text-primary flex items-center gap-1">
                       <AlertTriangle className="w-3.5 h-3.5" />
                       No-show fees may apply per barber policy.
                     </p>
                   )}
                   {paymentProtectionPreview.policy?.late_cancel_protection_enabled && (
-                    <p className="text-xs text-violet-700">
+                    <p className="text-xs text-primary">
                       Late cancellations: full refund {paymentProtectionPreview.policy.late_cancel_full_refund_hours}h+ before;
                       {' '}{paymentProtectionPreview.policy.late_cancel_fee_percent}% fee between{' '}
                       {paymentProtectionPreview.policy.late_cancel_no_refund_hours}-{paymentProtectionPreview.policy.late_cancel_full_refund_hours}h;
@@ -433,7 +433,7 @@ export default function BookingConfirmationStep({
               ) : null}
 
               {isGuestCheckout && guestBookingBlocked && guestBlockReason ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-sm text-amber-900">
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-6 text-sm text-foreground">
                   {guestBlockReason}{' '}
                   <Link
                     to={`${createPageUrl('SignIn')}?return=${encodeURIComponent(signInReturnPath || '/BookingFlow')}`}
@@ -445,7 +445,7 @@ export default function BookingConfirmationStep({
               ) : null}
 
               {cashAvailability?.accepts_cash && (
-                <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-3">
+                <div className="stb-panel p-6 mb-6 space-y-3">
                   <p className="font-semibold">How would you like to pay?</p>
                   <p className="text-xs text-muted-foreground">
                     Pay at shop means you settle with the barber in person, cash or card on their shop POS.
@@ -456,7 +456,7 @@ export default function BookingConfirmationStep({
                       <button
                         type="button"
                         onClick={() => onPaymentMethodChange?.('online')}
-                        className={`p-4 rounded-xl border text-left transition-colors ${
+                        className={`p-4 rounded-lg border text-left transition-colors ${
                           paymentMethod === 'online' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
                         }`}
                       >
@@ -468,11 +468,11 @@ export default function BookingConfirmationStep({
                     <button
                       type="button"
                       onClick={() => onPaymentMethodChange?.('cash_at_store')}
-                      className={`p-4 rounded-xl border text-left transition-colors ${
+                      className={`p-4 rounded-lg border text-left transition-colors ${
                         paymentMethod === 'cash_at_store' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
                       }`}
                     >
-                      <Banknote className="w-5 h-5 mb-2 text-emerald-600" />
+                      <Banknote className="w-5 h-5 mb-2 text-primary" />
                       <p className="font-medium text-sm">Pay at shop</p>
                       <p className="text-xs text-muted-foreground">Cash or card on the shop POS, pay your barber at the visit</p>
                     </button>
@@ -521,7 +521,7 @@ export default function BookingConfirmationStep({
         <div>
           <h2 className="text-3xl font-bold mb-2">Available Barbers</h2>
           {groupSearchMode && (
-            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 max-w-xl">
+            <p className="text-sm text-foreground bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mb-2 max-w-xl">
               Group booking, pick a barber who accepts parties. You&apos;ll add friend &amp; family names at checkout (no guest accounts).
             </p>
           )}
@@ -571,10 +571,10 @@ export default function BookingConfirmationStep({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               onClick={() => onBarberSelect(barber)}
-              className="bg-card rounded-2xl border border-border p-5 cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all group"
+              className="stb-panel p-5 cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all group"
             >
               <div className="flex items-start gap-4 mb-4">
-                <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                   <OptimizedImage
                     src={(barber.data || barber).image_url || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=200&fit=crop"}
                     alt={(barber.data || barber).name}
@@ -588,14 +588,14 @@ export default function BookingConfirmationStep({
                       {(barber.data || barber).name}
                     </h3>
                     {(barber.data || barber).auto_accept && (
-                      <Badge variant="outline" className="text-[10px] py-0.5 px-1.5 bg-green-50 text-green-700 border-green-200">
+                      <Badge variant="outline" className="text-[10px] py-0.5 px-1.5 bg-success/10 text-success border-success/20">
                         Instant
                       </Badge>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">{(barber.data || barber).title || 'Professional Barber'}</p>
                   <div className="flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-amber-500">
+                    <div className="flex items-center gap-1 text-primary">
                       <Star className="w-4 h-4 fill-current" />
                       <span className="font-semibold">{(barber.data || barber).rating || 5.0}</span>
                     </div>

@@ -3,22 +3,29 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 export default function TermsOfService() {
   return (
-    <div className="stb-page">
+    <div className={stb.page}>
       <MetaTags
         title="Terms of Service"
         description="Terms of Service for ShopTheBarber customers"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <ContextualBackLink className="mb-8" />
+      <PageHeader
+        label="Legal"
+        title="Terms of Service"
+        subtitle="Customer Edition • Effective January 28, 2026"
+        compact
+        variant="light"
+        tier="app"
+      />
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Terms of Service</h1>
-          <p className="text-muted-foreground">Customer Edition • Effective January 28, 2026</p>
-        </div>
+      <PageContent narrow>
+        <ContextualBackLink className="mb-6" />
 
         <Card className="prose prose-sm max-w-none">
           <CardContent className="prose prose-sm prose-headings:font-bold prose-headings:mt-6 prose-headings:mb-3 pt-6 space-y-4">
@@ -276,7 +283,7 @@ export default function TermsOfService() {
             <Link to={createPageUrl('Dashboard')} className="text-primary hover:underline">Return to Dashboard</Link>
           </p>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

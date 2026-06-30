@@ -9,10 +9,10 @@ import { toast } from 'sonner';
 import { AlertCircle, Ban, Eye, Shield } from 'lucide-react';
 
 const ACTION_TYPES = {
-  'flag': { label: 'Flag Account', icon: AlertCircle, color: 'bg-orange-50 text-orange-700 hover:bg-orange-100', severity: 'warning' },
-  'suspend': { label: 'Suspend Account', icon: Eye, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100', severity: 'danger' },
-  'ban': { label: 'Ban Account', icon: Ban, color: 'bg-red-50 text-red-700 hover:bg-red-100', severity: 'critical' },
-  'restore': { label: 'Restore Account', icon: Shield, color: 'bg-green-50 text-green-700 hover:bg-green-100', severity: 'info' }
+  'flag': { label: 'Flag Account', icon: AlertCircle, color: 'bg-warning/15 text-foreground hover:bg-warning/25', severity: 'warning' },
+  'suspend': { label: 'Suspend Account', icon: Eye, color: 'bg-primary/10 text-muted-foreground hover:bg-primary/15', severity: 'danger' },
+  'ban': { label: 'Ban Account', icon: Ban, color: 'bg-destructive/10 text-destructive hover:bg-destructive/15', severity: 'critical' },
+  'restore': { label: 'Restore Account', icon: Shield, color: 'bg-success/10 text-success hover:bg-success/15', severity: 'info' }
 };
 
 export default function ModerationActions({ targetUser }) {
@@ -79,10 +79,10 @@ export default function ModerationActions({ targetUser }) {
         <CardContent>
           <Badge 
             className={
-              currentStatus === 'active' ? 'bg-green-50 text-green-700' :
-              currentStatus === 'flagged' ? 'bg-orange-50 text-orange-700' :
-              currentStatus === 'suspended' ? 'bg-amber-50 text-amber-700' :
-              'bg-red-50 text-red-700'
+              currentStatus === 'active' ? 'bg-success/10 text-success' :
+              currentStatus === 'flagged' ? 'bg-warning/15 text-foreground' :
+              currentStatus === 'suspended' ? 'bg-primary/10 text-muted-foreground' :
+              'bg-destructive/10 text-destructive'
             }
           >
             {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}

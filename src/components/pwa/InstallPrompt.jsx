@@ -32,7 +32,7 @@ export default function InstallPrompt() {
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-6 md:max-w-sm">
-            <div className="rounded-2xl border bg-card shadow-lg p-4 flex gap-3 items-start">
+            <div className=" border bg-card shadow-lg p-4 flex gap-3 items-start">
                 <Download className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm">Install ShopTheBarber</p>

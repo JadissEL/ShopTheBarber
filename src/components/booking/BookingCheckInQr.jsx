@@ -28,7 +28,7 @@ function CheckInSkeleton({ compact }) {
 
     return (
 
-        <div className="rounded-xl border border-border bg-muted/30 p-4 animate-pulse" aria-busy="true" aria-label="Loading check-in code…">
+        <div className=" border border-border bg-muted/30 p-4 animate-pulse" aria-busy="true" aria-label="Loading check-in code…">
 
             <div className="h-4 w-40 bg-muted rounded mb-3" />
 
@@ -92,7 +92,7 @@ export default function BookingCheckInQr({ bookingId, compact = false, embedded 
 
         return (
 
-            <div className={cn('rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground', className)}>
+            <div className={cn('rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground', className)}>
 
                 <p>Check-in code unavailable right now.</p>
 
@@ -202,7 +202,7 @@ export default function BookingCheckInQr({ bookingId, compact = false, embedded 
 
                     ? 'border-t border-border px-4 py-4 bg-muted/20 space-y-3'
 
-                    : 'rounded-xl border border-border bg-muted/40 p-4 space-y-3',
+                    : 'rounded-lg border border-border bg-muted/40 p-4 space-y-3',
 
                 className
 

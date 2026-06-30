@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export function Card({ className, children, ...props }) {
   return (
-    <div className={cn("bg-card text-card-foreground rounded-[13px] border border-border shadow-sm", className)} {...props}>
+    <div className={cn(stb.surface, className)} {...props}>
       {children}
     </div>
   );
@@ -18,7 +19,7 @@ export function CardHeader({ className, children, ...props }) {
 
 export function CardTitle({ className, children, ...props }) {
   return (
-    <h3 className={cn("font-semibold text-lg leading-none tracking-tight text-foreground", className)} {...props}>
+    <h3 className={cn(stb.uiHeading, "text-lg", className)} {...props}>
       {children}
     </h3>
   );
@@ -26,7 +27,7 @@ export function CardTitle({ className, children, ...props }) {
 
 export function CardDescription({ className, children, ...props }) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)} {...props}>
+    <p className={cn(stb.body, className)} {...props}>
       {children}
     </p>
   );

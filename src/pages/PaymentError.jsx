@@ -1,7 +1,6 @@
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   XCircle,
@@ -12,6 +11,11 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { MetaTags } from '@/components/seo/MetaTags';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function PaymentError() {
   const [searchParams] = useSearchParams();
@@ -38,56 +42,59 @@ export default function PaymentError() {
   ];
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-br from-slate-50 to-red-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="stb-page lg:pb-8">
+      <MetaTags title="Payment Failed" description="Your payment could not be processed." />
+      <PageHeader
+        label="Marketplace"
+        title="Payment failed"
+        subtitle="Your payment could not be processed"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent narrow>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <Card className="border-2 border-red-200 overflow-hidden mb-8">
-            <div className="bg-gradient-to-r from-red-500 to-orange-600 p-8 text-center">
+          <div className={cn(stb.panel, 'overflow-hidden mb-8 border-destructive/30')}>
+            <div className="bg-destructive p-8 text-center text-destructive-foreground">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring' }}
               >
-                <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-                  <XCircle className="w-12 h-12 text-red-600" />
+                <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-elevation-lg">
+                  <XCircle className="w-12 h-12 text-destructive" />
                 </div>
               </motion.div>
-
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                Payment Failed
-              </h1>
-              <p className="text-red-100 text-lg">
-                Your payment could not be processed
-              </p>
             </div>
 
-            <CardContent className="p-8">
-              <Alert className="bg-red-50 border-red-200 mb-6">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <AlertDescription className="text-red-800 font-semibold">
+            <div className="p-8">
+              <Alert className="bg-destructive/10 border-destructive/30 mb-6">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <AlertDescription className="text-destructive font-semibold">
                   {reason}
                 </AlertDescription>
               </Alert>
 
               <div className="mb-8">
-                <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                <h3 className={cn(stb.uiSubheading, 'mb-4 flex items-center gap-2')}>
                   <HelpCircle className="w-5 h-5 text-primary" />
                   Possible causes
                 </h3>
                 <div className="space-y-3">
                   {commonErrors.map((error, idx) => (
-                    <div key={idx} className="p-4 bg-muted/50 rounded-xl border border-slate-200">
-                      <p className="font-semibold text-foreground mb-1">{error.title}</p>
-                      <p className="text-sm text-muted-foreground">{error.description}</p>
+                    <div key={idx} className={cn(stb.surfaceMuted, 'p-4 rounded-lg border border-border')}>
+                      <p className={cn(stb.uiSubheading, 'text-sm mb-1')}>{error.title}</p>
+                      <p className={cn(stb.caption, 'text-muted-foreground')}>{error.description}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <Alert className="bg-muted border-border mb-6">
+              <Alert className={cn(stb.surfaceMuted, 'border-border mb-6')}>
                 <AlertDescription className="text-foreground">
                   <strong>Don&apos;t worry:</strong> No amount was charged to your account.
                   Your items are still in your bag.
@@ -106,23 +113,23 @@ export default function PaymentError() {
                 <Button
                   variant="outline"
                   onClick={() => navigate(createPageUrl('Cart'))}
-                  className="w-full border-slate-300 h-12"
+                  className="w-full h-12"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to bag
                 </Button>
               </div>
 
-              <div className="mt-8 p-6 bg-muted rounded-[13px] border border-border">
+              <div className={cn(stb.panel, 'mt-8 p-6')}>
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <HelpCircle className="w-6 h-6 text-white" />
+                  <div className={cn(stb.iconBox, 'bg-primary text-primary-foreground shrink-0 w-12 h-12')}>
+                    <HelpCircle className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-foreground mb-2">
+                    <h4 className={cn(stb.uiSubheading, 'mb-2')}>
                       Need help?
                     </h4>
-                    <p className="text-sm text-foreground/90 mb-4">
+                    <p className={cn(stb.caption, 'text-muted-foreground mb-4')}>
                       Our team can help you resolve this issue.
                     </p>
                     <Link to={createPageUrl('Messages')}>
@@ -133,37 +140,35 @@ export default function PaymentError() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border-2 border-slate-200">
-            <CardContent className="p-6">
-              <h3 className="font-bold text-foreground mb-4">
-                Other payment options
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 bg-muted/50 rounded-xl border border-slate-200">
-                  <CreditCard className="w-8 h-8 text-primary mb-2" />
-                  <p className="font-semibold text-foreground mb-1">Different card</p>
-                  <p className="text-sm text-muted-foreground">
-                    Try another payment card
-                  </p>
-                </div>
-
-                <div className="p-4 bg-muted/50 rounded-xl border border-slate-200">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
-                    <span className="text-white font-bold text-sm">P</span>
-                  </div>
-                  <p className="font-semibold text-foreground mb-1">PayPal</p>
-                  <p className="text-sm text-muted-foreground">
-                    Pay securely with PayPal
-                  </p>
-                </div>
+          <div className={cn(stb.panel, 'p-6')}>
+            <h3 className={cn(stb.uiSubheading, 'mb-4')}>
+              Other payment options
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className={cn(stb.surfaceMuted, 'p-4 rounded-lg border border-border')}>
+                <CreditCard className="w-8 h-8 text-primary mb-2" />
+                <p className={cn(stb.uiSubheading, 'text-sm mb-1')}>Different card</p>
+                <p className={cn(stb.caption, 'text-muted-foreground')}>
+                  Try another payment card
+                </p>
               </div>
-            </CardContent>
-          </Card>
+
+              <div className={cn(stb.surfaceMuted, 'p-4 rounded-lg border border-border')}>
+                <div className={cn(stb.iconBox, 'bg-primary text-primary-foreground mb-2 w-8 h-8')}>
+                  <span className="font-bold text-sm">P</span>
+                </div>
+                <p className={cn(stb.uiSubheading, 'text-sm mb-1')}>PayPal</p>
+                <p className={cn(stb.caption, 'text-muted-foreground')}>
+                  Pay securely with PayPal
+                </p>
+              </div>
+            </div>
+          </div>
         </motion.div>
-      </div>
+      </PageContent>
     </div>
   );
 }

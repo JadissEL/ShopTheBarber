@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, AlertTriangle, TrendingUp, Target, Users, CalendarX, Zap } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
+import { AlertTriangle, TrendingUp, Target, Users, CalendarX, Zap } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from 'recharts';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
@@ -27,6 +28,10 @@ import AdminLiveMetricsPanel from '@/components/admin/AdminLiveMetricsPanel';
 import AdminFraudAlertsPanel from '@/components/admin/AdminFraudAlertsPanel';
 import AdminDisputeAppealsPanel from '@/components/admin/AdminDisputeAppealsPanel';
 import OnboardingSetupBanner from '@/components/onboarding/OnboardingSetupBanner';
+import { chartColor, chartFill, stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function GlobalFinancials() {
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -135,7 +140,7 @@ export default function GlobalFinancials() {
   if (isFinError) return <PageError title="Failed to load financials" onRetry={refetchFin} />;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+    <div className="stb-page pb-16 font-sans">
       <MetaTags
         title="Global Financials"
         description="Comprehensive financial overview and reporting."
@@ -143,57 +148,62 @@ export default function GlobalFinancials() {
 
       <OnboardingSetupBanner audience="admin" />
 
-      <div className="mb-8 space-y-6">
+      <div className="mb-8 space-y-6 px-4 md:px-6 max-w-7xl mx-auto">
         <AdminLiveMetricsPanel />
         <AdminFraudAlertsPanel />
       </div>
 
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Financial Command</h1>
-          <p className="text-muted-foreground mt-1">Real-time platform performance and liquidity control.</p>
-        </div>
-        <div className="flex gap-3">
+      <PageHeader
+        label="Admin"
+        title="Financial command"
+        subtitle="Real-time platform performance and liquidity control."
+        compact
+        variant="light"
+        tier="app"
+      >
+        <div className="flex flex-wrap gap-3">
           <Link to={createPageUrl('AdminOrders')}>
-            <Button variant="outline" className="bg-card">Orders</Button>
+            <Button variant="outline">Orders</Button>
           </Link>
           <Link to={createPageUrl('AdminDisputes')}>
-            <Button variant="outline" className="bg-card">Disputes</Button>
+            <Button variant="outline">Disputes</Button>
           </Link>
-          <Button variant="outline" className="bg-card">Monthly Report</Button>
-          <Button className="bg-primary text-primary-foreground">Generate Payouts</Button>
+          <Button variant="outline">Monthly Report</Button>
+          <Button>Generate Payouts</Button>
         </div>
-      </div>
+      </PageHeader>
+
+      <PageContent>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card className="bg-card border-slate-200">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2">Platform Gross</p>
             <div className="flex items-baseline gap-2">
-              <h3 className="text-3xl font-black text-foreground">${overview.totalGross?.toLocaleString() || '0'}</h3>
-              <span className="text-emerald-600 text-xs font-bold">+12.5%</span>
+              <h3 className={cn(stb.metricValue, 'text-3xl text-foreground')}>${overview.totalGross?.toLocaleString() || '0'}</h3>
+              <span className="text-primary text-xs font-bold">+12.5%</span>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-primary text-primary-foreground border-none">
           <CardContent className="pt-6">
-            <p className="text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Platform Revenue</p>
+            <p className="text-white/70 text-xs font-bold uppercase tracking-wider mb-2">Platform Revenue</p>
             <div className="flex items-baseline gap-2">
-              <h3 className="text-3xl font-black text-white">${overview.platformRevenue?.toLocaleString() || '0'}</h3>
-              <span className="text-slate-400 text-xs">Net Margin {overview.netMargin?.toFixed(1)}%</span>
+              <h3 className={cn(stb.metricValue, 'text-3xl text-white')}>${overview.platformRevenue?.toLocaleString() || '0'}</h3>
+              <span className="text-muted-foreground text-xs">Net Margin {overview.netMargin?.toFixed(1)}%</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-slate-200">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2">Pending Payouts</p>
-            <h3 className="text-3xl font-black text-foreground">${overview.pendingPayouts?.toLocaleString() || '0'}</h3>
+            <h3 className={cn(stb.metricValue, 'text-3xl text-foreground')}>${overview.pendingPayouts?.toLocaleString() || '0'}</h3>
           </CardContent>
         </Card>
-        <Card className="bg-card border-slate-200">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2">Settled Payouts</p>
-            <h3 className="text-3xl font-black text-foreground">${overview.totalPayouts?.toLocaleString() || '0'}</h3>
+            <h3 className={cn(stb.metricValue, 'text-3xl text-foreground')}>${overview.totalPayouts?.toLocaleString() || '0'}</h3>
           </CardContent>
         </Card>
       </div>
@@ -221,7 +231,7 @@ export default function GlobalFinancials() {
               <p className="text-xs text-muted-foreground mt-1">
                 {northStar.booked_count ?? 0} bookings
                 {northStar.trends?.booked_gmv_change_pct != null && (
-                  <span className={northStar.trends.booked_gmv_change_pct >= 0 ? ' text-emerald-600' : ' text-red-600'}>
+                  <span className={northStar.trends.booked_gmv_change_pct >= 0 ? ' text-primary' : ' text-destructive'}>
                     {', '}{northStar.trends.booked_gmv_change_pct >= 0 ? '+' : ''}{northStar.trends.booked_gmv_change_pct}% vs prior period
                   </span>
                 )}
@@ -265,14 +275,14 @@ export default function GlobalFinancials() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted p-1 rounded-xl">
+        <TabsList className="bg-muted p-1 rounded-lg">
           <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
           <TabsTrigger value="revenue" className="rounded-lg">Revenue</TabsTrigger>
           <TabsTrigger value="payouts" className="rounded-lg">Payouts</TabsTrigger>
           <TabsTrigger value="reconciliation" className="rounded-lg">Reconciliation</TabsTrigger>
           <TabsTrigger value="disputes" className="rounded-lg">
             Disputes
-            {disputes.length > 0 && <span className="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{disputes.length}</span>}
+            {disputes.length > 0 && <span className="ml-2 bg-destructive/100 text-white text-[10px] px-1.5 py-0.5 rounded-full">{disputes.length}</span>}
           </TabsTrigger>
           <TabsTrigger value="pricing" className="rounded-lg">Rules</TabsTrigger>
           <TabsTrigger value="fixedfee" className="rounded-lg">Fixed fees</TabsTrigger>
@@ -308,7 +318,7 @@ export default function GlobalFinancials() {
                       <div key={i} className="flex-1 flex flex-col items-center group relative cursor-help">
                         <div className="w-full flex flex-col justify-end gap-1 h-48">
                           <div
-                            className="w-full bg-muted rounded-t-md group-hover:bg-slate-200 transition-all"
+                            className="w-full bg-muted rounded-t-md group-hover:bg-muted transition-all"
                             style={{ height: `${(day.gross / Math.max(...chartData.map(d => d.gross), 1)) * 100}%` }}
                           />
                           <div
@@ -319,16 +329,16 @@ export default function GlobalFinancials() {
                         <span className="text-[10px] text-muted-foreground mt-2 font-bold uppercase">{day.day}</span>
 
                         {/* Tooltip emulation */}
-                        <div className="absolute bottom-full mb-2 bg-foreground text-background text-[10px] p-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-xl">
+                        <div className="absolute bottom-full mb-2 bg-foreground text-background text-[10px] p-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-elevation-lg">
                           <p className="font-bold border-b border-white/10 pb-1 mb-1">{day.date}</p>
                           <p>Gross: ${day.gross}</p>
-                          <p className="text-emerald-400">Comm: ${day.commission}</p>
+                          <p className="text-primary">Comm: ${day.commission}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-sm italic">
+                  <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
                     Insufficient data for visualization
                   </div>
                 )}
@@ -343,7 +353,7 @@ export default function GlobalFinancials() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">Stripe Integration</span>
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-bold">ACTIVE</span>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold">ACTIVE</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">Auto-Payouts</span>
@@ -351,18 +361,18 @@ export default function GlobalFinancials() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">Dispute Rate</span>
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-bold">0.12%</span>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold">0.12%</span>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-amber-50 border-amber-100">
+              <Card className="bg-primary/10 border-amber-100">
                 <CardContent className="pt-6">
                   <div className="flex gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                    <AlertTriangle className="w-5 h-5 text-primary shrink-0" />
                     <div>
-                      <p className="text-xs font-bold text-amber-900">Liquidity Alert</p>
-                      <p className="text-[11px] text-amber-700 mt-1">Pending payouts exceed last 24h platform revenue. Monitor reserve balance.</p>
+                      <p className="text-xs font-bold text-foreground">Liquidity Alert</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">Pending payouts exceed last 24h platform revenue. Monitor reserve balance.</p>
                     </div>
                   </div>
                 </CardContent>
@@ -430,7 +440,7 @@ export default function GlobalFinancials() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="border rounded-xl overflow-hidden">
+              <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 border-b">
                     <tr className="text-muted-foreground font-medium text-[11px] uppercase tracking-wider">
@@ -503,7 +513,7 @@ export default function GlobalFinancials() {
             </div>
           </div>
 
-          <div className="border rounded-xl overflow-hidden bg-card">
+          <div className="border rounded-lg overflow-hidden bg-card">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b">
                 <tr className="text-muted-foreground font-medium text-[11px] uppercase tracking-wider">
@@ -520,9 +530,9 @@ export default function GlobalFinancials() {
                     <td className="p-4 font-medium">{p.provider_id?.substring(0, 8) || 'Multi-Provider'}</td>
                     <td className="p-4 text-muted-foreground text-xs">{p.period_start} - {p.period_end}</td>
                     <td className="p-4 text-right font-bold text-foreground">${p.amount}</td>
-                    <td className="p-4 text-center text-xs text-slate-400">Stripe Connect</td>
+                    <td className="p-4 text-center text-xs text-muted-foreground">Stripe Connect</td>
                     <td className="p-4 text-right">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'Completed' ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-muted-foreground'}`}>
                         {p.status?.toUpperCase()}
                       </span>
                     </td>
@@ -553,7 +563,7 @@ export default function GlobalFinancials() {
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, '']} />
                       <Area type="monotone" dataKey="gross" name="Gross" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.15)" />
-                      <Area type="monotone" dataKey="commission" name="Platform fee" stroke="#10b981" fill="#10b98122" />
+                      <Area type="monotone" dataKey="commission" name="Platform fee" stroke={chartColor(2)} fill={chartFill(2, 0.15)} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -592,7 +602,7 @@ export default function GlobalFinancials() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Platform revenue (fees)</span>
-                  <span className="font-semibold text-emerald-600">${(overview.platformRevenue ?? 0).toLocaleString()}</span>
+                  <span className="font-semibold text-primary">${(overview.platformRevenue ?? 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Net margin</span>
@@ -624,7 +634,7 @@ export default function GlobalFinancials() {
               </div>
               <div className="p-4 rounded-lg bg-muted/40">
                 <p className="text-muted-foreground mb-1">Residual (fees − payouts)</p>
-                <p className={`text-2xl font-bold ${reconciliationDelta >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                <p className={`text-2xl font-bold ${reconciliationDelta >= 0 ? 'text-primary' : 'text-primary'}`}>
                   ${reconciliationDelta.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </p>
               </div>
@@ -639,7 +649,7 @@ export default function GlobalFinancials() {
               <p className="text-sm text-muted-foreground mb-4">
                 Compare provider settlements against booking gross. Large negative residuals may indicate pending Stripe Connect transfers.
               </p>
-              <div className="border rounded-xl overflow-hidden">
+              <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 border-b">
                     <tr className="text-muted-foreground font-medium text-[11px] uppercase tracking-wider">
@@ -654,7 +664,7 @@ export default function GlobalFinancials() {
                     </tr>
                     <tr>
                       <td className="p-4">Platform fees</td>
-                      <td className="p-4 text-right font-bold text-emerald-600">${(overview.platformRevenue ?? 0).toLocaleString()}</td>
+                      <td className="p-4 text-right font-bold text-primary">${(overview.platformRevenue ?? 0).toLocaleString()}</td>
                     </tr>
                     <tr>
                       <td className="p-4">Provider share (est.)</td>
@@ -687,7 +697,7 @@ export default function GlobalFinancials() {
                   {disputes.map((dispute) => (
                     <div key={dispute.id} className="flex items-start justify-between p-4 border rounded-lg">
                       <div className="flex gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-primary mt-0.5" />
                         <div>
                           <p className="font-semibold">{dispute.reason || 'Dispute Reported'}</p>
                           <p className="text-sm text-muted-foreground">Booking ID: {dispute.booking_id?.substring(0, 8)}</p>
@@ -884,15 +894,14 @@ export default function GlobalFinancials() {
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">User Management</h3>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users..."
-                  className="pl-9"
-                  value={userSearchTerm}
-                  onChange={(e) => setUserSearchTerm(e.target.value)}
-                />
-              </div>
+              <SearchField
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+                onClear={() => setUserSearchTerm('')}
+                placeholder="Search users..."
+                className="w-64"
+                aria-label="Search users"
+              />
             </div>
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
@@ -928,6 +937,7 @@ export default function GlobalFinancials() {
 
 
       </Tabs>
+      </PageContent>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export function ReplaySetupGuideLink({ className = '' }) {
       to={getSetupGuidePath()}
       onClick={handleReplay}
       className={cn(
-        'inline-flex items-center justify-center rounded-xl border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted transition-colors',
+        'inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted transition-colors',
         className,
       )}
     >

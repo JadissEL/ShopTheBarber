@@ -88,7 +88,7 @@ export default function AdminPartnerKeysPanel() {
 
     return (
         <div className="space-y-6">
-            <Card className="rounded-2xl border-border max-w-xl">
+            <Card className=" border-border max-w-xl">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                         <Plus className="w-5 h-5" />
@@ -139,8 +139,8 @@ export default function AdminPartnerKeysPanel() {
                     </Button>
 
                     {createdKey?.api_key && (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 p-4 space-y-2">
-                            <p className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                        <div className=" border border-primary/30 bg-primary/10/60 dark:bg-primary/10 p-4 space-y-2">
+                            <p className="text-sm font-bold text-foreground dark:text-primary-foreground">
                                 Save this key — it won&apos;t be shown again
                             </p>
                             <code className="block text-xs font-mono break-all bg-background/80 p-2 rounded-lg">
@@ -155,7 +155,7 @@ export default function AdminPartnerKeysPanel() {
                 </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border-border">
+            <Card className=" border-border">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                         <Key className="w-5 h-5" />

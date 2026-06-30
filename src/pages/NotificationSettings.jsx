@@ -1,6 +1,5 @@
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Bell, Smartphone, CheckCircle2, AlertCircle, Send } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -11,6 +10,9 @@ import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 import { useState, useEffect } from 'react';
 import {
   browserWaitlistAlertsEnabled,
@@ -70,38 +72,34 @@ export default function NotificationSettings() {
   const twilioReady = status?.twilio_configured === true;
 
   return (
-    <div className="stb-page lg:pb-8">
+    <div className={stb.page + ' lg:pb-8'}>
       <MetaTags title="Notification Settings" description="Manage your notification preferences" />
-      <div className="w-full max-w-xl lg:max-w-4xl mx-auto px-4 lg:px-8 py-12">
-        <ContextualBackLink className="mb-8" />
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <Bell className="w-10 h-10 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Notification Settings</h1>
-              <p className="text-muted-foreground text-sm">
-                SMS & email reminders ~{status?.hours_before ?? 24}h before appointments
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={twilioReady ? 'default' : 'secondary'}>
-              {twilioReady ? 'Twilio connected' : 'Twilio not configured'}
-            </Badge>
-            {phoneValid && (
-              <Badge variant="outline" className="text-emerald-700 border-emerald-200">
-                <CheckCircle2 className="w-3 h-3 mr-1" /> Valid phone
-              </Badge>
-            )}
-          </div>
-        </div>
+      <PageHeader
+        label="Account"
+        title="Notification settings"
+        subtitle={`SMS & email reminders ~${status?.hours_before ?? 24}h before appointments`}
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Badge variant={twilioReady ? 'default' : 'secondary'}>
+          {twilioReady ? 'Twilio connected' : 'Twilio not configured'}
+        </Badge>
+        {phoneValid && (
+          <Badge variant="outline" className="text-primary border-primary/30">
+            <CheckCircle2 className="w-3 h-3 mr-1" /> Valid phone
+          </Badge>
+        )}
+      </PageHeader>
+      <PageContent narrow>
+        <ContextualBackLink className="mb-6" />
 
-        <Card className="mb-6">
-          <CardContent className="p-6 space-y-6">
+        <div className={stb.panel + ' mb-6'}>
+          <div className="p-6 space-y-6">
             <div className="flex items-start gap-3 pb-4 border-b border-border">
               <Bell className="w-5 h-5 text-primary mt-0.5" />
               <div>
-                <p className="font-semibold text-foreground">Browser waitlist alerts</p>
+                <p className={stb.uiSubheading}>Browser waitlist alerts</p>
                 <p className="text-sm text-muted-foreground">
                   Desktop notifications and a short sound when a waitlist slot opens (15 min to accept).
                   Requires permission in your browser.
@@ -126,15 +124,15 @@ export default function NotificationSettings() {
                 }}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="mb-6">
-          <CardContent className="p-6 space-y-6">
+        <div className={stb.panel + ' mb-6'}>
+          <div className="p-6 space-y-6">
             <div className="flex items-start gap-3 pb-4 border-b border-border">
               <Smartphone className="w-5 h-5 text-primary mt-0.5" />
               <div>
-                <p className="font-semibold text-foreground">SMS reminders</p>
+                <p className={stb.uiSubheading}>SMS reminders</p>
                 <p className="text-sm text-muted-foreground">
                   Text alerts via Twilio. Use international format (e.g. +15551234567 or +33612345678).
                   Reply STOP to any message to opt out. We can also text when you&apos;re usually due for another visit.
@@ -157,7 +155,7 @@ export default function NotificationSettings() {
                 }}
               />
               {phoneInput && !phoneValid && prefs?.phone === phoneInput && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
+                <p className="text-xs text-primary flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" />
                   Could not validate this number, check the country code.
                 </p>
@@ -199,11 +197,11 @@ export default function NotificationSettings() {
               <Send className="w-4 h-4 mr-2" />
               {testSmsMutation.isPending ? 'Sending…' : 'Send test SMS'}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-6 space-y-6">
+        <div className={stb.panel}>
+          <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="email-reminders" className="text-base">Email booking reminders</Label>
@@ -218,9 +216,9 @@ export default function NotificationSettings() {
             <p className="text-xs text-muted-foreground border-t border-border pt-4">
               Booking confirmations are always sent when email is on file. Scheduled reminders respect these toggles.
             </p>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
+      </PageContent>
     </div>
   );
 }

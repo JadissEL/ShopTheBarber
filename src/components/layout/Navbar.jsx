@@ -4,6 +4,8 @@ import { createPageUrl } from '@/utils';
 import { Menu, X, Scissors, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
+import { stb } from '@/lib/stbUi';
+import { cn } from '@/lib/utils';
 
 function navHref(path) {
   return path.startsWith('/') ? path : createPageUrl(path);
@@ -39,11 +41,12 @@ function NavDropdown({ label, items, pathname: _pathname, isActive, align = 'lef
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1 px-3.5 py-2 text-sm font-semibold rounded-lg transition-all ${
+        className={cn(
+          'flex items-center gap-1 px-3.5 py-2 text-xs font-semibold uppercase tracking-wider font-sans transition-colors rounded-lg',
           isActive || open
-            ? 'text-foreground bg-muted/50'
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-        }`}
+            ? 'text-primary border-l-2 border-primary pl-3'
+            : 'text-white/70 hover:text-white hover:bg-white/10',
+        )}
         aria-expanded={open}
         aria-haspopup="true"
       >
@@ -52,15 +55,16 @@ function NavDropdown({ label, items, pathname: _pathname, isActive, align = 'lef
       </button>
       {open && (
         <div
-          className={`absolute top-full mt-2 w-52 rounded-xl border border-border bg-background shadow-xl py-2 z-50 ${
-            align === 'right' ? 'right-0' : 'left-0'
-          }`}
+          className={cn(
+            'absolute top-full mt-2 w-52 rounded-lg border border-white/10 bg-[hsl(var(--navy))] shadow-elevation-md py-1.5 z-50 font-sans',
+            align === 'right' ? 'right-0' : 'left-0',
+          )}
         >
           {items.map((item) => (
             <Link
               key={item.path}
               to={navHref(item.path)}
-              className="block px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              className="block px-4 py-2 text-sm font-medium font-sans text-white/75 hover:text-primary hover:bg-white/5 transition-colors rounded-md mx-1"
               onClick={() => setOpen(false)}
             >
               {item.label}
@@ -103,7 +107,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
 
   return (
     <>
-      <div className="hidden sm:block bg-[hsl(var(--navy))] text-white/90 text-center text-xs font-semibold py-2 px-4 safe-area-pt border-b border-white/10">
+      <div className="hidden sm:block bg-[hsl(var(--navy))] text-white/90 text-center text-xs font-semibold font-sans py-2 px-4 safe-area-pt border-b border-white/10">
         <span className="inline-flex items-center gap-2 flex-wrap justify-center">
           <span className="text-primary font-bold">NEW</span>
           WELCOME5 — €5 off your first booking
@@ -112,14 +116,14 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
           </Link>
         </span>
       </div>
-    <header className="sticky top-0 z-50 w-full stb-glass border-b border-border/80 safe-area-pt">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className={cn('sticky top-0 z-50 w-full safe-area-pt font-sans', stb.glass)}>
+      <div className={cn(stb.container, 'max-w-7xl')}>
         <div className="flex items-center justify-between h-16 lg:h-[4.5rem]">
           <Link to={createPageUrl('Home')} className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 bg-primary text-primary-foreground rounded-[13px] flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shadow-primary/15">
+            <div className="w-9 h-9 bg-primary text-primary-foreground rounded-lg border border-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Scissors className="w-4 h-4 transform -rotate-45" />
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight hidden sm:inline">ShopTheBarber</span>
+            <span className="text-lg font-display uppercase tracking-wider text-white hidden sm:inline">ShopTheBarber</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
@@ -136,13 +140,14 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                 <Link
                   key={item.path}
                   to={navHref(item.path)}
-                  className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                  className={cn(
+                    'px-3.5 py-2 text-xs font-semibold uppercase tracking-wider font-sans transition-colors whitespace-nowrap rounded-lg',
                     isNavActive(location.pathname, item.path)
-                      ? 'text-foreground bg-muted/50'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
+                      ? 'text-primary border-l-2 border-primary pl-3'
+                      : 'text-white/70 hover:text-white hover:bg-white/10',
+                  )}
                 >
-                  {item.label}
+                  {isNavActive(location.pathname, item.path) ? `[${item.label}]` : item.label}
                 </Link>
               ),
             )}
@@ -158,29 +163,29 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
             )}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-3 ml-4 pl-4 border-l border-border shrink-0">
+          <div className="hidden lg:flex items-center gap-3 ml-4 pl-4 border-l border-white/15 shrink-0">
             {isAuthenticated ? (
               <>
                 <Link
                   to={createPageUrl('Dashboard')}
-                  className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+                  className="text-xs font-semibold uppercase tracking-wider font-sans text-white/70 hover:text-white rounded-lg px-2 py-1"
                 >
                   Dashboard
                 </Link>
-                <Button asChild className="rounded-xl px-5 h-10 font-semibold stb-btn-primary">
-                  <Link to={createPageUrl('Explore')}>Book a barber</Link>
+                <Button asChild className={cn('px-5 h-10', stb.btn)}>
+                  <Link to={createPageUrl('Explore')}>Book now</Link>
                 </Button>
               </>
             ) : (
               <>
                 <Link
                   to={createPageUrl('SignIn')}
-                  className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+                  className="text-xs font-semibold uppercase tracking-wider font-sans text-white/70 hover:text-white rounded-lg px-2 py-1"
                 >
                   Sign In
                 </Link>
-                <Button asChild className="rounded-xl px-5 h-10 font-semibold stb-btn-primary">
-                  <Link to={createPageUrl('Explore')}>Book a barber</Link>
+                <Button asChild className={cn('px-5 h-10', stb.btn)}>
+                  <Link to={createPageUrl('Explore')}>Book now</Link>
                 </Button>
               </>
             )}
@@ -188,7 +193,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
 
           <button
             type="button"
-            className="lg:hidden p-2.5 text-foreground hover:bg-muted rounded-xl transition-all"
+            className="lg:hidden p-2.5 text-white hover:bg-white/10 rounded-lg transition-colors font-sans"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
@@ -199,14 +204,14 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
       </div>
 
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 border-b border-border bg-background/98 backdrop-blur-xl shadow-lg max-h-[85vh] overflow-y-auto">
+        <div className="lg:hidden absolute top-full left-0 right-0 border-b border-white/10 bg-[hsl(var(--navy))] shadow-lg max-h-[85vh] overflow-y-auto font-sans">
           <div className="px-4 py-6 space-y-1">
             {navItems.map((item) =>
               item.children?.length ? (
                 <div key={item.label}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between px-4 py-3 text-base font-semibold text-foreground rounded-xl hover:bg-muted/50"
+                    className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold uppercase tracking-wider text-white rounded-lg hover:bg-white/10"
                     onClick={() => setMobileExpanded(mobileExpanded === item.label ? null : item.label)}
                   >
                     {item.label}
@@ -218,7 +223,12 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                         <Link
                           key={child.path}
                           to={navHref(child.path)}
-                          className="block px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg"
+                          className={cn(
+                            'block px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-lg',
+                            isNavActive(location.pathname, child.path)
+                              ? 'text-primary border-l-2 border-primary pl-3'
+                              : 'text-white/70 hover:text-primary hover:bg-white/5',
+                          )}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {child.label}
@@ -231,7 +241,12 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                 <Link
                   key={item.path}
                   to={navHref(item.path)}
-                  className="block px-4 py-3 text-base font-semibold text-foreground rounded-xl hover:bg-muted/50"
+                  className={cn(
+                    'block px-4 py-3 text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-white/10',
+                    isNavActive(location.pathname, item.path)
+                      ? 'text-primary border-l-2 border-primary pl-3'
+                      : 'text-white',
+                  )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
@@ -240,10 +255,10 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
             )}
 
             {showBusinessNav && (
-              <div className="pt-2 mt-2 border-t border-border">
+              <div className="pt-2 mt-2 border-t border-white/10">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between px-4 py-3 text-base font-semibold text-foreground rounded-xl hover:bg-muted/50"
+                  className="flex w-full items-center justify-between px-4 py-3 text-base font-semibold text-white rounded-lg hover:bg-white/10"
                   onClick={() => setMobileExpanded(mobileExpanded === 'business' ? null : 'business')}
                 >
                   For Barbers
@@ -255,7 +270,12 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                       <Link
                         key={item.path}
                         to={navHref(item.path)}
-                        className="block px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg"
+                        className={cn(
+                          'block px-4 py-2.5 text-sm font-medium rounded-lg',
+                          isNavActive(location.pathname, item.path)
+                            ? 'text-primary border-l-2 border-primary pl-3'
+                            : 'text-white/70 hover:text-primary hover:bg-white/5',
+                        )}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         {item.label}
@@ -266,15 +286,15 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
               </div>
             )}
 
-            <div className="pt-4 mt-4 border-t border-border space-y-2">
+            <div className="pt-4 mt-4 border-t border-white/10 space-y-2">
               {isAuthenticated ? (
                 <>
-                  <Button asChild className="w-full h-12 rounded-xl font-semibold">
+                  <Button asChild className="w-full h-12">
                     <Link to={createPageUrl('Explore')} onClick={() => setIsMobileMenuOpen(false)}>
-                      Book a barber
+                      Book now
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="w-full h-12 rounded-xl font-semibold">
+                  <Button asChild variant="outline" className="w-full h-12 border-white/30 text-white hover:bg-white/10">
                     <Link to={createPageUrl('Dashboard')} onClick={() => setIsMobileMenuOpen(false)}>
                       Dashboard
                     </Link>
@@ -282,12 +302,12 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                 </>
               ) : (
                 <>
-                  <Button asChild className="w-full h-12 rounded-xl font-semibold">
+                  <Button asChild className="w-full h-12">
                     <Link to={createPageUrl('Explore')} onClick={() => setIsMobileMenuOpen(false)}>
-                      Book a barber
+                      Book now
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="w-full h-12 rounded-xl font-semibold">
+                  <Button asChild variant="outline" className="w-full h-12 border-white/30 text-white hover:bg-white/10">
                     <Link to={createPageUrl('SignIn')} onClick={() => setIsMobileMenuOpen(false)}>
                       Sign In
                     </Link>

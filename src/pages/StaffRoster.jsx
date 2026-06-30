@@ -15,8 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import StaffServicePricingEditor from '@/components/provider/StaffServicePricingEditor';
-import { UserPlus, Trash2, ArrowLeft, Calendar, BadgeCheck, X } from 'lucide-react';
+import { UserPlus, Trash2, Calendar, BadgeCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const SKILL_PRESETS = ['Fades', 'Beard', 'Hot Towel', 'Color', 'Kids Cuts', 'Line Ups', 'Scissor Work', 'Braids'];
 
@@ -47,17 +50,17 @@ function SkillsEditor({ skills = [], onChange }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Add specialty…"
-          className="rounded-xl"
+          className=""
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
         />
-        <Button type="button" variant="outline" className="rounded-xl" onClick={() => add()}>Add</Button>
+        <Button type="button" variant="outline" className="" onClick={() => add()}>Add</Button>
       </div>
       <div className="flex flex-wrap gap-1">
         {SKILL_PRESETS.filter((p) => !skills.includes(p)).map((p) => (
           <button
             key={p}
             type="button"
-            className="text-[10px] px-2 py-1 rounded-lg border border-slate-200 text-muted-foreground hover:border-primary hover:text-primary"
+            className="text-[10px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary"
             onClick={() => add(p)}
           >
             + {p}
@@ -116,54 +119,57 @@ export default function StaffRoster() {
 
   if (!isManager || !shopId) {
     return (
-      <div className="max-w-lg mx-auto py-20 px-4 text-center">
+      <div className={stb.page}>
         <MetaTags title="Team" description="Manage your shop team" />
-        <p className="text-muted-foreground mb-4">Shop owner or manager access is required.</p>
-        <Link to={createPageUrl('ProviderDashboard')} className="text-primary font-bold">Back to dashboard</Link>
+        <PageContent narrow className="py-20 text-center">
+          <p className="text-muted-foreground mb-4">Shop owner or manager access is required.</p>
+          <Link to={createPageUrl('ProviderDashboard')} className="text-primary font-bold">Back to dashboard</Link>
+        </PageContent>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-24">
+    <div className={stb.page + ' pb-24 lg:pb-8'}>
       <MetaTags title="Team Roster" description={`Manage barbers at ${shop?.name || 'your shop'}`} />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-sm text-primary mb-2">
-            <ArrowLeft className="w-4 h-4" /> Dashboard
+      <PageHeader
+        label="Provider"
+        title="Team roster"
+        subtitle={`Manage barbers, skills, booking visibility, and pricing for ${shop?.name}.`}
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Button asChild variant="outline">
+          <Link to={createPageUrl('StaffSchedule')}>
+            <Calendar className="w-4 h-4 mr-2" /> Schedules
           </Link>
-          <h1 className="text-3xl font-black tracking-tight">Team Roster</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Manage barbers, skills, booking visibility, and per-barber pricing for {shop?.name}.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" className="rounded-xl font-bold">
-            <Link to={createPageUrl('StaffSchedule')}>
-              <Calendar className="w-4 h-4 mr-2" /> Schedules
-            </Link>
-          </Button>
-          <Button className="rounded-xl font-bold" onClick={() => setAddOpen(true)}>
-            <UserPlus className="w-4 h-4 mr-2" /> Add barber
-          </Button>
-        </div>
-      </div>
+        </Button>
+        <Button onClick={() => setAddOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" /> Add barber
+        </Button>
+      </PageHeader>
+
+      <PageContent>
+        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-sm text-primary mb-6">
+          ← Dashboard
+        </Link>
 
       {teamLoading ? (
         <PageLoading message="Loading roster…" />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {team.map((member) => (
-            <Card key={member.id} className="rounded-3xl border-slate-200 overflow-hidden">
+            <Card key={member.id} className=" border-border overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4 mb-4">
                   <UserAvatar src={member.barber?.image_url} name={member.barber?.name} className="w-14 h-14" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-black text-lg truncate">{member.barber?.name}</h3>
+                    <h3 className={stb.uiSubheading + ' truncate'}>{member.barber?.name}</h3>
                     <p className="text-sm text-muted-foreground">{member.barber?.title || member.role}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${member.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${member.status === 'active' ? 'stb-chip stb-chip-active' : 'bg-muted text-muted-foreground'}`}>
                         {member.status || 'active'}
                       </span>
                       {member.booking_enabled !== false && (
@@ -183,11 +189,11 @@ export default function StaffRoster() {
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-100">
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-xl font-bold"
+                    className=" font-bold"
                     onClick={() => {
                       setEditMember(member);
                       setForm({
@@ -205,7 +211,7 @@ export default function StaffRoster() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-xl font-bold"
+                    className=" font-bold"
                     onClick={() => setPricingMember(member)}
                   >
                     Services & pricing
@@ -214,7 +220,7 @@ export default function StaffRoster() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-xl text-red-600 border-red-200"
+                      className=" text-destructive border-destructive/30"
                       onClick={() => {
                         if (confirm(`Remove ${member.barber?.name} from the team?`)) {
                           removeMutation.mutate(member.id);
@@ -233,19 +239,19 @@ export default function StaffRoster() {
 
       {/* Add dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md rounded-3xl">
+        <DialogContent className="max-w-md ">
           <DialogHeader>
             <DialogTitle>Add team member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="rounded-xl mt-1" />
+              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className=" mt-1" />
             </div>
             <div>
               <Label>Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
-                <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className=" mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="barber">Barber</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
@@ -257,7 +263,7 @@ export default function StaffRoster() {
               <Label>Specialties</Label>
               <SkillsEditor skills={form.skills} onChange={(skills) => setForm((f) => ({ ...f, skills }))} />
             </div>
-            <Button className="w-full rounded-xl font-bold" onClick={() => addMutation.mutate()} disabled={addMutation.isPending || !form.name.trim()}>
+            <Button className="w-full rounded-lg font-bold" onClick={() => addMutation.mutate()} disabled={addMutation.isPending || !form.name.trim()}>
               {addMutation.isPending ? 'Adding…' : 'Add to roster'}
             </Button>
           </div>
@@ -266,23 +272,23 @@ export default function StaffRoster() {
 
       {/* Edit dialog */}
       <Dialog open={!!editMember} onOpenChange={(o) => !o && setEditMember(null)}>
-        <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md  max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit {editMember?.barber?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Display name</Label>
-              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="rounded-xl mt-1" />
+              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className=" mt-1" />
             </div>
             <div>
               <Label>Title</Label>
-              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="rounded-xl mt-1" placeholder="Senior Barber" />
+              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className=" mt-1" placeholder="Senior Barber" />
             </div>
             <div>
               <Label>Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))} disabled={editMember?.role === 'owner'}>
-                <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className=" mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="owner">Owner</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
@@ -298,7 +304,7 @@ export default function StaffRoster() {
             <div>
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
-                <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className=" mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
@@ -311,7 +317,7 @@ export default function StaffRoster() {
               <SkillsEditor skills={form.skills} onChange={(skills) => setForm((f) => ({ ...f, skills }))} />
             </div>
             <Button
-              className="w-full rounded-xl font-bold"
+              className="w-full rounded-lg font-bold"
               onClick={() => updateMutation.mutate({
                 id: editMember.id,
                 data: {
@@ -333,7 +339,7 @@ export default function StaffRoster() {
 
       {/* Pricing panel dialog */}
       <Dialog open={!!pricingMember} onOpenChange={(o) => !o && setPricingMember(null)}>
-        <DialogContent className="max-w-lg rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg  max-h-[90vh] overflow-y-auto">
           {pricingMember && (
             <StaffServicePricingEditor
               shopId={shopId}
@@ -343,6 +349,7 @@ export default function StaffRoster() {
           )}
         </DialogContent>
       </Dialog>
+      </PageContent>
     </div>
   );
 }

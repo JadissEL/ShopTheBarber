@@ -52,15 +52,13 @@ export default function HomeVipGroupBarbers() {
 
     return (
 
-        <section className="py-24 bg-gradient-to-b from-violet-950 to-slate-900 text-white relative overflow-hidden">
-
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,#8b5cf6,transparent_50%)]" />
+        <section className="stb-section-dark stb-section relative overflow-hidden">
 
             <div className="container mx-auto px-4 md:px-6 relative z-10">
 
                 <div className="max-w-2xl mb-12">
 
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-violet-200 text-sm font-medium mb-4">
+                    <div className="stb-chip border-white/25 bg-white/10 text-white mb-4">
 
                         <Users className="w-4 h-4" />
 
@@ -68,13 +66,13 @@ export default function HomeVipGroupBarbers() {
 
                     </div>
 
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+                    <h2 className="stb-heading-display text-white text-3xl md:text-4xl mb-4">
 
                         {groupBooking.headline || 'Group grooming'}
 
                     </h2>
 
-                    <p className="text-violet-100/80 text-lg font-light">
+                    <p className="text-white/75 text-lg font-light">
 
                         {groupBooking.description ||
 
@@ -112,7 +110,7 @@ export default function HomeVipGroupBarbers() {
 
                             >
 
-                                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-3 ring-1 ring-white/20 group-hover:ring-violet-400/50 transition-all">
+                                <div className="relative aspect-[3/4] overflow-hidden mb-3 border border-white/20 group-hover:border-primary/50 transition-all stb-card-interactive">
 
                                     <OptimizedImage
 
@@ -132,7 +130,7 @@ export default function HomeVipGroupBarbers() {
 
                                     />
 
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-foreground/55" />
 
                                     <div className="absolute top-3 left-3 flex flex-wrap gap-1">
                                         {barber.is_vip && <VipBarberBadge />}
@@ -146,7 +144,7 @@ export default function HomeVipGroupBarbers() {
 
                                         <p className="text-sm text-white/70">{barber.title}</p>
 
-                                        <p className="text-xs text-violet-200 mt-1">
+                                        <p className="text-xs text-white/70 mt-1">
 
                                             {barber.min_party}-{barber.max_party} guests
 
@@ -185,7 +183,7 @@ export default function HomeVipGroupBarbers() {
 
                     variant="secondary"
 
-                    className="rounded-full gap-2 bg-card text-violet-950 hover:bg-violet-100"
+                    className="rounded-full gap-2 bg-card text-foreground hover:bg-primary/10"
 
                 >
 

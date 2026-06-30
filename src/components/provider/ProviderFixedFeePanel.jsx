@@ -17,10 +17,10 @@ function fmtDate(iso) {
 
 function statusBadge(status, paymentStatus) {
     if (status === 'active' && paymentStatus === 'paid') {
-        return <Badge className="bg-emerald-100 text-emerald-800">Active</Badge>;
+        return <Badge className="stb-chip stb-chip-active">Active</Badge>;
     }
     if (status === 'pending_payment') {
-        return <Badge className="bg-amber-100 text-amber-800">Awaiting payment</Badge>;
+        return <Badge className="bg-warning/15 text-foreground">Awaiting payment</Badge>;
     }
     if (status === 'expired') return <Badge variant="secondary">Expired</Badge>;
     if (status === 'cancelled') return <Badge variant="outline">Cancelled</Badge>;
@@ -32,13 +32,13 @@ function PlanBlock({ title, active, pendingPlan, quoteMonthly, quoteAnnual, enro
 
     if (active?.commission_waived) {
         return (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-2">
+            <div className=" border border-primary/30 bg-primary/10 p-4 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                    <ShieldCheck className="w-5 h-5 text-emerald-700" />
-                    <p className="font-semibold text-emerald-900">{title}, active</p>
-                    <Badge className="bg-emerald-100 text-emerald-800">0% commission</Badge>
+                    <ShieldCheck className="w-5 h-5 text-primary" />
+                    <p className="font-semibold text-foreground">{title}, active</p>
+                    <Badge className="stb-chip stb-chip-active">0% commission</Badge>
                 </div>
-                <p className="text-sm text-emerald-800">
+                <p className="text-sm text-primary">
                     {active.billing_cycle === 'annual' ? 'Annual' : 'Monthly'} plan for {active.coverage_year}
                     {', '}valid until {fmtDate(active.period_end)}
                 </p>
@@ -53,12 +53,12 @@ function PlanBlock({ title, active, pendingPlan, quoteMonthly, quoteAnnual, enro
 
     if (pendingPlan && pendingPlan.status === 'pending_payment') {
         return (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 space-y-2">
+            <div className=" border border-primary/30 bg-primary/10 p-4 space-y-2">
                 <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-amber-700" />
-                    <p className="font-semibold text-amber-900">{title}, checkout pending</p>
+                    <Clock className="w-5 h-5 text-muted-foreground" />
+                    <p className="font-semibold text-foreground">{title}, checkout pending</p>
                 </div>
-                <p className="text-sm text-amber-800">
+                <p className="text-sm text-foreground">
                     Complete payment to activate your {pendingPlan.billing_cycle} plan for {pendingPlan.coverage_year}.
                 </p>
                 <Button
@@ -75,13 +75,13 @@ function PlanBlock({ title, active, pendingPlan, quoteMonthly, quoteAnnual, enro
     const annualSavings = quoteAnnual?.annual_savings ?? 0;
 
     return (
-        <div className="rounded-2xl border border-border p-4 space-y-3">
+        <div className=" border border-border p-4 space-y-3">
             <p className="font-semibold">{title}</p>
             <p className="text-sm text-muted-foreground">
                 {symbol}{quoteMonthly?.monthly_fee_amount}/month instead of per-booking commission
             </p>
             {annualSavings > 0 && (
-                <p className="text-xs text-violet-700">
+                <p className="text-xs text-primary">
                     Save {symbol}{annualSavings.toFixed(2)} with annual prepay (30% off)
                 </p>
             )}
@@ -103,7 +103,7 @@ function PlanBlock({ title, active, pendingPlan, quoteMonthly, quoteAnnual, enro
                 </Button>
             </div>
             {!enrollmentOpen && (
-                <p className="text-xs text-amber-700 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
                     Enrollment for {coverageYear} opens January-March only.
                 </p>
@@ -116,7 +116,7 @@ function PlanHistory({ plans }) {
     if (!plans?.length) return null;
 
     return (
-        <div className="rounded-2xl border border-border/60 p-4 space-y-2">
+        <div className=" border border-border/60 p-4 space-y-2">
             <p className="text-sm font-semibold text-muted-foreground">Plan history</p>
             <div className="space-y-2 max-h-40 overflow-y-auto">
                 {plans.map((p) => (
@@ -189,16 +189,16 @@ export default function ProviderFixedFeePanel({ shopId, isShopOwner }) {
     const pendingShop = data?.plans?.find((p) => p.scope === 'shop' && p.status === 'pending_payment');
 
     return (
-        <Card className="border-violet-200 bg-gradient-to-br from-violet-50/80 to-transparent rounded-3xl">
+        <Card className="border-primary/30 bg-primary/10">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg flex-wrap">
-                    <Percent className="w-5 h-5 text-violet-700" />
+                    <Percent className="w-5 h-5 text-primary" />
                     Fixed platform fee
                     {data?.commission_waived && (
-                        <Badge className="bg-emerald-100 text-emerald-800 ml-2">Commission waived</Badge>
+                        <Badge className="stb-chip stb-chip-active ml-2">Commission waived</Badge>
                     )}
                     {enrollmentOpen && !data?.commission_waived && (
-                        <Badge className="bg-violet-100 text-violet-800">Enrollment open</Badge>
+                        <Badge className="bg-primary/10 text-foreground">Enrollment open</Badge>
                     )}
                 </CardTitle>
             </CardHeader>

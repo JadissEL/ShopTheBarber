@@ -25,12 +25,16 @@ import {
 import { Search, MapPin, Star, SlidersHorizontal, Scissors, Baby, Home as HomeIcon, Car, Map, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-
+import SearchField from '@/components/ui/search-field';
+import PageHeader from "@/components/layout/PageHeader";
+import PageContent from "@/components/layout/PageContent";
 import BarberMap from "@/components/barbers/BarberMap";
 import AddressAutocomplete from "@/components/maps/AddressAutocomplete";
 import { toast } from "sonner";
 import { barberDistanceKm, formatDistanceKm } from "@/lib/geo";
 import { usePreferredLocation } from "@/hooks/usePreferredLocation";
+import { cn } from "@/lib/utils";
+import { stb } from "@/lib/stbUi";
 
 export default function Barbers() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,9 +125,8 @@ export default function Barbers() {
 
   const FilterContent = () => (
     <div className="space-y-8">
-      {/* Provider Type */}
       <div>
-        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Provider Type</h3>
+        <h3 className={cn(stb.uiHeading, 'text-lg mb-4')}>Provider Type</h3>
         <div className="space-y-3">
           {[
             { id: 'all', label: 'All' },
@@ -134,9 +137,9 @@ export default function Barbers() {
               <Checkbox
                 checked={filters.providerType === type.id}
                 onCheckedChange={() => setFilters({ ...filters, providerType: type.id })}
-                className="border-slate data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <span className="text-slate dark:text-matte-silver group-hover:text-primary transition-colors">
+              <span className="text-muted-foreground group-hover:text-primary transition-colors">
                 {type.label}
               </span>
             </label>
@@ -144,9 +147,8 @@ export default function Barbers() {
         </div>
       </div>
 
-      {/* Mode */}
       <div>
-        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Mode</h3>
+        <h3 className={cn(stb.uiHeading, 'text-lg mb-4')}>Mode</h3>
         <div className="space-y-3">
           {[
             { id: 'all', label: 'All', icon: null },
@@ -157,10 +159,10 @@ export default function Barbers() {
               <Checkbox
                 checked={filters.mode === mode.id}
                 onCheckedChange={() => setFilters({ ...filters, mode: mode.id })}
-                className="border-slate data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              {mode.icon && <mode.icon className="w-4 h-4 text-slate" />}
-              <span className="text-slate dark:text-matte-silver group-hover:text-primary transition-colors">
+              {mode.icon && <mode.icon className="w-4 h-4 text-muted-foreground" />}
+              <span className="text-muted-foreground group-hover:text-primary transition-colors">
                 {mode.label}
               </span>
             </label>
@@ -168,9 +170,8 @@ export default function Barbers() {
         </div>
       </div>
 
-      {/* Min Rating */}
       <div>
-        <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Minimum Rating</h3>
+        <h3 className={cn(stb.uiHeading, 'text-lg mb-4')}>Minimum Rating</h3>
         <div className="space-y-4">
           <Input
             type="range"
@@ -182,8 +183,8 @@ export default function Barbers() {
             className="w-full accent-primary"
             aria-label="Minimum rating"
           />
-          <div className="flex items-center gap-2 text-slate dark:text-matte-silver">
-            <Star className="w-4 h-4 text-amber-500 fill-current" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Star className="w-4 h-4 text-primary fill-current" />
             <span>{filters.minRating}+ stars</span>
           </div>
         </div>
@@ -191,7 +192,7 @@ export default function Barbers() {
 
       {userCoords && (
         <div>
-          <h3 className="text-lg font-bold text-charcoal dark:text-white mb-4">Maximum Distance</h3>
+          <h3 className={cn(stb.uiHeading, 'text-lg mb-4')}>Maximum Distance</h3>
           <div className="space-y-4">
             <Input
               type="range"
@@ -203,32 +204,30 @@ export default function Barbers() {
               className="w-full accent-primary"
               aria-label="Maximum distance in km"
             />
-            <p className="text-sm text-slate dark:text-matte-silver">
-              Within <span className="font-bold text-charcoal dark:text-white">{filters.maxDistance} km</span>
+            <p className="text-sm text-muted-foreground">
+              Within <span className="font-bold text-foreground">{filters.maxDistance} km</span>
             </p>
           </div>
         </div>
       )}
 
-      {/* Kid Friendly */}
       <div>
         <label className="flex items-center gap-3 cursor-pointer group">
           <Checkbox
             checked={filters.kidFriendly}
             onCheckedChange={(checked) => setFilters({ ...filters, kidFriendly: checked })}
-            className="border-slate data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+            className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
-          <Baby className="w-5 h-5 text-emerald-600" />
-          <span className="text-slate dark:text-matte-silver group-hover:text-primary transition-colors font-medium">
+          <Baby className="w-5 h-5 text-primary" />
+          <span className="text-muted-foreground group-hover:text-primary transition-colors font-medium">
             Kid-friendly
           </span>
         </label>
       </div>
 
-      {/* Reset */}
       <Button
         variant="outline"
-        className="w-full border-slate text-slate hover:bg-background-light rounded-button"
+        className="w-full border-foreground/15 text-muted-foreground hover:bg-muted hover:text-foreground rounded-button"
         onClick={() => {
           setSearchQuery("");
           clearPreferredLocation();
@@ -248,43 +247,29 @@ export default function Barbers() {
   );
 
   return (
-    <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-charcoal dark:text-white mb-4">
-            Find Your Ideal Barber
-          </h1>
-          <p className="text-xl text-slate dark:text-matte-silver">
-            Qualified professionals near you
-          </p>
-        </div>
+    <div className="stb-page pb-16 font-sans">
+      <PageHeader
+        label="Discover"
+        title="Find your ideal barber"
+        subtitle="Qualified professionals near you"
+      />
 
-        {/* Search & Filters Bar */}
-        <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-soft p-6 mb-8">
+      <PageContent>
+        <div className={cn(stb.surface, 'rounded-lg p-6 mb-8')}>
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative group">
-              <div className="absolute left-0 top-0 bottom-0 w-12 bg-background-light dark:bg-background-dark rounded-l-xl flex items-center justify-center border-r border-soft-gray dark:border-slate/20">
-                <Search className="text-slate w-5 h-5 group-focus-within:text-primary transition-colors" />
-              </div>
-              <Input
-                placeholder="Search by shop name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-16 h-12 text-lg border-none bg-background-light dark:bg-background-dark rounded-xl focus:ring-0 placeholder:text-slate/50"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate hover:text-charcoal"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+            <SearchField
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              placeholder="Search by shop name..."
+              size="lg"
+              className="flex-1"
+              inputClassName="text-lg"
+              aria-label="Search barbers"
+            />
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-64 h-12 rounded-xl border-none bg-background-light dark:bg-background-dark">
+              <SelectTrigger className="w-full md:w-64 h-12 rounded-lg border-none bg-muted">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -295,42 +280,40 @@ export default function Barbers() {
               </SelectContent>
             </Select>
 
-            {/* View Mode Toggle */}
-            <div className="flex gap-2 bg-background-light dark:bg-background-dark p-1 rounded-xl">
+            <div className="flex gap-2 bg-muted p-1 rounded-lg">
               <Button
                 variant="ghost"
-                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'list' ? 'bg-card dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
+                className={cn('h-10 w-10 p-0 rounded-lg', viewMode === 'list' ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground')}
                 onClick={() => setViewMode('list')}
               >
                 <ListIcon className="w-5 h-5" />
               </Button>
               <Button
                 variant="ghost"
-                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'grid' ? 'bg-card dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
+                className={cn('h-10 w-10 p-0 rounded-lg', viewMode === 'grid' ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground')}
                 onClick={() => setViewMode('grid')}
               >
                 <LayoutGrid className="w-5 h-5" />
               </Button>
               <Button
                 variant="ghost"
-                className={`h-10 w-10 p-0 rounded-lg ${viewMode === 'map' ? 'bg-card dark:bg-surface-dark shadow-sm text-primary' : 'text-slate'}`}
+                className={cn('h-10 w-10 p-0 rounded-lg', viewMode === 'map' ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground')}
                 onClick={() => setViewMode('map')}
               >
                 <Map className="w-5 h-5" />
               </Button>
             </div>
 
-            {/* Mobile Filter Button */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" className="lg:hidden h-12 rounded-xl border-none bg-background-light dark:bg-background-dark">
+                <Button variant="outline" className="lg:hidden h-12 rounded-lg border-none bg-muted">
                   <SlidersHorizontal className="w-5 h-5 mr-2" />
                   Filters
                 </Button>
               </SheetTrigger>
               <SheetContent side="bottom" className="filter-sheet h-[80vh] overflow-y-auto">
                 <SheetHeader>
-                  <SheetTitle className="text-charcoal dark:text-white">Filters</SheetTitle>
+                  <SheetTitle className={stb.uiHeading}>Filters</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6">
                   <FilterContent />
@@ -355,14 +338,14 @@ export default function Barbers() {
                   longitude: item.longitude,
                 });
               }}
-              inputClassName="h-12 border-none bg-background-light dark:bg-background-dark"
+              inputClassName="h-12 border-none bg-muted"
             />
             <Button
               type="button"
               variant="outline"
               onClick={handleUseMyLocation}
               disabled={isLoadingLocation}
-              className="h-12 shrink-0 rounded-xl border-none bg-background-light dark:bg-background-dark"
+              className="h-12 shrink-0 rounded-lg border-none bg-muted"
             >
               {isLoadingLocation ? '…' : (
                 <>
@@ -373,13 +356,12 @@ export default function Barbers() {
             </Button>
           </div>
 
-          {/* Quick Filters */}
           <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
             {['Coupe Homme', 'Taille de Barbe', 'Rasage à l\'ancienne', 'Coloration'].map((service) => (
               <Badge
                 key={service}
                 variant="secondary"
-                className="px-4 py-2 rounded-xl bg-background-light dark:bg-background-dark hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors text-sm font-medium text-charcoal dark:text-white whitespace-nowrap"
+                className="px-4 py-2 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors text-sm font-medium text-foreground whitespace-nowrap"
               >
                 {service}
               </Badge>
@@ -387,18 +369,16 @@ export default function Barbers() {
           </div>
         </div>
 
-        {/* Map View */}
         {viewMode === 'map' && (
-          <div className="mb-8 rounded-2xl overflow-hidden shadow-soft border border-soft-gray dark:border-slate/20">
+          <div className="mb-8 rounded-lg overflow-hidden border border-foreground/10">
             <BarberMap barbers={filteredBarbers} userPosition={userCoords} />
           </div>
         )}
 
         <div className="flex gap-8">
-          {/* Desktop Filters Sidebar */}
           <aside className="hidden lg:block w-80 shrink-0">
-            <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 sticky top-24 shadow-soft">
-              <h2 className="text-xl font-bold text-charcoal dark:text-white mb-6 flex items-center gap-2">
+            <div className={cn(stb.surface, 'rounded-lg p-6 sticky top-24')}>
+              <h2 className={cn(stb.uiHeading, 'text-xl mb-6 flex items-center gap-2')}>
                 <SlidersHorizontal className="w-5 h-5" />
                 Filters
               </h2>
@@ -406,19 +386,17 @@ export default function Barbers() {
             </div>
           </aside>
 
-          {/* Results */}
           <div className="flex-1">
             <div className="mb-6 flex items-center justify-between">
-              <p className="text-slate dark:text-matte-silver">
-                <span className="font-bold text-charcoal dark:text-white text-xl">{filteredBarbers.length}</span> barbier(s) trouvé(s)
+              <p className="text-muted-foreground">
+                <span className="font-bold text-foreground text-xl">{filteredBarbers.length}</span> barbier(s) trouvé(s)
               </p>
             </div>
 
-            {/* Barbers List/Grid */}
             {isLoading ? (
               <div className={`grid gap-6 ${viewMode === 'grid' ? 'md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <Card key={i} className="rounded-2xl border-none shadow-soft">
+                  <Card key={i} className="border-none">
                     <Skeleton className={`w-full ${viewMode === 'grid' ? 'h-56' : 'h-48'}`} />
                     <CardContent className="p-6 space-y-3">
                       <Skeleton className="h-6 w-3/4" />
@@ -429,16 +407,16 @@ export default function Barbers() {
                 ))}
               </div>
             ) : filteredBarbers.length === 0 ? (
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-16 text-center shadow-soft">
-                <Scissors className="w-20 h-20 text-slate/30 mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-3">
+              <div className={cn(stb.surface, 'rounded-lg p-16 text-center')}>
+                <Scissors className="w-20 h-20 text-muted-foreground/40 mx-auto mb-6" />
+                <h3 className={cn(stb.uiHeading, 'text-2xl mb-3')}>
                   Aucun barbier trouvé
                 </h3>
-                <p className="text-slate dark:text-matte-silver mb-6">
+                <p className="text-muted-foreground mb-6">
                   Essayez de modifier vos critères de recherche ou d'élargir la zone
                 </p>
                 <Button
-                  className="bg-primary text-white hover:bg-primary/90 rounded-button"
+                  className="rounded-button"
                   onClick={() => {
                     setSearchQuery("");
                     setFilters({
@@ -466,48 +444,47 @@ export default function Barbers() {
                       transition={{ delay: index * 0.05 }}
                     >
                       {viewMode === 'list' ? (
-                        // List View Card (Horizontal)
-                        <Card className="rounded-2xl border-none shadow-soft hover:shadow-soft-md transition-all bg-surface-light dark:bg-surface-dark overflow-hidden group h-full">
+                        <Card className={cn(stb.surfaceHover, 'border-none overflow-hidden group h-full')}>
                           <div className="flex flex-col md:flex-row h-full">
                             <div className="flex-1 p-6 flex flex-col justify-between order-2 md:order-1">
                               <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                  <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                                  <div className="flex items-center gap-1 text-primary font-bold text-sm">
                                     <Star className="w-4 h-4 fill-current" />
                                     {barber.rating?.toFixed(1) || "5.0"}
-                                    <span className="text-slate font-normal text-xs">({barber.total_reviews || 0})</span>
+                                    <span className="text-muted-foreground font-normal text-xs">({barber.total_reviews || 0})</span>
                                   </div>
                                   {barber.kid_friendly && (
-                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-none text-xs">
+                                    <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-none text-xs">
                                       <Baby className="w-3 h-3 mr-1" />
                                       Kids
                                     </Badge>
                                   )}
                                 </div>
-                                <h3 className="text-2xl font-bold text-charcoal dark:text-white mb-2 group-hover:text-primary transition-colors">
+                                <h3 className={cn(stb.uiHeading, 'text-2xl mb-2 group-hover:text-primary transition-colors')}>
                                   {barber.name || barber.shop_name}
                                 </h3>
-                                <div className="flex items-center gap-2 text-slate dark:text-matte-silver mb-4 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground mb-4 text-sm">
                                   <MapPin className="w-4 h-4 text-primary" />
                                   <span>{barber.location || barber.city || '-'}</span>
                                   {barber.distance_km != null && (
                                     <>
-                                      <span className="w-1 h-1 bg-slate/30 rounded-full mx-1" />
+                                      <span className="w-1 h-1 bg-muted-foreground/40 rounded-full mx-1" />
                                       <span>{formatDistanceKm(barber.distance_km)}</span>
                                     </>
                                   )}
                                 </div>
                                 <div className="flex flex-wrap gap-2 mb-4">
                                   {barber.specialties?.slice(0, 3).map((specialty, i) => (
-                                    <span key={i} className="text-xs font-medium text-slate dark:text-matte-silver bg-background-light dark:bg-background-dark px-2 py-1 rounded-lg">
+                                    <span key={i} className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-lg">
                                       {specialty}
                                     </span>
                                   ))}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-4 mt-auto pt-4 border-t border-soft-gray dark:border-slate/10">
+                              <div className="flex items-center gap-4 mt-auto pt-4 border-t border-foreground/10">
                                 <Link to={createPageUrl(`BarberProfile?id=${barber.id}`)} className="w-full">
-                                  <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-button">
+                                  <Button className="w-full rounded-button">
                                     View availability
                                   </Button>
                                 </Link>
@@ -521,16 +498,15 @@ export default function Barbers() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-charcoal">
-                                  <Scissors className="w-12 h-12 text-white/50" />
+                                <div className="w-full h-full flex items-center justify-center bg-primary">
+                                  <Scissors className="w-12 h-12 text-primary-foreground/50" />
                                 </div>
                               )}
                             </div>
                           </div>
                         </Card>
                       ) : (
-                        // Grid View Card (Vertical)
-                        <Card className="rounded-2xl border-none shadow-soft hover:shadow-soft-md transition-all bg-surface-light dark:bg-surface-dark overflow-hidden group h-full">
+                        <Card className={cn(stb.surfaceHover, 'border-none overflow-hidden group h-full')}>
                           <div className="h-56 relative overflow-hidden">
                             {barber.portfolio_images?.[0] ? (
                               <img
@@ -539,18 +515,18 @@ export default function Barbers() {
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-charcoal">
-                                <Scissors className="w-20 h-20 text-white/50" />
+                              <div className="w-full h-full flex items-center justify-center bg-primary">
+                                <Scissors className="w-20 h-20 text-primary-foreground/50" />
                               </div>
                             )}
                             <div className="absolute top-4 right-4">
-                              <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 text-sm font-bold text-charcoal shadow-sm">
-                                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                              <div className="bg-card/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 text-sm font-bold text-foreground shadow-sm">
+                                <Star className="w-3.5 h-3.5 fill-primary text-primary" />
                                 {barber.rating?.toFixed(1) || "5.0"}
                               </div>
                             </div>
                             {barber.kid_friendly && (
-                              <Badge className="absolute top-4 left-4 bg-emerald-500 text-white border-none shadow-sm">
+                              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground border-none shadow-sm">
                                 <Baby className="w-3 h-3 mr-1" />
                                 Kids
                               </Badge>
@@ -558,16 +534,16 @@ export default function Barbers() {
                           </div>
 
                           <CardContent className="p-6">
-                            <h3 className="text-xl font-bold mb-2 text-charcoal dark:text-white group-hover:text-primary transition-colors">
+                            <h3 className={cn(stb.uiHeading, 'text-xl mb-2 group-hover:text-primary transition-colors')}>
                               {barber.name || barber.shop_name}
                             </h3>
 
-                            <div className="flex items-center gap-2 text-slate dark:text-matte-silver mb-4 text-sm">
+                            <div className="flex items-center gap-2 text-muted-foreground mb-4 text-sm">
                               <MapPin className="w-4 h-4 text-primary" />
                               <span>{barber.location || barber.city || '-'}</span>
                               {barber.distance_km != null && (
                                 <>
-                                  <span className="w-1 h-1 bg-slate/30 rounded-full mx-1" />
+                                  <span className="w-1 h-1 bg-muted-foreground/40 rounded-full mx-1" />
                                   <span>{formatDistanceKm(barber.distance_km)}</span>
                                 </>
                               )}
@@ -577,7 +553,7 @@ export default function Barbers() {
                               {barber.specialties && (
                                 <div className="flex flex-wrap gap-2">
                                   {barber.specialties.slice(0, 3).map((specialty, i) => (
-                                    <Badge key={i} variant="secondary" className="text-xs bg-background-light dark:bg-background-dark text-slate dark:text-matte-silver hover:bg-primary/10 hover:text-primary transition-colors">
+                                    <Badge key={i} variant="secondary" className="text-xs bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                                       {specialty}
                                     </Badge>
                                   ))}
@@ -586,7 +562,7 @@ export default function Barbers() {
                             </div>
 
                             <Link to={createPageUrl(`BarberProfile?id=${barber.id}`)}>
-                              <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-button">
+                              <Button className="w-full rounded-button">
                                 View Profile
                               </Button>
                             </Link>
@@ -600,7 +576,7 @@ export default function Barbers() {
             )}
           </div>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
 import BackupHealthDashboard from '@/components/admin/BackupHealthDashboard';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 export default function AdminBackups() {
   const { data: user } = useQuery({
@@ -113,16 +115,20 @@ export default function AdminBackups() {
         description="Monitor and verify system backups"
       />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Backup Verification</h1>
-          <p className="text-muted-foreground">Monitor automated backups and verify data integrity</p>
-        </div>
+      <PageHeader
+        label="Admin"
+        title="Backup verification"
+        subtitle="Monitor automated backups and verify data integrity"
+        compact
+        variant="light"
+        tier="app"
+      />
+
+      <PageContent>
 
         {/* Health Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className={lastSuccessfulBackup ? 'border-green-200 bg-green-50/50' : 'border-destructive/20 bg-destructive/5'}>
+          <Card className={lastSuccessfulBackup ? 'border-success/20 bg-success/10' : 'border-destructive/20 bg-destructive/5'}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -134,31 +140,31 @@ export default function AdminBackups() {
                     }
                   </p>
                 </div>
-                <Database className={`w-8 h-8 ${lastSuccessfulBackup ? 'text-green-600' : 'text-destructive'} opacity-50`} />
+                <Database className={`w-8 h-8 ${lastSuccessfulBackup ? 'text-success' : 'text-destructive'} opacity-50`} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className={allPassed ? 'border-green-200 bg-green-50/50' : 'border-amber-200 bg-amber-50/50'}>
+          <Card className={allPassed ? 'border-success/20 bg-success/10' : 'border-primary/30 bg-primary/10'}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Verification Status</p>
                   <h3 className="text-2xl font-bold">{backups.filter(b => b.verification_status === 'passed').length}/{backups.length}</h3>
                 </div>
-                <CheckCircle2 className={`w-8 h-8 ${allPassed ? 'text-green-600' : 'text-amber-600'} opacity-50`} />
+                <CheckCircle2 className={`w-8 h-8 ${allPassed ? 'text-success' : 'text-primary'} opacity-50`} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className={restoreReadiness ? 'border-green-200 bg-green-50/50' : 'border-amber-200 bg-amber-50/50'}>
+          <Card className={restoreReadiness ? 'border-success/20 bg-success/10' : 'border-primary/30 bg-primary/10'}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Restore Readiness</p>
                   <h3 className="text-2xl font-bold">{backups.filter(b => b.restore_tested).length}/{backups.length}</h3>
                 </div>
-                <Shield className={`w-8 h-8 ${restoreReadiness ? 'text-green-600' : 'text-amber-600'} opacity-50`} />
+                <Shield className={`w-8 h-8 ${restoreReadiness ? 'text-success' : 'text-primary'} opacity-50`} />
               </div>
             </CardContent>
           </Card>
@@ -177,21 +183,21 @@ export default function AdminBackups() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-semibold">Automated Backups</span>
-                  <Badge className="bg-green-50 text-green-700">Active</Badge>
+                  <Badge className="bg-success/10 text-success">Active</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">Daily full backups at 02:00 UTC</p>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-semibold">Backup Verification</span>
-                  <Badge className="bg-green-50 text-green-700">Active</Badge>
+                  <Badge className="bg-success/10 text-success">Active</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">Automatic integrity checks after each backup</p>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-semibold">Restore Testing</span>
-                  <Badge className="bg-green-50 text-green-700">Scheduled Weekly</Badge>
+                  <Badge className="bg-success/10 text-success">Scheduled Weekly</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">Next restore test: {new Date(Date.now() + 604800000).toLocaleDateString()}</p>
               </div>
@@ -225,7 +231,7 @@ export default function AdminBackups() {
                           {new Date(backup.timestamp).toLocaleString()}
                         </h4>
                         <Badge 
-                          className={backup.status === 'success' ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'}
+                          className={backup.status === 'success' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}
                         >
                           {backup.status}
                         </Badge>
@@ -306,7 +312,7 @@ export default function AdminBackups() {
             </ul>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

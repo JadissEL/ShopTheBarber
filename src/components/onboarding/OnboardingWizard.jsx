@@ -35,6 +35,7 @@ import {
 import { OnboardingProviderEmbed } from '@/components/onboarding/OnboardingProviderEmbed';
 import { OnboardingClientEmbed } from '@/components/onboarding/OnboardingClientEmbed';
 import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 import { toast } from 'sonner';
 
 /**
@@ -178,7 +179,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
               'We could not load your profile from the server. Check that the API is running and try again.'}
           </p>
         </div>
-        <Button type="button" onClick={() => void retrySync?.()} className="rounded-xl">
+        <Button type="button" onClick={() => void retrySync?.()} className="">
           <RefreshCw className="w-4 h-4 mr-2" />
           Retry
         </Button>
@@ -228,7 +229,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                 className={cn(
                   'h-2 rounded-full transition-all',
                   idx === stepIndex ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30',
-                  completion[s.id] && idx !== stepIndex && 'bg-emerald-500/70',
+                  completion[s.id] && idx !== stepIndex && 'bg-primary/70',
                 )}
               />
             ))}
@@ -247,12 +248,13 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                   type="button"
                   onClick={() => goToStep(idx)}
                   className={cn(
-                    'w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
-                    active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted',
+                    stb.listItem,
+                    'w-full justify-start',
+                    active ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground',
                   )}
                 >
                   {done ? (
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <Check className="w-4 h-4 text-primary shrink-0" />
                   ) : (
                     <Circle className="w-4 h-4 shrink-0 opacity-40" />
                   )}
@@ -276,7 +278,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
               transition={{ duration: 0.2 }}
               className="space-y-6"
             >
-              <Card className="border shadow-sm overflow-hidden">
+              <Card className="stb-panel overflow-hidden">
                 <CardContent className="p-6 md:p-8 space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -284,10 +286,10 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                         Step {stepIndex + 1} of {steps.length}
                         {step.optional && ', Optional'}
                       </p>
-                      <h2 className="text-2xl md:text-3xl font-bold">{step.title}</h2>
+                      <h2 className={cn(stb.title, 'text-2xl md:text-3xl')}>{step.title}</h2>
                     </div>
                     {stepComplete && (
-                      <Badge className="bg-emerald-100 text-emerald-800 shrink-0">Done</Badge>
+                      <Badge className="stb-chip stb-chip-active shrink-0">Done</Badge>
                     )}
                   </div>
                   <p className="text-muted-foreground text-base leading-relaxed max-w-2xl">
@@ -295,13 +297,13 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                   </p>
 
                   {step.required && !stepComplete && step.embed && (
-                    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <p className="stb-notice-warm text-sm">
                       Required, complete the section below before continuing.
                     </p>
                   )}
 
                   {step.id === 'fixed_fee' && (
-                    <div className="rounded-xl bg-muted/50 border p-4 text-sm space-y-2">
+                    <div className=" bg-muted/50 border p-4 text-sm space-y-2">
                       <p className="font-medium">When it makes sense</p>
                       <ul className="list-disc pl-5 text-muted-foreground space-y-1">
                         <li>High booking volume, fixed fee can cost less than commission</li>
@@ -312,7 +314,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                   )}
 
                   {href && step.id !== 'welcome' && !step.embed && step.id !== 'profile' && (
-                    <Button asChild variant="outline" className="rounded-xl">
+                    <Button asChild variant="outline" className="">
                       <Link to={href} onClick={() => trackStep('onboarding_open_in_app', step.id)}>
                         Open in app <ExternalLink className="w-4 h-4 ml-2" />
                       </Link>
@@ -340,18 +342,18 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                 <div className="flex gap-2">
                   {!isFirst && (
-                    <Button type="button" variant="ghost" onClick={goBack} className="rounded-xl">
+                    <Button type="button" variant="ghost" onClick={goBack} className="">
                       <ArrowLeft className="w-4 h-4 mr-1" /> Back
                     </Button>
                   )}
-                  <Button type="button" variant="ghost" onClick={handleSkip} className="rounded-xl text-muted-foreground">
+                  <Button type="button" variant="ghost" onClick={handleSkip} className=" text-muted-foreground">
                     Skip for now
                   </Button>
                 </div>
                 <Button
                   type="button"
                   onClick={goNext}
-                  className="rounded-xl px-6"
+                  className=" px-6"
                   disabled={step.required && !stepComplete && !isLast}
                 >
                   {isLast ? 'Finish' : 'Continue'}
@@ -367,7 +369,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
 
   if (mode === 'dialog') {
     return (
-      <div className="relative bg-background rounded-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-background stb-panel max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={handleSkip}

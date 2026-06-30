@@ -5,6 +5,8 @@ import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { sovereign } from '@/api/apiClient';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function WalletSummary({ hideHeader }) {
   const { data: user } = useQuery({
@@ -47,7 +49,7 @@ export default function WalletSummary({ hideHeader }) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-card rounded-2xl p-5 border border-border shadow-sm flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+        <div className={cn(stb.panel, stb.surfaceHover, 'p-5 flex flex-col justify-between h-full')}>
           <div>
             <div className="flex justify-between items-start mb-2">
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Wallet Balance</p>
@@ -65,7 +67,7 @@ export default function WalletSummary({ hideHeader }) {
           </Button>
         </div>
 
-        <div className="bg-card rounded-2xl p-5 border border-border shadow-sm flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+        <div className={cn(stb.panel, stb.surfaceHover, 'p-5 flex flex-col justify-between h-full')}>
           <div>
             <div className="flex justify-between items-start mb-2">
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Loyalty Points</p>

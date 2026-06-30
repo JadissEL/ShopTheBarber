@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import Stripe from 'stripe';
 import { prisma } from '../db/prisma';
-import { getStripeApiKey } from '../config/stripeKeys';
+import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import {
     ANNUAL_DISCOUNT_PERCENT,
     BILLING_CYCLES,
@@ -333,7 +333,7 @@ export async function createFixedFeeCheckout(
     }
 
     const stripeKey = getStripeApiKey();
-    if (!stripeKey?.startsWith('sk_')) {
+    if (!isUsableStripeApiKey(stripeKey)) {
         throw new Error('Stripe is not configured for fixed-fee payments');
     }
 

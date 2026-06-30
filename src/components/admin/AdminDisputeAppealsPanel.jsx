@@ -52,13 +52,13 @@ export default function AdminDisputeAppealsPanel() {
             <CardContent>
                 {appeals.length === 0 ? (
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
                         No pending appeals.
                     </p>
                 ) : (
                     <ul className="space-y-3">
                         {appeals.map((appeal) => (
-                            <li key={appeal.id} className="p-4 rounded-xl border space-y-2">
+                            <li key={appeal.id} className="p-4 rounded-lg border space-y-2">
                                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                     <span>{formatWhen(appeal.created_at)}</span>
                                     <span>·</span>

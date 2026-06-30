@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Heart, Search, Sparkles } from 'lucide-react';
+import { Heart, Sparkles } from 'lucide-react';
+import SearchField from '@/components/ui/search-field';
 import { PageLoading } from '@/components/ui/page-loading';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MetaTags } from '@/components/seo/MetaTags';
 import BarberCard from '@/components/ui/barber-card';
@@ -13,6 +13,10 @@ import ShopCard from '@/components/ui/shop-card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signInUrlWithReturn } from '@/utils';
 import { toast } from 'sonner';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function Favorites() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -71,12 +75,12 @@ export default function Favorites() {
         return (
             <div className="stb-page flex items-center justify-center p-4">
                 <div className="text-center space-y-4 max-w-sm">
-                    <div className="w-16 h-16 bg-card rounded-2xl shadow-sm flex items-center justify-center mx-auto text-muted-foreground">
+                    <div className="w-16 h-16 bg-card rounded-lg shadow-sm flex items-center justify-center mx-auto text-muted-foreground">
                         <Heart className="w-8 h-8" />
                     </div>
                     <h2 className="text-2xl font-bold text-foreground">Sign in for Favorites</h2>
                     <p className="text-muted-foreground">Save your favorite barbers and shops to find them easily next time.</p>
-                    <Button variant="default" className="w-full bg-primary text-primary-foreground hover:opacity-95 rounded-xl py-6 h-auto text-lg font-medium" onClick={() => { window.location.href = signInUrlWithReturn('/Favorites'); }}>
+                    <Button variant="default" className="w-full bg-primary text-primary-foreground hover:opacity-95 rounded-lg py-6 h-auto text-lg font-medium" onClick={() => { window.location.href = signInUrlWithReturn('/Favorites'); }}>
                         Sign In to Continue
                     </Button>
                 </div>
@@ -88,36 +92,32 @@ export default function Favorites() {
         <div className="stb-page lg:pb-8">
             <MetaTags title="My Favorites" description="Your saved barbers and shops" />
 
-            {/* Premium Header */}
-            <div className="bg-card border-b border-border pt-8 pb-6 px-4 md:px-8 sticky top-0 z-30">
-                <div className="w-full max-w-6xl lg:max-w-7xl mx-auto space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                            <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-                                Favorites <Sparkles className="w-5 h-5 text-amber-500 fill-amber-500" />
-                            </h1>
-                            <p className="text-muted-foreground text-sm">You have {favorites.length} saved profiles</p>
-                        </div>
-                    </div>
+            <PageHeader
+                label="Saved"
+                title="Favorites"
+                subtitle={`You have ${favorites.length} saved profiles`}
+                compact
+                variant="light"
+                tier="app"
+            />
 
-                    <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                        <Input
-                            placeholder="Search your favorites..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 pr-4 h-14 bg-muted border-transparent focus:bg-card focus:ring-2 focus:ring-primary/10 transition-all text-lg rounded-2xl"
-                        />
-                    </div>
-                </div>
+            <div className={cn(stb.container, 'border-b border-border pb-6 -mt-2')}>
+                <SearchField
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onClear={() => setSearchTerm('')}
+                    placeholder="Search your favorites..."
+                    size="lg"
+                    aria-label="Search favorites"
+                />
             </div>
 
-            <div className="w-full max-w-6xl lg:max-w-7xl mx-auto px-4 md:px-8 py-8">
+            <PageContent>
                 <Tabs defaultValue="all" className="space-y-8">
-                    <TabsList className="bg-card p-1 rounded-xl border border-border shadow-sm w-full md:w-auto inline-flex overflow-x-auto">
-                        <TabsTrigger value="all" className="px-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All</TabsTrigger>
-                        <TabsTrigger value="barbers" className="px-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Barbers</TabsTrigger>
-                        <TabsTrigger value="shops" className="px-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Shops</TabsTrigger>
+                    <TabsList className="bg-muted/60 p-1 rounded-lg border border-foreground/10 w-full md:w-auto inline-flex overflow-x-auto">
+                        <TabsTrigger value="all" className="px-6 rounded-md">All</TabsTrigger>
+                        <TabsTrigger value="barbers" className="px-6 rounded-md">Barbers</TabsTrigger>
+                        <TabsTrigger value="shops" className="px-6 rounded-md">Shops</TabsTrigger>
                     </TabsList>
 
                     {isFavoritesLoading ? (
@@ -140,7 +140,7 @@ export default function Favorites() {
                                                 <BarberCard barber={barber} />
                                                 <button
                                                     onClick={() => removeFavoriteMutation.mutate(favorites.find(f => f.target_id === barber.id)?.id)}
-                                                    className="mt-2 text-xs text-red-500 hover:text-red-600 font-medium px-2"
+                                                    className="mt-2 text-xs text-destructive hover:text-destructive/80 font-medium px-2"
                                                 >
                                                     Remove from favorites
                                                 </button>
@@ -151,7 +151,7 @@ export default function Favorites() {
                                                 <ShopCard shop={shop} />
                                                 <button
                                                     onClick={() => removeFavoriteMutation.mutate(favorites.find(f => f.target_id === shop.id)?.id)}
-                                                    className="mt-2 text-xs text-red-500 hover:text-red-600 font-medium px-2"
+                                                    className="mt-2 text-xs text-destructive hover:text-destructive/80 font-medium px-2"
                                                 >
                                                     Remove from favorites
                                                 </button>
@@ -185,7 +185,7 @@ export default function Favorites() {
                         </div>
                     )}
                 </Tabs>
-            </div>
+            </PageContent>
         </div>
     );
 }

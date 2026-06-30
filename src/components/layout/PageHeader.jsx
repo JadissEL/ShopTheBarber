@@ -1,66 +1,162 @@
 import { cn } from '@/lib/utils';
 
+import { stb, HEADER_TIER, headerTitleClasses } from '@/lib/stbUi';
+
+
+
 /**
- * Site-wide page hero — dark cinematic header used across client, provider, and public pages.
+
+ * Site-wide page hero — Premium Momentum.
+
+ * `display` tier (default on dark): Bebas marketing headlines.
+
+ * `app` tier: DM Sans UI headings on cream background.
+
+ * `immersive` tier: profile heroes — minimal chrome, transparent/dark overlay.
+
  */
+
 export default function PageHeader({
+
   label,
+
   title,
+
   subtitle,
+
   children,
+
   className,
+
   compact = false,
+
   variant = 'dark',
+
+  tier = 'display',
+
 }) {
-  const isDark = variant === 'dark';
+
+  const isImmersive = tier === HEADER_TIER.IMMERSIVE;
+
+  const isDark = isImmersive || variant === 'dark';
+
+  const isApp = tier === HEADER_TIER.APP || variant === 'light';
+
+
 
   return (
+
     <header
+
       className={cn(
-        'relative overflow-hidden border-b',
-        isDark ? 'stb-explore-hero border-white/10 text-white' : 'bg-card border-border text-foreground',
-        compact ? 'py-6 md:py-8' : 'py-8 md:py-12',
+
+        'relative overflow-hidden',
+
+        isImmersive
+
+          ? 'border-0 bg-transparent text-white'
+
+          : cn(
+
+              'border-b',
+
+              isDark
+
+                ? 'stb-explore-hero border-white/10 text-white'
+
+                : 'bg-background border-foreground/10 text-foreground',
+
+            ),
+
+        compact ? 'py-6 md:py-8' : isImmersive ? 'py-8 md:py-12' : 'py-8 md:py-12',
+
         className,
-      )}
-    >
-      {isDark && (
-        <>
-          <div className="absolute inset-0 stb-mesh-bg opacity-70 pointer-events-none" aria-hidden />
-          <div
-            className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_30%_0%,hsl(var(--primary)/0.22),transparent_55%)] pointer-events-none"
-            aria-hidden
-          />
-        </>
+
       )}
 
-      <div className="relative container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
+    >
+
+      {isImmersive && (
+
+        <div
+
+          className="absolute inset-0 bg-foreground/55 pointer-events-none"
+
+          aria-hidden
+
+        />
+
+      )}
+
+
+
+      {isDark && tier === HEADER_TIER.DISPLAY && !isImmersive && (
+
+        <div
+
+          className="absolute inset-0 bg-primary/5 pointer-events-none"
+
+          aria-hidden
+
+        />
+
+      )}
+
+
+
+      <div className={cn(stb.container, 'relative')}>
+
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+
           <div className="max-w-2xl">
+
             {label && (
-              <p className={cn('stb-section-label mb-2', isDark && 'text-primary')}>{label}</p>
+
+              <p className={cn(stb.overline, 'mb-2 font-sans', isDark && 'text-primary')}>{label}</p>
+
             )}
-            <h1
-              className={cn(
-                'font-extrabold tracking-tight leading-[1.05]',
-                compact ? 'text-2xl md:text-3xl' : 'text-3xl md:text-4xl lg:text-[2.75rem]',
-              )}
-            >
+
+            <h1 className={cn(headerTitleClasses(tier, compact), isImmersive && 'drop-shadow-sm')}>
+
               {title}
+
             </h1>
+
             {subtitle && (
+
               <p
+
                 className={cn(
-                  'mt-2 md:mt-3 text-base md:text-lg leading-relaxed max-w-xl',
+
+                  stb.body,
+
+                  'mt-2 md:mt-3 text-base md:text-lg max-w-xl font-sans',
+
                   isDark ? 'text-white/70' : 'text-muted-foreground',
+
+                  isImmersive && 'text-white/80 drop-shadow-sm',
+
                 )}
+
               >
+
                 {subtitle}
+
               </p>
+
             )}
+
           </div>
-          {children && <div className="shrink-0 flex flex-wrap items-center gap-2">{children}</div>}
+
+          {children && <div className="relative shrink-0 flex flex-wrap items-center gap-2">{children}</div>}
+
         </div>
+
       </div>
+
     </header>
+
   );
+
 }
+

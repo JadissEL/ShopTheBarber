@@ -15,6 +15,8 @@ import ProviderTaxExportPanel from '@/components/provider/ProviderTaxExportPanel
 import ProviderFinancingApplyPanel from '@/components/provider/ProviderFinancingApplyPanel';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 
 const DEFAULT_PLATFORM_FEE_PERCENT = 15;
 
@@ -101,7 +103,7 @@ export default function ProviderPayouts() {
     'Pending': { color: 'bg-yellow-50 text-yellow-700', icon: Clock, label: 'Pending' },
     'Processing': { color: 'bg-primary/10 text-primary', icon: TrendingUp, label: 'Processing' },
     'Completed': { color: 'bg-primary/10 text-primary', icon: CheckCircle2, label: 'Completed' },
-    'Failed': { color: 'bg-red-50 text-red-700', icon: AlertCircle, label: 'Failed' }
+    'Failed': { color: 'bg-destructive/10 text-destructive', icon: AlertCircle, label: 'Failed' }
   };
 
   if (!user) {
@@ -125,20 +127,23 @@ export default function ProviderPayouts() {
         description="View your earnings and payout history"
       />
 
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Payouts & Earnings</h1>
-            <p className="text-muted-foreground">Track your revenue and payout history</p>
-          </div>
-          <Link to={`${createPageUrl('ProviderSettings')}?tab=payments`}>
-            <Button variant="outline" className="gap-2">
-              <Settings className="w-4 h-4" />
-              Bank Details
-            </Button>
-          </Link>
-        </div>
+      <PageHeader
+        label="Provider"
+        title="Payouts & earnings"
+        subtitle="Track your revenue and payout history"
+        compact
+        variant="light"
+        tier="app"
+      >
+        <Link to={`${createPageUrl('ProviderSettings')}?tab=payments`}>
+          <Button variant="outline" className="gap-2 h-11">
+            <Settings className="w-4 h-4" />
+            Bank Details
+          </Button>
+        </Link>
+      </PageHeader>
+
+      <PageContent narrow>
 
         <div className="mb-8 space-y-6">
           <ProviderFixedFeePanel shopId={shopId} isShopOwner={myShopMembership?.role === 'owner'} />
@@ -206,7 +211,7 @@ export default function ProviderPayouts() {
                   <h3 className="text-3xl font-bold">${Math.max(0, pendingAmount).toFixed(2)}</h3>
                   <p className="text-xs text-muted-foreground mt-1">Ready to process</p>
                 </div>
-                <Clock className="w-8 h-8 text-amber-600 opacity-50" />
+                <Clock className="w-8 h-8 text-primary opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -327,7 +332,7 @@ export default function ProviderPayouts() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Pending Payout</span>
-                    <span className="font-semibold text-amber-600">${Math.max(0, pendingAmount).toFixed(2)}</span>
+                    <span className="font-semibold text-primary">${Math.max(0, pendingAmount).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -349,7 +354,7 @@ export default function ProviderPayouts() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContent>
     </div>
   );
 }

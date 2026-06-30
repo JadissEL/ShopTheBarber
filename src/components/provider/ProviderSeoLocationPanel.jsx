@@ -71,7 +71,7 @@ export default function ProviderSeoLocationPanel({ barber }) {
     return (
         <div className="space-y-6">
             <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
                     <MapPin className="w-5 h-5" />
                 </div>
                 <div>
@@ -92,7 +92,7 @@ export default function ProviderSeoLocationPanel({ barber }) {
                             if (v !== CUSTOM_CITY) form.setValue('city', v);
                         }}
                     >
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger className="">
                             <SelectValue placeholder="Choose a featured city" />
                         </SelectTrigger>
                         <SelectContent>
@@ -108,7 +108,7 @@ export default function ProviderSeoLocationPanel({ barber }) {
                         <Input
                             {...form.register('city')}
                             placeholder="e.g. Thessaloniki"
-                            className="rounded-xl mt-2"
+                            className=" mt-2"
                         />
                     )}
                 </div>
@@ -118,7 +118,7 @@ export default function ProviderSeoLocationPanel({ barber }) {
                         value={form.watch('location') || ''}
                         onChange={(value) => form.setValue('location', value)}
                         placeholder="Paris, Le Marais"
-                        inputClassName="rounded-xl h-11"
+                        inputClassName="rounded-lg h-11"
                     />
                 </div>
                 <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border">
@@ -134,7 +134,7 @@ export default function ProviderSeoLocationPanel({ barber }) {
                     ) : (
                         <span className="text-sm text-muted-foreground">Pick a featured city to preview your landing page.</span>
                     )}
-                    <Button type="submit" className="rounded-xl px-8 font-bold" disabled={saveMutation.isPending}>
+                    <Button type="submit" className=" px-8 font-bold" disabled={saveMutation.isPending}>
                         {saveMutation.isPending ? 'Saving…' : 'Save location'}
                     </Button>
                 </div>

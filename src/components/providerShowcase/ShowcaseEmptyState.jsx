@@ -44,9 +44,9 @@ export default function ShowcaseEmptyState({
 
     return (
         <div
-            className={`text-center py-12 px-6 space-y-4 rounded-2xl border border-dashed border-border bg-muted/30 ${className}`}
+            className={`text-center py-12 px-6 space-y-4 rounded-lg border border-dashed border-border bg-muted/30 ${className}`}
         >
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
                 <Icon className="w-7 h-7 text-primary" />
             </div>
             <div className="space-y-2 max-w-md mx-auto">
@@ -58,7 +58,7 @@ export default function ShowcaseEmptyState({
                 <span>Discovery on ShopTheBarber, not an app store listing</span>
             </div>
             {onAction && (
-                <Button onClick={onAction} variant={actionVariant} className="rounded-xl">
+                <Button onClick={onAction} variant={actionVariant} className="">
                     {config.cta}
                 </Button>
             )}

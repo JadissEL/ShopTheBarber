@@ -21,6 +21,9 @@ import {
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
+import { stb } from '@/lib/stbUi';
 
 const EMPTY = {
     title: '',
@@ -162,11 +165,11 @@ export default function AdminEvents() {
 
     if (user?.role !== 'admin') {
         return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <Card><CardContent className="py-8 text-center">
+            <div className={stb.page + ' flex items-center justify-center p-4'}>
+                <div className={stb.panel + ' p-8 text-center'}>
                     <AlertCircle className="w-10 h-10 text-destructive mx-auto mb-2" />
-                    <p className="font-semibold">Admin access required</p>
-                </CardContent></Card>
+                    <p className={stb.uiSubheading}>Admin access required</p>
+                </div>
             </div>
         );
     }
@@ -174,17 +177,19 @@ export default function AdminEvents() {
     if (isLoading) return <PageLoading message="Loading events…" />;
 
     return (
-        <div className="stb-page p-4 lg:p-8">
+        <div className={stb.page + ' lg:pb-8'}>
             <MetaTags title="Events Admin" />
-            <div className="max-w-4xl mx-auto">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                    <div className="flex items-center gap-3">
-                        <Calendar className="w-6 h-6 text-primary" />
-                        <h1 className="text-xl font-bold">Events & Webinars</h1>
-                    </div>
-                    <Button onClick={openCreate} className="gap-1"><Plus className="w-4 h-4" /> New event</Button>
-                </div>
-
+            <PageHeader
+                label="Admin"
+                title="Events & webinars"
+                subtitle="Create and manage platform events"
+                compact
+                variant="light"
+                tier="app"
+            >
+                <Button onClick={openCreate} className="gap-1"><Plus className="w-4 h-4" /> New event</Button>
+            </PageHeader>
+            <PageContent narrow>
                 <ul className="space-y-3">
                     {events.map((ev) => (
                         <li key={ev.id}>
@@ -221,7 +226,7 @@ export default function AdminEvents() {
                         </li>
                     ))}
                 </ul>
-            </div>
+            </PageContent>
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

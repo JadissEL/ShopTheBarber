@@ -37,6 +37,8 @@ export default function RealTimeNotifications() {
           toast(notification.title, {
             description: notification.content,
             icon: <Bell className="w-4 h-4 text-primary" />,
+            className: 'font-sans',
+            descriptionClassName: 'text-muted-foreground',
             action:
               notification.type === 'waitlist'
                 ? {

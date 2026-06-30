@@ -9,7 +9,7 @@ export default function RescheduleProposalCard({ message, isMe, onAccept, onDecl
 
     return (
         <div
-            className={`max-w-sm rounded-2xl border p-4 space-y-3 ${
+            className={`max-w-sm rounded-lg border p-4 space-y-3 ${
                 isMe ? 'bg-primary/10 border-primary/30' : 'bg-card border-border'
             }`}
         >
@@ -27,7 +27,7 @@ export default function RescheduleProposalCard({ message, isMe, onAccept, onDecl
                 <div className="flex gap-2">
                     <Button
                         size="sm"
-                        className="rounded-xl flex-1"
+                        className=" flex-1"
                         disabled={isPending}
                         onClick={() => onAccept(message.id)}
                     >
@@ -37,7 +37,7 @@ export default function RescheduleProposalCard({ message, isMe, onAccept, onDecl
                     <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-xl flex-1"
+                        className=" flex-1"
                         disabled={isPending}
                         onClick={() => onDecline(message.id)}
                     >

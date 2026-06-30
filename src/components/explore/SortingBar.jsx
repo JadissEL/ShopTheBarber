@@ -28,7 +28,7 @@ export default function SortingBar({ value, onChange, disabled = false, compact 
 
       className={cn(
 
-        'flex items-center gap-2 rounded-xl border border-border bg-card shadow-sm',
+        'flex items-center gap-2 rounded-lg border border-border bg-card shadow-sm',
 
         compact ? 'px-2 h-9' : 'px-3 h-10'
 

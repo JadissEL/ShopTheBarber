@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { stb, chartColor } from '@/lib/stbUi';
 import { sovereign } from '@/api/apiClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,16 +30,27 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { MetaTags } from '@/components/seo/MetaTags';
+import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
 
-const PIE_COLORS = ['#D08B3D', '#0B2545', '#4B5563', '#9CA3AF', '#6366f1', '#10b981', '#f59e0b', '#ef4444'];
+const PIE_COLORS = [
+  'hsl(22 95% 52%)',
+  'hsl(0 0% 5%)',
+  'hsl(0 0% 35%)',
+  'hsl(40 20% 70%)',
+  'hsl(22 95% 42%)',
+  'hsl(142 70% 38%)',
+  'hsl(42 100% 55%)',
+  'hsl(0 84% 50%)',
+];
 
 function BenchmarkTierBadge({ tier }) {
     const map = {
-        great: { label: 'Top quartile', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' },
-        good: { label: 'On track', cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200' },
-        below: { label: 'Below peers', cls: 'bg-amber-100 text-amber-800 dark:bg-energy/10/30 dark:text-amber-200' },
+        great: { label: 'Top quartile', cls: 'stb-chip stb-chip-active' },
+        good: { label: 'On track', cls: 'bg-primary/10 text-primary' },
+        below: { label: 'Below peers', cls: 'bg-warning/15 text-foreground' },
     };
     const t = map[tier] ?? map.below;
     return <Badge className={t.cls}>{t.label}</Badge>;
@@ -58,7 +70,7 @@ function ComparisonRow({ row }) {
             : row.yours >= row.cohort_median;
 
     return (
-        <div className="rounded-xl border border-border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className=" border border-border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <p className="font-medium text-foreground">{row.label}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -70,7 +82,7 @@ function ComparisonRow({ row }) {
             <div className="flex items-center gap-4">
                 <div className="text-right">
                     <p className="text-2xl font-bold">{formatMetricValue(row.yours, row.unit)}</p>
-                    <p className={`text-xs ${better ? 'text-emerald-600' : 'text-muted-foreground'}`}>You</p>
+                    <p className={`text-xs ${better ? 'text-primary' : 'text-muted-foreground'}`}>You</p>
                 </div>
                 <BenchmarkTierBadge tier={row.tier} />
             </div>
@@ -155,40 +167,32 @@ export default function ShopAnalytics() {
     const totalServices = serviceMix.reduce((sum, s) => sum + (s.count ?? 0), 0);
 
     return (
-        <div className="min-h-screen py-12 bg-background-light dark:bg-background-dark font-sans">
+        <div className="stb-page pb-16 font-sans">
             <MetaTags
                 title="Shop Analytics"
                 description="Performance benchmarks vs similar shops on ShopTheBarber."
             />
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-                >
-                    <div>
-                        <h1 className="text-4xl font-display font-bold text-charcoal dark:text-white mb-2">
-                            Shop Analytics
-                        </h1>
-                        <p className="text-lg text-slate dark:text-matte-silver">
-                            You vs similar shops, {data.cohort?.label}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {data.shop?.name}, {data.shop?.size_band_label}, {data.shop?.chair_count}{' '}
-                            {data.shop?.chair_count === 1 ? 'chair' : 'chairs'}
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="rounded-xl" onClick={() => refetch()} disabled={isFetching}>
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                            Refresh
-                        </Button>
-                        <Button variant="outline" className="rounded-xl" disabled>
-                            <Download className="w-4 h-4 mr-2" />
-                            Export
-                        </Button>
-                    </div>
-                </motion.div>
+            <PageHeader
+                label="Provider"
+                title="Shop analytics"
+                subtitle={`You vs similar shops — ${data.cohort?.label ?? 'cohort'}`}
+                compact
+                variant="light"
+                tier="app"
+            >
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+                    <Button variant="outline" disabled>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export
+                    </Button>
+                </div>
+            </PageHeader>
+
+            <PageContent>
 
                 <div className="grid md:grid-cols-4 gap-6 mb-8">
                     {[
@@ -223,11 +227,11 @@ export default function ShopAnalytics() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.1 }}
                         >
-                            <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                            <Card className=" border-none shadow-sm bg-card ">
                                 <CardContent className="p-6">
                                     <stat.icon className="w-10 h-10 text-primary mb-4" />
-                                    <p className="text-sm text-slate dark:text-matte-silver mb-1">{stat.label}</p>
-                                    <p className="text-3xl font-display font-bold text-charcoal dark:text-white">
+                                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+                                    <p className="stb.metricValue text-3xl">
                                         {stat.value}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
@@ -237,7 +241,7 @@ export default function ShopAnalytics() {
                     ))}
                 </div>
 
-                <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark mb-8">
+                <Card className=" border-none shadow-sm bg-card  mb-8">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BarChart3 className="w-5 h-5" />
@@ -256,9 +260,9 @@ export default function ShopAnalytics() {
 
                 {revenueTrend.length > 0 && (
                     <div className="grid lg:grid-cols-2 gap-6 mb-8">
-                        <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                        <Card className=" border-none shadow-sm bg-card ">
                             <CardContent className="p-6">
-                                <h3 className="text-xl font-bold text-charcoal dark:text-white mb-6">Revenue trend</h3>
+                                <h3 className="text-xl font-bold text-foreground dark:text-white mb-6">Revenue trend</h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <LineChart data={revenueTrend}>
                                         <CartesianGrid strokeDasharray="3 3" />
@@ -269,7 +273,7 @@ export default function ShopAnalytics() {
                                         <Line
                                             type="monotone"
                                             dataKey="revenue_eur"
-                                            stroke="#D08B3D"
+                                            stroke="hsl(22 95% 52%)"
                                             strokeWidth={3}
                                             name="Revenue (€)"
                                         />
@@ -279,9 +283,9 @@ export default function ShopAnalytics() {
                         </Card>
 
                         {serviceMix.length > 0 && (
-                            <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                            <Card className=" border-none shadow-sm bg-card ">
                                 <CardContent className="p-6">
-                                    <h3 className="text-xl font-bold text-charcoal dark:text-white mb-6">
+                                    <h3 className="text-xl font-bold text-foreground dark:text-white mb-6">
                                         Service mix
                                     </h3>
                                     <ResponsiveContainer width="100%" height={300}>
@@ -313,9 +317,9 @@ export default function ShopAnalytics() {
                 )}
 
                 {revenueTrend.length > 0 && (
-                    <Card className="rounded-2xl border-none shadow-soft bg-surface-light dark:bg-surface-dark">
+                    <Card className=" border-none shadow-sm bg-card ">
                         <CardContent className="p-6">
-                            <h3 className="text-xl font-bold text-charcoal dark:text-white mb-6">Monthly bookings</h3>
+                            <h3 className="text-xl font-bold text-foreground dark:text-white mb-6">Monthly bookings</h3>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={revenueTrend}>
                                     <CartesianGrid strokeDasharray="3 3" />
@@ -325,7 +329,7 @@ export default function ShopAnalytics() {
                                     <Legend />
                                     <Bar
                                         dataKey="bookings"
-                                        fill="#D08B3D"
+                                        fill={chartColor(1)}
                                         radius={[8, 8, 0, 0]}
                                         name="Bookings"
                                     />
@@ -334,7 +338,7 @@ export default function ShopAnalytics() {
                         </CardContent>
                     </Card>
                 )}
-            </div>
+            </PageContent>
         </div>
     );
 }

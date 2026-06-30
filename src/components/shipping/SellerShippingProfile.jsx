@@ -85,7 +85,7 @@ export default function SellerShippingProfile({ barberId, shopId, ownerType }) {
     }
 
     return (
-        <Card className="border-border rounded-2xl">
+        <Card className="border-border rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <Truck className="w-5 h-5 text-primary" />
@@ -104,44 +104,44 @@ export default function SellerShippingProfile({ barberId, shopId, ownerType }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <Label>Ship-from name / business</Label>
-                        <Input value={form.ship_from_name} onChange={(e) => setForm((f) => ({ ...f, ship_from_name: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input value={form.ship_from_name} onChange={(e) => setForm((f) => ({ ...f, ship_from_name: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                     <div>
                         <Label>Phone</Label>
-                        <Input value={form.ship_from_phone} onChange={(e) => setForm((f) => ({ ...f, ship_from_phone: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input value={form.ship_from_phone} onChange={(e) => setForm((f) => ({ ...f, ship_from_phone: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                     <div className="md:col-span-2">
                         <Label>Street address</Label>
-                        <Input value={form.ship_from_street} onChange={(e) => setForm((f) => ({ ...f, ship_from_street: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input value={form.ship_from_street} onChange={(e) => setForm((f) => ({ ...f, ship_from_street: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                     <div>
                         <Label>City</Label>
-                        <Input value={form.ship_from_city} onChange={(e) => setForm((f) => ({ ...f, ship_from_city: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input value={form.ship_from_city} onChange={(e) => setForm((f) => ({ ...f, ship_from_city: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <div>
                             <Label>State</Label>
-                            <Input value={form.ship_from_state} onChange={(e) => setForm((f) => ({ ...f, ship_from_state: e.target.value }))} className="mt-1 rounded-xl" />
+                            <Input value={form.ship_from_state} onChange={(e) => setForm((f) => ({ ...f, ship_from_state: e.target.value }))} className="mt-1 rounded-lg" />
                         </div>
                         <div>
                             <Label>Zip</Label>
-                            <Input value={form.ship_from_zip} onChange={(e) => setForm((f) => ({ ...f, ship_from_zip: e.target.value }))} className="mt-1 rounded-xl" />
+                            <Input value={form.ship_from_zip} onChange={(e) => setForm((f) => ({ ...f, ship_from_zip: e.target.value }))} className="mt-1 rounded-lg" />
                         </div>
                     </div>
                     <div>
                         <Label>Processing days</Label>
-                        <Input type="number" min={1} max={14} value={form.processing_days} onChange={(e) => setForm((f) => ({ ...f, processing_days: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input type="number" min={1} max={14} value={form.processing_days} onChange={(e) => setForm((f) => ({ ...f, processing_days: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                     <div>
                         <Label>Free shipping min ($)</Label>
-                        <Input type="number" min={0} step="0.01" placeholder="Platform default: $50" value={form.free_shipping_min} onChange={(e) => setForm((f) => ({ ...f, free_shipping_min: e.target.value }))} className="mt-1 rounded-xl" />
+                        <Input type="number" min={0} step="0.01" placeholder="Platform default: $50" value={form.free_shipping_min} onChange={(e) => setForm((f) => ({ ...f, free_shipping_min: e.target.value }))} className="mt-1 rounded-lg" />
                     </div>
                 </div>
                 <div>
                     <Label>Return policy</Label>
-                    <Textarea value={form.return_policy} onChange={(e) => setForm((f) => ({ ...f, return_policy: e.target.value }))} placeholder="30-day returns on unopened products…" className="mt-1 rounded-xl min-h-[80px]" />
+                    <Textarea value={form.return_policy} onChange={(e) => setForm((f) => ({ ...f, return_policy: e.target.value }))} placeholder="30-day returns on unopened products…" className="mt-1 rounded-lg min-h-[80px]" />
                 </div>
-                <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="rounded-xl">
+                <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="">
                     {saveMutation.isPending ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
                     Save shipping profile
                 </Button>
