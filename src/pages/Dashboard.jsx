@@ -215,7 +215,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className={stb.page + ' font-sans lg:pb-8 selection:bg-primary/20'}>
+    <div className={`${stb.page  } font-sans lg:pb-8 selection:bg-primary/20`}>
       <MetaTags
         title="Dashboard"
         description="Control center for your grooming life."

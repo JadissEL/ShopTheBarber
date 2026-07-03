@@ -62,7 +62,7 @@ export default function ProviderMarketplaceProducts() {
   }
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title="My marketplace products | Shop The Barber" />
       <PageHeader
         label="Provider"

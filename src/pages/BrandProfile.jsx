@@ -21,7 +21,6 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
 import PageHeader from '@/components/layout/PageHeader';
-import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
 
 const ACCOLADE_ICONS = {
@@ -153,7 +152,7 @@ export default function BrandProfile() {
   const priceRange = displayBrand.price_range || '$$$';
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags
         title={displayBrand.name}
         description={displayBrand.description || `Elite brand profile for ${displayBrand.name}.`}

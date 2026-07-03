@@ -43,7 +43,7 @@ export default function StaffSchedule() {
   const dateObj = new Date(`${selectedDate  }T12:00:00`);
 
   return (
-    <div className={stb.page + ' pb-24 lg:pb-8'}>
+    <div className={`${stb.page  } pb-24 lg:pb-8`}>
       <MetaTags title="Staff Schedules" description={`Availability for ${shop?.name || 'your shop'}`} />
 
       <PageHeader

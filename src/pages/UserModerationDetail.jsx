@@ -4,14 +4,13 @@ import ModerationActions from '@/components/moderation/ModerationActions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Mail, Calendar, Shield } from 'lucide-react';
+import { AlertCircle, Mail, Calendar, Shield, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
-import { ArrowLeft } from 'lucide-react';
 
 export default function UserModerationDetail() {
   const { data: currentUser } = useQuery({

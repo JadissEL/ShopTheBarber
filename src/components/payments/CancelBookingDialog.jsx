@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Shield } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function tierLabel(tier) {
     switch (tier) {

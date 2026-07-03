@@ -72,7 +72,7 @@ export default function NotificationSettings() {
   const twilioReady = status?.twilio_configured === true;
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title="Notification Settings" description="Manage your notification preferences" />
       <PageHeader
         label="Account"
@@ -94,7 +94,7 @@ export default function NotificationSettings() {
       <PageContent narrow>
         <ContextualBackLink className="mb-6" />
 
-        <div className={stb.panel + ' mb-6'}>
+        <div className={`${stb.panel  } mb-6`}>
           <div className="p-6 space-y-6">
             <div className="flex items-start gap-3 pb-4 border-b border-border">
               <Bell className="w-5 h-5 text-primary mt-0.5" />
@@ -127,7 +127,7 @@ export default function NotificationSettings() {
           </div>
         </div>
 
-        <div className={stb.panel + ' mb-6'}>
+        <div className={`${stb.panel  } mb-6`}>
           <div className="p-6 space-y-6">
             <div className="flex items-start gap-3 pb-4 border-b border-border">
               <Smartphone className="w-5 h-5 text-primary mt-0.5" />

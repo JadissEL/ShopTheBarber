@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
-import { ArrowLeft, Calendar, MessageCircle } from 'lucide-react';
+import { Calendar, MessageCircle } from 'lucide-react';
 import SearchField from '@/components/ui/search-field';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ export default function ApplicantReview() {
   }
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title={`Applicant review - ${job?.title} | Shop The Barber`} />
       <PageHeader
         label="Careers"
@@ -66,8 +66,8 @@ export default function ApplicantReview() {
         tier="app"
       />
       <PageContent>
-        <div className={stb.panel + ' p-5 mb-6'}>
-          <p className={stb.overline + ' mb-1'}>Active role</p>
+        <div className={`${stb.panel  } p-5 mb-6`}>
+          <p className={`${stb.overline  } mb-1`}>Active role</p>
           <h2 className={stb.uiSubheading}>{job?.title}</h2>
           <p className="text-muted-foreground text-sm">{applicants.length} total applicants</p>
           <div className="flex gap-3 mt-3">

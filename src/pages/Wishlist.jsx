@@ -8,7 +8,7 @@ import SearchField from '@/components/ui/search-field';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Heart, Share2, Trash2, Grid3x3, List, FolderPlus, Bell, TrendingDown, Check, ArrowUpDown, Star, Eye, Package, Search } from 'lucide-react';
+import { Heart, Share2, Trash2, Grid3x3, List, FolderPlus, Bell, TrendingDown, Check, ArrowUpDown, Star, Eye, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import WishlistCollectionManager from '../components/wishlist/WishlistCollectionManager';

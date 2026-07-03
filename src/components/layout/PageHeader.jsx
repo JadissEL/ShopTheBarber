@@ -40,8 +40,6 @@ export default function PageHeader({
 
   const isDark = isImmersive || variant === 'dark';
 
-  const isApp = tier === HEADER_TIER.APP || variant === 'light';
-
 
 
   return (

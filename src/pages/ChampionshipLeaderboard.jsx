@@ -9,8 +9,6 @@ import { PageLoading } from '@/components/ui/page-loading';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
-import { cn } from '@/lib/utils';
-import { stb } from '@/lib/stbUi';
 
 function RankBadge({ rank }) {
     if (rank === 1) return <Trophy className="w-5 h-5 text-primary" />;

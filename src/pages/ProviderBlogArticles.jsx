@@ -53,7 +53,7 @@ export default function ProviderBlogArticles() {
   }
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title="My blog articles | Shop The Barber" />
       <PageHeader
         label="Provider"

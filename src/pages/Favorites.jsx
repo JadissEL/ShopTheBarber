@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Heart, Sparkles } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import SearchField from '@/components/ui/search-field';
 import { PageLoading } from '@/components/ui/page-loading';
 import { EmptyState } from '@/components/ui/empty-state';

@@ -48,7 +48,7 @@ export default function PortfolioCredentials() {
   };
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title="Upload credential | Shop The Barber" />
       <PageHeader
         label="Careers"

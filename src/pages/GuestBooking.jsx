@@ -97,7 +97,7 @@ export default function GuestBooking() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className={stb.panel + ' p-6 space-y-4'}>
+            <div className={`${stb.panel  } p-6 space-y-4`}>
               {booking.barber ? (
                 <div className="flex items-center gap-4">
                   <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-muted shrink-0">

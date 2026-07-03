@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { createPageUrl } from '@/utils';

@@ -1,6 +1,6 @@
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Check, Circle, Truck, Package, Headphones } from 'lucide-react';
+import { Check, Circle, Truck, Package, Headphones } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -89,7 +89,7 @@ export default function OrderTracking() {
   const items = order.items || [];
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags
         title={`Tracking - Order ${orderNumber}`}
         description="Track your premium grooming order."
@@ -109,7 +109,7 @@ export default function OrderTracking() {
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-primary" strokeWidth={2.5} />
           </div>
-          <h2 className={stb.uiSubheading + ' mb-1'}>
+          <h2 className={`${stb.uiSubheading  } mb-1`}>
             Thank You, {customerName}
           </h2>
           <p className="text-sm text-muted-foreground font-medium">ORDER {orderNumber}</p>

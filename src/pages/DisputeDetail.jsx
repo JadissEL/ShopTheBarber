@@ -47,9 +47,9 @@ export default function DisputeDetail() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className={stb.page + ' flex items-center justify-center p-4'}>
+      <div className={`${stb.page  } flex items-center justify-center p-4`}>
         <MetaTags title="Access Denied" />
-        <div className={stb.panel + ' p-8 text-center'}>
+        <div className={`${stb.panel  } p-8 text-center`}>
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
             <p className={stb.uiSubheading}>Admin Access Required</p>
         </div>
@@ -59,9 +59,9 @@ export default function DisputeDetail() {
 
   if (!disputeForUi) {
     return (
-      <div className={stb.page + ' flex items-center justify-center p-4'}>
+      <div className={`${stb.page  } flex items-center justify-center p-4`}>
         <MetaTags title="Dispute Not Found" />
-        <div className={stb.panel + ' p-8 text-center'}>
+        <div className={`${stb.panel  } p-8 text-center`}>
             <p className="text-muted-foreground mb-4">Dispute not found</p>
             <Link to={createPageUrl('AdminDisputes')}>
               <Button>Back to Disputes</Button>
@@ -81,7 +81,7 @@ export default function DisputeDetail() {
   const _Icon = config.icon;
 
   return (
-    <div className={stb.page + ' pb-16'}>
+    <div className={`${stb.page  } pb-16`}>
       <MetaTags 
         title={`Dispute: ${disputeForUi.client_name} vs ${disputeForUi.barber_name}`}
         description="Manage dispute resolution"

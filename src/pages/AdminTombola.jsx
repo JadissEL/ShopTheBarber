@@ -5,7 +5,7 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Loader2, Play, RefreshCw, Trophy } from 'lucide-react';
+import { AlertCircle, Loader2, Play, RefreshCw } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
@@ -44,8 +44,8 @@ export default function AdminTombola() {
 
     if (user?.role !== 'admin') {
         return (
-            <div className={stb.page + ' flex items-center justify-center p-4'}>
-                <div className={stb.panel + ' p-8 text-center'}>
+            <div className={`${stb.page  } flex items-center justify-center p-4`}>
+                <div className={`${stb.panel  } p-8 text-center`}>
                     <AlertCircle className="w-10 h-10 text-destructive mx-auto mb-2" />
                     <p className={stb.uiSubheading}>Admin access required</p>
                 </div>
@@ -56,7 +56,7 @@ export default function AdminTombola() {
     if (isLoading) return <PageLoading message="Loading draws…" />;
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Tombola Admin" />
             <PageHeader
                 label="Admin"

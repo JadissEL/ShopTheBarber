@@ -60,7 +60,7 @@ export default function SellerOrders() {
     if (isLoading) return <PageLoading message="Loading orders to fulfill…" />;
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Marketplace orders" description="Manage shipments for your marketplace sales." />
 
             <PageHeader

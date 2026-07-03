@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import {
-  ArrowLeft,
   FileText,
   Award,
   FileEdit,
@@ -220,7 +219,7 @@ export default function ProfessionalPortfolio() {
   }
 
   return (
-    <div className={stb.page + ' pb-24 lg:pb-12'}>
+    <div className={`${stb.page  } pb-24 lg:pb-12`}>
       <MetaTags title="Professional Portfolio | Shop The Barber" description="Your credentials and career readiness." />
       <PageHeader
         label="Careers"

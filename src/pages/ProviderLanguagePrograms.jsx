@@ -216,7 +216,7 @@ export default function ProviderLanguagePrograms() {
     };
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Language Learning Programs" description="Join waitlists for barber language training" />
             <PageHeader
                 label="Provider"
@@ -246,7 +246,7 @@ export default function ProviderLanguagePrograms() {
                 <TabsContent value="browse" className="space-y-6 mt-4">
                     {suggested.length > 0 && (
                         <section>
-                            <h2 className={stb.uiSubheading + ' mb-3'}>Recommended for you</h2>
+                            <h2 className={`${stb.uiSubheading  } mb-3`}>Recommended for you</h2>
                             <div className="grid gap-4 md:grid-cols-2">
                                 {suggested.map((p) => (
                                     <ProgramCard
@@ -264,7 +264,7 @@ export default function ProviderLanguagePrograms() {
                         </section>
                     )}
                     <section>
-                        <h2 className={stb.uiSubheading + ' mb-3'}>{suggested.length ? 'All programs' : 'Programs'}</h2>
+                        <h2 className={`${stb.uiSubheading  } mb-3`}>{suggested.length ? 'All programs' : 'Programs'}</h2>
                         {other.length === 0 && suggested.length === 0 ? (
                             <p className="text-muted-foreground text-sm">No programs available yet.</p>
                         ) : (

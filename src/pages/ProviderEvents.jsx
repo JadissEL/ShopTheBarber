@@ -145,7 +145,7 @@ export default function ProviderEvents() {
     if (isLoading) return <PageLoading message="Loading events…" />;
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Events & Webinars" description="Register for grooming industry events and webinars" />
             <PageHeader
                 label="Provider"

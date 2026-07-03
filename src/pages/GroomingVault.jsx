@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Settings, Filter } from 'lucide-react';
+import { Settings, Filter } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
@@ -99,7 +99,7 @@ export default function GroomingVault() {
   }
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags
         title="Grooming Vault - Shop The Barber"
         description="Your past luxury acquisitions and quick replenish."

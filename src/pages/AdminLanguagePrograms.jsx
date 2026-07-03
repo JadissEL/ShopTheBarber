@@ -15,7 +15,7 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { Languages, Loader2, Plus, Users, Pencil, GraduationCap } from 'lucide-react';
+import { Loader2, Plus, Users, Pencil, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/ui/page-loading';
 import PageHeader from '@/components/layout/PageHeader';
@@ -126,7 +126,7 @@ export default function AdminLanguagePrograms() {
 
     if (user?.role !== 'admin') {
         return (
-            <div className={stb.page + ' p-6'}>
+            <div className={`${stb.page  } p-6`}>
                 <p className="text-muted-foreground">Admin access required.</p>
             </div>
         );
@@ -134,7 +134,7 @@ export default function AdminLanguagePrograms() {
     if (isLoading) return <PageLoading />;
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Admin, Language Programs" />
             <PageHeader
                 label="Admin"

@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { stb } from '@/lib/stbUi';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Activity, AlertCircle, CheckCircle, Database, Zap } from "lucide-react";

@@ -8,7 +8,7 @@ import SearchField from '@/components/ui/search-field';
 import { Card } from '@/components/ui/card';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, Eye, TrendingUp, BookOpen, Search } from "lucide-react";
+import { Clock, Eye, TrendingUp, BookOpen } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { format } from "date-fns";

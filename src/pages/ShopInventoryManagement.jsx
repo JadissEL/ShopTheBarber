@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { stb } from '@/lib/stbUi';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Plus, Edit, Trash2, TrendingDown, AlertTriangle } from "lucide-react";

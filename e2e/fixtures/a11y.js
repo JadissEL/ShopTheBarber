@@ -1,7 +1,8 @@
+/* global process */
 import AxeBuilder from '@axe-core/playwright';
 
 /** When set, axe violations fail the test run (CI gate). Default: record-only. */
-export const A11Y_STRICT = process.env.QA_AUDIT_STRICT === '1';
+export const A11Y_STRICT = typeof process !== 'undefined' && process.env?.QA_AUDIT_STRICT === '1';
 
 /** Impact levels we report / optionally fail on */
 const FAIL_IMPACTS = new Set(['serious', 'critical']);

@@ -124,7 +124,7 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className={stb.page + ' pb-24 lg:pb-8'}>
+    <div className={`${stb.page  } pb-24 lg:pb-8`}>
       <MetaTags
         title={`${product.name} - ${product.brand}`}
         description={product.description || `Premium ${product.category} product from ${product.brand}.`}

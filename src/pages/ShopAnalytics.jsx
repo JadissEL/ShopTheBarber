@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { stb, chartColor } from '@/lib/stbUi';
+import { chartColor } from '@/lib/stbUi';
 import { sovereign } from '@/api/apiClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

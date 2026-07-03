@@ -6,8 +6,7 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/ui/page-loading';
-import {
-  Building2, Users, Wallet, Package, DollarSign, Palette, BarChart3, UserCog, ArrowRight,
+import { Users, Wallet, Package, DollarSign, Palette, BarChart3, UserCog, ArrowRight,
 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';

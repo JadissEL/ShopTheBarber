@@ -174,7 +174,7 @@ export default function LaunchChecklist() {
   };
 
   return (
-    <div className={stb.page + ' pb-20'}>
+    <div className={`${stb.page  } pb-20`}>
       <MetaTags
         title="Launch Checklist"
         description="Tracking MVP status and go-live readiness for ShopTheBarber"
@@ -189,10 +189,10 @@ export default function LaunchChecklist() {
       />
       <PageContent narrow>
         {/* Overall Progress */}
-        <div className={stb.panel + ' p-6 mb-8'}>
+        <div className={`${stb.panel  } p-6 mb-8`}>
             <div className="flex justify-between items-center mb-3">
               <span className={stb.uiSubheading}>Overall Progress</span>
-              <span className={stb.metricValue + ' text-primary'}>{getTotalProgress()}%</span>
+              <span className={`${stb.metricValue  } text-primary`}>{getTotalProgress()}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-3">
               <div

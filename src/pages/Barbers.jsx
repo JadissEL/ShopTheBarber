@@ -22,7 +22,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Search, MapPin, Star, SlidersHorizontal, Scissors, Baby, Home as HomeIcon, Car, Map, LayoutGrid, List as ListIcon, X } from "lucide-react";
+import { MapPin, Star, SlidersHorizontal, Scissors, Baby, Home as HomeIcon, Car, Map, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchField from '@/components/ui/search-field';

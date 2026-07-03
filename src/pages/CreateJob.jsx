@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
-import { ArrowLeft, Scissors, Briefcase } from 'lucide-react';
+import { Scissors, Briefcase } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
@@ -63,7 +63,7 @@ export default function CreateJob() {
   });
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title="New opening | Shop The Barber" />
       <PageHeader
         label="Careers"
@@ -84,7 +84,7 @@ export default function CreateJob() {
 
         {step === 1 && (
           <>
-            <h2 className={stb.uiSubheading + ' mb-1'}>Select the role type</h2>
+            <h2 className={`${stb.uiSubheading  } mb-1`}>Select the role type</h2>
             <p className="text-muted-foreground text-sm mb-6">Choose the category that best describes the position.</p>
             <div className="space-y-4">
               {ROLE_TYPES.map((r) => {
@@ -120,7 +120,7 @@ export default function CreateJob() {
 
         {step === 2 && (
           <>
-            <h2 className={stb.uiSubheading + ' mb-6'}>Job details</h2>
+            <h2 className={`${stb.uiSubheading  } mb-6`}>Job details</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground/90 mb-1">Job title</label>

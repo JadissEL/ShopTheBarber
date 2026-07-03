@@ -1896,7 +1896,7 @@ export default function BookingFlow() {
   };
 
   return (
-    <div className={stb.page + ' pb-24 lg:pb-8'}>
+    <div className={`${stb.page  } pb-24 lg:pb-8`}>
       <MetaTags
         title="Book Appointment"
         description="Find and book with the best barbers in your area"

@@ -19,7 +19,7 @@ import ProviderSetupProgressCard from '@/components/onboarding/ProviderSetupProg
 import ProviderTrustScoreCard from '@/components/provider/ProviderTrustScoreCard';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
-import { stb, chartColor, chartFill } from '@/lib/stbUi';
+import { stb, chartColor } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
 
 export default function ProviderDashboard() {

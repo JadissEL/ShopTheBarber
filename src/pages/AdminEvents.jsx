@@ -16,7 +16,7 @@ import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
-    AlertCircle, Calendar, Loader2, Plus, Users, CheckCircle2, Pencil,
+    AlertCircle, Loader2, Plus, Users, CheckCircle2, Pencil,
 } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';
@@ -165,8 +165,8 @@ export default function AdminEvents() {
 
     if (user?.role !== 'admin') {
         return (
-            <div className={stb.page + ' flex items-center justify-center p-4'}>
-                <div className={stb.panel + ' p-8 text-center'}>
+            <div className={`${stb.page  } flex items-center justify-center p-4`}>
+                <div className={`${stb.panel  } p-8 text-center`}>
                     <AlertCircle className="w-10 h-10 text-destructive mx-auto mb-2" />
                     <p className={stb.uiSubheading}>Admin access required</p>
                 </div>
@@ -177,7 +177,7 @@ export default function AdminEvents() {
     if (isLoading) return <PageLoading message="Loading events…" />;
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Events Admin" />
             <PageHeader
                 label="Admin"

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/ui/page-loading';
 import { PageError } from '@/components/ui/page-error';
 import { createPageUrl } from '@/utils';
-import { KeyRound, ExternalLink, RefreshCw, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import { ExternalLink, RefreshCw, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
@@ -39,7 +39,7 @@ export default function AdminKeysWalkthrough() {
     }, {});
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="API keys walkthrough" description="Production secrets readiness checklist" />
 
             <PageHeader

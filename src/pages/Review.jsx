@@ -231,7 +231,7 @@ export default function Review() {
     const allDone = effectiveStatus?.all_done;
 
     return (
-        <div className={stb.page + ' lg:pb-8'}>
+        <div className={`${stb.page  } lg:pb-8`}>
             <MetaTags title="Write a Review" description="Share your experience with your barber and shop." />
 
             <PageHeader
@@ -263,9 +263,9 @@ export default function Review() {
                 )}
 
                 {allDone ? (
-                    <div className={stb.panel + ' p-8 text-center border-primary/30 bg-primary/5'}>
+                    <div className={`${stb.panel  } p-8 text-center border-primary/30 bg-primary/5`}>
                             <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-4" />
-                            <h2 className={stb.uiSubheading + ' mb-2'}>Thank you!</h2>
+                            <h2 className={`${stb.uiSubheading  } mb-2`}>Thank you!</h2>
                             <p className="text-muted-foreground mb-6">All reviews for this visit have been submitted.</p>
                             <Button onClick={handleFinish}>Done</Button>
                     </div>

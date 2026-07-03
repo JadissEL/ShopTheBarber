@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { Users, ArrowLeft, DollarSign, Calendar } from 'lucide-react';
+import { ArrowLeft, DollarSign, Calendar } from 'lucide-react';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';

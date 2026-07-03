@@ -1,11 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { stb } from '@/lib/stbUi';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Save, Eye } from "lucide-react";
-import { motion } from "framer-motion";
 import { MetaTags } from '@/components/seo/MetaTags';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';

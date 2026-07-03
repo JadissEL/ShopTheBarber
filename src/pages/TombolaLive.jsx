@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-    Plane, Trophy, Ticket, Users, Sparkles, Loader2, Gift, CheckCircle2, AlertCircle,
+    Plane, Trophy, Ticket, Users, Loader2, Gift, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { toast } from 'sonner';

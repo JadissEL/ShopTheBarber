@@ -30,7 +30,7 @@ export default function ConfirmBooking() {
   }, [bookingId]);
 
   return (
-    <div className={stb.page + ' pb-24 lg:pb-8'}>
+    <div className={`${stb.page  } pb-24 lg:pb-8`}>
       <MetaTags title="Booking Confirmation" description="Your booking has been confirmed" noindex />
       <PageHeader
         label="Booking"

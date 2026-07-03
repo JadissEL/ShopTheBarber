@@ -19,7 +19,6 @@ import { FileText, Eye, CheckCircle2, XCircle, Star, Ban } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
-import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';

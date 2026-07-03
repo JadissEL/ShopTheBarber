@@ -130,7 +130,7 @@ export default function StaffRoster() {
   }
 
   return (
-    <div className={stb.page + ' pb-24 lg:pb-8'}>
+    <div className={`${stb.page  } pb-24 lg:pb-8`}>
       <MetaTags title="Team Roster" description={`Manage barbers at ${shop?.name || 'your shop'}`} />
 
       <PageHeader
@@ -166,7 +166,7 @@ export default function StaffRoster() {
                 <div className="flex items-start gap-4 mb-4">
                   <UserAvatar src={member.barber?.image_url} name={member.barber?.name} className="w-14 h-14" />
                   <div className="flex-1 min-w-0">
-                    <h3 className={stb.uiSubheading + ' truncate'}>{member.barber?.name}</h3>
+                    <h3 className={`${stb.uiSubheading  } truncate`}>{member.barber?.name}</h3>
                     <p className="text-sm text-muted-foreground">{member.barber?.title || member.role}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${member.status === 'active' ? 'stb-chip stb-chip-active' : 'bg-muted text-muted-foreground'}`}>

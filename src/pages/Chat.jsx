@@ -216,7 +216,7 @@ export default function Chat() {
     }
 
     return (
-        <div className={stb.page + ' flex flex-col lg:pb-8'}>
+        <div className={`${stb.page  } flex flex-col lg:pb-8`}>
             <MetaTags title="Messages" description="Secure booking chat" />
             <PageHeader
                 label="Inbox"

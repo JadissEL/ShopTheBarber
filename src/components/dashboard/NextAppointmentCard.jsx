@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 export default function NextAppointmentCard({ booking }) {
   if (!booking) {
@@ -43,9 +45,7 @@ export default function NextAppointmentCard({ booking }) {
                   <MapPin className="w-4 h-4 text-muted-foreground" />
                   {location}
                 </span>
-                <Button size="sm" className="text-xs h-9 px-4 shrink-0">
-                  asChild
-                >
+                <Button asChild size="sm" className="text-xs h-9 px-4 shrink-0">
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
                     target="_blank"

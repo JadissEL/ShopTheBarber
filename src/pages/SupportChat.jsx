@@ -138,7 +138,7 @@ export default function SupportChat() {
 
     if (!isAuthenticated) {
         return (
-            <div className={stb.page + ' flex items-center justify-center p-6'}>
+            <div className={`${stb.page  } flex items-center justify-center p-6`}>
                 <MetaTags title="Support" />
                 <p className="text-muted-foreground">Sign in to contact support.</p>
             </div>
@@ -152,7 +152,7 @@ export default function SupportChat() {
     ];
 
     return (
-        <div className={stb.page + ' flex flex-col lg:pb-8'}>
+        <div className={`${stb.page  } flex flex-col lg:pb-8`}>
             <MetaTags title="Support Chat" description="Chat with ShopTheBarber support" />
             <PageHeader
                 label="Help"

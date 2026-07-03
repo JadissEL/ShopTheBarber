@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Users, Gift, Share2, Copy, Check, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
 import { buildInviteUrl } from '@/components/referral/ReferralShareCard';

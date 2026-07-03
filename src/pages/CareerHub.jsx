@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
-import { User, Bell, MapPin, Briefcase, Bookmark, Send, Compass } from 'lucide-react';
+import { User, MapPin, Briefcase, Bookmark, Send, Compass } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Button } from '@/components/ui/button';
@@ -95,7 +95,7 @@ export default function CareerHub() {
   const recentJobs = useMemo(() => filteredJobs.slice(0, 10), [filteredJobs]);
 
   return (
-    <div className={stb.page + ' pb-20 lg:pb-8'}>
+    <div className={`${stb.page  } pb-20 lg:pb-8`}>
       <MetaTags title="Elite Career Hub | Shop The Barber" description="Jobs and employment in grooming and beyond." />
 
       <PageHeader
@@ -112,7 +112,7 @@ export default function CareerHub() {
       </PageHeader>
 
       {isDesktop && (
-        <div className={stb.container + ' pt-2 pb-2 border-b border-border'}>
+        <div className={`${stb.container  } pt-2 pb-2 border-b border-border`}>
           <div className="flex gap-1">
             {[
               { id: 'explore', label: 'Explore', Icon: Compass },

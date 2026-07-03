@@ -76,7 +76,7 @@ export default function ApplyToJob() {
   }
 
   return (
-    <div className={stb.page + ' lg:pb-8'}>
+    <div className={`${stb.page  } lg:pb-8`}>
       <MetaTags title={`Apply - ${job?.title || 'Job'} | Shop The Barber`} />
       <PageHeader
         label="Careers"

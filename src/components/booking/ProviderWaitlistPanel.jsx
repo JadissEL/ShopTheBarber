@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Calendar, Clock, ListOrdered, Scissors, User } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
+import { stb } from '@/lib/stbUi';
 
 function formatSlot(iso) {
     if (!iso) return 'Flexible';
