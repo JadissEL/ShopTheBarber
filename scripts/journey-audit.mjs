@@ -53,13 +53,14 @@ const pwEnv = {
 };
 
 const skipAuth = pwEnv.QA_SKIP_AUTH_JOURNEYS === '1';
+const journeySpec = skipAuth ? 'e2e/journeys/guest.journey.browser.spec.ts' : 'e2e/journeys';
 const playwrightEnv = skipAuth
   ? { ...pwEnv, CLERK_SECRET_KEY: '', CLERK_PUBLISHABLE_KEY: '' }
   : pwEnv;
 
 let code = run(
   'npx',
-  ['playwright', 'test', 'e2e/journeys', '--project=clerk-browser', '--workers=1'],
+  ['playwright', 'test', journeySpec, '--project=clerk-browser', '--workers=1'],
   playwrightEnv,
 );
 

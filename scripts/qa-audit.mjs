@@ -64,7 +64,17 @@ code |= run(
   env,
 );
 
-code |= run('npx', ['playwright', 'test', 'e2e/journeys', '--project=clerk-browser', '--workers=1'], journeyEnv);
+code |= run(
+  'npx',
+  [
+    'playwright',
+    'test',
+    env.QA_SKIP_AUTH_JOURNEYS === '1' ? 'e2e/journeys/guest.journey.browser.spec.ts' : 'e2e/journeys',
+    '--project=clerk-browser',
+    '--workers=1',
+  ],
+  journeyEnv,
+);
 
 if (process.env.RUN_LEGACY_JOURNEYS === '1' && process.env.CLERK_SECRET_KEY) {
   code |= run('node', ['scripts/qa-journey-runner.mjs'], env);

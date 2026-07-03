@@ -57,11 +57,11 @@ jobs:
           E2E_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL || 'http://127.0.0.1:3001' }}
           JOURNEY_READONLY: ${{ (github.event.inputs.readonly != false) && '1' || '0' }}
           QA_SKIP_AUTH_JOURNEYS: ${{ github.event.inputs.start_local_servers == true && '0' || '1' }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL || 'qa.marcus.client@shopthebarber.com' }}
-          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL || 'qa.alex.barber@shopthebarber.com' }}
-          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL || 'qa.admin@shopthebarber.com' }}
+          CLERK_SECRET_KEY: ${{ github.event.inputs.start_local_servers == true && secrets.CLERK_SECRET_KEY || '' }}
+          CLERK_PUBLISHABLE_KEY: ${{ github.event.inputs.start_local_servers == true && secrets.CLERK_PUBLISHABLE_KEY || '' }}
+          E2E_CLERK_USER_EMAIL: ${{ github.event.inputs.start_local_servers == true && secrets.E2E_CLERK_USER_EMAIL || 'qa.marcus.client@shopthebarber.com' }}
+          E2E_CLERK_PROVIDER_EMAIL: ${{ github.event.inputs.start_local_servers == true && secrets.E2E_CLERK_PROVIDER_EMAIL || 'qa.alex.barber@shopthebarber.com' }}
+          E2E_CLERK_ADMIN_EMAIL: ${{ github.event.inputs.start_local_servers == true && secrets.E2E_CLERK_ADMIN_EMAIL || 'qa.admin@shopthebarber.com' }}
           RUN_LEGACY_JOURNEYS: ${{ github.event.inputs.run_legacy_runner == true && '1' || '0' }}
         run: npm run qa:journey-audit
 
