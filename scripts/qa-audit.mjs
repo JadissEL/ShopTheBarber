@@ -41,6 +41,9 @@ const env = {
 const journeyEnv = {
   ...env,
   E2E_FRONTEND_URL: isProd && !authJourneys ? prodFrontend : frontend,
+  ...(env.QA_SKIP_AUTH_JOURNEYS === '1'
+    ? { CLERK_SECRET_KEY: '', CLERK_PUBLISHABLE_KEY: '' }
+    : {}),
 };
 
 let code = 0;

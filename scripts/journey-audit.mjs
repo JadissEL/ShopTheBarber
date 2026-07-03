@@ -52,10 +52,15 @@ const pwEnv = {
     (localServers || process.env.QA_AUTH_JOURNEYS === '1' ? '0' : '1'),
 };
 
+const skipAuth = pwEnv.QA_SKIP_AUTH_JOURNEYS === '1';
+const playwrightEnv = skipAuth
+  ? { ...pwEnv, CLERK_SECRET_KEY: '', CLERK_PUBLISHABLE_KEY: '' }
+  : pwEnv;
+
 let code = run(
   'npx',
   ['playwright', 'test', 'e2e/journeys', '--project=clerk-browser', '--workers=1'],
-  pwEnv,
+  playwrightEnv,
 );
 
 if (process.env.RUN_LEGACY_JOURNEYS === '1' && process.env.CLERK_SECRET_KEY) {

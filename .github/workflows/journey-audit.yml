@@ -63,9 +63,7 @@ jobs:
           E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL || 'qa.alex.barber@shopthebarber.com' }}
           E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL || 'qa.admin@shopthebarber.com' }}
           RUN_LEGACY_JOURNEYS: ${{ github.event.inputs.run_legacy_runner == true && '1' || '0' }}
-        run: |
-          npm run qa:journey-audit
-          node scripts/merge-qa-report.mjs
+        run: npm run qa:journey-audit
 
       - name: Upload journey reports
         if: always()
