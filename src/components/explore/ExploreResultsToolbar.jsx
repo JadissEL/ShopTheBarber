@@ -40,8 +40,8 @@ export default function ExploreResultsToolbar({
         {viewType === 'professionals' ? (
           <>
             <SortingBar value={sortBy} onChange={onSortChange} compact />
-            <Link to={createPageUrl('Barbers')}>
-              <Button variant="outline" size="sm" className=" gap-2 h-10 border-border">
+            <Link to={createPageUrl('Barbers')} aria-label="View barbers map">
+              <Button variant="outline" size="sm" className=" gap-2 h-10 border-border" aria-label="View barbers map">
                 <Map className="w-4 h-4" aria-hidden />
                 <span className="hidden xs:inline">Map</span>
               </Button>

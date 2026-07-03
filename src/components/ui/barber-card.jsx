@@ -107,6 +107,7 @@ export default function BarberCard({ barber, variant = 'vertical', badge, appear
                             size="icon"
                             variant="outline"
                             onClick={toggleFavorite}
+                            aria-label={isFavorited ? 'Remove from favorites' : 'Save barber'}
                             className={cn('h-9 w-9', isFavorited && 'text-primary border-primary')}
                         >
                             <Heart className={cn('w-4 h-4', isFavorited && 'fill-current')} />

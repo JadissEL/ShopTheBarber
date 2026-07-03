@@ -32,8 +32,6 @@ export const CUSTOM_APP_ROUTE_PAGES = new Set([
   'CityLanding',
   'CitiesDirectory',
   'InviteLanding',
-  'SignIn',
-  'SignUp',
   'PlatformPricing',
   'ForSoloBarbers',
   'ForShopOwners',

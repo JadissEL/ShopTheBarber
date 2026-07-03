@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import AdminFeatureToggles from '@/pages/AdminFeatureToggles';
 
 vi.mock('@/api/apiClient', () => ({
@@ -22,9 +23,11 @@ vi.mock('@/api/apiClient', () => ({
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <AdminFeatureToggles />
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AdminFeatureToggles />
+      </QueryClientProvider>
+    </HelmetProvider>,
   );
 }
 

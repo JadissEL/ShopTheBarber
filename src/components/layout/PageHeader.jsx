@@ -132,7 +132,7 @@ export default function PageHeader({
 
                   'mt-2 md:mt-3 text-base md:text-lg max-w-xl font-sans',
 
-                  isDark ? 'text-white/70' : 'text-muted-foreground',
+                  isDark ? stb.textOnDarkMuted : 'text-muted-foreground',
 
                   isImmersive && 'text-white/80 drop-shadow-sm',
 

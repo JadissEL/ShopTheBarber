@@ -29,7 +29,7 @@ export default function HeroSection({
     <div className="w-full lg:max-w-md lg:ml-auto order-first lg:order-none">
       <div
         className={cn(
-          'rounded-lg border border-foreground/10 bg-card p-2 shadow-sm focus-within:ring-2 transition-shadow',
+          'rounded-lg border border-foreground/10 bg-card text-foreground p-2 shadow-sm focus-within:ring-2 transition-shadow',
           theme.ring.replace('focus-visible:', 'focus-within:'),
         )}
       >
@@ -61,7 +61,7 @@ export default function HeroSection({
             </span>
 
             <h1 className={cn(stb.heading, 'text-white mb-3')}>{pageConfig.heroTitle(cityFilter)}</h1>
-            <p className="text-base md:text-lg text-white/70 leading-relaxed mb-6 max-w-xl">
+            <p className={cn('text-base md:text-lg leading-relaxed mb-6 max-w-xl', stb.textOnDarkMuted)}>
               {pageConfig.heroSubtitle(cityFilter)}
             </p>
 

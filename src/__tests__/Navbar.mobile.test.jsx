@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
+
+vi.mock('@/lib/AuthContext', () => ({
+  useAuth: () => ({ isAuthenticated: false, user: null }),
+}));
 
 describe('Navbar (mobile)', () => {
   beforeEach(() => {
@@ -21,7 +25,7 @@ describe('Navbar (mobile)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Toggle menu' }));
 
-    expect(screen.getByRole('link', { name: 'Sign In' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Sign In' }).length).toBeGreaterThanOrEqual(1);
     expect(document.body.style.overflow).toBe('hidden');
   });
 

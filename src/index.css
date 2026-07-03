@@ -18,6 +18,7 @@
     /* —— Accent (single orange; aliases point here) —— */
     --primary: 22 95% 52%;
     --primary-foreground: 0 0% 5%;
+    --primary-text: 22 75% 38%;
     --secondary: 40 25% 92%;
     --secondary-foreground: 0 0% 5%;
     --muted: 40 20% 90%;
@@ -214,7 +215,15 @@
     @apply text-xs text-muted-foreground font-sans normal-case leading-relaxed;
   }
   .stb-overline {
-    @apply text-xs font-bold uppercase tracking-[0.2em] text-primary font-sans;
+    @apply text-xs font-bold uppercase tracking-[0.2em] font-sans;
+    color: hsl(var(--primary-text));
+  }
+  .stb-section-dark .stb-overline,
+  .stb-explore-hero .stb-overline {
+    @apply text-primary;
+  }
+  .stb-explore-hero .stb-body {
+    @apply text-white/85;
   }
   .stb-display-xl {
     @apply font-display uppercase text-5xl md:text-6xl lg:text-8xl tracking-wide leading-[0.88];

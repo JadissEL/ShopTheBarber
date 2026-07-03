@@ -119,9 +119,9 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
     <header className={cn('sticky top-0 z-50 w-full safe-area-pt font-sans', stb.glass)}>
       <div className={cn(stb.container, 'max-w-7xl')}>
         <div className="flex items-center justify-between h-16 lg:h-[4.5rem]">
-          <Link to={createPageUrl('Home')} className="flex items-center gap-2.5 group shrink-0">
+          <Link to={createPageUrl('Home')} className="flex items-center gap-2.5 group shrink-0" aria-label="ShopTheBarber home">
             <div className="w-9 h-9 bg-primary text-primary-foreground rounded-lg border border-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Scissors className="w-4 h-4 transform -rotate-45" />
+              <Scissors className="w-4 h-4 transform -rotate-45" aria-hidden />
             </div>
             <span className="text-lg font-display uppercase tracking-wider text-white hidden sm:inline">ShopTheBarber</span>
           </Link>

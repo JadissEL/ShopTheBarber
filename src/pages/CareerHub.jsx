@@ -156,6 +156,7 @@ export default function CareerHub() {
               <select
                 value={employmentType}
                 onChange={(e) => setEmploymentType(e.target.value)}
+                aria-label="Employment type filter"
                 className="px-3 py-2 rounded-full border border-border bg-card text-sm text-foreground"
               >
                 {EMPLOYMENT_TYPES.map((o) => (
@@ -165,6 +166,7 @@ export default function CareerHub() {
               <select
                 value={locationType}
                 onChange={(e) => setLocationType(e.target.value)}
+                aria-label="Location type filter"
                 className="px-3 py-2 rounded-full border border-border bg-card text-sm text-foreground"
               >
                 {LOCATION_TYPES.map((o) => (
@@ -336,19 +338,19 @@ export default function CareerHub() {
       {/* Career Hub bottom nav (mobile only) */}
       {!isDesktop && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex justify-around py-2 safe-area-pb lg:hidden">
-          <button type="button" onClick={() => setSearchParams({ tab: 'explore' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'explore' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Explore opportunities">
+          <button type="button" onClick={() => setSearchParams({ tab: 'explore' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'explore' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`} aria-label="Explore opportunities">
             <Compass className="w-5 h-5" />
             <span className="text-[10px] font-medium">Explore</span>
           </button>
-          <button type="button" onClick={() => setSearchParams({ tab: 'saved' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'saved' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Saved jobs">
+          <button type="button" onClick={() => setSearchParams({ tab: 'saved' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'saved' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`} aria-label="Saved jobs">
             <Bookmark className="w-5 h-5" />
             <span className="text-[10px] font-medium">Saved</span>
           </button>
-          <button type="button" onClick={() => setSearchParams({ tab: 'applied' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'applied' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Applied jobs">
+          <button type="button" onClick={() => setSearchParams({ tab: 'applied' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'applied' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`} aria-label="Applied jobs">
             <Send className="w-5 h-5" />
             <span className="text-[10px] font-medium">Applied</span>
           </button>
-          <button type="button" onClick={() => setSearchParams({ tab: 'profile' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'profile' ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Profile">
+          <button type="button" onClick={() => setSearchParams({ tab: 'profile' })} className={`flex flex-col items-center gap-0.5 py-2 px-4 ${tab === 'profile' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`} aria-label="Profile">
             <User className="w-5 h-5" />
             <span className="text-[10px] font-medium">Profile</span>
           </button>

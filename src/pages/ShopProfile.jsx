@@ -230,7 +230,7 @@ export default function ShopProfile() {
                             )}
                             <div className="flex flex-wrap items-center gap-2 mt-3">
                                 <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
-                                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                    <Star className="w-4 h-4 fill-primary text-primary" />
                                     <span className="font-bold">{displayShop.rating || 'New'}</span>
                                     <span className="text-white/60 font-normal">({displayShop.review_count || 0} reviews)</span>
                                 </div>

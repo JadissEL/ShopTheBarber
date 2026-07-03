@@ -1,0 +1,70 @@
+# UX audit: design-token drift (PR/push) + nightly Playwright a11y against production.
+name: UX Audit
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  schedule:
+    # Nightly 04:00 UTC — smoke production frontend
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'frontend URL (no trailing slash)'
+        required: false
+        default: https://shop-the-barber.vercel.app
+
+jobs:
+  design-lint:
+    name: Design lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run qa:design-lint
+      - name: Upload design lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-lint
+          path: qa-reports/design-lint.json
+          if-no-files-found: ignore
+
+  playwright-ux:
+    name: Playwright UX + a11y
+    runs-on: ubuntu-latest
+    # Full browser audit on schedule / manual only (keeps PR feedback fast via design-lint)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+      - name: UX audit (production)
+        env:
+          E2E_START_SERVERS: '0'
+          E2E_FRONTEND_URL: ${{ github.event.inputs.target || 'https://shop-the-barber.vercel.app' }}
+        run: |
+          npm run test:e2e:ux
+          node scripts/merge-ux-report.mjs || true
+      - name: Upload UX audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-audit-reports
+          path: |
+            qa-reports/ux-audit-playwright.json
+            qa-reports/ux-audit-mobile-playwright.json
+            qa-reports/UX-AUDIT-REPORT.md
+            qa-reports/ux-audit-summary.json
+          if-no-files-found: ignore

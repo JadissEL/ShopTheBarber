@@ -30,6 +30,11 @@
     "test:e2e:signup": "node scripts/e2e-signup-flow.mjs",
     "qa:provision": "node scripts/provision-qa-profiles.mjs",
     "qa:journeys": "node scripts/qa-journey-runner.mjs",
+    "qa:design-lint": "node scripts/design-lint.mjs",
+    "test:e2e:ux": "playwright test e2e/ux-audit.browser.spec.ts e2e/ux-audit-mobile.browser.spec.ts e2e/layout-guards.browser.spec.ts e2e/layout-guards-mobile.browser.spec.ts --project=clerk-browser",
+    "qa:audit:merge": "node scripts/merge-ux-report.mjs",
+    "qa:audit": "node scripts/ux-audit.mjs",
+    "qa:audit:prod": "node scripts/ux-audit-prod.mjs",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
@@ -101,6 +106,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@clerk/testing": "^2.0.24",
     "@eslint/js": "^9.19.0",
     "@playwright/test": "^1.50.1",
