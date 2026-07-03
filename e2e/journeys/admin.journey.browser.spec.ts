@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { hasClerkAdminBrowser } from '../fixtures/env';
-import { signInAdmin, signInClerkAndSync } from '../fixtures/auth';
+import { hasClerkAdminBrowser, skipAuthenticatedJourneys } from '../fixtures/env';
+import { signInAdmin } from '../fixtures/auth';
 import { JOURNEY_PERSONAS } from '../fixtures/journey-matrix';
 import { flushJourneyReport } from '../fixtures/journey-report';
 import { assertHealthyPage, assertNotSignInRedirect, journeyStep } from '../fixtures/journey-helpers';
@@ -10,11 +10,14 @@ const PERSONA = JOURNEY_PERSONAS.admin;
 test.describe.serial('Admin user journey', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(
+      skipAuthenticatedJourneys(),
+      'Authenticated journeys require local dev servers (QA Clerk users are not on production)',
+    );
+    test.skip(
       !hasClerkAdminBrowser(),
       'Set CLERK_SECRET_KEY, E2E_CLERK_ADMIN_EMAIL, E2E_FRONTEND_URL',
     );
     await signInAdmin(page);
-    await signInClerkAndSync(page, process.env.E2E_CLERK_ADMIN_EMAIL!);
   });
 
   test.afterAll(() => {

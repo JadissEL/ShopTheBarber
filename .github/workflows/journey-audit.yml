@@ -3,6 +3,8 @@
 name: Journey Audit
 
 on:
+  push:
+    branches: [master, main]
   schedule:
     # Nightly 05:00 UTC (after UX audit at 04:00)
     - cron: '0 5 * * *'
@@ -55,13 +57,14 @@ jobs:
           E2E_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL || 'http://127.0.0.1:3001' }}
           JOURNEY_READONLY: ${{ (github.event.inputs.readonly != false) && '1' || '0' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL }}
-          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL }}
-          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL || 'qa.marcus.client@shopthebarber.com' }}
+          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL || 'qa.alex.barber@shopthebarber.com' }}
+          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL || 'qa.admin@shopthebarber.com' }}
           RUN_LEGACY_JOURNEYS: ${{ github.event.inputs.run_legacy_runner == true && '1' || '0' }}
         run: |
-          npm run qa:journey-audit || true
-          node scripts/merge-qa-report.mjs || true
+          npm run qa:journey-audit
+          node scripts/merge-qa-report.mjs
 
       - name: Upload journey reports
         if: always()
@@ -97,11 +100,11 @@ jobs:
           E2E_FRONTEND_URL: https://shop-the-barber.vercel.app
           JOURNEY_READONLY: '1'
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL }}
-          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL }}
-          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL }}
-        run: |
-          npm run qa:audit:full:prod || true
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL || 'qa.marcus.client@shopthebarber.com' }}
+          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL || 'qa.alex.barber@shopthebarber.com' }}
+          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL || 'qa.admin@shopthebarber.com' }}
+        run: npm run qa:audit:full:prod
 
       - name: Upload full QA report
         if: always()

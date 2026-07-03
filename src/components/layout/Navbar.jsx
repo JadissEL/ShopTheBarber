@@ -109,7 +109,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
     <>
       <div className="hidden sm:block bg-[hsl(var(--navy))] text-white/90 text-center text-xs font-semibold font-sans py-2 px-4 safe-area-pt border-b border-white/10">
         <span className="inline-flex items-center gap-2 flex-wrap justify-center">
-          <span className="text-primary font-bold">NEW</span>
+          <span className="font-bold text-[hsl(var(--primary))]">NEW</span>
           WELCOME5 — €5 off your first booking
           <Link to={createPageUrl('Explore')} className="underline underline-offset-2 hover:text-primary transition-colors">
             Book now →

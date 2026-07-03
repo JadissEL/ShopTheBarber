@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { hasClerkBrowserE2e } from '../fixtures/env';
-import { signInClient, signInClerkAndSync } from '../fixtures/auth';
+import { hasClerkBrowserE2e, skipAuthenticatedJourneys } from '../fixtures/env';
+import { signInClient } from '../fixtures/auth';
 import { JOURNEY_PERSONAS, isJourneyReadonly } from '../fixtures/journey-matrix';
 import { flushJourneyReport } from '../fixtures/journey-report';
 import { assertHealthyPage, assertNotSignInRedirect, journeyStep } from '../fixtures/journey-helpers';
@@ -11,9 +11,12 @@ const PERSONA = JOURNEY_PERSONAS.client;
 
 test.describe.serial('Client user journey', () => {
   test.beforeEach(async ({ page }) => {
+    test.skip(
+      skipAuthenticatedJourneys(),
+      'Authenticated journeys require local dev servers (QA Clerk users are not on production)',
+    );
     test.skip(!hasClerkBrowserE2e(), 'Set CLERK_SECRET_KEY, E2E_CLERK_USER_EMAIL, E2E_FRONTEND_URL');
     await signInClient(page);
-    await signInClerkAndSync(page, process.env.E2E_CLERK_USER_EMAIL!);
   });
 
   test.afterAll(() => {

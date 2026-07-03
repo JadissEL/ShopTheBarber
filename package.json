@@ -41,6 +41,9 @@
     "qa:audit:merge": "node scripts/merge-ux-report.mjs",
     "qa:audit": "node scripts/ux-audit.mjs",
     "qa:audit:prod": "node scripts/ux-audit-prod.mjs",
+    "qa:autopilot": "node scripts/qa-autopilot.mjs",
+    "qa:autopilot:local": "node scripts/qa-autopilot.mjs --local",
+    "qa:autopilot:setup": "node scripts/qa-autopilot.mjs --setup-gh",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {

@@ -220,10 +220,32 @@
   }
   .stb-section-dark .stb-overline,
   .stb-explore-hero .stb-overline {
-    @apply text-primary;
+    color: hsl(var(--primary));
   }
   .stb-explore-hero .stb-body {
     @apply text-white/85;
+  }
+  /* WCAG: default orange text on cream shells uses readable primary-text */
+  .stb-page .text-primary:not(.text-primary-foreground),
+  .stb-page strong.text-primary,
+  .stb-page .font-bold.text-primary,
+  .stb-page .font-semibold.text-primary {
+    color: hsl(var(--primary-text));
+  }
+  /* Orange badges: dark label on primary background */
+  .bg-primary.text-white {
+    color: hsl(var(--primary-foreground));
+  }
+  .stb-caption {
+    color: hsl(var(--muted-foreground));
+  }
+  .stb-section-dark .text-primary,
+  .stb-explore-hero .text-primary,
+  .stb-glass .text-primary,
+  footer .text-primary,
+  .bg-\[hsl\(var\(--navy\)\)\] .text-primary,
+  .bg-primary.text-primary {
+    color: hsl(var(--primary));
   }
   .stb-display-xl {
     @apply font-display uppercase text-5xl md:text-6xl lg:text-8xl tracking-wide leading-[0.88];

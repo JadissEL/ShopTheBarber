@@ -270,7 +270,7 @@ export default function HomeOffers() {
       <section className="py-24 bg-[hsl(var(--navy))] border-y border-white/15">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <p className="text-white/70 mb-4">Could not load deals right now.</p>
-          <Button variant="outline" onClick={() => refetch()} className=" border-foreground/25 text-white hover:bg-muted">
+          <Button variant="outline" onClick={() => refetch()} className="border-white/30 text-white hover:bg-white/10">
             Try again
           </Button>
         </div>
@@ -340,7 +340,7 @@ export default function HomeOffers() {
             asChild
             size="lg"
             variant="outline"
-            className=" border-foreground/25 bg-transparent text-white hover:bg-muted hover:text-white gap-2 shrink-0 h-12 px-8 font-semibold"
+            className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white gap-2 shrink-0 h-12 px-8 font-semibold"
           >
             <Link to={createPageUrl(DISCOVERY_ROUTES.deals)}>
               Browse all deals

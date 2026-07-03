@@ -1,6 +1,6 @@
 import { test, expect, devices } from '@playwright/test';
-import { hasClerkBrowserE2e } from '../fixtures/env';
-import { signInClient, signInClerkAndSync } from '../fixtures/auth';
+import { hasClerkBrowserE2e, skipAuthenticatedJourneys } from '../fixtures/env';
+import { signInClient } from '../fixtures/auth';
 import { JOURNEY_PERSONAS } from '../fixtures/journey-matrix';
 import { flushJourneyReport } from '../fixtures/journey-report';
 import { assertHealthyPage, assertNotSignInRedirect, journeyStep } from '../fixtures/journey-helpers';
@@ -11,9 +11,12 @@ test.use({ ...devices['iPhone 13'] });
 
 test.describe.serial('Mobile client user journey', () => {
   test.beforeEach(async ({ page }) => {
+    test.skip(
+      skipAuthenticatedJourneys(),
+      'Authenticated journeys require local dev servers (QA Clerk users are not on production)',
+    );
     test.skip(!hasClerkBrowserE2e(), 'Set CLERK_SECRET_KEY, E2E_CLERK_USER_EMAIL, E2E_FRONTEND_URL');
     await signInClient(page);
-    await signInClerkAndSync(page, process.env.E2E_CLERK_USER_EMAIL!);
   });
 
   test.afterAll(() => {
@@ -47,7 +50,6 @@ test.describe.serial('Mobile client user journey', () => {
 
   test('Mobile wallet', async ({ page }) => {
     await signInClient(page);
-    await signInClerkAndSync(page, process.env.E2E_CLERK_USER_EMAIL!);
 
     await journeyStep(PERSONA, 'Mobile wallet', page, async () => {
       await page.goto('/ClientWallet');
@@ -59,7 +61,6 @@ test.describe.serial('Mobile client user journey', () => {
 
   test('Mobile marketplace', async ({ page }) => {
     await signInClient(page);
-    await signInClerkAndSync(page, process.env.E2E_CLERK_USER_EMAIL!);
 
     await journeyStep(PERSONA, 'Mobile marketplace', page, async () => {
       await page.goto('/Marketplace');

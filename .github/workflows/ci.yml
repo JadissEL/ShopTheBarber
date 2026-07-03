@@ -38,6 +38,30 @@ jobs:
       - name: Build
         run: npm run build
 
+  qa-guest-smoke:
+    name: QA guest smoke (production)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Guest journey smoke (read-only)
+        env:
+          E2E_START_SERVERS: '0'
+          E2E_FRONTEND_URL: https://shop-the-barber.vercel.app
+          E2E_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL }}
+          JOURNEY_READONLY: '1'
+        run: npm run test:e2e:journeys:guest
+
   server:
     name: Server
     runs-on: ubuntu-latest

@@ -97,7 +97,10 @@ async function signOut(page) {
 async function signInAs(page, user) {
   await signOut(page);
   await page.goto(`${frontend}/SignIn`);
-  await clerk.signIn({ page, emailAddress: user.email, password: user.password });
+  await clerk.signIn({
+    page,
+    signInParams: { strategy: 'password', identifier: user.email, password: user.password },
+  });
   await waitClerk(page);
   await waitAuthMe(page);
 }
