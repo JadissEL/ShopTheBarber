@@ -36,6 +36,9 @@ const env = {
   JOURNEY_READONLY: isProd && !authJourneys ? '1' : (process.env.JOURNEY_READONLY ?? '0'),
   QA_AUTH_JOURNEYS: authJourneys ? '1' : '0',
   QA_SKIP_AUTH_JOURNEYS: isProd && !authJourneys ? '1' : '0',
+  ...(authJourneys
+    ? { VITE_API_URL: process.env.VITE_API_URL || process.env.E2E_API_BASE_URL || 'http://127.0.0.1:3001' }
+    : {}),
 };
 
 const journeyEnv = {

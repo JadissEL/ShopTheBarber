@@ -4,24 +4,26 @@ import { passwordForEmail } from './qa-profiles';
 import { waitForAuthSync } from './journey-helpers';
 
 async function signOutIfNeeded(page: Page): Promise<void> {
-  await page.goto('/');
-  await page
-    .waitForFunction(
-      () =>
-        typeof (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk !== 'undefined' &&
-        (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded,
-      { timeout: 30_000 },
-    )
-    .catch(() => {});
+  try {
+    await page.goto('/');
+    await page
+      .waitForFunction(
+        () =>
+          typeof (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk !== 'undefined' &&
+          (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded,
+        { timeout: 15_000 },
+      )
+      .catch(() => {});
 
-  await page
-    .evaluate(async () => {
-      const c = (window as unknown as { Clerk?: { session?: unknown; signOut: () => Promise<void> } }).Clerk;
-      if (c?.session) await c.signOut();
-    })
-    .catch(() => {});
-
-  await page.waitForTimeout(500);
+    await page
+      .evaluate(async () => {
+        const c = (window as unknown as { Clerk?: { session?: unknown; signOut: () => Promise<void> } }).Clerk;
+        if (c?.session) await c.signOut();
+      })
+      .catch(() => {});
+  } catch {
+    /* page may already be closed between serial tests */
+  }
 }
 
 async function waitForClerkUser(page: Page, timeout = 60_000): Promise<void> {

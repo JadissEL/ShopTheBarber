@@ -60,6 +60,7 @@ jobs:
           E2E_FRONTEND_URL: https://shop-the-barber.vercel.app
           E2E_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL }}
           JOURNEY_READONLY: '1'
+          QA_SKIP_AUTH_JOURNEYS: '1'
         run: npm run test:e2e:journeys:guest
 
   server:

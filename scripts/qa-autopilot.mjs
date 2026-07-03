@@ -62,6 +62,14 @@ const baseEnv = {
   E2E_START_SERVERS: isLocal ? '1' : '0',
   JOURNEY_READONLY: isLocal ? '0' : '1',
   QA_AUDIT_PROD: isLocal ? '0' : '1',
+  ...(isLocal
+    ? {
+        VITE_API_URL: process.env.VITE_API_URL || process.env.E2E_API_BASE_URL || 'http://127.0.0.1:3001',
+        QA_AUTH_JOURNEYS: '1',
+        QA_SKIP_AUTH_JOURNEYS: '0',
+        DATABASE_URL: fileEnv.TEST_DATABASE_URL || fileEnv.DATABASE_URL,
+      }
+    : { QA_SKIP_AUTH_JOURNEYS: '1' }),
 };
 
 const steps = [];

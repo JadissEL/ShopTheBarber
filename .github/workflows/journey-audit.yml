@@ -50,13 +50,31 @@ jobs:
         working-directory: server
         run: npm ci
 
+      - name: Prepare test database (local servers only)
+        if: github.event.inputs.start_local_servers == true
+        working-directory: server
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::TEST_DATABASE_URL secret required for authenticated local journeys"
+            exit 1
+          fi
+          npx prisma generate
+          npx prisma migrate deploy
+
       - name: Run journey specs
         env:
-          E2E_FRONTEND_URL: ${{ github.event.inputs.frontend_url || 'https://shop-the-barber.vercel.app' }}
+          E2E_FRONTEND_URL: ${{ github.event.inputs.start_local_servers == true && 'http://127.0.0.1:3000' || (github.event.inputs.frontend_url || 'https://shop-the-barber.vercel.app') }}
           E2E_START_SERVERS: ${{ github.event.inputs.start_local_servers == true && '1' || '0' }}
-          E2E_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL || 'http://127.0.0.1:3001' }}
+          E2E_API_BASE_URL: ${{ github.event.inputs.start_local_servers == true && 'http://127.0.0.1:3001' || (secrets.PRODUCTION_API_URL || 'http://127.0.0.1:3001') }}
+          VITE_API_URL: ${{ github.event.inputs.start_local_servers == true && 'http://127.0.0.1:3001' || '' }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ github.event.inputs.start_local_servers == true && secrets.CLERK_PUBLISHABLE_KEY || '' }}
+          DATABASE_URL: ${{ github.event.inputs.start_local_servers == true && secrets.TEST_DATABASE_URL || '' }}
+          TEST_DATABASE_URL: ${{ github.event.inputs.start_local_servers == true && secrets.TEST_DATABASE_URL || '' }}
           JOURNEY_READONLY: ${{ (github.event.inputs.readonly != false) && '1' || '0' }}
           QA_SKIP_AUTH_JOURNEYS: ${{ github.event.inputs.start_local_servers == true && '0' || '1' }}
+          QA_AUTH_JOURNEYS: ${{ github.event.inputs.start_local_servers == true && '1' || '0' }}
           CLERK_SECRET_KEY: ${{ github.event.inputs.start_local_servers == true && secrets.CLERK_SECRET_KEY || '' }}
           CLERK_PUBLISHABLE_KEY: ${{ github.event.inputs.start_local_servers == true && secrets.CLERK_PUBLISHABLE_KEY || '' }}
           E2E_CLERK_USER_EMAIL: ${{ github.event.inputs.start_local_servers == true && secrets.E2E_CLERK_USER_EMAIL || 'qa.marcus.client@shopthebarber.com' }}

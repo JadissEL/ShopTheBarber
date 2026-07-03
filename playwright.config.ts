@@ -8,7 +8,6 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
     testDir: 'e2e',
-    globalSetup: './e2e/global-setup.ts',
     forbidOnly: !!process.env.CI,
     fullyParallel: true,
     retries: process.env.CI ? 1 : 0,
@@ -33,6 +32,10 @@ export default defineConfig({
         : {}),
     projects: [
         {
+            name: 'setup',
+            testMatch: /auth\.setup\.ts/,
+        },
+        {
             name: 'api',
             testMatch: [
                 '**/health-public.spec.ts',
@@ -51,6 +54,7 @@ export default defineConfig({
                 '**/*.browser.spec.ts',
                 '**/*.journey.browser.spec.ts',
             ],
+            dependencies: ['setup'],
             use: {
                 ...devices['Desktop Chrome'],
                 baseURL: process.env.E2E_FRONTEND_URL || 'http://127.0.0.1:3000',

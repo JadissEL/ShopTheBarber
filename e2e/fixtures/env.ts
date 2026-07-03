@@ -27,7 +27,12 @@ export function hasClerkProviderJwt(): boolean {
 }
 
 export function hasClerkBrowserE2e(): boolean {
-    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_CLERK_USER_EMAIL && process.env.E2E_FRONTEND_URL);
+    return !!(
+        process.env.CLERK_SECRET_KEY &&
+        process.env.E2E_CLERK_USER_EMAIL &&
+        process.env.E2E_FRONTEND_URL &&
+        (process.env.CLERK_TESTING_TOKEN || process.env.CLERK_FAPI)
+    );
 }
 
 export function hasClerkProviderBrowser(): boolean {
