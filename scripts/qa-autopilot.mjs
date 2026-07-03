@@ -5,7 +5,7 @@
  * Usage:
  *   node scripts/qa-autopilot.mjs              # local prod read-only
  *   node scripts/qa-autopilot.mjs --local    # start dev servers + full mutations
- *   node scripts/qa-autopilot.mjs --setup-gh   # push Clerk secrets to GitHub first
+ *   node scripts/qa-autopilot.mjs --verify-ci  # after push, poll GitHub Actions
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -18,6 +18,7 @@ const outDir = resolve(root, 'qa-reports');
 const args = process.argv.slice(2);
 const isLocal = args.includes('--local');
 const setupGh = args.includes('--setup-gh');
+const verifyCi = args.includes('--verify-ci');
 
 function loadEnv(relPath) {
   const p = resolve(root, relPath);
@@ -117,5 +118,12 @@ const md = [
 ].join('\n');
 
 writeFileSync(resolve(outDir, 'QA-AUTOPILOT-RUN.md'), md);
+
+if (verifyCi && process.env.GITHUB_TOKEN) {
+  exitCode |= run('Verify GitHub CI', 'node', ['scripts/verify-ci-status.mjs']);
+} else if (verifyCi) {
+  console.warn('\nSkipping CI verification — GITHUB_TOKEN not set');
+}
+
 console.log(`\nAutopilot: ${summary.status.toUpperCase()} — qa-reports/qa-autopilot-status.json`);
 process.exit(exitCode);
