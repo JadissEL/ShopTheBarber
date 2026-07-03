@@ -213,6 +213,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                     type="button"
                     className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold uppercase tracking-wider text-white rounded-lg hover:bg-white/10"
                     onClick={() => setMobileExpanded(mobileExpanded === item.label ? null : item.label)}
+                    aria-expanded={mobileExpanded === item.label}
                   >
                     {item.label}
                     <ChevronDown className={`w-5 h-5 transition-transform ${mobileExpanded === item.label ? 'rotate-180' : ''}`} />
@@ -260,6 +261,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                   type="button"
                   className="flex w-full items-center justify-between px-4 py-3 text-base font-semibold text-white rounded-lg hover:bg-white/10"
                   onClick={() => setMobileExpanded(mobileExpanded === 'business' ? null : 'business')}
+                  aria-expanded={mobileExpanded === 'business'}
                 >
                   For Barbers
                   <ChevronDown className={`w-5 h-5 transition-transform ${mobileExpanded === 'business' ? 'rotate-180' : ''}`} />

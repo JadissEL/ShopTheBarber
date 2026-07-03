@@ -8,6 +8,7 @@ export default function FilterGroup({ title, icon: Icon, children, className = '
         {title}
       </p>
       <div
+        role={scrollable ? 'group' : undefined}
         aria-label={scrollable ? `${title} filters` : undefined}
         className={cn(
           'flex gap-2',

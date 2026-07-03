@@ -165,7 +165,7 @@ export default function TermsOfService() {
               <p>
                 Checkout shows estimated VAT and shipping. Seller return policies and shipping liability
                 apply. See the{' '}
-                <Link to="/marketplace/buyer-terms" className="text-primary hover:underline">
+                <Link to="/marketplace/buyer-terms" className="text-primary-text hover:underline">
                   Marketplace Purchase Terms
                 </Link>
                 .
@@ -277,10 +277,10 @@ export default function TermsOfService() {
 
         <div className="mt-8 space-y-2">
           <p className="text-sm text-muted-foreground">
-            Are you a service provider? <Link to={createPageUrl('ProviderTermsOfService')} className="text-primary hover:underline">View Provider Terms of Service</Link>
+            Are you a service provider? <Link to={createPageUrl('ProviderTermsOfService')} className="text-primary-text hover:underline">View Provider Terms of Service</Link>
           </p>
           <p className="text-sm text-muted-foreground">
-            <Link to={createPageUrl('Dashboard')} className="text-primary hover:underline">Return to Dashboard</Link>
+            <Link to={createPageUrl('Dashboard')} className="text-primary-text hover:underline">Return to Dashboard</Link>
           </p>
         </div>
       </PageContent>

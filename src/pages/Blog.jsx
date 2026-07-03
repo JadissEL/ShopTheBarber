@@ -75,6 +75,7 @@ export default function Blog() {
                   <TabsTrigger
                     key={cat.id}
                     value={cat.id}
+                    aria-label={cat.label}
                     className="rounded-md data-[state=active]:bg-foreground data-[state=active]:text-background text-muted-foreground min-h-[44px]"
                   >
                     <span className="mr-2">{cat.icon}</span>

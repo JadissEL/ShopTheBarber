@@ -85,7 +85,7 @@ export default function GiftCards() {
                         <CardContent className="p-6 md:p-8">
                             <h2 className={cn(stb.uiHeading, 'text-xl mb-6')}>Buy a gift card</h2>
                             <div className="space-y-6">
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-2" role="group" aria-label="Preset gift card amounts">
                                     {presetAmounts.map((preset) => (
                                         <button
                                             key={preset}
@@ -101,15 +101,21 @@ export default function GiftCards() {
                                     ))}
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Button type="button" variant="outline" size="icon" onClick={() => setAmount(Math.max(10, amount - 10))}>
-                                        <Minus className="w-4 h-4" />
+                                    <Button type="button" variant="outline" size="icon" aria-label="Decrease gift card amount" onClick={() => setAmount(Math.max(10, amount - 10))}>
+                                        <Minus className="w-4 h-4" aria-hidden />
                                     </Button>
-                                    <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="text-center text-xl font-semibold" />
-                                    <Button type="button" variant="outline" size="icon" onClick={() => setAmount(Math.min(500, amount + 10))}>
-                                        <Plus className="w-4 h-4" />
+                                    <div className="flex-1">
+                                        <label htmlFor="gift-amount" className="sr-only">Gift card amount in euros</label>
+                                        <Input id="gift-amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="text-center text-xl font-semibold" />
+                                    </div>
+                                    <Button type="button" variant="outline" size="icon" aria-label="Increase gift card amount" onClick={() => setAmount(Math.min(500, amount + 10))}>
+                                        <Plus className="w-4 h-4" aria-hidden />
                                     </Button>
                                 </div>
-                                <Input placeholder="Recipient email (optional)" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} />
+                                <div>
+                                    <label htmlFor="recipient-email" className="sr-only">Recipient email (optional)</label>
+                                    <Input id="recipient-email" placeholder="Recipient email (optional)" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} />
+                                </div>
                                 <Button className="w-full h-12" disabled={purchaseMutation.isPending} onClick={() => purchaseMutation.mutate()}>
                                     <ShoppingBag className="w-5 h-5 mr-2" />
                                     Pay €{amount} with card
@@ -122,8 +128,14 @@ export default function GiftCards() {
                         <CardContent className="p-6 md:p-8">
                             <h2 className={cn(stb.uiHeading, 'text-xl mb-4')}>Redeem to wallet</h2>
                             <div className="space-y-3">
-                                <Input placeholder="GIFT-XXXX" value={redeemCode} onChange={(e) => setRedeemCode(e.target.value)} />
-                                <Input type="number" placeholder="Amount" value={redeemAmount} onChange={(e) => setRedeemAmount(Number(e.target.value))} />
+                                <div>
+                                    <label htmlFor="redeem-code" className="sr-only">Gift card code</label>
+                                    <Input id="redeem-code" placeholder="GIFT-XXXX" value={redeemCode} onChange={(e) => setRedeemCode(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label htmlFor="redeem-amount" className="sr-only">Amount to redeem</label>
+                                    <Input id="redeem-amount" type="number" placeholder="Amount" value={redeemAmount} onChange={(e) => setRedeemAmount(Number(e.target.value))} />
+                                </div>
                                 <Button className="w-full" disabled={redeemMutation.isPending} onClick={() => redeemMutation.mutate()}>
                                     Redeem
                                 </Button>

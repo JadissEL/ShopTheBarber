@@ -61,6 +61,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install root dependencies (eslint)
+        working-directory: ..
+        run: npm ci
+
+      - name: Lint server
+        working-directory: ..
+        run: npm run lint:server
+
       # Prisma + Neon PostgreSQL (only DB). Generate the client before running tests.
       - name: Generate Prisma Client
         run: npx prisma generate

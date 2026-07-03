@@ -50,6 +50,7 @@ const serverTypeCheckedRules = {
   "@typescript-eslint/no-unnecessary-type-assertion": "warn",
   "@typescript-eslint/require-await": "warn",
   "@typescript-eslint/no-explicit-any": "warn",
+  "@typescript-eslint/no-redundant-type-constituents": "off",
   "@typescript-eslint/consistent-type-imports": [
     "error",
     { prefer: "type-imports", fixStyle: "inline-type-imports" },
@@ -139,9 +140,9 @@ export default tseslint.config(
     },
   },
 
-  // E2E tests (Playwright + TypeScript)
+  // E2E tests (Playwright + JS fixtures)
   {
-    files: ["e2e/**/*.ts"],
+    files: ["e2e/**/*.{js,ts}"],
     extends: [...tseslint.configs.recommended],
     languageOptions: {
       globals: {
