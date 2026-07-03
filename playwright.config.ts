@@ -48,6 +48,7 @@ export default defineConfig({
             testMatch: [
                 '**/clerk-browser-signin.spec.ts',
                 '**/*.browser.spec.ts',
+                '**/*.journey.browser.spec.ts',
             ],
             use: {
                 ...devices['Desktop Chrome'],

@@ -1,0 +1,117 @@
+# User journey audit — Playwright persona flows + optional legacy runner.
+# Requires Clerk secrets for authenticated journeys (client / provider / admin).
+name: Journey Audit
+
+on:
+  schedule:
+    # Nightly 05:00 UTC (after UX audit at 04:00)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      frontend_url:
+        description: 'Frontend URL (no trailing slash)'
+        required: false
+        default: https://shop-the-barber.vercel.app
+      readonly:
+        description: 'Read-only smoke (no booking confirm mutations)'
+        type: boolean
+        default: true
+      run_legacy_runner:
+        description: 'Also run scripts/qa-journey-runner.mjs'
+        type: boolean
+        default: false
+      start_local_servers:
+        description: 'Boot vite + API locally (needs TEST_DATABASE_URL for full auth)'
+        type: boolean
+        default: false
+
+jobs:
+  journey-playwright:
+    name: Playwright journeys
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Install server dependencies (local servers only)
+        if: github.event.inputs.start_local_servers == true
+        working-directory: server
+        run: npm ci
+
+      - name: Run journey specs
+        env:
+          E2E_FRONTEND_URL: ${{ github.event.inputs.frontend_url || 'https://shop-the-barber.vercel.app' }}
+          E2E_START_SERVERS: ${{ github.event.inputs.start_local_servers == true && '1' || '0' }}
+          E2E_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL || 'http://127.0.0.1:3001' }}
+          JOURNEY_READONLY: ${{ (github.event.inputs.readonly != false) && '1' || '0' }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL }}
+          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL }}
+          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL }}
+          RUN_LEGACY_JOURNEYS: ${{ github.event.inputs.run_legacy_runner == true && '1' || '0' }}
+        run: |
+          npm run qa:journey-audit || true
+          node scripts/merge-qa-report.mjs || true
+
+      - name: Upload journey reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journey-audit-reports
+          path: |
+            qa-reports/journey-playwright.json
+            qa-reports/qa-journey-results.json
+            qa-reports/QA-AUDIT-REPORT.md
+            qa-reports/qa-audit-summary.json
+          if-no-files-found: ignore
+
+  full-qa-nightly:
+    name: Full QA (design + UX + journeys)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+
+      - name: Full QA audit (production read-only)
+        env:
+          QA_AUDIT_PROD: '1'
+          E2E_START_SERVERS: '0'
+          E2E_FRONTEND_URL: https://shop-the-barber.vercel.app
+          JOURNEY_READONLY: '1'
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          E2E_CLERK_USER_EMAIL: ${{ secrets.E2E_CLERK_USER_EMAIL }}
+          E2E_CLERK_PROVIDER_EMAIL: ${{ secrets.E2E_CLERK_PROVIDER_EMAIL }}
+          E2E_CLERK_ADMIN_EMAIL: ${{ secrets.E2E_CLERK_ADMIN_EMAIL }}
+        run: |
+          npm run qa:audit:full:prod || true
+
+      - name: Upload full QA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-qa-audit
+          path: |
+            qa-reports/QA-AUDIT-REPORT.md
+            qa-reports/qa-audit-summary.json
+            qa-reports/journey-playwright.json
+            qa-reports/UX-AUDIT-REPORT.md
+            qa-reports/design-lint.json
+          if-no-files-found: ignore
