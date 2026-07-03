@@ -57,7 +57,7 @@ export default function SignIn() {
                     />
                 </ClerkLoaded>
 
-                <p className={cn(stb.caption, 'text-center mt-10 max-w-xs mx-auto uppercase tracking-widest opacity-70')}>
+                <p className={cn(stb.caption, 'text-center mt-10 max-w-xs mx-auto uppercase tracking-widest')}>
                     Encrypted for your protection. 256-bit SSL secure.
                 </p>
             </AuthSplitLayout>

@@ -1912,7 +1912,7 @@ export default function BookingFlow() {
       />
 
       {/* Progress Header */}
-      <div className="sticky top-0 z-30 stb-glass border-b border-border/80 bg-background/95 backdrop-blur-xl">
+      <div className="sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-end mb-4">
             {currentStep > 0 && currentStep < 3 && !isContextValidating && (
@@ -1929,7 +1929,7 @@ export default function BookingFlow() {
                 <div className={cn(
                   "flex shrink-0 items-center gap-2 px-1 sm:px-2 py-1 transition-all duration-200",
                   index === currentStep ? "text-foreground" :
-                    index < currentStep ? "text-primary" : "text-muted-foreground"
+                    index < currentStep ? "text-primary-text" : "text-muted-foreground"
                 )}>
                   {index < currentStep ? (
                     <Check className="w-4 h-4 shrink-0 text-primary" />

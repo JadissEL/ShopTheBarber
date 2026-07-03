@@ -56,7 +56,7 @@ export default function HomeFinalCta() {
 
           </Button>
 
-          <Button asChild variant="outline" size="lg" className="h-12 px-8 border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
+          <Button asChild variant="outline" size="lg" className="h-12 px-8 border-white/30 !bg-transparent text-white hover:bg-white/10 hover:text-white">
 
             <Link to={createPageUrl(DISCOVERY_ROUTES.mobile)}>Mobile barbers</Link>
 

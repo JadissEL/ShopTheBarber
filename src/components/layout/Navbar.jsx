@@ -44,7 +44,7 @@ function NavDropdown({ label, items, pathname: _pathname, isActive, align = 'lef
         className={cn(
           'flex items-center gap-1 px-3.5 py-2 text-xs font-semibold uppercase tracking-wider font-sans transition-colors rounded-lg',
           isActive || open
-            ? 'text-primary border-l-2 border-primary pl-3'
+            ? 'text-[hsl(var(--primary))] border-l-2 border-primary pl-3'
             : 'text-white/70 hover:text-white hover:bg-white/10',
         )}
         aria-expanded={open}
@@ -144,7 +144,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                   className={cn(
                     'px-3.5 py-2 text-xs font-semibold uppercase tracking-wider font-sans transition-colors whitespace-nowrap rounded-lg',
                     isNavActive(location.pathname, item.path)
-                      ? 'text-primary border-l-2 border-primary pl-3'
+                      ? 'text-[hsl(var(--primary))] border-l-2 border-primary pl-3'
                       : 'text-white/70 hover:text-white hover:bg-white/10',
                   )}
                 >
@@ -228,7 +228,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                           className={cn(
                             'block px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-lg',
                             isNavActive(location.pathname, child.path)
-                              ? 'text-primary border-l-2 border-primary pl-3'
+                              ? 'text-[hsl(var(--primary))] border-l-2 border-primary pl-3'
                               : 'text-white/70 hover:text-primary hover:bg-white/5',
                           )}
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -246,7 +246,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                   className={cn(
                     'block px-4 py-3 text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-white/10',
                     isNavActive(location.pathname, item.path)
-                      ? 'text-primary border-l-2 border-primary pl-3'
+                      ? 'text-[hsl(var(--primary))] border-l-2 border-primary pl-3'
                       : 'text-white',
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -276,7 +276,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                         className={cn(
                           'block px-4 py-2.5 text-sm font-medium rounded-lg',
                           isNavActive(location.pathname, item.path)
-                            ? 'text-primary border-l-2 border-primary pl-3'
+                            ? 'text-[hsl(var(--primary))] border-l-2 border-primary pl-3'
                             : 'text-white/70 hover:text-primary hover:bg-white/5',
                         )}
                         onClick={() => setIsMobileMenuOpen(false)}

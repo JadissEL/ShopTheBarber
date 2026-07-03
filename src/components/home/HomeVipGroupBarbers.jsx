@@ -205,7 +205,7 @@ export default function HomeVipGroupBarbers() {
 
                     variant="outline"
 
-                    className="rounded-full gap-2 border-white/30 text-white hover:bg-white/10"
+                    className="rounded-full gap-2 border-white/30 !bg-transparent text-white hover:bg-white/10"
 
                 >
 

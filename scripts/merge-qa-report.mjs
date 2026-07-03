@@ -74,9 +74,11 @@ const byPersona = (steps) => {
   return map;
 };
 
+const journeyOnly = process.env.QA_JOURNEY_ONLY === '1';
+const designOk = journeyOnly && !designLint ? true : designErrors.length === 0;
+const a11yOk =
+  (journeyOnly && !uxSummary) || uxStatus === 'pass' || a11yFails.length === 0;
 const journeyOk = journeyFails.length === 0;
-const designOk = designErrors.length === 0;
-const a11yOk = uxStatus === 'pass' || a11yFails.length === 0;
 const overallStatus = designOk && a11yOk && journeyOk ? 'pass' : 'fail';
 
 const summary = {

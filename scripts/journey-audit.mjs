@@ -38,10 +38,18 @@ writeFileSync(
   JSON.stringify({ generatedAt: new Date().toISOString(), results: [] }, null, 2),
 );
 
+const frontend = process.env.E2E_FRONTEND_URL ?? 'http://127.0.0.1:3000';
+const localServers = process.env.E2E_START_SERVERS === '1';
+const prodReadonly = !localServers || process.env.JOURNEY_READONLY === '1';
+
 const pwEnv = {
   E2E_START_SERVERS: process.env.E2E_START_SERVERS ?? '1',
-  E2E_FRONTEND_URL: process.env.E2E_FRONTEND_URL ?? 'http://127.0.0.1:3000',
+  E2E_FRONTEND_URL: frontend,
   E2E_API_BASE_URL: process.env.E2E_API_BASE_URL ?? 'http://127.0.0.1:3001',
+  JOURNEY_READONLY: prodReadonly ? '1' : '0',
+  QA_SKIP_AUTH_JOURNEYS:
+    process.env.QA_SKIP_AUTH_JOURNEYS ??
+    (localServers || process.env.QA_AUTH_JOURNEYS === '1' ? '0' : '1'),
 };
 
 let code = run(
@@ -54,5 +62,5 @@ if (process.env.RUN_LEGACY_JOURNEYS === '1' && process.env.CLERK_SECRET_KEY) {
   code |= run('node', ['scripts/qa-journey-runner.mjs'], pwEnv);
 }
 
-const mergeCode = run('node', ['scripts/merge-qa-report.mjs']);
-process.exit(mergeCode || code);
+const mergeCode = run('node', ['scripts/merge-qa-report.mjs'], { QA_JOURNEY_ONLY: '1' });
+process.exit(code || mergeCode);

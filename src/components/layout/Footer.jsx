@@ -40,7 +40,7 @@ export default function Footer() {
 
           <nav className="grid grid-cols-2 gap-8 text-sm font-sans" aria-label="Footer">
             <div>
-              <p className={cn(stb.overline, 'mb-3 text-white/45')}>Discover</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-3 text-white/70 font-sans">Discover</p>
               <div className="flex flex-col gap-2.5">
                 <Link to={createPageUrl('Explore')} className="text-white/75 hover:text-primary transition-colors no-underline">
                   Find barbers
@@ -57,7 +57,7 @@ export default function Footer() {
               </div>
             </div>
             <div>
-              <p className={cn(stb.overline, 'mb-3 text-white/45')}>Company</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-3 text-white/70 font-sans">Company</p>
               <div className="flex flex-col gap-2.5">
                 <Link to={createPageUrl('About')} className="text-white/75 hover:text-primary transition-colors no-underline">
                   About

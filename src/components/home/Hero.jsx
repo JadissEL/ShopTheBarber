@@ -78,7 +78,7 @@ export default function Hero() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-12 px-8 border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                className="h-12 px-8 border-white/40 !bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <Link to={createPageUrl(DISCOVERY_ROUTES.mobile)}>Mobile barbers</Link>
               </Button>

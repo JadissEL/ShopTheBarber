@@ -215,22 +215,27 @@
     @apply text-xs text-muted-foreground font-sans normal-case leading-relaxed;
   }
   .stb-overline {
-    @apply text-xs font-bold uppercase tracking-[0.2em] font-sans;
-    color: hsl(var(--primary-text));
+    @apply text-xs font-bold uppercase tracking-[0.2em] font-sans text-primary-text;
   }
   .stb-section-dark .stb-overline,
-  .stb-explore-hero .stb-overline {
-    color: hsl(var(--primary));
+  .stb-explore-hero .stb-overline,
+  footer .stb-overline {
+    @apply text-white/70;
   }
   .stb-explore-hero .stb-body {
     @apply text-white/85;
   }
-  /* WCAG: default orange text on cream shells uses readable primary-text */
+  /* WCAG: readable orange-brown on cream/light surfaces only */
   .stb-page .text-primary:not(.text-primary-foreground),
   .stb-page strong.text-primary,
   .stb-page .font-bold.text-primary,
   .stb-page .font-semibold.text-primary {
     color: hsl(var(--primary-text));
+  }
+  /* Dark shells keep bright accent — higher specificity than rules above */
+  .stb-page :is(.stb-section-dark, .stb-explore-hero, header.stb-glass, .stb-glass, footer, .bg-\[hsl\(var\(--navy\)\)\]) .text-primary:not(.text-primary-foreground),
+  .stb-page :is(.stb-section-dark, .stb-explore-hero, header.stb-glass, .stb-glass, footer) :is(strong, .font-bold, .font-semibold).text-primary {
+    color: hsl(var(--primary));
   }
   /* Orange badges: dark label on primary background */
   .bg-primary.text-white {
@@ -239,13 +244,8 @@
   .stb-caption {
     color: hsl(var(--muted-foreground));
   }
-  .stb-section-dark .text-primary,
-  .stb-explore-hero .text-primary,
-  .stb-glass .text-primary,
-  footer .text-primary,
-  .bg-\[hsl\(var\(--navy\)\)\] .text-primary,
-  .bg-primary.text-primary {
-    color: hsl(var(--primary));
+  .stb-caption.opacity-70 {
+    opacity: 1;
   }
   .stb-display-xl {
     @apply font-display uppercase text-5xl md:text-6xl lg:text-8xl tracking-wide leading-[0.88];
