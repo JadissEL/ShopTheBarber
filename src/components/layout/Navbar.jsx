@@ -123,6 +123,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
             <div className="w-9 h-9 bg-primary text-primary-foreground rounded-lg border border-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Scissors className="w-4 h-4 transform -rotate-45" aria-hidden />
             </div>
+            <span className="sr-only">ShopTheBarber</span>
             <span className="text-lg font-display uppercase tracking-wider text-white hidden sm:inline">ShopTheBarber</span>
           </Link>
 

@@ -1953,7 +1953,7 @@ export default function BookingFlow() {
           </div>
 
           {/* Progress bar */}
-          <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={currentStep + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
+          <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden" role="progressbar" aria-label="Booking progress" aria-valuenow={currentStep + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
             <div
               className="h-full bg-primary transition-all duration-200 ease-out rounded-full"
               style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}

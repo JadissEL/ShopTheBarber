@@ -41,11 +41,11 @@ export default function ExploreFeaturedSpotlight({ barber, bookingLocation = nul
           />
         </Link>
         <div className="flex flex-col flex-1 p-4 gap-2 min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-primary-text">
             Featured
           </p>
           <Link to={profileUrl} className="group/name min-w-0">
-            <h3 className={cn(stb.uiHeading, 'text-base truncate group-hover/name:text-primary transition-colors')}>
+            <h3 className={cn(stb.uiHeading, 'text-base truncate group-hover/name:text-primary-text transition-colors')}>
               {name}
             </h3>
           </Link>

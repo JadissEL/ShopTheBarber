@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import SearchField from '@/components/ui/search-field';
 import { Card } from '@/components/ui/card';
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, Eye, TrendingUp, BookOpen } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
@@ -69,21 +68,31 @@ export default function Blog() {
               aria-label="Search blog articles"
             />
 
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <TabsList className="bg-muted h-12 rounded-lg">
-                {categories.slice(0, 4).map((cat) => (
-                  <TabsTrigger
-                    key={cat.id}
-                    value={cat.id}
-                    aria-label={cat.label}
-                    className="rounded-md data-[state=active]:bg-foreground data-[state=active]:text-background text-muted-foreground min-h-[44px]"
-                  >
-                    <span className="mr-2">{cat.icon}</span>
-                    <span className="hidden sm:inline">{cat.label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div
+              role="tablist"
+              aria-label="Blog categories"
+              className="flex flex-wrap gap-2 bg-muted h-auto min-h-12 rounded-lg p-1"
+            >
+              {categories.slice(0, 4).map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedCategory === cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={cn(
+                    'inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium min-h-[44px] transition-colors',
+                    selectedCategory === cat.id
+                      ? 'bg-foreground text-background shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <span className="mr-2" aria-hidden>{cat.icon}</span>
+                  <span className="hidden sm:inline">{cat.label}</span>
+                  <span className="sr-only sm:hidden">{cat.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
