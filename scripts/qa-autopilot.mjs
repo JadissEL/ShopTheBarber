@@ -7,39 +7,21 @@
  *   node scripts/qa-autopilot.mjs --local    # start dev servers + full mutations
  *   node scripts/qa-autopilot.mjs --verify-ci  # after push, poll GitHub Actions
  */
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hydrateE2eEnv, loadEnvFile, root } from './qa-e2e-env.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
 const outDir = resolve(root, 'qa-reports');
 const args = process.argv.slice(2);
 const isLocal = args.includes('--local');
 const setupGh = args.includes('--setup-gh');
 const verifyCi = args.includes('--verify-ci');
 
-function loadEnv(relPath) {
-  const p = resolve(root, relPath);
-  if (!existsSync(p)) return {};
-  const out = {};
-  for (const line of readFileSync(p, 'utf8').split('\n')) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    const eq = t.indexOf('=');
-    if (eq === -1) continue;
-    const key = t.slice(0, eq).trim();
-    let val = t.slice(eq + 1).trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1);
-    }
-    out[key] = val;
-  }
-  return out;
-}
-
-const fileEnv = { ...loadEnv('.env.local'), ...loadEnv('server/.env') };
+hydrateE2eEnv();
+const fileEnv = { ...loadEnvFile('.env.local'), ...loadEnvFile('server/.env') };
 const profiles = JSON.parse(readFileSync(resolve(__dirname, 'qa-profiles.json'), 'utf8'));
 const profileEmail = (id) => profiles.find((p) => p.id === id)?.email ?? '';
 
@@ -96,6 +78,8 @@ exitCode |= run('Design lint', 'npm', ['run', 'qa:design-lint']);
 exitCode |= run('Production build', 'npm', ['run', 'build']);
 
 if (isLocal) {
+  exitCode |= run('Verify Clerk E2E keys', 'node', ['scripts/verify-clerk-e2e.mjs']);
+  exitCode |= run('Provision QA profiles', 'node', ['scripts/provision-qa-profiles.mjs']);
   exitCode |= run('Full QA audit (local)', 'node', ['scripts/qa-audit.mjs']);
 } else {
   exitCode |= run('Full QA audit (production read-only)', 'node', ['scripts/qa-audit-prod.mjs']);

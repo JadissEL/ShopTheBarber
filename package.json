@@ -45,6 +45,7 @@
     "qa:autopilot:local": "node scripts/qa-autopilot.mjs --local",
     "qa:autopilot:setup": "node scripts/qa-autopilot.mjs --setup-gh",
     "qa:verify-ci": "node scripts/verify-ci-status.mjs",
+    "qa:verify-clerk": "node scripts/verify-clerk-e2e.mjs",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {

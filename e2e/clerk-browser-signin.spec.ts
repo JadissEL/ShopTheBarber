@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { clerk } from '@clerk/testing/playwright';
+import { clerk, setupClerkTestingToken } from '@clerk/testing/playwright';
+import { loadClerkTestingEnv } from './fixtures/clerk-env';
+import { hydrateE2eEnv } from '../scripts/qa-e2e-env.mjs';
 
 /**
  * Real browser flow using Clerk’s testing helpers (`clerk.signIn` with `emailAddress`).
@@ -21,6 +23,10 @@ test.describe('Clerk browser sign-in (@clerk/testing)', () => {
             !hasClerkBrowserE2e(),
             'Set CLERK_SECRET_KEY, E2E_CLERK_USER_EMAIL, and E2E_FRONTEND_URL (see AGENTS.md)'
         );
+
+        hydrateE2eEnv();
+        loadClerkTestingEnv();
+        await setupClerkTestingToken({ page });
 
         await page.goto('/');
         await clerk.signIn({

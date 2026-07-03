@@ -9,32 +9,13 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClerkClient } from '@clerk/backend';
+import { hydrateE2eEnv, root } from './qa-e2e-env.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
 
-function loadEnv(relPath) {
-  const p = resolve(root, relPath);
-  if (!existsSync(p)) return {};
-  const out = {};
-  for (const line of readFileSync(p, 'utf8').split('\n')) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    const eq = t.indexOf('=');
-    if (eq === -1) continue;
-    const key = t.slice(0, eq).trim();
-    let val = t.slice(eq + 1).trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1);
-    }
-    out[key] = val;
-  }
-  return out;
-}
-
-const env = { ...loadEnv('server/.env'), ...loadEnv('.env.local'), ...process.env };
-const secretKey = env.CLERK_SECRET_KEY;
 const dbOnly = process.argv.includes('--db-only');
+const env = hydrateE2eEnv();
+const secretKey = env.CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY;
 
 const profiles = JSON.parse(readFileSync(resolve(__dirname, 'qa-profiles.json'), 'utf8'));
 

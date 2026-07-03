@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-type QaProfile = { email: string; password: string };
+type QaProfile = { id?: string; email: string; password: string };
 
 const profilesPath = resolve(dirname(fileURLToPath(import.meta.url)), '../../scripts/qa-profiles.json');
 
@@ -13,6 +13,10 @@ function loadProfiles(): QaProfile[] {
     cached = JSON.parse(readFileSync(profilesPath, 'utf8')) as QaProfile[];
   }
   return cached;
+}
+
+export function emailForProfile(id: string): string | undefined {
+  return loadProfiles().find((p) => p.id === id)?.email;
 }
 
 export function passwordForEmail(email: string): string | undefined {
