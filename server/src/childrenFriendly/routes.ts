@@ -8,6 +8,22 @@ import {
     serializeEffectiveChildrenFriendly,
 } from './logic';
 
+type AuthUser = { id: string; email?: string; role?: string; full_name?: string };
+
+type AuthedRequest = {
+    user?: AuthUser;
+    entityScopeCache?: Parameters<typeof assertShopManager>[2];
+};
+
+async function requireAuth(
+    request: Parameters<typeof authenticateRequest>[0],
+    reply: Parameters<typeof authenticateRequest>[1]
+): Promise<AuthUser | null> {
+    const ok = await authenticateRequest(request, reply);
+    if (!ok) return null;
+    return (request as AuthedRequest).user ?? null;
+}
+
 function parseBodyFlag(body: { children_friendly?: unknown }): boolean {
     return body.children_friendly === true;
 }
@@ -18,9 +34,8 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
     });
 
     fastify.get('/api/provider/children-friendly', async (request, reply) => {
-        const ok = await authenticateRequest(request, reply);
-        if (!ok) return;
-        const user = request.user!;
+        const user = await requireAuth(request, reply);
+        if (!user) return;
         if (!['barber', 'shop_owner', 'admin', 'provider'].includes(user.role ?? '')) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
@@ -56,9 +71,8 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
     fastify.put<{ Body: { children_friendly?: boolean } }>(
         '/api/provider/barber/children-friendly',
         async (request, reply) => {
-            const ok = await authenticateRequest(request, reply);
-            if (!ok) return;
-            const user = request.user!;
+            const user = await requireAuth(request, reply);
+            if (!user) return;
             const flag = parseBodyFlag(request.body ?? {});
 
             let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
@@ -87,9 +101,8 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
     fastify.put<{ Params: { shopId: string }; Body: { children_friendly?: boolean } }>(
         '/api/provider/shop/:shopId/children-friendly',
         async (request, reply) => {
-            const ok = await authenticateRequest(request, reply);
-            if (!ok) return;
-            const user = request.user!;
+            const user = await requireAuth(request, reply);
+            if (!user) return;
             const { shopId } = request.params;
             const flag = parseBodyFlag(request.body ?? {});
 
@@ -98,7 +111,7 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
 
             const isOwner = shop.owner_id === user.id;
             if (!isOwner && user.role !== 'admin') {
-                await assertShopManager(user, shopId, request.entityScopeCache);
+                await assertShopManager(user, shopId, (request as AuthedRequest).entityScopeCache);
             }
 
             const updated = await prisma.shops.update({
