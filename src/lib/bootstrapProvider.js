@@ -96,4 +96,6 @@ export function invalidateOnboardingQueries(queryClient) {
   for (const key of keys) {
     queryClient.invalidateQueries({ queryKey: key });
   }
+  queryClient.invalidateQueries({ queryKey: ['provider-workspace'] });
+  queryClient.invalidateQueries({ queryKey: ['currentUser'] });
 }
