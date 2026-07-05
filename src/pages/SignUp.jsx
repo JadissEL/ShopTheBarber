@@ -11,14 +11,14 @@ import {
   clerkAuthAppearance,
   clerkSignUpLocalization,
 } from '@/lib/clerkAppearance';
+import { resolvePostAuthDestination } from '@/lib/authReturn';
 
 const REF_STORAGE_KEY = 'stb_referral_code';
 
 function getPostAuthUrl() {
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get('redirect') || params.get('return');
-    if (redirect && redirect.startsWith('/')) return redirect;
-    return '/SetupGuide';
+    return resolvePostAuthDestination(redirect);
 }
 
 export default function SignUp() {

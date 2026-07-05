@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useCart } from '@/components/context/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { sovereign } from '@/api/apiClient';
-import { createPageUrl } from '@/utils';
+import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import SavedAddressesManager, { addressToShipping } from '@/components/shipping/SavedAddressesManager';
@@ -89,7 +89,7 @@ export default function Checkout() {
         
         // Auth check
         if (!isAuthenticated) {
-            navigate(`${createPageUrl('SignIn')  }?return=${  encodeURIComponent('/Checkout')}`, { replace: true });
+            navigate(signInUrlWithReturn('/Checkout'), { replace: true });
             return;
         }
         

@@ -1,3 +1,5 @@
+import { stashAuthReturn } from '@/lib/authReturn';
+
 const AUTH_PATH_ALIASES: Record<string, string> = {
   SignIn: '/login',
   SignUp: '/register',
@@ -17,5 +19,6 @@ export function createPageUrl(pageName: string): string {
 /** Sign-in URL that returns the user to a path after login. */
 export function signInUrlWithReturn(returnPath?: string): string {
     const path = returnPath || (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/');
+    stashAuthReturn(path);
     return `${createPageUrl('SignIn')}?return=${encodeURIComponent(path)}`;
 }

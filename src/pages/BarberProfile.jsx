@@ -14,10 +14,13 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { LocalBusinessSchema } from '@/components/seo/SchemaMarkup';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import ReviewCard from '@/components/ui/review-card';
 import PromotionList from '@/components/promotions/PromotionList';
 import ServiceSelection from '@/components/barber/ServiceSelection';
+import BarberProfileAboutPanel from '@/components/barber/BarberProfileAboutPanel';
+import BarberProfileReviewsPanel from '@/components/barber/BarberProfileReviewsPanel';
 import ProviderPublicStats from '@/components/providerStats/ProviderPublicStats';
+import { mergeShowcaseWithFallback } from '@/utils/showcaseFallback';
+import { ProviderShowcasePortfolioOnly } from '@/components/providerShowcase/ProviderShowcasePublic';
 import {
     Dialog,
     DialogContent,
@@ -156,6 +159,14 @@ export default function BarberProfile() {
     const primaryMembership = memberships[0]; // For now, default to first shop found if multiple
     const _barberShop = primaryMembership?.shop;
 
+    const { data: barberShowcase } = useQuery({
+        queryKey: ['barber-showcase', barberId],
+        queryFn: () => (barberId ? sovereign.showcase.getBarberPublic(barberId) : null),
+        enabled: !!barberId,
+    });
+
+    const effectiveShowcase = mergeShowcaseWithFallback(barberShowcase, barber?.created_at);
+
     const { data: reviews = [], isFetching: isReviewsFetching } = useQuery({
         queryKey: ['reviews', 'barber', barberId],
         queryFn: () => (barberId ? sovereign.entities.Review.filter({ barber_id: barberId }, '-created_at', 20) : []),
@@ -208,8 +219,6 @@ export default function BarberProfile() {
         // Redirect to chat with the barber
         navigate(createPageUrl(`Chat?contactId=${barberId}`));
     };
-
-    const displayReviews = reviews;
 
     const proceedToBooking = (shopId, type) => {
         // Analytics: Track Context Selection
@@ -450,37 +459,51 @@ export default function BarberProfile() {
                             </TabsContent>
 
                             <TabsContent value="portfolio" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {[
-                                        "https://images.unsplash.com/photo-1621605815971-fbc98d665033",
-                                        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70",
-                                        "https://images.unsplash.com/photo-1599351431202-6e0c06e7838d",
-                                        "https://images.unsplash.com/photo-1534643960519-11ad79bc19df",
-                                        "https://images.unsplash.com/photo-1635273051932-a56976a4a49c",
-                                        "https://images.unsplash.com/photo-1605497788044-5a32c7078486"
-                                    ].map((url, i) => (
-                                        <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer border border-border">
-                                            <OptimizedImage
-                                                src={`${url}?w=400&auto=format&fit=crop`}
-                                                fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&fit=crop"
-                                                alt={`Portfolio Item ${i + 1}`}
-                                                fill
-                                                imgClassName="group-hover:scale-110 transition-transform duration-500"
-                                            />
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <Heart className="w-6 h-6 text-white" />
+                                {effectiveShowcase?.portfolio?.length > 0 ? (
+                                    <ProviderShowcasePortfolioOnly showcase={effectiveShowcase} />
+                                ) : (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {[
+                                            "https://images.unsplash.com/photo-1621605815971-fbc98d665033",
+                                            "https://images.unsplash.com/photo-1585747860715-2ba37e788b70",
+                                            "https://images.unsplash.com/photo-1599351431202-6e0c06e7838d",
+                                            "https://images.unsplash.com/photo-1534643960519-11ad79bc19df",
+                                            "https://images.unsplash.com/photo-1635273051932-a56976a4a49c",
+                                            "https://images.unsplash.com/photo-1605497788044-5a32c7078486"
+                                        ].map((url, i) => (
+                                            <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer border border-border">
+                                                <OptimizedImage
+                                                    src={`${url}?w=400&auto=format&fit=crop`}
+                                                    fallbackSrc="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&fit=crop"
+                                                    alt={`Portfolio Item ${i + 1}`}
+                                                    fill
+                                                    imgClassName="group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Heart className="w-6 h-6 text-white" />
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </TabsContent>
 
                             <TabsContent value="reviews" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="grid gap-6">
-                                    {displayReviews.map((review, i) => (
-                                        <ReviewCard key={i} review={review} />
-                                    ))}
-                                </div>
+                                <BarberProfileReviewsPanel
+                                    reviews={reviews}
+                                    barber={barber}
+                                    isLoading={isReviewsFetching}
+                                    onBook={handleBookContext}
+                                />
+                            </TabsContent>
+
+                            <TabsContent value="about" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <BarberProfileAboutPanel
+                                    barber={barber}
+                                    showcase={effectiveShowcase}
+                                    memberships={memberships}
+                                    onBook={handleBookContext}
+                                />
                             </TabsContent>
                         </Tabs>
                     </div>

@@ -10,7 +10,8 @@ import { createPageUrl } from '@/utils';
 export default function Auth() {
   const navigate = useNavigate();
   useEffect(() => {
-    navigate(createPageUrl('SignIn'), { replace: true });
+    const search = window.location.search;
+    navigate(`${createPageUrl('SignIn')}${search}`, { replace: true });
   }, [navigate]);
   return <PageLoading message="Redirecting…" />;
 }

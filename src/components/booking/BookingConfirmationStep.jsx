@@ -79,8 +79,9 @@ export default function BookingConfirmationStep({
   guestContactError,
   guestBookingBlocked = false,
   guestBlockReason,
-  signInReturnPath,
+  getSignInHref,
 }) {
+  const signInUrl = getSignInHref?.() || `${createPageUrl('SignIn')}?return=${encodeURIComponent('/BookingFlow')}`;
   if (hasBarberId) {
     return (
       <motion.div
@@ -427,7 +428,7 @@ export default function BookingConfirmationStep({
                 <GuestContactForm
                   contact={guestContact}
                   onChange={onGuestContactChange}
-                  signInReturnPath={signInReturnPath}
+                  getSignInHref={getSignInHref}
                   error={guestContactError}
                 />
               ) : null}
@@ -436,7 +437,7 @@ export default function BookingConfirmationStep({
                 <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-6 text-sm text-foreground">
                   {guestBlockReason}{' '}
                   <Link
-                    to={`${createPageUrl('SignIn')}?return=${encodeURIComponent(signInReturnPath || '/BookingFlow')}`}
+                    to={signInUrl}
                     className="font-semibold underline underline-offset-2"
                   >
                     Sign in
@@ -484,7 +485,7 @@ export default function BookingConfirmationStep({
                 size="lg"
                 className="w-full text-lg h-14"
                 onClick={onConfirmBooking}
-                disabled={isConfirming || confirmDisabled}
+                disabled={isConfirming || (confirmDisabled && !(guestBookingBlocked && isGuestCheckout))}
               >
                 {isConfirming
                   ? 'Confirming...'

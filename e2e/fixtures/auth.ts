@@ -44,17 +44,12 @@ async function ensureClerkTesting(page: Page): Promise<void> {
   }
 }
 
-export async function signInClerkUser(page: Page, email: string): Promise<void> {
-  hydrateE2eEnv();
-  await signOutIfNeeded(page);
-  await ensureClerkTesting(page);
-
+async function fillClerkSignInForm(page: Page, email: string): Promise<void> {
   const password = passwordForEmail(email);
   if (!password) {
     throw new Error(`No QA password for ${email} (scripts/qa-profiles.json or E2E_CLERK_*_PASSWORD)`);
   }
 
-  await page.goto('/SignIn');
   await page.waitForFunction(
     () => (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded,
     { timeout: 30_000 },
@@ -72,6 +67,22 @@ export async function signInClerkUser(page: Page, email: string): Promise<void> 
   await passwordInput.fill(password);
   await submit().click();
   await waitForAuthSync(page);
+}
+
+/** Sign in on the current /login page (preserves ?return= query). */
+export async function signInClerkOnCurrentPage(page: Page, email: string): Promise<void> {
+  hydrateE2eEnv();
+  await ensureClerkTesting(page);
+  await fillClerkSignInForm(page, email);
+}
+
+export async function signInClerkUser(page: Page, email: string): Promise<void> {
+  hydrateE2eEnv();
+  await signOutIfNeeded(page);
+  await ensureClerkTesting(page);
+
+  await page.goto('/SignIn');
+  await fillClerkSignInForm(page, email);
 }
 
 export async function signInClient(page: Page): Promise<void> {

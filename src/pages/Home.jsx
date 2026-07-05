@@ -11,6 +11,7 @@ import HomeBestBarbers from '../components/home/HomeBestBarbers';
 import HomeTrustSpotlight from '../components/home/HomeTrustSpotlight';
 import Features from '../components/home/Features';
 import HomeRewardsStrip from '../components/home/HomeRewardsStrip';
+import HomeEcosystemStrip from '../components/home/HomeEcosystemStrip';
 import HomeOffers from '../components/home/HomeOffers';
 import HomeMarketplacePreview from '../components/home/HomeMarketplacePreview';
 import Testimonials from '../components/home/Testimonials';
@@ -74,6 +75,7 @@ export default function Home() {
       <HomeTrustSpotlight />
       <Features />
       <HomeRewardsStrip />
+      <HomeEcosystemStrip />
       <HomeOffers />
       <HomeMarketplacePreview />
       <Testimonials />

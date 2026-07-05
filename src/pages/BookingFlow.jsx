@@ -49,6 +49,7 @@ import {
   saveGuestBookingToken,
   isGuestBookingBlocked,
 } from '@/lib/guestBooking';
+import { useBookingDraftSync } from '@/hooks/useBookingDraftSync';
 
 export default function BookingFlow() {
   const navigate = useNavigate();
@@ -133,8 +134,17 @@ export default function BookingFlow() {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || null);
 
   // Step 2: Date & Time
-  const [selectedDate, setSelectedDate] = useState(bookingState?.selectedDate ? new Date(bookingState.selectedDate) : null);
-  const [selectedTime, setSelectedTime] = useState(bookingState?.selectedTime || '');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const dateParam = searchParams.get('date');
+    if (dateParam) {
+      const parsed = new Date(`${dateParam}T12:00:00`);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return bookingState?.selectedDate ? new Date(bookingState.selectedDate) : null;
+  });
+  const [selectedTime, setSelectedTime] = useState(
+    () => searchParams.get('time') || bookingState?.selectedTime || '',
+  );
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromotion, setAppliedPromotion] = useState(null);
   const [promoError, setPromoError] = useState('');
@@ -908,6 +918,61 @@ export default function BookingFlow() {
     }
   }, [isGuestCheckout, cashAvailability?.accepts_cash]);
 
+  const { syncUrlToStep, redirectToSignIn, getSignInHref, clearDraft } = useBookingDraftSync({
+    location,
+    navigate,
+    isSpecificBarberBooking,
+    isRebookFlow,
+    urlBarberId,
+    urlShopId,
+    bookingShopId: bookingState?.shopId,
+    currentStep,
+    setCurrentStep,
+    selectedServices,
+    setSelectedServices,
+    selectedCategory,
+    setSelectedCategory,
+    selectedDate,
+    setSelectedDate,
+    selectedTime,
+    setSelectedTime,
+    promoCode,
+    setPromoCode,
+    appliedPromotion,
+    setAppliedPromotion,
+    customerNotes,
+    setCustomerNotes,
+    paymentMethod,
+    setPaymentMethod,
+    guestContact,
+    setGuestContact,
+    address,
+    setAddress,
+    addressCoords,
+    setAddressCoords,
+    minRating,
+    setMinRating,
+    sortBy,
+    setSortBy,
+    acceptanceType,
+    setAcceptanceType,
+    providerType,
+    setProviderType,
+    locationType,
+    setLocationType,
+    preferredLanguage,
+    setPreferredLanguage,
+    kidsWelcomeOnly,
+    setKidsWelcomeOnly,
+    groupGuests,
+    setGroupGuests,
+    groupEventLabel,
+    setGroupEventLabel,
+    groupMode,
+    context,
+    bookingContext: bookingState?.context,
+  });
+
   const handleApplyPromo = async () => {
     if (!promoCode) return;
     setPromoError('');
@@ -1136,12 +1201,15 @@ export default function BookingFlow() {
         }
       });
       setCurrentStep(nextStep);
+      syncUrlToStep(nextStep);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+      const prevStep = currentStep - 1;
+      setCurrentStep(prevStep);
+      syncUrlToStep(prevStep);
     }
   };
 
@@ -1228,6 +1296,7 @@ export default function BookingFlow() {
       setConfirmedBookingId(newBooking.id);
       setConfirmedPaymentStep(paymentProtectionPreview?.next_step || 'full_payment');
       setShowSuccessModal(true);
+      clearDraft();
 
       // Trigger confetti
       const duration = 3 * 1000;
@@ -1270,6 +1339,7 @@ export default function BookingFlow() {
       setConfirmedBookingId(newBooking.id);
       setConfirmedPaymentStep('none');
       setShowSuccessModal(true);
+      clearDraft();
 
       const duration = 3 * 1000;
       const animationEnd = Date.now() + duration;
@@ -1324,7 +1394,7 @@ export default function BookingFlow() {
       }
       setGuestContactError('');
       if (guestBookingBlock.blocked) {
-        toast.error(guestBookingBlock.reason || 'Sign in required for this booking');
+        redirectToSignIn(isSpecificBarberBooking ? 2 : 3);
         return;
       }
       if (paymentMethod !== 'cash_at_store') {
@@ -2487,8 +2557,7 @@ export default function BookingFlow() {
                   (atHomeVisitForQuote &&
                     address.trim().length >= 8 &&
                     (travelQuoteLoading || travelQuoteFetching)) ||
-                  travelOutOfArea ||
-                  (isGuestCheckout && guestBookingBlock.blocked)
+                  travelOutOfArea
                 }
                 isGuestCheckout={isGuestCheckout}
                 guestContact={guestContact}
@@ -2496,7 +2565,7 @@ export default function BookingFlow() {
                 guestContactError={guestContactError}
                 guestBookingBlocked={guestBookingBlock.blocked}
                 guestBlockReason={guestBookingBlock.reason}
-                signInReturnPath={location.pathname + location.search}
+                getSignInHref={() => getSignInHref(isSpecificBarberBooking ? 2 : 3)}
                 cashAvailability={cashAvailability}
                 paymentProtectionPreview={paymentProtectionPreview}
                 paymentMethod={paymentMethod}

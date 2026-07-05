@@ -5,19 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import { PageLoading } from '@/components/ui/page-loading';
 
 import { createPageUrl } from '@/utils';
+import { resolvePostAuthDestination } from '@/lib/authReturn';
 
 
 
 function getPostAuthDestination() {
-
   const params = new URLSearchParams(window.location.search);
-
   const redirect = params.get('redirect') || params.get('return');
-
-  if (redirect?.startsWith('/')) return redirect;
-
-  return '/SetupGuide';
-
+  return resolvePostAuthDestination(redirect);
 }
 
 

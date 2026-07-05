@@ -6,11 +6,12 @@ import { User, Phone, Mail } from 'lucide-react';
 export default function GuestContactForm({
   contact,
   onChange,
-  signInReturnPath,
+  getSignInHref,
   error,
 }) {
-  const returnPath = signInReturnPath || (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/BookingFlow');
-  const signInUrl = `${createPageUrl('SignIn')}?return=${encodeURIComponent(returnPath)}`;
+  const signInUrl = getSignInHref?.() || `${createPageUrl('SignIn')}?return=${encodeURIComponent(
+    typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/BookingFlow',
+  )}`;
 
   return (
     <div className="stb-notice-warm rounded-lg border border-primary/30 p-6 mb-6 space-y-4">

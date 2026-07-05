@@ -2,16 +2,14 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useBooking } from '@/components/context/BookingContext';
-import { createPageUrl } from '@/utils';
+import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { getZoneFromPath, APP_ZONES } from '@/components/navigationConfig';
 
 /** Build SignIn URL with return path so user is sent back after login */
-function signInUrlWithReturn(currentPath) {
-  const base = createPageUrl('SignIn');
-  const returnPath = encodeURIComponent(currentPath || '/');
-  return `${base}?return=${returnPath}`;
+function buildSignInRedirect(currentPath) {
+  return signInUrlWithReturn(currentPath || '/');
 }
 
 /** Clerk session exists but backend user is not ready, never send to SignIn (Clerk would bounce back). */
@@ -62,7 +60,7 @@ export default function RouteGuard() {
     if (zone === APP_ZONES.CLIENT) {
       if (!user) {
         if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
-        navigate(signInUrlWithReturn(location.pathname + location.search), { replace: true });
+        navigate(buildSignInRedirect(location.pathname + location.search), { replace: true });
         return;
       }
     }
@@ -72,7 +70,7 @@ export default function RouteGuard() {
     if (zone === APP_ZONES.PROVIDER) {
       if (!user) {
         if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
-        navigate(signInUrlWithReturn(location.pathname), { replace: true });
+        navigate(buildSignInRedirect(location.pathname), { replace: true });
         return;
       }
       if (!isProviderRole) {
@@ -98,7 +96,7 @@ export default function RouteGuard() {
     if (zone === APP_ZONES.ADMIN) {
       if (!user) {
         if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
-        navigate(signInUrlWithReturn(location.pathname), { replace: true });
+        navigate(buildSignInRedirect(location.pathname), { replace: true });
         return;
       }
       if (role !== 'admin') {

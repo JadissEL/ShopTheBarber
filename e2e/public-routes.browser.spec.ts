@@ -59,4 +59,19 @@ test.describe('Public routes (mobile browser)', () => {
             timeout: 30_000,
         });
     });
+
+    test('barber profile reviews and about tabs show content', async ({ page }) => {
+        await page.goto(`/BarberProfile?id=${SEED.barber.nikos.id}`);
+        await expect(page.getByText(SEED.barber.nikos.name)).toBeVisible({ timeout: 30_000 });
+
+        await page.getByRole('tab', { name: /reviews/i }).click();
+        await expect(
+            page.getByText(/Client feedback|No reviews yet/i).first()
+        ).toBeVisible({ timeout: 15_000 });
+
+        await page.getByRole('tab', { name: /about/i }).click();
+        await expect(
+            page.getByText(/At a glance|Professional story|Member since/i).first()
+        ).toBeVisible({ timeout: 15_000 });
+    });
 });
