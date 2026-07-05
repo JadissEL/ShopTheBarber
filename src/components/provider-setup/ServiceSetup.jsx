@@ -150,9 +150,13 @@ export default function ServiceSetup({ shopId, onNext, onBack, context = 'shop',
             </div>
 
             <div className="flex justify-between pt-4">
-                <Button variant="ghost" onClick={onBack} className={t.ghostBtn}>
-                    Back
-                </Button>
+                {onBack ? (
+                    <Button variant="ghost" onClick={onBack} className={t.ghostBtn}>
+                        Back
+                    </Button>
+                ) : (
+                    <span />
+                )}
                 <Button onClick={handleContinue} className={t.primaryBtn} disabled={services.length === 0}>
                     Continue
                 </Button>

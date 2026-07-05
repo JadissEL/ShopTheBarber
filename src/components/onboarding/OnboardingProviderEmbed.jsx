@@ -14,7 +14,7 @@ import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { OnboardingProviderBootstrap } from '@/components/onboarding/OnboardingProviderBootstrap';
 import { invalidateOnboardingQueries } from '@/lib/bootstrapProvider';
 
-export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceReady }) {
+export function OnboardingProviderEmbed({ stepId, user, onAdvance, onBack, onWorkspaceReady }) {
   const queryClient = useQueryClient();
   const {
     barber,
@@ -25,18 +25,24 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
   } = useOnboardingProgress();
 
   const initiateStripeMutation = useMutation({
-    mutationFn: () => sovereign.functions.invoke('initiateStripeConnect', { userId: user?.id }),
+    mutationFn: () =>
+      sovereign.functions.invoke('initiateStripeConnect', {
+        userId: user?.id,
+        returnPath: '/SetupGuide?stripe=return',
+        refreshPath: '/SetupGuide?stripe=return',
+      }),
     onSuccess: (data) => {
       if (data.data?.url) {
-        const returnUrl = `${window.location.origin}/SetupGuide?stripe=return`;
-        window.location.href = data.data.url.includes('return_url')
-          ? data.data.url
-          : `${data.data.url}${data.data.url.includes('?') ? '&' : '?'}return_url=${encodeURIComponent(returnUrl)}`;
+        window.location.href = data.data.url;
       } else {
         toast.error('Could not start Stripe onboarding');
       }
     },
-    onError: () => toast.error('Stripe Connect failed, try from Settings Payments'),
+    onError: (err) => {
+      toast.error(
+        err instanceof Error ? err.message : 'Stripe Connect failed, try from Settings Payments'
+      );
+    },
   });
 
   const checkStripeMutation = useMutation({
@@ -45,6 +51,9 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
       invalidateOnboardingQueries(queryClient);
       toast.success('Stripe status updated');
       refresh();
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Could not refresh Stripe status');
     },
   });
 
@@ -77,6 +86,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
         <ProfileSetup
           shop={shop}
           variant="light"
+          onBack={onBack}
           onNext={() => {
             invalidateOnboardingQueries(queryClient);
             refresh();
@@ -101,7 +111,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
             refresh();
             onAdvance?.();
           }}
-          onBack={() => {}}
+          onBack={onBack}
         />
       </div>
     );
@@ -132,7 +142,7 @@ export function OnboardingProviderEmbed({ stepId, user, onAdvance, onWorkspaceRe
             refresh();
             onAdvance?.();
           }}
-          onBack={() => {}}
+          onBack={onBack}
         />
       </div>
     );

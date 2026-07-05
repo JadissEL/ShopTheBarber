@@ -4,6 +4,7 @@
 
 import { createPageUrl } from '@/utils';
 import { isFeatureEnabled } from '@/lib/featureRegistry';
+import { dashboardPageForRole } from '@/lib/userRole';
 
 /** @typedef {'client'|'barber'|'shop_owner'|'provider'|'admin'} OnboardingRole */
 
@@ -32,6 +33,7 @@ export function onboardingStorageKey(userId, role) {
 export function resetOnboarding(userId, role) {
   try {
     localStorage.removeItem(onboardingStorageKey(userId, role));
+    sessionStorage.removeItem(ONBOARDING_REDIRECT_ONCE_KEY);
   } catch {
     /* ignore */
   }
@@ -71,6 +73,23 @@ export function markOnboardingFinished(userId, role, lastStepId) {
   });
 }
 
+/** Prevent post-finish bounce back to SetupGuide when required steps are still open. */
+export function markOnboardingRedirectComplete() {
+  try {
+    sessionStorage.setItem(ONBOARDING_REDIRECT_ONCE_KEY, 'completed');
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isOnboardingRedirectComplete() {
+  try {
+    return sessionStorage.getItem(ONBOARDING_REDIRECT_ONCE_KEY) === 'completed';
+  } catch {
+    return false;
+  }
+}
+
 /** Mark a guide step visited (client/admin tours + resume) */
 export function markGuideStepVisited(userId, role, stepId) {
   const state = readOnboardingState(userId, role);
@@ -87,6 +106,9 @@ export function isPlaceholderAddress(value) {
 
 /** @param {OnboardingStep[]} steps */
 export function getResumeStepIndex(steps, completion, storageState) {
+  if (storageState?.finishedAt || storageState?.dismissed) {
+    return Math.max(0, steps.length - 1);
+  }
   if (storageState?.lastStepId) {
     const savedIdx = steps.findIndex((s) => s.id === storageState.lastStepId);
     if (savedIdx >= 0) return savedIdx;
@@ -442,10 +464,7 @@ export function shouldShowOnboardingPrompt(userId, role, progress) {
 }
 
 export function getDashboardPathForRole(role) {
-  const normalized = normalizeOnboardingRole(role);
-  if (normalized === 'admin') return createPageUrl('GlobalFinancials');
-  if (normalized === 'provider' || role === 'shop_owner') return createPageUrl('ProviderDashboard');
-  return createPageUrl('Dashboard');
+  return createPageUrl(dashboardPageForRole(role === 'provider' ? 'barber' : role));
 }
 
 export function getSetupGuidePath() {

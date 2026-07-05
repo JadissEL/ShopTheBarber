@@ -7,6 +7,7 @@ import {
   onboardingStorageKey,
   readOnboardingState,
   dismissOnboarding,
+  markOnboardingFinished,
   shouldShowOnboardingPrompt,
   resolveOnboardingRole,
   getInitialStepIndex,
@@ -108,6 +109,22 @@ describe('onboardingWizard', () => {
     expect(shouldShowOnboardingPrompt('u1', 'client', progress)).toBe(true);
     dismissOnboarding('u1', 'client');
     expect(shouldShowOnboardingPrompt('u1', 'client', progress)).toBe(false);
+  });
+
+  it('hides prompt when onboarding is marked finished', () => {
+    const steps = getOnboardingSteps('provider');
+    const completion = computeStepCompletion({
+      role: 'provider',
+      user: { id: 'p1' },
+      barber: { name: 'Alex', location: '1 Main' },
+      shop: { name: 'Shop', location: '1 Main' },
+      servicesCount: 0,
+      shiftsCount: 0,
+    });
+    const progress = getOnboardingProgress(steps, completion);
+    expect(shouldShowOnboardingPrompt('p1', 'provider', progress)).toBe(true);
+    markOnboardingFinished('p1', 'provider', 'dashboard');
+    expect(shouldShowOnboardingPrompt('p1', 'provider', progress)).toBe(false);
   });
 
   it('shows admin tour until finished', () => {

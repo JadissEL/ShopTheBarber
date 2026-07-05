@@ -11,7 +11,7 @@ import { shopSchema } from '@/components/schemas';
 import { Upload } from 'lucide-react';
 import { useProviderSetupTheme } from '@/components/provider-setup/providerSetupTheme';
 
-export default function ProfileSetup({ shop, onNext, variant = 'dark' }) {
+export default function ProfileSetup({ shop, onNext, onBack, variant = 'dark' }) {
   const t = useProviderSetupTheme(variant);
   const queryClient = useQueryClient();
   
@@ -115,7 +115,14 @@ export default function ProfileSetup({ shop, onNext, variant = 'dark' }) {
                   </div>
               </div>
 
-              <div className="pt-4">
+              <div className="flex justify-between pt-4">
+                  {onBack ? (
+                      <Button type="button" variant="ghost" onClick={onBack} className={t.ghostBtn}>
+                          Back
+                      </Button>
+                  ) : (
+                      <span />
+                  )}
                   <Button type="submit" disabled={updateShopMutation.isPending} className={t.saveBtn}>
                       {updateShopMutation.isPending ? 'Saving...' : 'Save & Continue'}
                   </Button>

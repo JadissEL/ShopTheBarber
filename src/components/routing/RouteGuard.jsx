@@ -6,6 +6,8 @@ import { createPageUrl, signInUrlWithReturn } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { getZoneFromPath, APP_ZONES } from '@/components/navigationConfig';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
+import { getProviderIntent } from '@/lib/bootstrapProvider';
 
 /** Build SignIn URL with return path so user is sent back after login */
 function buildSignInRedirect(currentPath) {
@@ -28,7 +30,8 @@ const EMPLOYER_PATHS = ['/createjob', '/myjobs', '/applicantreview', '/schedulei
 export default function RouteGuard() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
+  const { user, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
+  const { effectiveRole, isProvider, isLoading: roleLoading, workspace } = useEffectiveRole();
   const { bookingState } = useBooking();
   const path = location.pathname.toLowerCase();
   const zone = getZoneFromPath(path);
@@ -45,7 +48,11 @@ export default function RouteGuard() {
   });
 
   useEffect(() => {
-    if (isLoadingAuth || isManagerLoading) return; // Wait for Clerk + backend sync and manager check
+    if (isLoadingAuth || isManagerLoading || roleLoading) return; // Wait for Clerk + backend sync and manager check
+
+    const isProviderRole = isProvider;
+    const providerIntent = getProviderIntent();
+    const hasProviderWorkspace = Boolean(workspace?.barber || workspace?.ownerMembership);
 
     // 1. Booking Flow Protection
     if (path.includes('/payment') || path.includes('/bookingconfirm')) {
@@ -65,8 +72,7 @@ export default function RouteGuard() {
       }
     }
 
-    // 3. PROVIDER ZONE: Require auth + provider role
-    const isProviderRole = ['provider', 'barber', 'shop_owner', 'admin'].includes(role);
+    // 3. PROVIDER ZONE: Require auth + provider role (or active provider workspace)
     if (zone === APP_ZONES.PROVIDER) {
       if (!user) {
         if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
@@ -74,6 +80,10 @@ export default function RouteGuard() {
         return;
       }
       if (!isProviderRole) {
+        if (providerIntent && !hasProviderWorkspace) {
+          navigate(createPageUrl('SetupGuide'), { replace: true });
+          return;
+        }
         navigate(createPageUrl('Dashboard'), { replace: true });
         return;
       }
@@ -99,7 +109,7 @@ export default function RouteGuard() {
         navigate(buildSignInRedirect(location.pathname), { replace: true });
         return;
       }
-      if (role !== 'admin') {
+      if (effectiveRole !== 'admin') {
         navigate(createPageUrl('Home'), { replace: true });
       }
     }
@@ -110,11 +120,16 @@ export default function RouteGuard() {
       navigate(createPageUrl('CareerHub'), { replace: true });
     }
 
-    // 6. Smart dashboard redirection: provider role lands on ProviderDashboard from /dashboard
-    if (path === '/dashboard' && isProviderRole && role !== 'admin') {
+    // 6. Providers must not land on the client dashboard
+    if (path === '/dashboard' && isProviderRole && effectiveRole !== 'admin') {
         navigate(createPageUrl('ProviderDashboard'), { replace: true });
     }
-  }, [location, user, role, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
+
+    // 7. Clients without provider workspace should not stay on provider dashboard
+    if (path === '/providerdashboard' && user && !isProviderRole && !providerIntent && !hasProviderWorkspace) {
+        navigate(createPageUrl('Dashboard'), { replace: true });
+    }
+  }, [location, user, effectiveRole, isProvider, roleLoading, workspace, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
 
   return null;
 }

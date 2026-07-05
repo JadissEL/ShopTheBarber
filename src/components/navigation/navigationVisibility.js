@@ -138,6 +138,7 @@ export function getNavigationVisibility({ pathname, isAuthenticated, role, zone:
 
         case 'barber':
         case 'shop_owner':
+        case 'provider':
             visibility[NAV_ITEMS.DASHBOARD] = path !== '/providerdashboard';
             visibility[NAV_ITEMS.BOOKINGS] = !path.includes('bookings');
             visibility[NAV_ITEMS.SETTINGS] = !path.includes('settings');

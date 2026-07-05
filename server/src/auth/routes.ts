@@ -5,6 +5,7 @@
 import { type FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from './requestUser';
+import { resolveAndSyncUserRole } from './resolveUserRole';
 
 export async function authRoutes(fastify: FastifyInstance) {
     // ME (Profile), resolves the Clerk-backed user
@@ -17,8 +18,10 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (!user) {
             return reply.status(401).send({ error: 'User not found' });
         }
+        const role = await resolveAndSyncUserRole(user.id, user.role);
         return {
             ...user,
+            role,
             phone: user.phone,
             sms_reminders_enabled: user.sms_reminders_enabled !== false,
             email_reminders_enabled: user.email_reminders_enabled !== false,

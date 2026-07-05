@@ -18,6 +18,7 @@ import { WishlistProvider } from '@/components/wishlist/WishlistContext';
 import RouteGuard from '@/components/routing/RouteGuard';
 import FeatureGuard from '@/components/routing/FeatureGuard';
 import OnboardingRedirect from '@/components/routing/OnboardingRedirect';
+import ProviderSignupBootstrap from '@/components/onboarding/ProviderSignupBootstrap';
 import { SkipLink } from '@/components/ui/SkipLink';
 import ErrorBoundary from '@/components/ui/error-boundary';
 import RealTimeNotifications from '@/components/notifications/RealTimeNotifications';
@@ -42,6 +43,7 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
           <RouteGuard />
           <FeatureGuard />
           <OnboardingRedirect />
+          <ProviderSignupBootstrap />
           <ThemeProvider
             attribute="class"
             forcedTheme="light"

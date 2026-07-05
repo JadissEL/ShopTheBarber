@@ -110,9 +110,13 @@ export default function AvailabilitySetup({ shopId, onNext, onBack, variant = 'd
             </div>
 
             <div className="flex justify-between pt-4">
-                <Button variant="ghost" onClick={onBack} className={t.ghostBtn}>
-                    Back
-                </Button>
+                {onBack ? (
+                    <Button variant="ghost" onClick={onBack} className={t.ghostBtn}>
+                        Back
+                    </Button>
+                ) : (
+                    <span />
+                )}
                 <Button onClick={() => updateScheduleMutation.mutate(schedule)} disabled={updateScheduleMutation.isPending} className={t.primaryBtn}>
                     {updateScheduleMutation.isPending ? 'Saving...' : 'Continue'}
                 </Button>

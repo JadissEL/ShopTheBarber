@@ -10,6 +10,8 @@ import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/layout/PageHeader';
 import { stb } from '@/lib/stbUi';
+import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
+import { getDashboardPathForRole } from '@/lib/onboardingWizard';
 
 const SETUP_LOADING_TIMEOUT_MS = 15_000;
 
@@ -62,6 +64,7 @@ export default function SetupGuide() {
   } = useAuth();
   const navigate = useNavigate();
   const [timedOut, setTimedOut] = useState(false);
+  const { role, storageState, isLoading: onboardingLoading } = useOnboardingProgress();
 
   const stillSyncing =
     isSignedIn && syncStatus !== 'ready' && syncStatus !== 'error';
@@ -85,6 +88,23 @@ export default function SetupGuide() {
       });
     }
   }, [isLoading, isLoadingAuth, isSignedIn, navigate]);
+
+  useEffect(() => {
+    if (isLoading || isLoadingAuth || onboardingLoading) return;
+    if (!isSignedIn) return;
+    if (storageState.finishedAt || storageState.dismissed) {
+      navigate(getDashboardPathForRole(role), { replace: true });
+    }
+  }, [
+    isLoading,
+    isLoadingAuth,
+    onboardingLoading,
+    isSignedIn,
+    storageState.finishedAt,
+    storageState.dismissed,
+    role,
+    navigate,
+  ]);
 
   if ((isLoading || isLoadingAuth) && !isSignedIn) {
     return <PageLoading message="Loading guide..." />;

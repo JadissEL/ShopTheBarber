@@ -14,7 +14,20 @@ function frontendBaseUrl(): string {
     return (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
 }
 
-export async function initiateStripeConnectForUser(userId: string) {
+/** Allow only same-site relative paths for Connect redirect targets. */
+function sanitizeConnectPath(path: string | undefined, fallback: string): string {
+    if (!path || typeof path !== 'string') return fallback;
+    const trimmed = path.trim();
+    if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.includes('://')) {
+        return fallback;
+    }
+    return trimmed;
+}
+
+export async function initiateStripeConnectForUser(
+    userId: string,
+    options?: { returnPath?: string; refreshPath?: string }
+) {
     const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
@@ -43,10 +56,18 @@ export async function initiateStripeConnectForUser(userId: string) {
     }
 
     const base = frontendBaseUrl();
+    const returnPath = sanitizeConnectPath(
+        options?.returnPath,
+        '/ProviderSettings?tab=payments&connect=success'
+    );
+    const refreshPath = sanitizeConnectPath(
+        options?.refreshPath,
+        '/ProviderSettings?tab=payments&connect=refresh'
+    );
     const accountLink = await stripe.accountLinks.create({
         account: accountId,
-        refresh_url: `${base}/ProviderSettings?tab=payments&connect=refresh`,
-        return_url: `${base}/ProviderSettings?tab=payments&connect=success`,
+        refresh_url: `${base}${refreshPath}`,
+        return_url: `${base}${returnPath}`,
         type: 'account_onboarding',
     });
 

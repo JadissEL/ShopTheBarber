@@ -336,7 +336,7 @@ export const sovereign = {
 
     functions: {
         invoke: async (name, payload) => {
-            const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+            const headers = { ...(await resolveAuthHeaders()), 'Content-Type': 'application/json' };
             const res = await fetch(`${BASE_URL}/functions/${name}`, {
                 method: 'POST',
                 headers,

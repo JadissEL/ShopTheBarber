@@ -16,6 +16,7 @@ import { createPageUrl } from '@/utils';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { getZoneFromPath, APP_ZONES } from '@/components/navigationConfig';
 import { useAuth } from '@/lib/AuthContext';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import {
   getNavigationVisibility,
@@ -36,7 +37,9 @@ import { cn } from '@/lib/utils';
 export default function GlobalNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { effectiveRole } = useEffectiveRole();
+  const role = effectiveRole;
   const path = location.pathname.toLowerCase();
   const zone = getZoneFromPath(path);
   const isDesktop = useIsDesktop();

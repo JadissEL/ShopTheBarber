@@ -4,8 +4,9 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { sovereign } from '@/api/apiClient';
 import { getAnalyticsSessionId } from '@/lib/analyticsSession';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import SearchField from '@/components/ui/search-field';
-import { MapPin, Bell, Menu, Calendar, Award, DollarSign, UserCheck, Check, MessageSquare } from 'lucide-react';
+import { MapPin, Bell, Menu, Calendar, Award } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { stb } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { isProvider, isLoading: roleLoading } = useEffectiveRole();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,6 +50,11 @@ export default function Dashboard() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const { data: user, isFetching: isUserFetching } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
+
+  useEffect(() => {
+    if (roleLoading || !isProvider) return;
+    navigate(createPageUrl('ProviderDashboard'), { replace: true });
+  }, [roleLoading, isProvider, navigate]);
 
   useEffect(() => {
     const status = searchParams.get('status');

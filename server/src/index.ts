@@ -660,11 +660,15 @@ fastify.post('/api/functions/checkStripeConnectStatus', { preHandler: [requireAu
 // 6. Initiate Stripe Connect (auth + self only)
 fastify.post('/api/functions/initiateStripeConnect', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
     const currentUser = request.user as { id: string };
-    const { userId } = request.body as { userId?: string };
+    const { userId, returnPath, refreshPath } = request.body as {
+        userId?: string;
+        returnPath?: string;
+        refreshPath?: string;
+    };
     const uid = userId ?? currentUser.id;
     if (uid !== currentUser.id) return reply.status(403).send({ error: 'Forbidden' });
     try {
-        const data = await initiateStripeConnectForUser(uid);
+        const data = await initiateStripeConnectForUser(uid, { returnPath, refreshPath });
         return { data };
     } catch (err: unknown) {
         fastify.log.error(err);

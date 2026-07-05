@@ -30,13 +30,16 @@ import {
   readOnboardingState,
   persistOnboardingStep,
   canAdvanceFromStep,
-  clearOnboardingRedirectSession,
+  markOnboardingRedirectComplete,
 } from '@/lib/onboardingWizard';
 import { OnboardingProviderEmbed } from '@/components/onboarding/OnboardingProviderEmbed';
 import { OnboardingClientEmbed } from '@/components/onboarding/OnboardingClientEmbed';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import { toast } from 'sonner';
+
+/** Embed steps ship their own save/back/continue controls — hide wizard footer to avoid duplicates. */
+const EMBED_STEPS_WITH_OWN_NAV = new Set(['profile', 'services', 'availability']);
 
 /**
  * @param {{ mode?: 'page' | 'dialog', onClose?: () => void, initialStep?: number }} props
@@ -134,7 +137,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
     setStepIndex(Math.min(Math.max(0, idx), steps.length - 1));
   };
 
-  const goNext = () => {
+  const goNext = async () => {
     if (!step) return;
 
     if (step.required && !stepComplete && step.embed) {
@@ -148,8 +151,9 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
     if (isLast) {
       if (user?.id) markOnboardingFinished(user.id, role, step.id);
       trackStep('onboarding_finished', step.id);
-      clearOnboardingRedirectSession();
-      if (mode === 'page') navigate(getDashboardPathForRole(role));
+      markOnboardingRedirectComplete();
+      await refreshUser?.();
+      if (mode === 'page') navigate(getDashboardPathForRole(role), { replace: true });
       else onClose?.();
       return;
     }
@@ -161,8 +165,8 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
   const handleSkip = () => {
     trackStep('onboarding_skipped', step?.id);
     if (user?.id) dismissOnboarding(user.id, role);
-    clearOnboardingRedirectSession();
-    if (mode === 'page') navigate(getDashboardPathForRole(role));
+    markOnboardingRedirectComplete();
+    if (mode === 'page') navigate(getDashboardPathForRole(role), { replace: true });
     else onClose?.();
   };
 
@@ -332,6 +336,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                   stepId={step.id}
                   user={user}
                   onAdvance={goNext}
+                  onBack={goBack}
                   onWorkspaceReady={() => {
                     refresh();
                     refreshUser?.();
@@ -339,6 +344,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                 />
               )}
 
+              {!(step.embed && EMBED_STEPS_WITH_OWN_NAV.has(step.id)) && (
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                 <div className="flex gap-2">
                   {!isFirst && (
@@ -360,6 +366,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                   {!isLast && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -133,15 +133,9 @@ export function useOnboardingProgress() {
     [role, completion],
   );
 
-  const storageState = useMemo(
-    () => readOnboardingState(user?.id, role),
-    [user?.id, role, progress.percent],
-  );
+  const storageState = user?.id ? readOnboardingState(user.id, role) : { dismissed: false };
 
-  const showPrompt = useMemo(
-    () => shouldShowOnboardingPrompt(user?.id, role, progress),
-    [user?.id, role, progress],
-  );
+  const showPrompt = user?.id ? shouldShowOnboardingPrompt(user.id, role, progress) : false;
 
   const needsProviderBootstrap =
     isProviderFlow && !!user?.id && !barber && !shopMembership && !shopId;
