@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useBooking } from '@/components/context/BookingContext';
+import { useAuth } from '@/lib/AuthContext';
 import { sendNotification } from '@/components/notifications/notificationUtils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
@@ -55,6 +56,7 @@ export default function BookingFlow() {
   const navigate = useNavigate();
   const location = useLocation();
   const { bookingState, updateBooking } = useBooking();
+  const { user: authUser, isAuthenticated, isSignedIn, isLoadingAuth, refreshUser } = useAuth();
 
   const searchParams = new URLSearchParams(location.search);
   const urlBarberId = searchParams.get('barberId') || searchParams.get('barber');
@@ -264,11 +266,8 @@ export default function BookingFlow() {
     enabled: true // Always enabled to support generic browsing
   });
 
-  // Core Integrity: User must be authenticated
-  const { data: currentUser } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => sovereign.auth.me().catch(() => null)
-  });
+  // Core Integrity: User must be authenticated for card/online bookings
+  const currentUser = authUser;
 
   // GUARD: Context Resolution
   const [isContextValidating, setIsContextValidating] = useState(false);
@@ -900,12 +899,12 @@ export default function BookingFlow() {
     enabled: !!activeBarberId && isSpecificBarberBooking && grandTotal > 0,
   });
 
-  const isGuestCheckout = !currentUser?.id;
+  const isGuestCheckout = !isAuthenticated;
   const guestBookingBlock = isGuestBookingBlocked(
     paymentProtectionPreview,
     cashAvailability,
     paymentMethod,
-    !!currentUser?.id
+    isAuthenticated
   );
 
   useEffect(() => {
@@ -1313,6 +1312,11 @@ export default function BookingFlow() {
     },
     onError: (error) => {
       const msg = error?.message || 'Failed to create booking';
+      if (/unauthorized|auth token|sign in/i.test(msg)) {
+        toast.error('Your session expired. Sign in again to confirm.');
+        redirectToSignIn(isSpecificBarberBooking ? 2 : 3);
+        return;
+      }
       if (/taken|unavailable|chair|slot is/i.test(msg)) {
         setWaitlistDialogOpen(true);
         toast.error('This time slot is no longer available');
@@ -1378,12 +1382,29 @@ export default function BookingFlow() {
     }
   });
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     if (!selectedDate || !selectedTime) return;
 
     // --- PHASE 2: WRITE-TIME INVARIANT ENFORCEMENT ---
 
-    const bookingAsGuest = !currentUser?.id;
+    const bookingAsGuest = !isAuthenticated;
+    let authenticatedClient = authUser;
+
+    if (!bookingAsGuest && isSignedIn && isLoadingAuth) {
+      toast.message('Connecting your account…', { description: 'One moment, then try again.' });
+      authenticatedClient = await refreshUser();
+      if (!authenticatedClient?.id) return;
+    }
+
+    if (!bookingAsGuest) {
+      const freshUser = await refreshUser();
+      if (!freshUser?.id) {
+        toast.error('Please sign in to confirm your booking');
+        redirectToSignIn(isSpecificBarberBooking ? 2 : 3);
+        return;
+      }
+      authenticatedClient = freshUser;
+    }
 
     if (bookingAsGuest) {
       const contactErr = validateGuestContact(guestContact);
@@ -1612,7 +1633,7 @@ export default function BookingFlow() {
 
     createBookingMutation.mutate({
       ...bookingPayload,
-      client_id: currentUser.id,
+      client_id: authenticatedClient.id,
     });
   };
 

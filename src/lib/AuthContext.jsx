@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/react';
-import { sovereign } from '@/api/apiClient';
+import { sovereign, registerClerkGetToken } from '@/api/apiClient';
 import { toast } from 'sonner';
 import { claimPendingGuestBookings } from '@/lib/guestBooking';
 import { createPageUrl } from '@/utils';
@@ -171,6 +171,10 @@ export const AuthProvider = ({ children }) => {
       syncInFlight.current = false;
     }
   }, [sessionLoaded, userLoaded, isSignedIn, clerkUser?.id, getToken]);
+
+  useEffect(() => {
+    registerClerkGetToken(() => getToken());
+  }, [getToken]);
 
   useEffect(() => {
     void runBackendSync();

@@ -125,7 +125,7 @@ class EntityClient {
     }
 
     async filter(criteria, order, limit, offset) {
-        const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+        const headers = { ...(await resolveAuthHeaders()), 'Content-Type': 'application/json' };
         const payload = {
             query: criteria && typeof criteria === 'object' ? criteria : {},
             order: order || undefined,
@@ -160,7 +160,7 @@ class EntityClient {
     }
 
     async create(data) {
-        const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+        const headers = { ...(await resolveAuthHeaders()), 'Content-Type': 'application/json' };
         const res = await fetch(`${BASE_URL}/${this.resource}`, {
             method: 'POST',
             headers,
@@ -177,7 +177,7 @@ class EntityClient {
     }
 
     async update(id, data) {
-        const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+        const headers = { ...(await resolveAuthHeaders()), 'Content-Type': 'application/json' };
         const res = await fetch(`${BASE_URL}/${this.resource}/${id}`, {
             method: 'PATCH',
             headers,
@@ -188,7 +188,7 @@ class EntityClient {
     }
 
     async delete(id) {
-        const headers = getAuthHeaders();
+        const headers = await resolveAuthHeaders();
         const res = await fetch(`${BASE_URL}/${this.resource}/${id}`, {
             method: 'DELETE',
             headers
@@ -202,12 +202,35 @@ class EntityClient {
 
 const AUTH_ME_TIMEOUT_MS = 15_000;
 
+/** Registered by AuthProvider — fetches a fresh Clerk JWT before API calls. */
+let clerkGetTokenFn = null;
+
+export function registerClerkGetToken(fn) {
+    clerkGetTokenFn = fn;
+}
+
 function getAuthHeaders() {
     // Check for Clerk token first, fallback to legacy sovereign token
     const clerkToken = localStorage.getItem('clerk_token');
     const sovereignToken = localStorage.getItem('sovereign_token');
     const token = clerkToken || sovereignToken;
     return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+/** Prefer a fresh Clerk token; fall back to cached localStorage token. */
+async function resolveAuthHeaders() {
+    if (clerkGetTokenFn) {
+        try {
+            const token = await clerkGetTokenFn();
+            if (token) {
+                localStorage.setItem('clerk_token', token);
+                return { Authorization: `Bearer ${token}` };
+            }
+        } catch (err) {
+            console.warn('Could not refresh Clerk token:', err);
+        }
+    }
+    return getAuthHeaders();
 }
 
 export const sovereign = {
@@ -223,7 +246,7 @@ export const sovereign = {
     auth: {
         /** Full auth/me result for sync flows (includes server hints on misconfiguration). */
         meResult: async () => {
-            const headers = getAuthHeaders();
+            const headers = await resolveAuthHeaders();
             if (!headers.Authorization) {
                 return { user: null, error: null };
             }
