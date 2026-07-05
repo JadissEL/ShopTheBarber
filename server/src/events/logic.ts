@@ -5,9 +5,9 @@ import {
     EVENT_FORMATS,
     EVENT_STATUSES,
     EVENT_TYPES,
-    PROVIDER_ROLES,
     type EventStatus,
 } from './config';
+import { isProviderRole } from '../auth/platformRbac';
 
 export type AuthUser = { id: string; role?: string | null; full_name?: string | null; email?: string | null };
 
@@ -15,9 +15,6 @@ function nowIso(): string {
     return new Date().toISOString();
 }
 
-export function isProviderRole(role?: string | null): boolean {
-    return !!role && PROVIDER_ROLES.has(role);
-}
 
 export function roleMatchesAudience(role: string | null | undefined, audience: string | null | undefined): boolean {
     const aud = audience ?? 'all_providers';

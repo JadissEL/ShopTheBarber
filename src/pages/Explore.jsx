@@ -10,13 +10,12 @@ import ExploreBarberGrid from '@/components/explore/ExploreBarberGrid';
 import ExploreActiveFilters from '@/components/explore/ExploreActiveFilters';
 import ExploreFeaturedSpotlight from '@/components/explore/ExploreFeaturedSpotlight';
 import ExploreChampionshipLink from '@/components/explore/ExploreChampionshipLink';
-import { parseSpokenLanguages, effectiveBarberLanguages, matchesLanguageFilter, FALLBACK_LANGUAGE_OPTIONS } from '@/lib/languages';
-import { parseChildrenFriendly, effectiveChildrenFriendly, matchesChildrenFriendlyFilter } from '@/lib/childrenFriendly';
-import { parseAttestationFlag, effectiveLicensed, effectiveInsured } from '@/lib/providerAttestation';
-import { matchesMobileServiceFilter, matchesShopServiceFilter } from '@/lib/mobileService';
+import { parseSpokenLanguages, FALLBACK_LANGUAGE_OPTIONS } from '@/lib/languages';
+import { parseChildrenFriendly } from '@/lib/childrenFriendly';
+import { parseAttestationFlag } from '@/lib/providerAttestation';
 import { resolveExploreMode, EXPLORE_PAGE_CONFIG } from '@/lib/explorePageConfig';
-import { sortExploreBarbers, buildBarberMinPriceMap } from '@/lib/exploreSort';
-import { barberDistanceKm } from '@/lib/geo';
+import { sortExploreBarbers } from '@/lib/exploreSort';
+import { enrichExploreBarber } from '@/lib/exploreBarberFilter';
 import { usePreferredLocation } from '@/hooks/usePreferredLocation';
 import { useExploreFilters } from '@/hooks/useExploreFilters';
 import { useBarberFavorites } from '@/hooks/useBarberFavorites';
@@ -73,18 +72,40 @@ export default function Explore() {
     }
   }, [pageConfig.lockProfessionals, exploreMode, setViewType]);
 
+  const exploreSearchParams = React.useMemo(
+    () => ({
+      q: searchTerm.trim() || undefined,
+      city: cityFilter.trim() || undefined,
+      service: activeFilter !== 'All' ? activeFilter : undefined,
+      language: languageFilter || undefined,
+      kids: kidsWelcomeOnly || undefined,
+      mobile: mobileOnly || undefined,
+      shop: shopOnly || undefined,
+      group: groupOnly || undefined,
+      highlight: highlightFilter || undefined,
+    }),
+    [
+      searchTerm,
+      cityFilter,
+      activeFilter,
+      languageFilter,
+      kidsWelcomeOnly,
+      mobileOnly,
+      shopOnly,
+      groupOnly,
+      highlightFilter,
+    ]
+  );
+
   const {
-    data: rawBarbers,
+    data: exploreResult,
     isFetching: barbersFetching,
     isError: barbersError,
     error: barbersErr,
     refetch: refetchBarbers,
   } = useQuery({
-    queryKey: ['explore-barbers'],
-    queryFn: async () => {
-      const list = await sovereign.entities.Barber.list();
-      return Array.isArray(list) ? list : [];
-    },
+    queryKey: ['explore-barbers', exploreSearchParams],
+    queryFn: () => sovereign.explore.searchBarbers(exploreSearchParams),
     staleTime: 1000 * 60 * 2,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
@@ -92,37 +113,49 @@ export default function Explore() {
     refetchOnWindowFocus: true,
   });
 
+  const normalizeExploreBarber = React.useCallback((b) => {
+    const shop = b.shop ?? null;
+    return {
+      id: b.id,
+      name: b.name || 'Unknown',
+      location: b.location,
+      city: b.city,
+      image_url: b.image_url,
+      rating: b.rating ?? 0,
+      review_count: b.review_count ?? 0,
+      title: b.title,
+      shop_id: b.shop_id ?? shop?.id,
+      services: b.services || [],
+      auto_accept: b.auto_accept,
+      type: b.type,
+      offers_mobile_service: b.offers_mobile_service === true,
+      offers_shop_service: b.offers_shop_service !== false,
+      offers_group_booking: b.offers_group_booking === true,
+      group_booking_discount_percent: b.group_booking_discount_percent ?? 0,
+      is_vip: b.is_vip === true,
+      spoken_languages: parseSpokenLanguages(b.spoken_languages),
+      children_friendly: parseChildrenFriendly(b.children_friendly),
+      attestation_licensed: parseAttestationFlag(b.attestation_licensed ?? shop?.attestation_licensed),
+      attestation_insured: parseAttestationFlag(b.attestation_insured ?? shop?.attestation_insured),
+      latitude: b.latitude,
+      longitude: b.longitude,
+      min_price: b.min_price ?? null,
+    };
+  }, []);
+
   const barbers = React.useMemo(() => {
-    const list = Array.isArray(rawBarbers) ? rawBarbers : [];
-    return list.map((b) => {
-      const data = b.data || {};
-      return {
-        id: b.id,
-        name: data.name || b.name || 'Unknown',
-        location: data.location || b.location,
-        city: data.city || b.city,
-        image_url: data.image_url || b.image_url,
-        rating: data.rating ?? b.rating ?? 0,
-        review_count: data.review_count ?? b.review_count ?? 0,
-        title: data.title || b.title,
-        shop_id: b.shop_id ?? data.shop_id,
-        services: data.services || b.services,
-        auto_accept: data.auto_accept || b.auto_accept,
-        type: data.type || b.type,
-        offers_mobile_service: data.offers_mobile_service === true || b.offers_mobile_service === true,
-        offers_shop_service: data.offers_shop_service ?? b.offers_shop_service,
-        offers_group_booking: data.offers_group_booking === true || b.offers_group_booking === true,
-        group_booking_discount_percent: data.group_booking_discount_percent ?? b.group_booking_discount_percent ?? 0,
-        is_vip: data.is_vip === true || b.is_vip === true,
-        spoken_languages: parseSpokenLanguages(data.spoken_languages ?? b.spoken_languages),
-        children_friendly: parseChildrenFriendly(data.children_friendly ?? b.children_friendly),
-        attestation_licensed: parseAttestationFlag(data.attestation_licensed ?? b.attestation_licensed),
-        attestation_insured: parseAttestationFlag(data.attestation_insured ?? b.attestation_insured),
-        latitude: data.latitude ?? b.latitude,
-        longitude: data.longitude ?? b.longitude,
-      };
-    });
-  }, [rawBarbers]);
+    const list = exploreResult?.barbers ?? [];
+    return list.map(normalizeExploreBarber);
+  }, [exploreResult, normalizeExploreBarber]);
+
+  const exploreFallback = React.useMemo(() => {
+    const fb = exploreResult?.fallback;
+    if (!fb?.barbers?.length) return null;
+    return {
+      ...fb,
+      barbers: fb.barbers.map(normalizeExploreBarber),
+    };
+  }, [exploreResult, normalizeExploreBarber]);
 
   const barberIds = React.useMemo(() => barbers.map((b) => b.id).filter(Boolean), [barbers]);
 
@@ -153,12 +186,24 @@ export default function Explore() {
     [barbers, statsMap, discoveryPreviews]
   );
 
-  const { data: rawShops, isError: shopsError, isFetching: shopsFetching, refetch: refetchShops } = useQuery({
-    queryKey: ['explore-shops'],
-    queryFn: async () => {
-      const list = await sovereign.entities.Shop.list();
-      return Array.isArray(list) ? list : [];
-    },
+  const exploreShopSearchParams = React.useMemo(
+    () => ({
+      q: searchTerm.trim() || undefined,
+      city: cityFilter.trim() || undefined,
+      language: languageFilter || undefined,
+      kids: kidsWelcomeOnly || undefined,
+    }),
+    [searchTerm, cityFilter, languageFilter, kidsWelcomeOnly]
+  );
+
+  const {
+    data: exploreShopResult,
+    isError: shopsError,
+    isFetching: shopsFetching,
+    refetch: refetchShops,
+  } = useQuery({
+    queryKey: ['explore-shops', exploreShopSearchParams],
+    queryFn: () => sovereign.explore.searchShops(exploreShopSearchParams),
     staleTime: 1000 * 60 * 2,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
@@ -166,74 +211,46 @@ export default function Explore() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: servicesList = [] } = useQuery({
-    queryKey: ['explore-services'],
-    queryFn: async () => {
-      try {
-        const list = await sovereign.entities.Service.list();
-        return Array.isArray(list) ? list : [];
-      } catch {
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
+  const normalizeExploreShop = React.useCallback(
+    (s) => ({
+      id: s.id,
+      name: s.name,
+      location: s.location,
+      description: s.description,
+      image_url: s.image_url,
+      rating: s.rating ?? 0,
+      review_count: s.review_count ?? 0,
+      spoken_languages: parseSpokenLanguages(s.spoken_languages),
+      children_friendly: parseChildrenFriendly(s.children_friendly),
+      attestation_licensed: parseAttestationFlag(s.attestation_licensed),
+      attestation_insured: parseAttestationFlag(s.attestation_insured),
+    }),
+    []
+  );
 
   const shops = React.useMemo(() => {
-    const list = Array.isArray(rawShops) ? rawShops : [];
-    return list.map((s) => ({
-      ...s,
-      ...(s.data || {}),
-      id: s.id,
-      spoken_languages: parseSpokenLanguages(s.spoken_languages ?? s.data?.spoken_languages),
-      children_friendly: parseChildrenFriendly(s.children_friendly ?? s.data?.children_friendly),
-      attestation_licensed: parseAttestationFlag(s.attestation_licensed ?? s.data?.attestation_licensed),
-      attestation_insured: parseAttestationFlag(s.attestation_insured ?? s.data?.attestation_insured),
-    }));
-  }, [rawShops]);
+    const list = exploreShopResult?.shops ?? [];
+    return list.map(normalizeExploreShop);
+  }, [exploreShopResult, normalizeExploreShop]);
 
   const shopById = React.useMemo(() => {
     const map = {};
     for (const s of shops) {
-      map[s.id] = {
-        ...s,
-        spoken_languages: parseSpokenLanguages(s.spoken_languages),
-        children_friendly: parseChildrenFriendly(s.children_friendly),
-        attestation_licensed: parseAttestationFlag(s.attestation_licensed),
-        attestation_insured: parseAttestationFlag(s.attestation_insured),
+      map[s.id] = s;
+    }
+    for (const raw of exploreResult?.barbers ?? []) {
+      if (!raw.shop?.id || map[raw.shop.id]) continue;
+      map[raw.shop.id] = {
+        id: raw.shop.id,
+        name: raw.shop.name,
+        spoken_languages: parseSpokenLanguages(raw.shop.spoken_languages),
+        children_friendly: parseChildrenFriendly(raw.shop.children_friendly),
+        attestation_licensed: parseAttestationFlag(raw.shop.attestation_licensed),
+        attestation_insured: parseAttestationFlag(raw.shop.attestation_insured),
       };
     }
     return map;
-  }, [shops]);
-
-  const shopIdsByService = React.useMemo(() => {
-    const map = {};
-    const list = Array.isArray(servicesList) ? servicesList : [];
-    const tags = ['hair', 'haircut', 'beard', 'beard trim', 'shave', 'styling', 'facial'];
-    for (const svc of list) {
-      const cat = (svc.category || '').toLowerCase();
-      const name = (svc.name || '').toLowerCase();
-      const shopId = svc.shop_id;
-      if (!shopId) continue;
-      for (const tag of tags) {
-        if (cat.includes(tag) || name.includes(tag)) {
-          const key = tag.replace(/\s+/g, '');
-          if (!map[key]) map[key] = new Set();
-          map[key].add(shopId);
-        }
-      }
-      if (cat.includes('hair') || name.includes('hair')) {
-        if (!map.haircut) map.haircut = new Set();
-        map.haircut.add(shopId);
-      }
-      if (cat.includes('beard') || name.includes('beard')) {
-        if (!map.beardtrim) map.beardtrim = new Set();
-        map.beardtrim.add(shopId);
-      }
-    }
-    return map;
-  }, [servicesList]);
+  }, [shops, exploreResult]);
 
   const { data: promotions = { shop_ids: [], has_platform_promos: false } } = useQuery({
     queryKey: ['active-promotions'],
@@ -247,10 +264,13 @@ export default function Explore() {
     retry: false,
   });
 
-  const minPriceByBarber = React.useMemo(
-    () => buildBarberMinPriceMap(Array.isArray(servicesList) ? servicesList : [], barbers),
-    [servicesList, barbers]
-  );
+  const minPriceByBarber = React.useMemo(() => {
+    const map = {};
+    for (const barber of barbers) {
+      if (barber.min_price != null) map[barber.id] = barber.min_price;
+    }
+    return map;
+  }, [barbers]);
 
   const prefetchBarber = (id) => {
     queryClient.prefetchQuery({
@@ -260,140 +280,17 @@ export default function Explore() {
     });
   };
 
-  const filteredBarbers = React.useMemo(() => {
-    return barbersWithStats
-      .filter((barber) => {
-        const searchTermLower = searchTerm.toLowerCase();
+  const exploreFilterDeps = React.useMemo(
+    () => ({ shopById, minPriceByBarber, userCoords }),
+    [shopById, minPriceByBarber, userCoords]
+  );
 
-        const matchesSearch =
-          !searchTerm ||
-          (barber.name || '').toLowerCase().includes(searchTermLower) ||
-          (barber.location || '').toLowerCase().includes(searchTermLower) ||
-          (barber.title || '').toLowerCase().includes(searchTermLower) ||
-          (Array.isArray(barber.services) &&
-            barber.services.some((s) =>
-              (typeof s === 'string' ? s : '').toLowerCase().includes(searchTermLower)
-            ));
+  const filteredBarbers = React.useMemo(
+    () => barbersWithStats.map((barber) => enrichExploreBarber(barber, exploreFilterDeps)),
+    [barbersWithStats, exploreFilterDeps]
+  );
 
-        const shopDealIds = Array.isArray(promotions?.shop_ids) ? promotions.shop_ids : [];
-        const dealSet = new Set(shopDealIds);
-        const hasPlatform = !!promotions?.has_platform_promos;
-        const hasPromotion = hasPlatform || (!!barber.shop_id && dealSet.has(barber.shop_id));
-
-        let matchesTag = true;
-        if (activeFilter === 'Deals') {
-          matchesTag = hasPromotion;
-        } else if (activeFilter !== 'All') {
-          const tagKey = activeFilter.toLowerCase().replace(/\s+/g, '');
-          const tagNorm = tagKey === 'beardtrim' ? 'beard' : tagKey === 'haircut' ? 'hair' : tagKey;
-          const shopIds = shopIdsByService[tagNorm] || shopIdsByService[tagKey];
-          const barberShopId = barber.shop_id;
-          const matchesByService = barberShopId && shopIds && shopIds.has(barberShopId);
-          const matchesByBarberServices =
-            Array.isArray(barber.services) &&
-            barber.services.some((s) =>
-              (typeof s === 'string' ? s : '').toLowerCase().includes(activeFilter.toLowerCase())
-            );
-          matchesTag = !!(matchesByService || matchesByBarberServices);
-        }
-
-        const matchesLanguage =
-          !languageFilter ||
-          matchesLanguageFilter(
-            barber.spoken_languages,
-            barber.shop_id ? shopById[barber.shop_id]?.spoken_languages : [],
-            [languageFilter]
-          );
-
-        const shopFriendly = barber.shop_id ? shopById[barber.shop_id]?.children_friendly : false;
-        const matchesKids = matchesChildrenFriendlyFilter(barber.children_friendly, shopFriendly, kidsWelcomeOnly);
-        const matchesMobile = matchesMobileServiceFilter(barber.offers_mobile_service, mobileOnly);
-        const matchesShop = matchesShopServiceFilter(barber.offers_shop_service, shopOnly);
-        const matchesGroup = !groupOnly || barber.offers_group_booking === true;
-        const cityLower = cityFilter.toLowerCase();
-        const matchesCity =
-          !cityFilter ||
-          (barber.city || '').toLowerCase().includes(cityLower) ||
-          (barber.location || '').toLowerCase().includes(cityLower);
-
-        let matchesHighlight = true;
-        if (highlightFilter === 'topRated') {
-          matchesHighlight = (barber.rating ?? 0) >= 4.5 && (barber.review_count ?? 0) >= 5;
-        } else if (highlightFilter === 'new') {
-          matchesHighlight = (barber.review_count ?? 0) === 0 && (barber.rating ?? 0) === 0;
-        } else if (highlightFilter === 'trending') {
-          matchesHighlight = (barber.review_count ?? 0) >= 15 && (barber.rating ?? 0) >= 4.0;
-        }
-
-        return (
-          matchesSearch &&
-          matchesTag &&
-          matchesLanguage &&
-          matchesKids &&
-          matchesMobile &&
-          matchesShop &&
-          matchesGroup &&
-          matchesCity &&
-          matchesHighlight
-        );
-      })
-      .map((barber) => ({
-        ...barber,
-        effective_languages: effectiveBarberLanguages(barber, shopById),
-        children_friendly: effectiveChildrenFriendly(
-          barber.children_friendly,
-          barber.shop_id ? shopById[barber.shop_id]?.children_friendly : false
-        ),
-        licensed: effectiveLicensed(
-          barber.attestation_licensed,
-          barber.shop_id ? shopById[barber.shop_id]?.attestation_licensed : false
-        ),
-        insured: effectiveInsured(
-          barber.attestation_insured,
-          barber.shop_id ? shopById[barber.shop_id]?.attestation_insured : false
-        ),
-        min_price: minPriceByBarber[barber.id] ?? null,
-        distance_km: barberDistanceKm(userCoords, barber),
-      }));
-  }, [
-    barbersWithStats,
-    searchTerm,
-    activeFilter,
-    highlightFilter,
-    promotions,
-    shopIdsByService,
-    languageFilter,
-    kidsWelcomeOnly,
-    mobileOnly,
-    shopOnly,
-    groupOnly,
-    cityFilter,
-    shopById,
-    minPriceByBarber,
-    userCoords,
-  ]);
-
-  const filteredShops = React.useMemo(() => {
-    return shops
-      .filter((shop) => {
-        const searchTermLower = searchTerm.toLowerCase();
-        const matchesSearch =
-          !searchTerm ||
-          (shop.name || '').toLowerCase().includes(searchTermLower) ||
-          (shop.location || '').toLowerCase().includes(searchTermLower) ||
-          (shop.description || '').toLowerCase().includes(searchTermLower);
-        const cityLower = cityFilter.toLowerCase();
-        const matchesCity = !cityFilter || (shop.location || '').toLowerCase().includes(cityLower);
-        const shopLangs = parseSpokenLanguages(shop.spoken_languages);
-        const matchesLanguage = !languageFilter || shopLangs.includes(languageFilter);
-        const matchesKids = matchesChildrenFriendlyFilter(false, shop.children_friendly, kidsWelcomeOnly);
-        return matchesSearch && matchesLanguage && matchesKids && matchesCity;
-      })
-      .map((shop) => ({
-        ...shop,
-        spoken_languages: parseSpokenLanguages(shop.spoken_languages),
-      }));
-  }, [shops, searchTerm, languageFilter, kidsWelcomeOnly, cityFilter]);
+  const filteredShops = shops;
 
   const sortedBarbers = React.useMemo(
     () =>
@@ -406,6 +303,26 @@ export default function Explore() {
         userCoords
       ),
     [filteredBarbers, sortBy, userCoords]
+  );
+
+  const sortedFallbackBarbers = React.useMemo(
+    () =>
+      exploreFallback?.barbers?.length
+        ? sortExploreBarbers(
+            exploreFallback.barbers
+              .map((b) => ({
+                ...enrichExploreBarber(b, exploreFilterDeps),
+                spoken_languages: b.spoken_languages,
+              }))
+              .map((b) => ({
+                ...b,
+                spoken_languages: b.effective_languages,
+              })),
+            sortBy === 'distance' ? 'distance' : 'rating',
+            userCoords
+          )
+        : [],
+    [exploreFallback, exploreFilterDeps, sortBy, userCoords]
   );
 
   const resultCount = viewType === 'professionals' ? sortedBarbers.length : filteredShops.length;
@@ -503,6 +420,8 @@ export default function Explore() {
         <ExploreBarberGrid
           viewType={viewType}
           sortedBarbers={sortedBarbers}
+          fallbackBarbers={sortedFallbackBarbers}
+          fallbackMessage={exploreFallback?.message}
           filteredShops={filteredShops}
           promotions={promotions}
           pageConfig={pageConfig}

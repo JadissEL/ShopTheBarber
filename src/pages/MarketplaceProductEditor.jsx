@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { canAccessProviderTools } from '@/lib/userRole';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,7 +39,7 @@ export default function MarketplaceProductEditor() {
   const productId = searchParams.get('id');
   const queryClient = useQueryClient();
   const { isAuthenticated, role, user } = useAuth();
-  const canSell = ['barber', 'shop_owner', 'admin'].includes(role);
+  const canSell = canAccessProviderTools(role);
   const [sellerTermsAccepted, setSellerTermsAccepted] = useState(() =>
     hasAcceptedSellerTerms(user?.id),
   );

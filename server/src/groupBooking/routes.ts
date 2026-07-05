@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest, resolveOptionalUserId } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import {
     ABSOLUTE_MAX_PARTY,
     ABSOLUTE_MIN_PARTY,
@@ -57,7 +58,7 @@ export async function groupBookingRoutes(fastify: FastifyInstance) {
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
         const user = request.user!;
-        if (!['barber', 'shop_owner', 'admin', 'provider'].includes(user.role ?? '')) {
+        if (!isProviderRole(user.role)) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
 

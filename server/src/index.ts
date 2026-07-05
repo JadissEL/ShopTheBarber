@@ -71,6 +71,7 @@ import { verifyBackupIntegrity } from './admin/backup';
 import { sendEmail } from './logic/email';
 import { createEntityScopeCache, getEntityScopeCondition, getManagedShopIdsForUser, rowInScope } from './entityScope';
 import { authenticateRequest } from './auth/requestUser';
+import { requireAuthPreHandler, requireAdminPreHandler } from './auth/authPreHandlers';
 import { runHealthCheck } from './observability/health';
 import { serializeBookingRow, serializeBookingRows } from './logic/bookingSerialize';
 import {
@@ -240,20 +241,7 @@ function isUniqueViolation(e: any): boolean {
 }
 
 // Sovereign auth: Clerk session JWT DB users.id for FK scope.
-async function requireAuthPreHandler(request: any, reply: any) {
-    const ok = await authenticateRequest(request, reply);
-    if (!ok) return;
-    request.entityScopeCache = createEntityScopeCache();
-}
-
-/** Requires DB role === 'admin' after unified auth resolution. */
-async function requireAdminPreHandler(request: any, reply: any) {
-    const ok = await authenticateRequest(request, reply);
-    if (!ok) return;
-    request.entityScopeCache = createEntityScopeCache();
-    const user = request.user as { id?: string; role?: string };
-    if (user?.role !== 'admin') return reply.status(403).send({ error: 'Forbidden' });
-}
+// requireAuthPreHandler / requireAdminPreHandler live in auth/authPreHandlers.ts
 
 // --- ROUTES ---
 
@@ -342,6 +330,7 @@ import { productAnalyticsRoutes } from './productAnalytics/routes';
 import { fixedFeeRoutes } from './fixedFee/routes';
 import { promotionsRoutes } from './promotions/routes';
 import { homeRoutes } from './home/routes';
+import { exploreRoutes } from './explore/routes';
 import { mobileServiceRoutes } from './mobileService/routes';
 import { serviceLocationRoutes } from './serviceLocation/routes';
 import { atHomeServiceRoutes } from './atHomeService/routes';
@@ -378,6 +367,7 @@ fastify.register(productAnalyticsRoutes);
 fastify.register(fixedFeeRoutes);
 fastify.register(promotionsRoutes);
 fastify.register(homeRoutes);
+fastify.register(exploreRoutes);
 fastify.register(mobileServiceRoutes);
 fastify.register(serviceLocationRoutes);
 fastify.register(atHomeServiceRoutes);
@@ -811,7 +801,10 @@ fastify.post('/api/functions/provider-analytics', { preHandler: [requireAuthPreH
         if (!shopId && !barberId) {
             return reply.status(400).send({ error: 'shopId or barberId required' });
         }
-        const currentUser = request.user as { id: string };
+        const currentUser = request.user as { id: string; role?: string };
+        if (currentUser.role === 'admin') {
+            return reply.status(403).send({ error: 'Use platform financial analytics for admin reporting' });
+        }
         if (barberId) {
             const barber = await prisma.barbers.findUnique({ where: { id: barberId }, select: { user_id: true } });
             if (!barber || barber.user_id !== currentUser.id) return reply.status(403).send({ error: 'Forbidden' });

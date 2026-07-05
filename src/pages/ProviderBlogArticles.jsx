@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { canAccessProviderTools } from '@/lib/userRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +26,7 @@ export default function ProviderBlogArticles() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated, role } = useAuth();
-  const canWrite = ['barber', 'shop_owner', 'admin'].includes(role);
+  const canWrite = canAccessProviderTools(role);
 
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['articles-mine'],

@@ -15,6 +15,14 @@ vi.mock('@/lib/AuthContext', () => ({
   useAuth: () => useAuth(),
 }));
 
+vi.mock('@/hooks/useEffectiveRole', () => ({
+  useEffectiveRole: () => ({
+    effectiveRole: 'client',
+    isLoading: false,
+    isProviderRole: false,
+  }),
+}));
+
 vi.mock('@/api/apiClient', () => ({
   sovereign: {
     cart: { get: vi.fn(() => Promise.resolve([])) },

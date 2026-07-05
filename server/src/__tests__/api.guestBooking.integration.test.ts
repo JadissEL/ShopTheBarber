@@ -37,6 +37,11 @@ function tomorrowDateText(): string {
     return format(addDays(new Date(), 1), 'PPP', { locale: enUS });
 }
 
+function tomorrowShiftDay(): string {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+    return dayNames[addDays(new Date(), 1).getDay()];
+}
+
 describe('integration: guest booking API', () => {
     let providerUserId: string;
     let clientUserId: string;
@@ -118,18 +123,37 @@ describe('integration: guest booking API', () => {
                 duration_minutes: 30,
             },
         });
+
+        await prisma.shifts.create({
+            data: {
+                id: `shift-guest-${Date.now()}`,
+                barber_id: barberId,
+                shop_id: shopId,
+                day: tomorrowShiftDay(),
+                start_time: '09:00',
+                end_time: '18:00',
+            },
+        });
     });
 
     afterAll(async () => {
+        await prisma.booking_services.deleteMany({ where: { booking: { barber_id: barberId } } });
         await prisma.bookings.deleteMany({ where: { barber_id: barberId } });
         await prisma.provider_fee_transactions.deleteMany({ where: { wallet_id: walletId } });
         await prisma.provider_fee_wallets.deleteMany({ where: { id: walletId } });
         await prisma.services.deleteMany({ where: { id: serviceId } });
         await prisma.shop_members.deleteMany({ where: { id: shopMemberId } });
+        await prisma.shifts.deleteMany({ where: { barber_id: barberId } });
         await prisma.barbers.deleteMany({ where: { id: barberId } });
         await prisma.shops.deleteMany({ where: { id: shopId } });
-        if (clientUserId) await prisma.users.deleteMany({ where: { id: clientUserId } });
-        if (providerUserId) await prisma.users.deleteMany({ where: { id: providerUserId } });
+        if (clientUserId) {
+            await prisma.notifications.deleteMany({ where: { user_id: clientUserId } });
+            await prisma.users.deleteMany({ where: { id: clientUserId } });
+        }
+        if (providerUserId) {
+            await prisma.notifications.deleteMany({ where: { user_id: providerUserId } });
+            await prisma.users.deleteMany({ where: { id: providerUserId } });
+        }
         await (app as FastifyInstance).close();
     });
 

@@ -9,10 +9,10 @@ import {
     DEFAULT_MONTHLY_FEE_SHOP,
     ENROLLMENT_MONTHS,
     PLAN_SCOPES,
-    PROVIDER_ROLES,
     type BillingCycle,
     type PlanScope,
 } from './config';
+import { isProviderRole } from '../auth/platformRbac';
 
 export type AuthUser = { id: string; role?: string | null; full_name?: string | null; email?: string | null };
 
@@ -22,10 +22,6 @@ function nowIso(): string {
 
 function roundMoney(n: number): number {
     return Math.round(n * 100) / 100;
-}
-
-export function isProviderRole(role?: string | null): boolean {
-    return !!role && PROVIDER_ROLES.has(role);
 }
 
 export function isEnrollmentWindowOpen(at: Date = new Date()): boolean {

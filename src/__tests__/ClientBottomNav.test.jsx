@@ -19,6 +19,14 @@ vi.mock('@/components/context/CartContext', () => ({
   useCart: () => useCart(),
 }));
 
+vi.mock('@/hooks/useEffectiveRole', () => ({
+  useEffectiveRole: () => ({
+    effectiveRole: 'client',
+    isLoading: false,
+    isProviderRole: false,
+  }),
+}));
+
 describe('ClientBottomNav', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,7 +75,7 @@ describe('ClientBottomNav', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More options' }));
 
     expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Find a Barber/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Favorites/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Gift Cards/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Support/i })).toBeInTheDocument();
   });

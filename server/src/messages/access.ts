@@ -1,7 +1,6 @@
 import { prisma } from '../db/prisma';
 import { getBarberShopIdsForUser } from '../entityScope';
-
-const PRO_ROLES = new Set(['barber', 'shop_owner', 'provider', 'admin']);
+import { isProviderRole } from '../auth/platformRbac';
 
 export async function assertBookingParticipant(bookingId: string, userId: string): Promise<void> {
     const booking = await prisma.bookings.findUnique({
@@ -59,8 +58,8 @@ export async function assertCanMessage(
     const senderRole = sender?.role ?? 'client';
     const receiverRole = receiver.role ?? 'client';
 
-    if (PRO_ROLES.has(receiverRole)) return;
-    if (PRO_ROLES.has(senderRole)) {
+    if (isProviderRole(receiverRole)) return;
+    if (isProviderRole(senderRole)) {
         const { barberIds, shopIds } = await getBarberShopIdsForUser(senderId);
         const shared = await prisma.bookings.findFirst({
             where: {

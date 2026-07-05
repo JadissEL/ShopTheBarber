@@ -5,7 +5,7 @@ import { Menu, X, Scissors, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
-import { dashboardPageForRole, isProviderRole } from '@/lib/userRole';
+import { dashboardPageForRole, isAdminRole, isProviderRole } from '@/lib/userRole';
 import { stb } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
 
@@ -82,6 +82,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
   const { isAuthenticated } = useAuth();
   const { effectiveRole } = useEffectiveRole();
   const dashboardPath = createPageUrl(dashboardPageForRole(effectiveRole));
+  const isAdmin = isAdminRole(effectiveRole);
   const isProvider = isProviderRole(effectiveRole);
   const showBusinessNav = businessLinks.length > 0;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -176,9 +177,9 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                   to={dashboardPath}
                   className="text-xs font-semibold uppercase tracking-wider font-sans text-white/70 hover:text-white rounded-lg px-2 py-1"
                 >
-                  {isProvider ? 'Provider hub' : 'Dashboard'}
+                  {isAdmin ? 'Admin console' : isProvider ? 'Provider hub' : 'Dashboard'}
                 </Link>
-                {!isProvider && (
+                {!isProvider && !isAdmin && (
                 <Button asChild className={cn('px-5 h-10', stb.btn)}>
                   <Link to={createPageUrl('Explore')}>Book now</Link>
                 </Button>
@@ -304,7 +305,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
             <div className="pt-4 mt-4 border-t border-white/10 space-y-2">
               {isAuthenticated ? (
                 <>
-                  {!isProvider && (
+                  {!isProvider && !isAdmin && (
                   <Button asChild className="w-full h-12">
                     <Link to={createPageUrl('Explore')} onClick={() => setIsMobileMenuOpen(false)}>
                       Book now
@@ -320,7 +321,7 @@ export default function Navbar({ navLinks, businessLinks = [] }) {
                   )}
                   <Button asChild variant="outline" className="w-full h-12 border-white/30 text-white hover:bg-white/10">
                     <Link to={dashboardPath} onClick={() => setIsMobileMenuOpen(false)}>
-                      {isProvider ? 'Provider hub' : 'Dashboard'}
+                      {isAdmin ? 'Admin console' : isProvider ? 'Provider hub' : 'Dashboard'}
                     </Link>
                   </Button>
                 </>

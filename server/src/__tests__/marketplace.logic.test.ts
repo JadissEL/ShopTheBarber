@@ -8,10 +8,11 @@ import {
 } from '../marketplace/logic';
 
 describe('marketplace/logic', () => {
-    it('canListProducts allows barber, shop_owner, admin', () => {
+    it('canListProducts allows provider roles only', () => {
         expect(canListProducts('barber')).toBe(true);
         expect(canListProducts('shop_owner')).toBe(true);
-        expect(canListProducts('admin')).toBe(true);
+        expect(canListProducts('provider')).toBe(true);
+        expect(canListProducts('admin')).toBe(false);
         expect(canListProducts('client')).toBe(false);
     });
 

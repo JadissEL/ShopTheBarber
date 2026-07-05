@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchField from '@/components/ui/search-field';
-import { AlertTriangle, TrendingUp, Target, Users, CalendarX, Zap } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Target, Users, CalendarX, Zap, ShieldAlert, HeadphonesIcon } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from 'recharts';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
@@ -174,6 +174,44 @@ export default function GlobalFinancials() {
       </PageHeader>
 
       <PageContent>
+      <section className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link to={createPageUrl('AdminDisputes')}>
+          <Card className="border-border hover:border-primary/40 transition-colors h-full">
+            <CardContent className="pt-5 pb-5 flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ops queue</p>
+                <p className="text-lg font-bold text-foreground">{disputes.length} open dispute{disputes.length === 1 ? '' : 's'}</p>
+                <p className="text-xs text-muted-foreground mt-1">Review payment and booking disputes</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to={createPageUrl('AdminUserModeration')}>
+          <Card className="border-border hover:border-primary/40 transition-colors h-full">
+            <CardContent className="pt-5 pb-5 flex items-start gap-3">
+              <Users className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Moderation</p>
+                <p className="text-lg font-bold text-foreground">{users.length} platform users</p>
+                <p className="text-xs text-muted-foreground mt-1">Accounts, roles, and trust actions</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to={createPageUrl('AdminSupportInbox')}>
+          <Card className="border-border hover:border-primary/40 transition-colors h-full">
+            <CardContent className="pt-5 pb-5 flex items-start gap-3">
+              <HeadphonesIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Support</p>
+                <p className="text-lg font-bold text-foreground">Inbox</p>
+                <p className="text-xs text-muted-foreground mt-1">Client and provider tickets</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <Card className="bg-card border-border">

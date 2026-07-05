@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, Truck, MapPin, Loader } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { canAccessProviderTools } from '@/lib/userRole';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -28,7 +29,7 @@ export default function SellerOrders() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { isAuthenticated, role } = useAuth();
-    const canSell = ['barber', 'shop_owner', 'admin'].includes(role);
+    const canSell = canAccessProviderTools(role);
     const [expandedId, setExpandedId] = useState(null);
     const [trackingForms, setTrackingForms] = useState({});
 

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import { assertShopManager } from '../shop/logic';
 import {
     getProviderAttestationConfig,
@@ -25,7 +26,7 @@ export async function providerAttestationRoutes(fastify: FastifyInstance) {
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
         const user = request.user!;
-        if (!['barber', 'shop_owner', 'admin', 'provider'].includes(user.role ?? '')) {
+        if (!isProviderRole(user.role)) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
 

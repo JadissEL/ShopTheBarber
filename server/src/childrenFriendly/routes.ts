@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import { assertShopManager } from '../shop/logic';
 import {
     getChildrenFriendlyConfig,
@@ -36,7 +37,7 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
     fastify.get('/api/provider/children-friendly', async (request, reply) => {
         const user = await requireAuth(request, reply);
         if (!user) return;
-        if (!['barber', 'shop_owner', 'admin', 'provider'].includes(user.role ?? '')) {
+        if (!isProviderRole(user.role)) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
 

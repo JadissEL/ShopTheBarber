@@ -37,6 +37,7 @@ const mockShops = [
 ];
 
 vi.mock('@/api/apiClient', () => ({
+  registerClerkGetToken: vi.fn(),
   sovereign: {
     auth: { me: vi.fn(() => Promise.resolve(null)) },
     public: {
@@ -50,9 +51,40 @@ vi.mock('@/api/apiClient', () => ({
     languages: { getOptions: vi.fn(() => Promise.resolve([{ code: 'en', label: 'English' }])) },
     providerStats: { getBarberPublicBatch: vi.fn(() => Promise.resolve({})) },
     showcase: { getDiscoveryPreviews: vi.fn(() => Promise.resolve({})) },
+    explore: {
+      searchBarbers: vi.fn(() =>
+        Promise.resolve({
+          barbers: mockBarbers.map((b) => ({
+            id: b.id,
+            shop_id: b.shop_id,
+            name: b.data.name,
+            location: b.data.location,
+            image_url: b.data.image_url,
+            rating: b.data.rating,
+            review_count: b.data.review_count,
+            title: b.data.title,
+            offers_mobile_service: b.data.offers_mobile_service,
+            offers_shop_service: true,
+            services: [],
+            shop: { id: b.shop_id, name: 'Downtown Cuts', spoken_languages: null, children_friendly: false, attestation_licensed: false, attestation_insured: false },
+          })),
+          total: 1,
+          fallback: null,
+        })
+      ),
+      searchShops: vi.fn(() =>
+        Promise.resolve({
+          shops: mockShops.map((s) => ({
+            id: s.id,
+            name: s.data.name,
+            location: s.data.location,
+          })),
+          total: 1,
+        })
+      ),
+    },
     entities: {
       Barber: {
-        list: vi.fn(() => Promise.resolve(mockBarbers)),
         get: vi.fn((id) => Promise.resolve(mockBarbers.find((b) => b.id === id) || null)),
       },
       Shop: { list: vi.fn(() => Promise.resolve(mockShops)) },

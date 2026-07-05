@@ -1,5 +1,6 @@
 import { type FastifyInstance } from 'fastify';
 import { authenticateRequest } from '../auth/requestUser';
+import { isAdminRole, isProviderRole } from '../auth/platformRbac';
 import { prisma } from '../db/prisma';
 import {
     getPublicBarberStats,
@@ -26,8 +27,18 @@ async function requireAuth(request: any, reply: any) {
 async function requireAdmin(request: any, reply: any) {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (user.role !== 'admin') {
+    if (!isAdminRole(user.role)) {
         reply.status(403).send({ error: 'Admin access required' });
+        return null;
+    }
+    return user;
+}
+
+async function requireProvider(request: any, reply: any) {
+    const user = await requireAuth(request, reply);
+    if (!user) return null;
+    if (!isProviderRole(user.role)) {
+        reply.status(403).send({ error: 'Provider access required' });
         return null;
     }
     return user;
@@ -64,7 +75,7 @@ export async function providerStatsRoutes(fastify: FastifyInstance) {
     });
 
     fastify.get('/api/provider/my-stats', async (request, reply) => {
-        const user = await requireAuth(request, reply);
+        const user = await requireProvider(request, reply);
         if (!user) return;
         const stats = await getMyProviderStats(user.id);
         if (!stats) {
@@ -74,7 +85,7 @@ export async function providerStatsRoutes(fastify: FastifyInstance) {
     });
 
     fastify.get('/api/provider/benchmarks', async (request, reply) => {
-        const user = await requireAuth(request, reply);
+        const user = await requireProvider(request, reply);
         if (!user) return;
         const q = request.query as { shop_id?: string; barber_id?: string };
         try {
@@ -86,14 +97,14 @@ export async function providerStatsRoutes(fastify: FastifyInstance) {
                 if (!shop) return reply.status(404).send({ error: 'Shop not found' });
                 const isOwner = shop.owner_id === user.id;
                 let isManager = false;
-                if (!isOwner && user.role !== 'admin') {
+                if (!isOwner && !isAdminRole(user.role)) {
                     const member = await prisma.shop_members.findFirst({
                         where: { shop_id: q.shop_id, user_id: user.id },
                         select: { role: true },
                     });
                     isManager = member?.role === 'owner' || member?.role === 'manager';
                 }
-                if (!isOwner && !isManager && user.role !== 'admin') {
+                if (!isOwner && !isManager) {
                     return reply.status(403).send({ error: 'Forbidden' });
                 }
                 return await getShopBenchmarkDashboard(q.shop_id);
@@ -113,7 +124,7 @@ export async function providerStatsRoutes(fastify: FastifyInstance) {
             if (!barber) {
                 return reply.status(404).send({ error: 'No barber profile found' });
             }
-            if (barber.user_id !== user.id && user.role !== 'admin') {
+            if (barber.user_id !== user.id) {
                 return reply.status(403).send({ error: 'Forbidden' });
             }
             return await getBarberBenchmarkDashboard(barber.id);

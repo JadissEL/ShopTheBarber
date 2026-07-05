@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { canAccessProviderTools } from '@/lib/userRole';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,7 +32,7 @@ export default function BlogArticleEditor() {
   const articleId = searchParams.get('id');
   const queryClient = useQueryClient();
   const { isAuthenticated, role } = useAuth();
-  const canWrite = ['barber', 'shop_owner', 'admin'].includes(role);
+  const canWrite = canAccessProviderTools(role);
 
   const [form, setForm] = useState({
     title: '',

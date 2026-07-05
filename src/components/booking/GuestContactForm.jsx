@@ -15,16 +15,21 @@ export default function GuestContactForm({
 
   return (
     <div className="stb-notice-warm rounded-lg border border-primary/30 p-6 mb-6 space-y-4">
+      <div className="flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-800/80">
+        <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-900">1. Your details</span>
+        <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-800/70">2. Pay at shop</span>
+        <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-800/70">3. Confirm</span>
+      </div>
       <div>
         <p className="font-semibold text-emerald-950">Book without an account</p>
         <p className="text-sm text-emerald-800/90 mt-1">
-          Name + phone, that&apos;s it. Optional email for confirmation.
+          Name and phone are all we need. Email is optional for a confirmation message.
           {' '}
           <Link to={signInUrl} className="font-semibold underline underline-offset-2">
             Sign in
           </Link>
           {' '}
-          for faster rebooking, promos, and online pay.
+          for online pay, promos, and faster rebooking.
         </p>
       </div>
 

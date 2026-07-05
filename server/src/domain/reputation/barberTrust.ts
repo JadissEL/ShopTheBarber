@@ -1,5 +1,10 @@
 import { prisma } from '../../db/prisma';
 import { isFinancialTrustSchemaError } from '../schemaGuard';
+import { Prisma } from '@prisma/client';
+
+function isMissingRecordError(err: unknown): boolean {
+    return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025';
+}
 
 /** Internal barber trust score 0–100 — docs/specs/REPUTATION_TRUST.md */
 export async function computeBarberTrustScore(barberId: string): Promise<number> {
@@ -84,7 +89,7 @@ export async function syncBarberTrustScore(barberId: string) {
         });
         return score;
     } catch (err) {
-        if (isFinancialTrustSchemaError(err)) return null;
+        if (isFinancialTrustSchemaError(err) || isMissingRecordError(err)) return null;
         throw err;
     }
 }

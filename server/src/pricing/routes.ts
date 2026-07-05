@@ -1,6 +1,7 @@
 import { type FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest, resolveOptionalUserId } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import { getManagedShopIdsForUser } from '../entityScope';
 import {
     calculateBookingQuote,
@@ -21,7 +22,7 @@ async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
 async function requireProvider(request: any, reply: any): Promise<AuthUser | null> {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!['barber', 'shop_owner', 'admin'].includes(user.role ?? '')) {
+    if (!isProviderRole(user.role)) {
         reply.status(403).send({ error: 'Only providers can manage pricing bundles' });
         return null;
     }
@@ -137,11 +138,9 @@ export async function pricingRoutes(fastify: FastifyInstance) {
         try {
             const shopIds = await getManagedShopIdsForUser(user.id, request.entityScopeCache);
             const where =
-                user.role === 'admin'
-                    ? {}
-                    : shopIds.length > 0
-                      ? { shop_id: { in: shopIds } }
-                      : { shop_id: '__none__' };
+                shopIds.length > 0
+                    ? { shop_id: { in: shopIds } }
+                    : { shop_id: '__none__' };
             const rows = await prisma.service_bundles.findMany({
                 where,
                 include: { items: { include: { service: { select: { id: true, name: true, price: true } } } } },
@@ -175,10 +174,8 @@ export async function pricingRoutes(fastify: FastifyInstance) {
 
             const shopId = body.shop_id as string | undefined;
             if (!shopId) return reply.status(400).send({ error: 'shop_id is required' });
-            if (user.role !== 'admin') {
-                const ids = await getManagedShopIdsForUser(user.id, request.entityScopeCache);
-                if (!ids.includes(shopId)) return reply.status(403).send({ error: 'Forbidden' });
-            }
+            const ids = await getManagedShopIdsForUser(user.id, request.entityScopeCache);
+            if (!ids.includes(shopId)) return reply.status(403).send({ error: 'Forbidden' });
 
             const services = await prisma.services.findMany({
                 where: { id: { in: parsed.service_ids }, shop_id: shopId },
@@ -232,7 +229,7 @@ export async function pricingRoutes(fastify: FastifyInstance) {
         try {
             const existing = await prisma.service_bundles.findUnique({ where: { id }, include: { items: true } });
             if (!existing) return reply.status(404).send({ error: 'Bundle not found' });
-            if (user.role !== 'admin' && existing.shop_id) {
+            if (existing.shop_id) {
                 const ids = await getManagedShopIdsForUser(user.id, request.entityScopeCache);
                 if (!ids.includes(existing.shop_id)) return reply.status(404).send({ error: 'Bundle not found' });
             }
@@ -305,7 +302,7 @@ export async function pricingRoutes(fastify: FastifyInstance) {
         try {
             const existing = await prisma.service_bundles.findUnique({ where: { id } });
             if (!existing) return reply.status(404).send({ error: 'Bundle not found' });
-            if (user.role !== 'admin' && existing.shop_id) {
+            if (existing.shop_id) {
                 const ids = await getManagedShopIdsForUser(user.id, request.entityScopeCache);
                 if (!ids.includes(existing.shop_id)) return reply.status(404).send({ error: 'Bundle not found' });
             }

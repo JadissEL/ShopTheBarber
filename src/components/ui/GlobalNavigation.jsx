@@ -21,6 +21,7 @@ import { useIsDesktop } from '@/hooks/useMediaQuery';
 import {
   getNavigationVisibility,
   getDashboardPath,
+  getSettingsPath,
   NAV_ITEMS,
   shouldUseDarkHeader
 } from '@/components/navigation/navigationVisibility';
@@ -159,7 +160,7 @@ export default function GlobalNavigation() {
     navigationItems.push({
       icon: Settings,
       label: 'Settings',
-      path: role === 'admin' ? 'AdminUserModeration' : 'ProviderSettings'
+      path: getSettingsPath(role),
     });
   }
 

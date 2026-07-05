@@ -334,6 +334,46 @@ export const sovereign = {
         },
     },
 
+    explore: {
+        searchBarbers: async (params = {}) => {
+            const qs = new URLSearchParams();
+            if (params.q) qs.set('q', params.q);
+            if (params.city) qs.set('city', params.city);
+            if (params.service) qs.set('service', params.service);
+            if (params.language) qs.set('language', params.language);
+            if (params.kids) qs.set('kids', '1');
+            if (params.mobile) qs.set('mobile', '1');
+            if (params.shop) qs.set('shop', '1');
+            if (params.group) qs.set('group', '1');
+            if (params.highlight) qs.set('highlight', params.highlight);
+            if (params.limit != null) qs.set('limit', String(params.limit));
+            if (params.offset != null) qs.set('offset', String(params.offset));
+            const query = qs.toString();
+            const res = await fetch(`${BASE_URL}/explore/barbers${query ? `?${query}` : ''}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Explore search failed');
+            }
+            return res.json();
+        },
+        searchShops: async (params = {}) => {
+            const qs = new URLSearchParams();
+            if (params.q) qs.set('q', params.q);
+            if (params.city) qs.set('city', params.city);
+            if (params.language) qs.set('language', params.language);
+            if (params.kids) qs.set('kids', '1');
+            if (params.limit != null) qs.set('limit', String(params.limit));
+            if (params.offset != null) qs.set('offset', String(params.offset));
+            const query = qs.toString();
+            const res = await fetch(`${BASE_URL}/explore/shops${query ? `?${query}` : ''}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Explore shop search failed');
+            }
+            return res.json();
+        },
+    },
+
     functions: {
         invoke: async (name, payload) => {
             const headers = { ...(await resolveAuthHeaders()), 'Content-Type': 'application/json' };

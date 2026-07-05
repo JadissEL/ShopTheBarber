@@ -6,7 +6,7 @@ import { sovereign } from '@/api/apiClient';
 import { getAnalyticsSessionId } from '@/lib/analyticsSession';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import SearchField from '@/components/ui/search-field';
-import { MapPin, Bell, Menu, Calendar, Award } from 'lucide-react';
+import { Bell, Menu, Calendar, Award, MessageSquare, Check } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { stb } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
@@ -18,31 +18,25 @@ import NextAppointmentCard from '@/components/dashboard/NextAppointmentCard';
 import OnboardingSetupBanner from '@/components/onboarding/OnboardingSetupBanner';
 import PendingReviewBanner from '@/components/reviews/PendingReviewBanner';
 import QuickActions from '@/components/dashboard/QuickActions';
-import FeaturedServices from '@/components/dashboard/FeaturedServices';
 import LoyaltyGoalCard from '@/components/dashboard/LoyaltyGoalCard';
 import ClientReputationCard from '@/components/dashboard/ClientReputationCard';
 import MonthlySpendingCard from '@/components/dashboard/MonthlySpendingCard';
 import BarberCard from '@/components/ui/barber-card';
 import SidebarMenu from '@/components/dashboard/SidebarMenu';
-import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
-import InsightBanner from '@/components/dashboard/InsightBanner';
-import QuickInsights from '@/components/dashboard/QuickInsights';
 import PersonalizedBarberPicks from '@/components/dashboard/PersonalizedBarberPicks';
 import MessagesPanel from '@/components/dashboard/MessagesPanel';
 import NotificationsPanel from '@/components/dashboard/NotificationsPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import RebookButton from '@/components/booking/RebookButton';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   computeMonthlySpending,
-  computePreferredBookingDay,
   resolveTopBarbers,
 } from '@/lib/clientDashboardStats';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { isProvider, isLoading: roleLoading } = useEffectiveRole();
+  const { isProvider, isAdmin, isLoading: roleLoading } = useEffectiveRole();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -52,9 +46,15 @@ export default function Dashboard() {
   const { data: user, isFetching: isUserFetching } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
 
   useEffect(() => {
-    if (roleLoading || !isProvider) return;
-    navigate(createPageUrl('ProviderDashboard'), { replace: true });
-  }, [roleLoading, isProvider, navigate]);
+    if (roleLoading) return;
+    if (isAdmin) {
+      navigate(createPageUrl('GlobalFinancials'), { replace: true });
+      return;
+    }
+    if (isProvider) {
+      navigate(createPageUrl('ProviderDashboard'), { replace: true });
+    }
+  }, [roleLoading, isAdmin, isProvider, navigate]);
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -105,12 +105,6 @@ export default function Dashboard() {
     initialData: [],
   });
 
-  const { data: services } = useQuery({
-    queryKey: ['dashboard-services'],
-    queryFn: () => sovereign.entities.Service.list(),
-    initialData: []
-  });
-
   const { data: loyaltySummary } = useQuery({
     queryKey: ['loyalty-me', user?.id],
     queryFn: () => sovereign.loyalty.getMe(),
@@ -131,8 +125,6 @@ export default function Dashboard() {
         tier: loyaltySummary.tier ?? 'Bronze',
       }
     : null;
-
-  const loyaltyTransactions = loyaltySummary?.transactions?.slice(0, 10) ?? [];
 
   const { data: unreadMessages = [] } = useQuery({
     queryKey: ['messages', user?.email],
@@ -155,14 +147,6 @@ export default function Dashboard() {
   const isEliteClient = memberTier === 'Gold' || memberTier === 'Platinum';
 
   const pointsToNextReward = Math.max(0, 50 - (loyaltyProfile?.current_points ?? 0));
-  const progressToFirstReward = Math.min(100, Math.round(((loyaltyProfile?.current_points ?? 0) / 50) * 100));
-
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-  const monthlyEarned = loyaltyTransactions
-    .filter((tx) => tx.points > 0 && tx.date_text && new Date(tx.date_text) >= startOfMonth)
-    .reduce((sum, tx) => sum + tx.points, 0);
 
   const nextBooking = (() => {
     const upcoming = (myBookings || [])
@@ -190,30 +174,14 @@ export default function Dashboard() {
   })();
 
   const isRefreshing = isUserFetching || isBarbersFetching || isShopsFetching;
-  const lastBooking = myBookings && myBookings.length > 0 ? myBookings[0] : null;
   const lastCompletedForRebook = (myBookings || []).find(
     (b) => b.status === 'completed' && b.barber_id
   );
 
   const monthlySpending = useMemo(() => computeMonthlySpending(myBookings), [myBookings]);
-  const preferredDay = useMemo(() => computePreferredBookingDay(myBookings), [myBookings]);
   const topBarbers = useMemo(() => resolveTopBarbers(myBookings, barbers, 3), [myBookings, barbers]);
 
-  const walletCurrency = wallet?.currency ?? 'USD';
-  const walletSymbol = walletCurrency === 'EUR' ? '€' : '$';
-  const walletBalance = wallet?.balance ?? 0;
-
-  const insights = [
-    lastBooking
-      ? { text: `Your last cut was on ${lastBooking.date_text || 'recent'} with ${lastBooking.barber_name || 'your barber'}. Time to rebook?`, icon: <UserCheck className="w-3 h-3" /> }
-      : { text: "Welcome! Start your journey by booking your first cut today.", icon: <UserCheck className="w-3 h-3" /> },
-    ...(preferredDay
-      ? [{ text: `You usually book on ${preferredDay}s, book early to secure your slot.`, icon: <Calendar className="w-3 h-3" /> }]
-      : []),
-    monthlyEarned > 0
-      ? { text: `You've earned ${monthlyEarned} loyalty points this month.`, icon: <DollarSign className="w-3 h-3" /> }
-      : { text: 'Complete a booking to start earning loyalty points.', icon: <DollarSign className="w-3 h-3" /> },
-  ];
+  const walletSymbol = (wallet?.currency ?? 'USD') === 'EUR' ? '€' : '$';
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -226,15 +194,6 @@ export default function Dashboard() {
       <MetaTags
         title="Dashboard"
         description="Control center for your grooming life."
-      />
-
-      <PageHeader
-        label="Client"
-        title="Dashboard"
-        subtitle="Your grooming hub — bookings, loyalty, and quick actions"
-        compact
-        variant="light"
-        tier="app"
       />
 
       {/* Client dashboard toolbar: profile, search, notifications */}
@@ -378,73 +337,30 @@ export default function Dashboard() {
             />
           </section>
 
-          <section>
-            <FeaturedServices />
-          </section>
+          <div className="flex flex-wrap gap-2">
+            <Link to={createPageUrl('Loyalty')}>
+              <Button variant="outline" size="sm" className="text-xs font-semibold h-9">
+                Loyalty rewards
+              </Button>
+            </Link>
+            <Link to={createPageUrl('ClientWallet')}>
+              <Button variant="outline" size="sm" className="text-xs font-semibold h-9">
+                Wallet
+              </Button>
+            </Link>
+            <Link to={createPageUrl('Favorites')}>
+              <Button variant="outline" size="sm" className="text-xs font-semibold h-9">
+                Favorites
+              </Button>
+            </Link>
+          </div>
 
           <section>
             <QuickActions />
           </section>
 
-          <InsightBanner
-            message={
-              <span>
-                You have <span className="font-bold text-primary">{(loyaltyProfile?.current_points ?? 0).toLocaleString()} points</span>
-                {pointsToNextReward > 0
-                  ? <>, only {pointsToNextReward} more to unlock a $5 reward!</>
-                  : <>, redeem rewards on your next booking!</>}
-              </span>
-            }
-            actionText="View Rewards"
-            actionHref={createPageUrl('Loyalty')}
-          />
-
-          <section>
-            <QuickInsights insights={insights} />
-          </section>
-
           <section>
             <PersonalizedBarberPicks />
-          </section>
-
-          {/* Recommended For You */}
-          <section>
-            <div className="mb-4">
-              <h2 className={cn(stb.uiHeading, 'text-xl')}>Recommended for You</h2>
-              <p className="text-sm text-muted-foreground mt-1">Based on your recent style.</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {services.length === 0 ? (
-                <div className="col-span-full">
-                  <EmptyState
-                    title="No services to recommend yet"
-                    description="Explore barbers and shops to discover services tailored to you."
-                    actionLabel="Explore"
-                    actionHref={createPageUrl('Explore')}
-                  />
-                </div>
-              ) : services.slice(0, 4).map((item) => {
-                const serviceData = item.data || item;
-                const price = serviceData.price || parseFloat((serviceData.price_text || '0').replace(/[^0-9.]/g, '')) || 0;
-                return (
-                  <Link key={serviceData.id || serviceData.name} to={createPageUrl(`Explore?q=${encodeURIComponent(serviceData.name)}`)}>
-                    <div className="group cursor-pointer stb-panel p-3 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex gap-4 items-center sm:block sm:text-center h-full">
-                      <OptimizedImage
-                        src={serviceData.image_url}
-                        alt={serviceData.name}
-                        className="w-16 h-16 sm:w-full sm:h-32 object-cover rounded-lg sm:mb-3"
-                        width={300}
-                      />
-                      <div className="flex-1 text-left sm:text-center min-w-0">
-                        <h3 className="font-bold text-foreground text-sm truncate" title={serviceData.name}>{serviceData.name}</h3>
-                        <p className="text-xs text-muted-foreground truncate">{serviceData.category || 'Service'}</p>
-                        <span className="block mt-1 text-xs font-semibold text-primary">${price.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
           </section>
 
           {/* Book with Your Top Barbers */}
@@ -489,96 +405,6 @@ export default function Dashboard() {
                 );
               })}
             </div>
-            )}
-          </section>
-
-          {/* Loyalty & Wallet */}
-          <section>
-            <div className="mb-4">
-              <h2 className={cn(stb.uiHeading, 'text-xl')}>Loyalty & Wallet</h2>
-              <p className="text-sm text-muted-foreground mt-1">Earn points, unlock rewards, and manage your payment methods.</p>
-            </div>
-
-            {loyaltyProfile ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="stb-panel bg-primary text-primary-foreground p-6 border-primary">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="text-primary-foreground/80 text-sm mb-1">Your Points</p>
-                        <h3 className="text-4xl font-bold">{loyaltyProfile.current_points || 0}</h3>
-                      </div>
-                      <div className="px-3 py-1 bg-card/20 rounded-full text-xs font-bold">
-                        {loyaltyProfile.tier || 'Bronze'}
-                      </div>
-                    </div>
-                    <div className="h-2 bg-card/20 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-card rounded-full transition-all"
-                        style={{ width: `${progressToFirstReward}%` }}
-                      />
-                    </div>
-                    <p className="text-primary-foreground/80 text-xs mt-2">
-                      {pointsToNextReward > 0
-                        ? `${pointsToNextReward} points to your next $5 reward`
-                        : 'You can redeem a $5 reward!'}
-                      {loyaltySummary?.dollar_value != null && (
-                        <span className="block opacity-80">≈ ${loyaltySummary.dollar_value.toFixed(2)} redeemable value</span>
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="stb-panel p-6 shadow-sm">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="text-muted-foreground text-sm mb-1">Wallet Balance</p>
-                        <h3 className="text-4xl font-bold text-foreground">
-                          {walletLoading ? '-' : `${walletSymbol}${walletBalance.toFixed(2)}`}
-                        </h3>
-                      </div>
-                      <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                        <Link to={createPageUrl('ClientWallet')}>View Wallet</Link>
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Available for bookings & tips</p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <Link to={createPageUrl('Loyalty')} className="inline-block">
-                    <Button variant="outline" className="border-border text-primary hover:bg-primary/5 hover:border-primary/30">
-                      View All Rewards & History
-                    </Button>
-                  </Link>
-                </div>
-
-                {loyaltyTransactions.length > 0 && (
-                  <Card className="border-border bg-card shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-base text-foreground">Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {loyaltyTransactions.slice(0, 5).map((tx, i) => (
-                          <div key={i} className="flex justify-between items-center text-sm py-2 border-b border-border last:border-0">
-                            <span className="text-muted-foreground">{tx.description}</span>
-                            <span className={`font-bold ${tx.points > 0 ? 'text-primary' : 'text-destructive'}`}>
-                              {tx.points > 0 ? '+' : ''}{tx.points}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ) : (
-              <Card className="border-border bg-card shadow-sm">
-                <CardContent className="py-8 text-center">
-                  <Award className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Sign in to start earning loyalty points</p>
-                </CardContent>
-              </Card>
             )}
           </section>
 

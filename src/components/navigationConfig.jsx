@@ -149,7 +149,6 @@ export const getZoneFromPath = (pathname) => {
   const providerZonePaths = new Set([
     '/clientlist',
     '/networkownerdashboard',
-    '/supportchat',
     '/sellerorders',
     '/tombolalive',
     '/providerevents',

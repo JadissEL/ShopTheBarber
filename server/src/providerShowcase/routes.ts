@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { authenticateRequest } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import {
     getPublicBarberShowcase,
     getPublicShopShowcase,
@@ -16,13 +17,12 @@ import {
 } from './logic';
 import { getBatchDiscoveryPreviews } from './discoveryPreviews';
 
-const PROVIDER_ROLES = ['barber', 'shop_owner', 'admin', 'provider'] as const;
 
 async function requireProvider(request: unknown, reply: unknown) {
     const ok = await authenticateRequest(request as Parameters<typeof authenticateRequest>[0], reply as Parameters<typeof authenticateRequest>[1]);
     if (!ok) return null;
     const user = (request as { user?: { id: string; role?: string } }).user!;
-    if (!PROVIDER_ROLES.includes((user.role ?? '') as (typeof PROVIDER_ROLES)[number])) {
+    if (!isProviderRole(user.role)) {
         (reply as { status: (n: number) => { send: (b: unknown) => void } }).status(403).send({ error: 'Provider access required' });
         return null;
     }

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import { assertShopManager } from '../shop/logic';
 import {
     DEFAULT_TRAVEL_ZONES,
@@ -16,8 +17,6 @@ import {
 } from './logic';
 import { geocodeAddress, reverseGeocode, suggestAddresses, getGeocodingConfig } from './geocoding';
 import { isIpRateLimitAllowed } from '../lib/ipRateLimit';
-
-const PROVIDER_ROLES = ['barber', 'shop_owner', 'admin', 'provider'] as const;
 
 function parseAreaBody(body: Record<string, unknown>): AtHomeAreaInput {
     const zones = Array.isArray(body.zones)
@@ -53,7 +52,7 @@ export async function atHomeServiceRoutes(fastify: FastifyInstance) {
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
         const user = request.user!;
-        if (!PROVIDER_ROLES.includes((user.role ?? '') as (typeof PROVIDER_ROLES)[number])) {
+        if (!isProviderRole(user.role)) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
         return getProviderAtHomeSettings(user.id);

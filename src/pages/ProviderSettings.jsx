@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { toast } from 'sonner';
 import { MetaTags } from '@/components/seo/MetaTags';
+import { canAccessProviderTools } from '@/lib/userRole';
 import { Plus, AlertCircle, CheckCircle, Trash2, Edit3 } from 'lucide-react';
 import ShopHoursEditor from '@/components/scheduling/ShopHoursEditor';
 import AvailabilityManager from '@/components/provider-settings/AvailabilityManager';
@@ -105,25 +106,25 @@ export default function ProviderSettings() {
     const { data: providerLanguages } = useQuery({
         queryKey: ['provider-languages'],
         queryFn: () => sovereign.languages.getMyLanguages(),
-        enabled: !!user && ['barber', 'shop_owner', 'admin'].includes(user?.role),
+        enabled: !!user && ['barber', 'shop_owner', 'provider'].includes(user?.role),
     });
 
     const { data: childrenFriendlySettings } = useQuery({
         queryKey: ['provider-children-friendly'],
         queryFn: () => sovereign.childrenFriendly.getMySettings(),
-        enabled: !!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role),
+        enabled: !!user && ['barber', 'shop_owner', 'provider'].includes(user?.role),
     });
 
     const { data: attestationSettings } = useQuery({
         queryKey: ['provider-attestation'],
         queryFn: () => sovereign.providerAttestation.getMySettings(),
-        enabled: !!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role),
+        enabled: !!user && ['barber', 'shop_owner', 'provider'].includes(user?.role),
     });
 
     const { data: _groupBookingSettings } = useQuery({
         queryKey: ['provider-group-booking'],
         queryFn: () => sovereign.groupBooking.getMySettings(),
-        enabled: !!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role),
+        enabled: !!user && ['barber', 'shop_owner', 'provider'].includes(user?.role),
     });
 
     // 2. Form States
@@ -334,7 +335,7 @@ export default function ProviderSettings() {
                         </Card>
                     )}
 
-                    {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
+                    {!!user && ['barber', 'shop_owner', 'provider'].includes(user?.role) && (
                         <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderServiceLocationPanel />
@@ -342,7 +343,7 @@ export default function ProviderSettings() {
                         </Card>
                     )}
 
-                    {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
+                    {!!user && ['barber', 'shop_owner', 'provider'].includes(user?.role) && (
                         <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderAtHomeServicePanel />
@@ -350,7 +351,7 @@ export default function ProviderSettings() {
                         </Card>
                     )}
 
-                    {!!user && ['barber', 'shop_owner', 'admin', 'provider'].includes(user?.role) && (
+                    {!!user && ['barber', 'shop_owner', 'provider'].includes(user?.role) && (
                         <Card className="border-border shadow-sm  overflow-hidden bg-card mt-6">
                             <CardContent className="p-8">
                                 <ProviderGroupBookingPanel />

@@ -11,10 +11,11 @@ import {
 } from '../jobs/logic';
 
 describe('jobs logic', () => {
-    it('canPostJobs allows barber, shop_owner, admin only', () => {
+    it('canPostJobs allows provider roles only', () => {
         expect(canPostJobs('barber')).toBe(true);
         expect(canPostJobs('shop_owner')).toBe(true);
-        expect(canPostJobs('admin')).toBe(true);
+        expect(canPostJobs('provider')).toBe(true);
+        expect(canPostJobs('admin')).toBe(false);
         expect(canPostJobs('client')).toBe(false);
     });
 

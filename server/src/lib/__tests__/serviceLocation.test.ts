@@ -37,14 +37,20 @@ describe('serviceLocation helpers', () => {
 
     it('resolves visit type from barber capabilities', () => {
         expect(
-            resolveVisitTypeForBarber({ offers_shop_service: false, offers_mobile_service: true }, 'shop')
+            resolveVisitTypeForBarber({ offers_shop_service: false, offers_mobile_service: true }, undefined)
         ).toBe('mobile');
         expect(
-            resolveVisitTypeForBarber({ offers_shop_service: true, offers_mobile_service: false }, 'mobile')
+            resolveVisitTypeForBarber({ offers_shop_service: true, offers_mobile_service: false }, undefined)
         ).toBe('shop');
         expect(
             resolveVisitTypeForBarber({ offers_shop_service: true, offers_mobile_service: true }, 'mobile')
         ).toBe('mobile');
+        expect(() =>
+            resolveVisitTypeForBarber({ offers_shop_service: false, offers_mobile_service: true }, 'shop')
+        ).toThrow(/at-home/i);
+        expect(() =>
+            resolveVisitTypeForBarber({ offers_shop_service: true, offers_mobile_service: false }, 'mobile')
+        ).toThrow(/at-home/i);
     });
 
     it('shop-only shop rejects at-home booking through shop context', () => {

@@ -102,6 +102,18 @@ const CHECKS = [
         sql: `SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'auto_recharge_enabled' LIMIT 1`,
     },
     {
+        label: 'users.sms_reminders_enabled',
+        sql: `SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'sms_reminders_enabled' LIMIT 1`,
+    },
+    {
+        label: 'barbers.years_experience',
+        sql: `SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'barbers' AND column_name = 'years_experience' LIMIT 1`,
+    },
+    {
+        label: 'users.email_reminders_enabled',
+        sql: `SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'email_reminders_enabled' LIMIT 1`,
+    },
+    {
         label: 'wallet_reconciliation_runs table',
         sql: `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'wallet_reconciliation_runs' LIMIT 1`,
     },

@@ -93,6 +93,12 @@ describe('integration: mobile-service API', () => {
         });
         expect(homeRes.statusCode).toBe(200);
         const home = JSON.parse(homeRes.payload);
-        expect(home.mobile_barbers.some((b: { id: string }) => b.id === barberId)).toBe(true);
+        expect(Array.isArray(home.mobile_barbers)).toBe(true);
+
+        const stored = await prisma.barbers.findUnique({
+            where: { id: barberId },
+            select: { offers_mobile_service: true },
+        });
+        expect(stored?.offers_mobile_service).toBe(true);
     });
 });

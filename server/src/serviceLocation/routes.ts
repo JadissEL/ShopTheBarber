@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import { assertShopManager } from '../shop/logic';
 import {
     assertAtLeastOneServiceLocation,
@@ -11,8 +12,6 @@ import {
 import { MOBILE_SERVICE_LABEL } from '../mobileService/routes';
 
 export const SHOP_SERVICE_LABEL = 'In-shop visits';
-
-const PROVIDER_ROLES = ['barber', 'shop_owner', 'admin', 'provider'] as const;
 
 function serializeServiceLocations(entity: {
     id: string;
@@ -73,7 +72,7 @@ export async function serviceLocationRoutes(fastify: FastifyInstance) {
         if (!ok) return;
         const user = request.user!;
 
-        if (!PROVIDER_ROLES.includes((user.role ?? '') as (typeof PROVIDER_ROLES)[number])) {
+        if (!isProviderRole(user.role)) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
 
@@ -106,7 +105,7 @@ export async function serviceLocationRoutes(fastify: FastifyInstance) {
         const wantsMobile = request.body?.offers_mobile_service;
 
         let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
-        if (!barber && PROVIDER_ROLES.includes((user.role ?? '') as (typeof PROVIDER_ROLES)[number])) {
+        if (!barber && isProviderRole(user.role)) {
             barber = await prisma.barbers.create({
                 data: {
                     user_id: user.id,

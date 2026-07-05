@@ -14,10 +14,13 @@ import { stb } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
+import { canAccessProviderTools } from '@/lib/userRole';
 
 export default function ClientList() {
+  const { effectiveRole } = useEffectiveRole();
   const { user, shopId, isManager, isLoading: shopLoading } = useManagedShop();
-  const isProvider = user && ['provider', 'barber', 'shop_owner', 'admin'].includes(user.role);
+  const isProvider = canAccessProviderTools(effectiveRole);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['shop-clients', shopId],

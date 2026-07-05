@@ -3,6 +3,7 @@ import { APP_ZONES } from '@/components/navigationConfig';
 import {
   shouldHideBottomNav,
   shouldShowClientBottomNav,
+  shouldShowProviderBottomNav,
   shouldHideGlobalNavOnMobile,
 } from '@/lib/mobileLayout';
 
@@ -55,6 +56,25 @@ describe('mobileLayout', () => {
           isDesktop: false,
         }),
       ).toBe(false);
+    });
+
+    it('hides for providers and admins on public pages', () => {
+      expect(
+        shouldShowClientBottomNav({
+          pathname: '/Explore',
+          isAuthenticated: true,
+          isDesktop: false,
+          role: 'barber',
+        }),
+      ).toBe(false);
+      expect(
+        shouldShowProviderBottomNav({
+          pathname: '/Explore',
+          isAuthenticated: true,
+          isDesktop: false,
+          role: 'barber',
+        }),
+      ).toBe(true);
     });
   });
 

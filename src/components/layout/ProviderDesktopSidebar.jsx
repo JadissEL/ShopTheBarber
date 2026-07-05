@@ -58,12 +58,12 @@ const ICON_BY_PAGE = {
 export default function ProviderDesktopSidebar() {
   const location = useLocation();
   const { logout, user, role } = useAuth();
-  const { isManager } = useManagedShop();
+  const { isManager, shopId } = useManagedShop();
   const isDesktop = useIsDesktop();
 
   if (!isDesktop) return null;
 
-  const navGroups = getProviderNavGroups({ isManager });
+  const navGroups = getProviderNavGroups({ isManager, isSolo: !shopId });
 
   return (
     <aside className="w-64 shrink-0 border-r border-white/10 bg-[hsl(var(--navy))] text-white flex flex-col min-h-screen sticky top-0 font-sans">

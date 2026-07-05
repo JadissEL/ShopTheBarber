@@ -196,8 +196,13 @@ export async function syncAllEntries(drawId: string) {
 
     let synced = 0;
     for (const u of users) {
-        const result = await syncUserEntry(u.id);
-        if (result.entry) synced += 1;
+        try {
+            const result = await syncUserEntry(u.id);
+            if (result.entry) synced += 1;
+        } catch (err) {
+            if (err instanceof Error && err.message === 'User not found') continue;
+            throw err;
+        }
     }
     await refreshDrawTotals(drawId);
     return { synced, total_participants: draw.participant_count };

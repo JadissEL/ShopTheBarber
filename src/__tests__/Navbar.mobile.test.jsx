@@ -7,6 +7,14 @@ vi.mock('@/lib/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: false, user: null }),
 }));
 
+vi.mock('@/hooks/useEffectiveRole', () => ({
+  useEffectiveRole: () => ({
+    effectiveRole: null,
+    isLoading: false,
+    isProviderRole: false,
+  }),
+}));
+
 describe('Navbar (mobile)', () => {
   beforeEach(() => {
     document.body.style.overflow = '';

@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Calendar, DollarSign, TrendingUp, Clock, Zap, Download, UserCheck, Heart, Scissors, Ban, Scale } from 'lucide-react';
+import { Calendar, DollarSign, TrendingUp, Clock, Download, UserCheck, Heart, Scissors, Ban, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -23,6 +26,20 @@ import { stb, chartColor } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
 
 export default function ProviderDashboard() {
+    const navigate = useNavigate();
+    const { isAdmin, isProvider, isLoading: roleLoading } = useEffectiveRole();
+
+    useEffect(() => {
+        if (roleLoading) return;
+        if (isAdmin) {
+            navigate(createPageUrl('GlobalFinancials'), { replace: true });
+            return;
+        }
+        if (!isProvider) {
+            navigate(createPageUrl('Dashboard'), { replace: true });
+        }
+    }, [roleLoading, isAdmin, isProvider, navigate]);
+
     const { data: user, isLoading: isUserLoading } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
     const [reviewPage, _setReviewPage] = useState(1);
     const [ratingFilter, _setRatingFilter] = useState(null);
@@ -71,9 +88,17 @@ export default function ProviderDashboard() {
     });
 
     const { data: bookings = [] } = useQuery({
-        queryKey: ['dashboard-bookings', shopId],
-        queryFn: () => shopId ? sovereign.entities.Booking.filter({ shop_id: shopId }) : [],
-        enabled: !!shopId
+        queryKey: ['dashboard-bookings', shopId, myBarberProfile?.id],
+        queryFn: async () => {
+            if (shopId) {
+                return sovereign.entities.Booking.filter({ shop_id: shopId });
+            }
+            if (myBarberProfile?.id) {
+                return sovereign.entities.Booking.filter({ barber_id: myBarberProfile.id });
+            }
+            return [];
+        },
+        enabled: !!(shopId || myBarberProfile?.id),
     });
 
     const { data: reviews = [] } = useQuery({
@@ -99,7 +124,13 @@ export default function ProviderDashboard() {
         toast.success("Analytics report exported");
     };
 
-    if (isUserLoading) return <PageLoading message="Loading dashboard..." />;
+    if (isUserLoading || roleLoading) return <PageLoading message="Loading dashboard..." />;
+
+    const isShopConsole = Boolean(shopId);
+    const upcomingToday = bookings
+        .filter(b => b.status === 'confirmed' && new Date(b.start_time) >= new Date())
+        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+        .slice(0, 3);
 
     return (
         <div className="stb-page pb-20 font-sans">
@@ -107,8 +138,12 @@ export default function ProviderDashboard() {
 
             <PageHeader
                 label="Provider"
-                title="Shop console"
-                subtitle="Monitoring platform health and booking velocity."
+                title={isShopConsole ? 'Shop console' : 'Your business'}
+                subtitle={
+                    isShopConsole
+                        ? 'Team performance, revenue, and today\'s appointments.'
+                        : 'Today\'s schedule, earnings, and client reviews.'
+                }
                 compact
                 variant="light"
                 tier="app"
@@ -116,8 +151,10 @@ export default function ProviderDashboard() {
                 <Button onClick={handleExport} variant="outline" className="h-11">
                     <Download className="w-4 h-4 mr-2" /> Export
                 </Button>
-                <Button className="h-11">
-                    <Zap className="w-4 h-4 mr-2" /> Upgrade
+                <Button asChild className="h-11">
+                    <Link to={createPageUrl('ProviderBookings')}>
+                        <Calendar className="w-4 h-4 mr-2 inline" /> Open calendar
+                    </Link>
                 </Button>
             </PageHeader>
 
@@ -129,6 +166,23 @@ export default function ProviderDashboard() {
                     </div>
                 )}
                 <OnboardingSetupBanner autoOpenModal audience="provider" />
+
+                {upcomingToday.length > 0 ? (
+                    <section className="mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold text-foreground">Today</h2>
+                            <Link to={createPageUrl('ProviderBookings')} className="text-sm font-semibold text-primary hover:underline">
+                                View all
+                            </Link>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {upcomingToday.map((b) => (
+                                <BookingCard key={b.id} booking={b} />
+                            ))}
+                        </div>
+                    </section>
+                ) : null}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     <MetricCard
                         title="Total Revenue"
@@ -206,8 +260,8 @@ export default function ProviderDashboard() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <Card className="lg:col-span-2 border-border shadow-sm overflow-hidden bg-card rounded-lg">
+                <div className={`grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 ${shopId ? '' : 'lg:grid-cols-1'}`}>
+                    <Card className={`border-border shadow-sm overflow-hidden bg-card rounded-lg ${shopId ? 'lg:col-span-2' : ''}`}>
                         <div className="pt-6 px-6 flex justify-between items-center">
                             <div>
                                 <h3 className="text-lg font-bold text-foreground">Revenue Velocity</h3>
@@ -235,6 +289,7 @@ export default function ProviderDashboard() {
                         </div>
                     </Card>
 
+                    {shopId ? (
                     <Card className="border-border shadow-sm bg-card rounded-lg p-6">
                         <h3 className="text-lg font-bold text-foreground mb-6">Staff Performance</h3>
                         <div className="space-y-5">
@@ -256,6 +311,7 @@ export default function ProviderDashboard() {
                             )}
                         </div>
                     </Card>
+                    ) : null}
                 </div>
 
                 <Tabs defaultValue="upcoming" className="w-full">

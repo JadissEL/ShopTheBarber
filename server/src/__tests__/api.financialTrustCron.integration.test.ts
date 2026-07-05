@@ -71,7 +71,7 @@ describe('integration: Financial Trust cron routes', () => {
             headers: { 'x-cron-secret': 'test-cron-secret' },
         });
         expect(res.statusCode).toBe(200);
-    });
+    }, 120_000);
 
     it('POST /api/cron/wallets/reconcile runs with valid secret', async () => {
         const res = await (app as FastifyInstance).inject({

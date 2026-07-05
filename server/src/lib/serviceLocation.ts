@@ -44,6 +44,12 @@ export function resolveVisitTypeForBarber(
     requested: 'shop' | 'mobile' | undefined
 ): 'shop' | 'mobile' {
     const modes = getServiceLocationModes(barber);
+    if (requested === 'mobile' && !modes.mobile) {
+        throw new Error('This barber does not offer at-home visits');
+    }
+    if (requested === 'shop' && !modes.shop) {
+        throw new Error('This barber only offers at-home visits, please book at your location');
+    }
     if (modes.mobile_only) return 'mobile';
     if (modes.shop_only) return 'shop';
     if (requested === 'mobile' && modes.mobile) return 'mobile';
@@ -77,6 +83,12 @@ export function resolveVisitTypeForBooking(
 ): 'shop' | 'mobile' {
     if (inShopContext && shop) {
         const modes = getShopBookingLocationModes(barber, shop);
+        if (requested === 'mobile' && !modes.mobile) {
+            throw new Error('This shop does not offer at-home visits, please book in-shop');
+        }
+        if (requested === 'shop' && !modes.shop) {
+            throw new Error('This shop only offers at-home visits');
+        }
         if (modes.mobile_only) return 'mobile';
         if (modes.shop_only) return 'shop';
         if (requested === 'mobile' && modes.mobile) return 'mobile';

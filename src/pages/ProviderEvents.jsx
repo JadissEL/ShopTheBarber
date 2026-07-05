@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
+import { canAccessProviderTools } from '@/lib/userRole';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,7 +94,7 @@ export default function ProviderEvents() {
     const queryClient = useQueryClient();
     const [tab, setTab] = useState('upcoming');
 
-    const isProvider = ['barber', 'provider', 'shop_owner', 'admin'].includes(user?.role);
+    const isProvider = canAccessProviderTools(user?.role);
 
     const { data: events = [], isLoading } = useQuery({
         queryKey: ['provider-events'],

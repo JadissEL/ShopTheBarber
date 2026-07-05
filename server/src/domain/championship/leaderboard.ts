@@ -123,12 +123,16 @@ export async function refreshChampionshipLeaderboard(limit = 100) {
 
         const scores: Array<{ barberId: string; score: number; country: string }> = [];
         for (const b of barbers) {
-            const eligible = await isBarberChampionshipEligible(b.id);
-            if (!eligible) continue;
-            await syncBarberTrustScore(b.id);
-            await syncAvailabilityScore(b.id);
-            const score = await computeBarberChampionshipScore(b.id);
-            scores.push({ barberId: b.id, score, country: 'GR' });
+            try {
+                const eligible = await isBarberChampionshipEligible(b.id);
+                if (!eligible) continue;
+                await syncBarberTrustScore(b.id);
+                await syncAvailabilityScore(b.id);
+                const score = await computeBarberChampionshipScore(b.id);
+                scores.push({ barberId: b.id, score, country: 'GR' });
+            } catch {
+                continue;
+            }
         }
 
         scores.sort((a, b) => b.score - a.score);

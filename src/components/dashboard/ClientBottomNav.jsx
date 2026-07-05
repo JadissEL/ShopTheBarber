@@ -21,6 +21,7 @@ import { createPageUrl } from '@/utils';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useCart } from '@/components/context/CartContext';
 import { useAuth } from '@/lib/AuthContext';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { shouldShowClientBottomNav } from '@/lib/mobileLayout';
 import { getClientMoreItems, isFeatureEnabled } from '@/lib/featureRegistry';
 import { isNavActive } from '@/lib/navActive';
@@ -68,6 +69,7 @@ export default function ClientBottomNav() {
   const isDesktop = useIsDesktop();
   const { itemCount } = useCart();
   const { isAuthenticated } = useAuth();
+  const { effectiveRole } = useEffectiveRole();
   const [moreOpen, setMoreOpen] = useState(false);
   const marketplaceEnabled = isFeatureEnabled('marketplace');
   const moreLinks = getClientMoreItems();
@@ -77,6 +79,7 @@ export default function ClientBottomNav() {
       pathname: path,
       isAuthenticated,
       isDesktop,
+      role: effectiveRole,
     })
   ) {
     return null;

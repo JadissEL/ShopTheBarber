@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { sovereign } from '@/api/apiClient';
 import { getProviderIntent } from '@/lib/bootstrapProvider';
-import { isProviderRole, resolveEffectiveRole } from '@/lib/userRole';
+import { isAdminRole, isProviderRole, resolveEffectiveRole } from '@/lib/userRole';
 
 /**
  * Auth role + workspace inference for routing and nav (fixes client/barber mismatch).
@@ -40,6 +40,7 @@ export function useEffectiveRole() {
     [authRole, workspace?.barber, workspace?.ownerMembership, providerIntent],
   );
 
+  const isAdmin = isAdminRole(effectiveRole);
   const isProvider = isProviderRole(effectiveRole);
   const needsProviderBootstrap =
     isAuthenticated &&
@@ -51,6 +52,7 @@ export function useEffectiveRole() {
   return {
     authRole,
     effectiveRole,
+    isAdmin,
     isProvider,
     needsProviderBootstrap,
     providerIntent,

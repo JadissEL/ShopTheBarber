@@ -9,7 +9,5 @@ export const BILLING_CYCLES = ['monthly', 'annual'] as const;
 export const PLAN_SCOPES = ['barber', 'shop'] as const;
 export const PLAN_STATUSES = ['pending_payment', 'active', 'expired', 'cancelled'] as const;
 
-export const PROVIDER_ROLES = new Set(['barber', 'provider', 'shop_owner', 'admin']);
-
 export type BillingCycle = (typeof BILLING_CYCLES)[number];
 export type PlanScope = (typeof PLAN_SCOPES)[number];

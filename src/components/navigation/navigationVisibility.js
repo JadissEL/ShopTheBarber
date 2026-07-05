@@ -10,6 +10,7 @@
 
 import { APP_ZONES } from '@/components/navigationConfig';
 import { isFeatureEnabled } from '@/lib/featureRegistry';
+import { dashboardPageForRole, settingsPageForRole } from '@/lib/userRole';
 
 /**
  * Navigation visibility categories
@@ -165,17 +166,15 @@ export function getNavigationVisibility({ pathname, isAuthenticated, role, zone:
  * @returns {string} Page name for dashboard
  */
 export function getDashboardPath(role) {
-    switch (role) {
-        case 'admin':
-            return 'GlobalFinancials';
-        case 'barber':
-        case 'shop_owner':
-        case 'provider':
-            return 'ProviderDashboard';
-        case 'client':
-        default:
-            return 'Dashboard';
-    }
+    return dashboardPageForRole(role);
+}
+
+/**
+ * @param {string} role
+ * @returns {string} Page name for role-appropriate settings
+ */
+export function getSettingsPath(role) {
+    return settingsPageForRole(role);
 }
 
 /**

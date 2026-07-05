@@ -8,6 +8,7 @@ import { sovereign } from '@/api/apiClient';
 import { getZoneFromPath, APP_ZONES } from '@/components/navigationConfig';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { getProviderIntent } from '@/lib/bootstrapProvider';
+import { isAdminRole } from '@/lib/userRole';
 
 /** Build SignIn URL with return path so user is sent back after login */
 function buildSignInRedirect(currentPath) {
@@ -24,19 +25,18 @@ function handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate }) {
   return true;
 }
 
-/** Employer-only pages: require barber/shop_owner/admin (job poster role) */
+/** Employer-only pages: require barber/shop_owner (job poster role) */
 const EMPLOYER_PATHS = ['/createjob', '/myjobs', '/applicantreview', '/scheduleinterview'];
 
 export default function RouteGuard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
-  const { effectiveRole, isProvider, isLoading: roleLoading, workspace } = useEffectiveRole();
+  const { effectiveRole, isProvider, isAdmin, isLoading: roleLoading, workspace } = useEffectiveRole();
   const { bookingState } = useBooking();
   const path = location.pathname.toLowerCase();
   const zone = getZoneFromPath(path);
 
-  // Check if user is a shop owner/manager (for guarded Ops pages)
   const { data: isManager, isLoading: isManagerLoading } = useQuery({
     queryKey: ['isManager', user?.id],
     queryFn: async () => {
@@ -48,11 +48,22 @@ export default function RouteGuard() {
   });
 
   useEffect(() => {
-    if (isLoadingAuth || isManagerLoading || roleLoading) return; // Wait for Clerk + backend sync and manager check
+    if (isLoadingAuth || isManagerLoading || roleLoading) return;
 
-    const isProviderRole = isProvider;
     const providerIntent = getProviderIntent();
     const hasProviderWorkspace = Boolean(workspace?.barber || workspace?.ownerMembership);
+
+    // Platform admins: admin console only — never client or provider dashboards/tools
+    if (isAdmin) {
+      if (path === '/dashboard' || path === '/providerdashboard') {
+        navigate(createPageUrl('GlobalFinancials'), { replace: true });
+        return;
+      }
+      if (zone === APP_ZONES.PROVIDER) {
+        navigate(createPageUrl('GlobalFinancials'), { replace: true });
+        return;
+      }
+    }
 
     // 1. Booking Flow Protection
     if (path.includes('/payment') || path.includes('/bookingconfirm')) {
@@ -79,7 +90,7 @@ export default function RouteGuard() {
         navigate(buildSignInRedirect(location.pathname), { replace: true });
         return;
       }
-      if (!isProviderRole) {
+      if (!isProvider) {
         if (providerIntent && !hasProviderWorkspace) {
           navigate(createPageUrl('SetupGuide'), { replace: true });
           return;
@@ -109,27 +120,27 @@ export default function RouteGuard() {
         navigate(buildSignInRedirect(location.pathname), { replace: true });
         return;
       }
-      if (effectiveRole !== 'admin') {
+      if (!isAdminRole(effectiveRole)) {
         navigate(createPageUrl('Home'), { replace: true });
       }
     }
 
-    // 5. Employer-only routes (job posting/applicant management): require auth + barber/shop_owner/admin
+    // 5. Employer-only routes: require provider role
     const isEmployerRoute = EMPLOYER_PATHS.some(p => path === p || path.startsWith(`${p  }/`));
-    if (isEmployerRoute && user && !isProviderRole) {
+    if (isEmployerRoute && user && !isProvider) {
       navigate(createPageUrl('CareerHub'), { replace: true });
     }
 
     // 6. Providers must not land on the client dashboard
-    if (path === '/dashboard' && isProviderRole && effectiveRole !== 'admin') {
+    if (path === '/dashboard' && isProvider) {
         navigate(createPageUrl('ProviderDashboard'), { replace: true });
     }
 
     // 7. Clients without provider workspace should not stay on provider dashboard
-    if (path === '/providerdashboard' && user && !isProviderRole && !providerIntent && !hasProviderWorkspace) {
+    if (path === '/providerdashboard' && user && !isProvider && !providerIntent && !hasProviderWorkspace) {
         navigate(createPageUrl('Dashboard'), { replace: true });
     }
-  }, [location, user, effectiveRole, isProvider, roleLoading, workspace, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
+  }, [location, user, effectiveRole, isProvider, isAdmin, roleLoading, workspace, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
 
   return null;
 }

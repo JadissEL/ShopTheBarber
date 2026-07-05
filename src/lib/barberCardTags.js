@@ -19,18 +19,18 @@ export function buildBarberCardTags(barber, { hasPromo = false, exploreMode = 't
 
   if (hasPromo) tags.push({ key: 'deal', icon: Tag, label: 'Deal available' });
 
-  const rating = barber.rating ?? 0;
-  const reviews = barber.review_count ?? 0;
-  if (rating >= 4.5 && reviews >= 5) {
-    tags.push({ key: 'top', icon: Star, label: 'Top rated' });
+  if (barber.offers_group_booking && !['group', 'mobileGroup'].includes(exploreMode)) {
+    tags.push({ key: 'group', icon: Users, label: 'Group booking' });
   }
 
   if (barber.children_friendly) {
     tags.push({ key: 'kids', icon: Baby, label: 'Kids welcome' });
   }
 
-  if (barber.offers_group_booking && !['group', 'mobileGroup'].includes(exploreMode)) {
-    tags.push({ key: 'group', icon: Users, label: 'Group booking' });
+  const rating = barber.rating ?? 0;
+  const reviews = barber.review_count ?? 0;
+  if (rating >= 4.5 && reviews >= 5) {
+    tags.push({ key: 'top', icon: Star, label: 'Top rated' });
   }
 
   if (reviews === 0 && rating === 0) {

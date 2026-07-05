@@ -1,5 +1,6 @@
 import type { products } from '@prisma/client';
 import { prisma } from '../db/prisma';
+import { isProviderRole } from '../auth/platformRbac';
 
 export const PRODUCT_STATUSES = ['draft', 'pending_review', 'published', 'rejected'] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
@@ -9,12 +10,12 @@ export const PRODUCT_CATEGORIES = ['hair', 'skincare', 'beard', 'tools', 'fragra
 export const SELLER_TYPES = ['barber', 'shop', 'platform', 'vendor'] as const;
 export type SellerType = (typeof SELLER_TYPES)[number];
 
-export const PRODUCT_SELLER_ROLES = ['barber', 'shop_owner', 'admin'] as const;
+export const PRODUCT_SELLER_ROLES = ['barber', 'shop_owner', 'provider'] as const;
 
 export type AuthUser = { id: string; email?: string; role?: string };
 
 export function canListProducts(role?: string | null): boolean {
-    return role === 'barber' || role === 'shop_owner' || role === 'admin';
+    return isProviderRole(role);
 }
 
 export function isAdmin(role?: string | null): boolean {

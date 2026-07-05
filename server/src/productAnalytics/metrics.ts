@@ -19,16 +19,37 @@ import {
     type FunnelEventRow,
 } from './funnelLogic';
 
-function parseDate(iso: string | null | undefined): Date | null {
+function parseDate(iso: string | Date | null | undefined): Date | null {
     if (!iso) return null;
+    if (iso instanceof Date) return Number.isNaN(iso.getTime()) ? null : iso;
     const d = new Date(iso);
     return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function daysAgoIso(days: number): string {
+    return daysAgoDate(days).toISOString();
+}
+
+function daysAgoDate(days: number): Date {
     const d = new Date();
     d.setUTCDate(d.getUTCDate() - days);
-    return d.toISOString();
+    return d;
+}
+
+function toFunnelEventRows(
+    events: Array<{
+        event_name: string;
+        session_id: string | null;
+        user_id: string | null;
+        created_at: Date | null;
+    }>
+): FunnelEventRow[] {
+    return events.map((event) => ({
+        event_name: event.event_name,
+        session_id: event.session_id,
+        user_id: event.user_id,
+        created_at: event.created_at?.toISOString() ?? null,
+    }));
 }
 
 function monthKey(d: Date): string {
@@ -106,7 +127,8 @@ export type AnalyticsDashboardOptions = {
 };
 
 export async function getBookingFunnelMetrics(days = DEFAULT_ANALYTICS_DAYS) {
-    const since = daysAgoIso(days);
+    const since = daysAgoDate(days);
+    const sinceIso = since.toISOString();
     const events = await prisma.product_analytics_events.findMany({
         where: { created_at: { gte: since } },
         select: {
@@ -117,7 +139,7 @@ export async function getBookingFunnelMetrics(days = DEFAULT_ANALYTICS_DAYS) {
         },
     });
 
-    const funnelEvents: FunnelEventRow[] = events;
+    const funnelEvents = toFunnelEventRows(events);
     const { stepSessions, stepUsers } = computeLooseFunnelCounts(funnelEvents);
     const strictCounts = computeStrictFunnelCounts(funnelEvents);
     const windowedStrictCounts = computeTimeWindowedStrictFunnelCounts(
@@ -129,11 +151,11 @@ export async function getBookingFunnelMetrics(days = DEFAULT_ANALYTICS_DAYS) {
 
     const [bookingsCreated, bookingsPaid] = await Promise.all([
         prisma.bookings.count({
-            where: { created_at: { gte: since } },
+            where: { created_at: { gte: sinceIso } },
         }),
         prisma.bookings.count({
             where: {
-                created_at: { gte: since },
+                created_at: { gte: sinceIso },
                 OR: [
                     { payment_status: 'paid' },
                     { status: { in: ['completed', 'confirmed'] } },
@@ -714,7 +736,8 @@ export async function getMarketplaceAttachmentMetrics() {
 }
 
 export async function getAnalyticsEventSummary(days = DEFAULT_ANALYTICS_DAYS) {
-    const since = daysAgoIso(days);
+    const since = daysAgoDate(days);
+    const sinceIso = since.toISOString();
     const tracked = [
         ANALYTICS_EVENTS.BOOKING_PAID,
         ANALYTICS_EVENTS.BOOKING_CREATED,
@@ -735,7 +758,7 @@ export async function getAnalyticsEventSummary(days = DEFAULT_ANALYTICS_DAYS) {
         counts[row.event_name] = (counts[row.event_name] ?? 0) + 1;
     }
 
-    return { period_days: days, since, counts };
+    return { period_days: days, since: sinceIso, counts };
 }
 
 export async function getLtvMonthlyTrend(monthsBack = 12) {
@@ -860,7 +883,7 @@ export async function getFeeAdoptionMonthlyTrend(monthsBack = 12) {
         prisma.product_analytics_events.findMany({
             where: {
                 event_name: ANALYTICS_EVENTS.FIXED_FEE_ENROLLED,
-                created_at: { gte: since },
+                created_at: { gte: new Date(since) },
             },
             select: { created_at: true },
         }),
@@ -967,7 +990,7 @@ export async function getMarketplaceMonthlyTrend(monthsBack = 12) {
         prisma.product_analytics_events.findMany({
             where: {
                 event_name: ANALYTICS_EVENTS.MARKETPLACE_ORDER_PAID,
-                created_at: { gte: since },
+                created_at: { gte: new Date(since) },
             },
             select: { created_at: true },
         }),

@@ -37,8 +37,13 @@ vi.mock('../auth/clerk', () => ({
 
 
 import { prisma } from '../db/prisma';
-
 import { fastify as app } from '../index';
+
+async function deleteBookingCascade(bookingId: string) {
+    await prisma.group_booking_guests.deleteMany({ where: { booking_id: bookingId } });
+    await prisma.booking_services.deleteMany({ where: { booking_id: bookingId } });
+    await prisma.bookings.delete({ where: { id: bookingId } });
+}
 
 
 
@@ -64,7 +69,11 @@ describe('integration: group booking API', () => {
 
             });
 
+            await prisma.booking_services.deleteMany({ where: { booking: { barber_id: barberId } } });
+
             await prisma.bookings.deleteMany({ where: { barber_id: barberId } });
+
+            await prisma.shifts.deleteMany({ where: { barber_id: barberId } });
 
             await prisma.barbers.deleteMany({ where: { id: barberId } });
 
@@ -72,7 +81,10 @@ describe('integration: group booking API', () => {
 
         if (serviceId) await prisma.services.deleteMany({ where: { id: serviceId } });
 
-        if (userId) await prisma.users.deleteMany({ where: { id: userId } });
+        if (userId) {
+            await prisma.notifications.deleteMany({ where: { user_id: userId } });
+            await prisma.users.deleteMany({ where: { id: userId } });
+        }
 
         await (app as FastifyInstance).close();
 
@@ -317,10 +329,9 @@ describe('integration: group booking API', () => {
             'Riley',
         ]);
 
-        await prisma.group_booking_guests.deleteMany({ where: { booking_id: booking.id } });
-        await prisma.bookings.delete({ where: { id: booking.id } });
+        await deleteBookingCascade(booking.id);
         await prisma.shifts.delete({ where: { id: shiftId } });
-    });
+    }, 60_000);
 
     it('creates at-home group booking for mobile-only barber', async () => {
         expect(barberId).toBeTruthy();
@@ -391,8 +402,7 @@ describe('integration: group booking API', () => {
         expect(booking.visit_type).toBe('mobile');
         expect(booking.location).toMatch(/Event Street/i);
 
-        await prisma.group_booking_guests.deleteMany({ where: { booking_id: booking.id } });
-        await prisma.bookings.delete({ where: { id: booking.id } });
+        await deleteBookingCascade(booking.id);
         await prisma.shifts.delete({ where: { id: shiftId } });
 
         await prisma.barbers.update({

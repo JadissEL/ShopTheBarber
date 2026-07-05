@@ -1,22 +1,33 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ClientBottomNav from '@/components/dashboard/ClientBottomNav';
+import ProviderBottomNav from '@/components/layout/ProviderBottomNav';
 import { useAuth } from '@/lib/AuthContext';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
-import { shouldShowClientBottomNav } from '@/lib/mobileLayout';
+import { shouldShowClientBottomNav, shouldShowProviderBottomNav } from '@/lib/mobileLayout';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getPublicNavItems, getPublicBusinessNavItems } from '@/lib/featureRegistry';
 
 export default function PublicLayout({ children }) {
   const { isAuthenticated } = useAuth();
+  const { effectiveRole } = useEffectiveRole();
   const isDesktop = useIsDesktop();
   const location = useLocation();
-  const showBottomNav = shouldShowClientBottomNav({
+  const showClientBottomNav = shouldShowClientBottomNav({
     pathname: location.pathname,
     isAuthenticated,
     isDesktop,
+    role: effectiveRole,
   });
+  const showProviderBottomNav = shouldShowProviderBottomNav({
+    pathname: location.pathname,
+    isAuthenticated,
+    isDesktop,
+    role: effectiveRole,
+  });
+  const showBottomNav = showClientBottomNav || showProviderBottomNav;
 
   const navLinks = getPublicNavItems();
   const businessLinks = getPublicBusinessNavItems();
@@ -39,6 +50,7 @@ export default function PublicLayout({ children }) {
       </div>
 
       <ClientBottomNav />
+      {showProviderBottomNav ? <ProviderBottomNav /> : null}
 
       <div className={cn(showBottomNav ? 'hidden lg:block' : 'block')}>
         <Footer />

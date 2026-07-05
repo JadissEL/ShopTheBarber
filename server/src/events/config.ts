@@ -28,4 +28,4 @@ export type EventStatus = (typeof EVENT_STATUSES)[number];
 export type EventAudience = (typeof EVENT_AUDIENCES)[number]['id'];
 export type RegistrationStatus = (typeof REGISTRATION_STATUSES)[number];
 
-export const PROVIDER_ROLES = new Set(['barber', 'provider', 'shop_owner', 'admin']);
+export const PROVIDER_ROLES = new Set(['barber', 'provider', 'shop_owner']);

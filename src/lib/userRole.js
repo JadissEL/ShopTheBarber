@@ -1,17 +1,30 @@
 /**
- * Shared role helpers — keep provider/client routing consistent across the app.
+ * Shared role helpers — keep provider/client/admin routing consistent across the app.
  */
 
 export const PROVIDER_ROLES = new Set(['barber', 'shop_owner', 'provider']);
 
 /** @param {string | null | undefined} role */
+export function isAdminRole(role) {
+  return role === 'admin';
+}
+
+/** @param {string | null | undefined} role */
 export function isProviderRole(role) {
-  return role === 'admin' || PROVIDER_ROLES.has(role);
+  return PROVIDER_ROLES.has(role);
 }
 
 /** @param {string | null | undefined} role */
 export function isClientRole(role) {
   return !role || role === 'client' || role === 'guest';
+}
+
+/** Roles allowed to use provider business tools (not platform admin). */
+export const PROVIDER_TOOL_ROLES = ['barber', 'shop_owner', 'provider'];
+
+/** @param {string | null | undefined} role */
+export function canAccessProviderTools(role) {
+  return isProviderRole(role);
 }
 
 /**
@@ -46,7 +59,14 @@ export function resolveEffectiveRole(ctx) {
 
 /** @param {string | null | undefined} role */
 export function dashboardPageForRole(role) {
-  if (role === 'admin') return 'GlobalFinancials';
+  if (isAdminRole(role)) return 'GlobalFinancials';
   if (isProviderRole(role)) return 'ProviderDashboard';
   return 'Dashboard';
+}
+
+/** @param {string | null | undefined} role */
+export function settingsPageForRole(role) {
+  if (isAdminRole(role)) return 'AdminPlatformHealth';
+  if (isProviderRole(role)) return 'ProviderSettings';
+  return 'AccountSettings';
 }

@@ -1,15 +1,26 @@
 import { describe, it, expect } from 'vitest';
 import {
   isProviderRole,
+  isAdminRole,
+  canAccessProviderTools,
   resolveEffectiveRole,
   dashboardPageForRole,
+  settingsPageForRole,
 } from '@/lib/userRole';
 
 describe('userRole', () => {
-  it('detects provider roles', () => {
+  it('detects provider roles without admin', () => {
     expect(isProviderRole('barber')).toBe(true);
     expect(isProviderRole('shop_owner')).toBe(true);
     expect(isProviderRole('client')).toBe(false);
+    expect(isProviderRole('admin')).toBe(false);
+  });
+
+  it('detects admin separately from providers', () => {
+    expect(isAdminRole('admin')).toBe(true);
+    expect(isAdminRole('barber')).toBe(false);
+    expect(canAccessProviderTools('admin')).toBe(false);
+    expect(canAccessProviderTools('barber')).toBe(true);
   });
 
   it('infers barber from workspace when auth role is client', () => {
@@ -42,8 +53,11 @@ describe('userRole', () => {
     ).toBe('barber');
   });
 
-  it('routes providers to ProviderDashboard', () => {
+  it('routes each role to its dashboard and settings', () => {
     expect(dashboardPageForRole('barber')).toBe('ProviderDashboard');
     expect(dashboardPageForRole('client')).toBe('Dashboard');
+    expect(dashboardPageForRole('admin')).toBe('GlobalFinancials');
+    expect(settingsPageForRole('admin')).toBe('AdminPlatformHealth');
+    expect(settingsPageForRole('client')).toBe('AccountSettings');
   });
 });

@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Scissors, MapPin, Star, ArrowLeft,
-  Calendar as CalendarIcon, Check, Banknote, CreditCard, Shield, AlertTriangle, Car, Loader2
+  Calendar as CalendarIcon, Check, Banknote, CreditCard, Shield, AlertTriangle, Car, Loader2, Sparkles, User
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -101,8 +101,43 @@ export default function BookingConfirmationStep({
             <>
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold mb-2">Review & Confirm</h2>
-                <p className="text-muted-foreground">Double check your booking details</p>
+                <p className="text-muted-foreground">
+                  {isGuestCheckout ? 'Add your details, then confirm your visit' : 'Double check your booking details'}
+                </p>
               </div>
+
+              {isGuestCheckout && guestContact && onGuestContactChange ? (
+                <GuestContactForm
+                  contact={guestContact}
+                  onChange={onGuestContactChange}
+                  getSignInHref={getSignInHref}
+                  error={guestContactError}
+                />
+              ) : null}
+
+              {isGuestCheckout && guestBookingBlocked && guestBlockReason ? (
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-6 text-sm text-foreground">
+                  {guestBlockReason}{' '}
+                  <Link
+                    to={signInUrl}
+                    className="font-semibold underline underline-offset-2"
+                  >
+                    Sign in
+                  </Link>
+                </div>
+              ) : null}
+
+              {isGuestCheckout && !guestBookingBlocked && cashAvailability?.accepts_cash ? (
+                <div className="stb-panel p-4 mb-6 border-primary/20 bg-primary/5">
+                  <p className="font-semibold text-sm flex items-center gap-2">
+                    <User className="w-4 h-4 text-primary" />
+                    Guest checkout — pay at the shop
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    No account required. Pay the barber in person (cash or their shop POS) when you arrive.
+                  </p>
+                </div>
+              ) : null}
 
               <div className="stb-panel overflow-hidden shadow-sm mb-6">
                 <div className="p-6 border-b border-border bg-muted/50/50">
@@ -215,6 +250,26 @@ export default function BookingConfirmationStep({
                         })}
                       </div>
 
+                      {comboSavings > 0 && bundleMatch && (
+                        <div className="mt-3 rounded-lg border border-success/30 bg-success/10 px-4 py-3 flex items-center justify-between gap-3">
+                          <div className="flex items-start gap-2">
+                            <Sparkles className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-bold text-success">Combo deal applied</p>
+                              <p className="text-xs text-success/90">{bundleMatch.bundle_name}</p>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-lg font-bold text-success">-${comboSavings.toFixed(2)}</p>
+                            {basePrice > 0 && (
+                              <p className="text-xs text-success/80">
+                                {Math.round((comboSavings / basePrice) * 100)}% off services
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {groupMode && groupBookingCaps && onGroupGuestsChange && (
                         <div className="mt-4">
                           <GroupBookingPartyPanel
@@ -310,7 +365,9 @@ export default function BookingConfirmationStep({
                       <div className="border-t border-border mt-3 pt-3">
                         <div className="flex justify-between text-muted-foreground mb-1">
                           <span>{groupMode ? 'Group subtotal' : 'Services subtotal'}</span>
-                          <span>${basePrice.toFixed(2)}</span>
+                          <span className={comboSavings > 0 ? 'line-through decoration-muted-foreground/60' : ''}>
+                            ${basePrice.toFixed(2)}
+                          </span>
                         </div>
                         {groupMode && groupDiscountAmount > 0 && (
                           <div className="flex justify-between text-primary mb-1">
@@ -350,8 +407,10 @@ export default function BookingConfirmationStep({
                         )}
                         {comboSavings > 0 && (
                           <div className="flex justify-between text-muted-foreground text-sm mb-1">
-                            <span>After combo</span>
-                            <span>${(subtotalAfterCombo ?? basePrice - comboSavings).toFixed(2)}</span>
+                            <span>Services after combo</span>
+                            <span className="font-medium text-foreground">
+                              ${(subtotalAfterCombo ?? basePrice - comboSavings).toFixed(2)}
+                            </span>
                           </div>
                         )}
                         <div className="flex justify-between font-bold text-lg text-foreground">
@@ -423,27 +482,6 @@ export default function BookingConfirmationStep({
                   )}
                 </div>
               )}
-
-              {isGuestCheckout && guestContact && onGuestContactChange ? (
-                <GuestContactForm
-                  contact={guestContact}
-                  onChange={onGuestContactChange}
-                  getSignInHref={getSignInHref}
-                  error={guestContactError}
-                />
-              ) : null}
-
-              {isGuestCheckout && guestBookingBlocked && guestBlockReason ? (
-                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-6 text-sm text-foreground">
-                  {guestBlockReason}{' '}
-                  <Link
-                    to={signInUrl}
-                    className="font-semibold underline underline-offset-2"
-                  >
-                    Sign in
-                  </Link>
-                </div>
-              ) : null}
 
               {cashAvailability?.accepts_cash && (
                 <div className="stb-panel p-6 mb-6 space-y-3">

@@ -1,5 +1,3 @@
-export const PROVIDER_ROLES = new Set(['barber', 'provider', 'shop_owner', 'admin']);
-
 export const COMMISSION_RATE_SHOP = 0.2;
 export const COMMISSION_RATE_FREELANCER = 0.15;
 

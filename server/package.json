@@ -16,6 +16,7 @@
     "backfill:coordinates": "tsx scripts/backfill-barber-coordinates.ts",
     "backfill:at-home": "tsx scripts/backfill-at-home-areas.ts",
     "verify:schema": "node scripts/verify-production-schema.mjs",
+    "sync:test-db": "node scripts/sync-test-database.mjs",
     "test": "vitest run",
     "set-stripe-keys": "node scripts/set-stripe-keys.js"
   },

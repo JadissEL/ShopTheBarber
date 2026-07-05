@@ -1,5 +1,6 @@
 import { type FastifyInstance } from 'fastify';
 import { authenticateRequest } from '../auth/requestUser';
+import { isProviderRole } from '../auth/platformRbac';
 import {
     assertShopManager,
     addShopTeamMember,
@@ -22,7 +23,7 @@ async function requireManager(
     const ok = await authenticateRequest(request as Parameters<typeof authenticateRequest>[0], reply as Parameters<typeof authenticateRequest>[1]);
     if (!ok) return null;
     const user = (request as { user: AuthUser }).user;
-    if (!['barber', 'shop_owner', 'admin'].includes(user.role ?? '')) {
+    if (!isProviderRole(user.role)) {
         reply.status(403).send({ error: 'Provider access required' });
         return null;
     }

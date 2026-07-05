@@ -109,7 +109,7 @@ model product_analytics_events {
   /// JSON blob: barber_id, booking_id, step_name, etc.
   properties  String?
   page_path   String?
-  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+  created_at  DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp(3)
 
   user        users?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
 

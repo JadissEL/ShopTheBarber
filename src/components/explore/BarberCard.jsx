@@ -11,6 +11,7 @@ import { Heart } from 'lucide-react';
 import { buildBarberCardTags } from '@/lib/barberCardTags';
 
 import BarberCardMeta from '@/components/explore/BarberCardMeta';
+import { GroupBookingBadge } from '@/components/groupBooking/GroupBookingBadges';
 
 import { cn } from '@/lib/utils';
 
@@ -169,6 +170,34 @@ export default function BarberCard({
             >
 
               Deal
+
+            </span>
+
+          ) : null}
+
+
+
+          {barber.offers_group_booking ? (
+
+            <span
+
+              className={cn(
+
+                'absolute rounded-md',
+
+                compact ? 'left-2.5 bottom-2.5' : 'left-3 bottom-3'
+
+              )}
+
+            >
+
+              <GroupBookingBadge
+
+                discountPercent={barber.group_booking_discount_percent ?? 0}
+
+                className="text-[10px] px-2 py-0.5 shadow-sm"
+
+              />
 
             </span>
 

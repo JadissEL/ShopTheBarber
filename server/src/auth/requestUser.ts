@@ -7,6 +7,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { prisma } from '../db/prisma';
 import { verifyClerkToken } from './clerk';
+import { resolveAndSyncUserRole } from './resolveUserRole';
 
 export type ResolvedRequestUser = { id: string; email?: string; role?: string };
 
@@ -67,10 +68,12 @@ export async function resolveUserFromBearer(token: string): Promise<ResolvedRequ
     });
     if (!resolved) return null;
 
+    const syncedRole = await resolveAndSyncUserRole(resolved.id, resolved.role ?? 'client');
+
     return {
         id: resolved.id,
         email: resolved.email ?? undefined,
-        role: resolved.role ?? 'client',
+        role: syncedRole,
     };
 }
 

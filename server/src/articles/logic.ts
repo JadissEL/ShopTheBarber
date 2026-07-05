@@ -1,17 +1,18 @@
 import type { articles } from '@prisma/client';
 import { prisma } from '../db/prisma';
+import { isProviderRole } from '../auth/platformRbac';
 
 export const ARTICLE_STATUSES = ['draft', 'pending_review', 'published', 'rejected'] as const;
 export type ArticleStatus = (typeof ARTICLE_STATUSES)[number];
 
 export const ARTICLE_CATEGORIES = ['tips', 'trends', 'products', 'techniques', 'lifestyle'] as const;
 
-export const ARTICLE_AUTHOR_ROLES = ['barber', 'shop_owner', 'admin'] as const;
+export const ARTICLE_AUTHOR_ROLES = ['barber', 'shop_owner', 'provider'] as const;
 
 export type AuthUser = { id: string; email?: string; role?: string; full_name?: string | null };
 
 export function canAuthorArticles(role?: string | null): boolean {
-    return role === 'barber' || role === 'shop_owner' || role === 'admin';
+    return isProviderRole(role);
 }
 
 export function isAdmin(role?: string | null): boolean {

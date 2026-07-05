@@ -7,8 +7,8 @@ import {
     COMMISSION_RATE_SHOP,
     DEFAULT_MINIMUM_BALANCE,
     MIN_TOP_UP_AMOUNT,
-    PROVIDER_ROLES,
 } from './config';
+import { isProviderRole } from '../auth/platformRbac';
 import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import { shouldWaiveCommissionForBooking, getActiveFixedFeePlanForProvider } from '../fixedFee/logic';
 import { blocksCashBookings, computeWalletHealthStatus, walletHealthLabel } from '../domain/wallet/health';
@@ -97,9 +97,6 @@ function roundMoney(n: number): number {
     return Math.round(n * 100) / 100;
 }
 
-export function isProviderRole(role?: string | null): boolean {
-    return !!role && PROVIDER_ROLES.has(role);
-}
 
 export function calculatePlatformFee(price: number, shopId?: string | null): number {
     const rate = shopId ? COMMISSION_RATE_SHOP : COMMISSION_RATE_FREELANCER;

@@ -9,10 +9,11 @@ import {
 } from '../articles/logic';
 
 describe('articles/logic', () => {
-    it('canAuthorArticles allows barber, shop_owner, admin only', () => {
+    it('canAuthorArticles allows provider roles only', () => {
         expect(canAuthorArticles('barber')).toBe(true);
         expect(canAuthorArticles('shop_owner')).toBe(true);
-        expect(canAuthorArticles('admin')).toBe(true);
+        expect(canAuthorArticles('provider')).toBe(true);
+        expect(canAuthorArticles('admin')).toBe(false);
         expect(canAuthorArticles('client')).toBe(false);
     });
 

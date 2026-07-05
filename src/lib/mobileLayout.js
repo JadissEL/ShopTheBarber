@@ -1,5 +1,5 @@
 import { APP_ZONES } from '@/components/navigationConfig';
-
+import { isProviderRole } from '@/lib/userRole';
 /** Paths where the fixed bottom nav would clash with full-screen flows */
 const HIDE_BOTTOM_NAV_PREFIXES = [
   '/bookingflow',
@@ -22,11 +22,22 @@ export function shouldHideBottomNav(pathname) {
 }
 
 /**
- * Client bottom tab bar, authenticated mobile users only.
+ * Client bottom tab bar — authenticated clients on mobile only (not providers/admins).
  */
-export function shouldShowClientBottomNav({ pathname, isAuthenticated, isDesktop }) {
+export function shouldShowClientBottomNav({ pathname, isAuthenticated, isDesktop, role }) {
   if (isDesktop) return false;
   if (!isAuthenticated) return false;
+  if (role && role !== 'client' && role !== 'guest') return false;
+  return !shouldHideBottomNav(pathname);
+}
+
+/**
+ * Provider bottom tab bar on public/mobile discovery pages.
+ */
+export function shouldShowProviderBottomNav({ pathname, isAuthenticated, isDesktop, role }) {
+  if (isDesktop) return false;
+  if (!isAuthenticated) return false;
+  if (!isProviderRole(role)) return false;
   return !shouldHideBottomNav(pathname);
 }
 

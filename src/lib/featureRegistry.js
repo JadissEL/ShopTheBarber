@@ -196,28 +196,28 @@ export function listFeatureModules() {
   }));
 }
 
-/** Client desktop / mobile nav items */
+/** Client desktop / mobile nav — 5 primary destinations */
 export const CLIENT_NAV_ITEMS = [
   { feature: 'core', label: 'Dashboard', page: 'Dashboard', primary: true },
   { feature: 'core', label: 'Bookings', page: 'UserBookings', primary: true },
-  { feature: 'marketplace', label: 'Marketplace', page: 'Marketplace', primary: true },
-  { feature: 'marketplace', label: 'Shopping Bag', page: 'ShoppingBag', primary: false },
-  { feature: 'marketplace', label: 'My Orders', page: 'MyOrders', primary: false },
-  { feature: 'marketplace', label: 'Grooming Vault', page: 'GroomingVault', primary: false },
-  { feature: 'careers', label: 'Career Hub', page: 'CareerHub', primary: false },
-  { feature: 'communication', label: 'Chat', page: 'Chat', primary: false },
-  { feature: 'core', label: 'Profile', page: 'AccountSettings', primary: false },
+  { feature: 'core', label: 'Explore', page: 'Explore', primary: true },
+  { feature: 'communication', label: 'Messages', page: 'Chat', primary: true },
+  { feature: 'core', label: 'Profile', page: 'AccountSettings', primary: true },
 ];
 
 export const CLIENT_MORE_ITEMS = [
-  { feature: 'core', label: 'Find a Barber', page: 'Explore' },
+  { feature: 'marketplace', label: 'Marketplace', page: 'Marketplace' },
+  { feature: 'marketplace', label: 'Shopping Bag', page: 'ShoppingBag' },
+  { feature: 'marketplace', label: 'My Orders', page: 'MyOrders' },
+  { feature: 'marketplace', label: 'Grooming Vault', page: 'GroomingVault' },
+  { feature: 'marketplace', label: 'Wallet', page: 'ClientWallet' },
+  { feature: 'marketplace', label: 'Wishlist', page: 'Wishlist' },
   { feature: 'engagement', label: 'Favorites', page: 'Favorites' },
   { feature: 'engagement', label: 'Loyalty', page: 'Loyalty' },
   { feature: 'engagement', label: 'Refer & Earn', page: 'Referral' },
   { feature: 'engagement', label: 'Gift Cards', page: 'GiftCards' },
   { feature: 'engagement', label: 'Championships', page: 'ChampionshipLeaderboard' },
-  { feature: 'marketplace', label: 'Wallet', page: 'ClientWallet' },
-  { feature: 'marketplace', label: 'Wishlist', page: 'Wishlist' },
+  { feature: 'careers', label: 'Career Hub', page: 'CareerHub' },
   { feature: 'core', label: 'Notifications', page: 'NotificationSettings' },
   { feature: 'communication', label: 'Support', page: 'SupportChat' },
   { feature: 'core', label: 'Help', page: 'HelpCenter' },
@@ -256,7 +256,6 @@ export const PROVIDER_NAV_GROUPS = [
       { feature: 'marketplace', label: 'Orders to ship', page: 'SellerOrders' },
       { feature: 'content', label: 'Blog', page: 'ProviderBlogArticles' },
       { feature: 'careers', label: 'My Jobs', page: 'MyJobs' },
-      { feature: 'careers', label: 'Career Hub', page: 'CareerHub' },
     ],
   },
   {
@@ -265,7 +264,6 @@ export const PROVIDER_NAV_GROUPS = [
       { feature: 'engagement', label: 'Tombola', page: 'TombolaLive' },
       { feature: 'programs', label: 'Events', page: 'ProviderEvents' },
       { feature: 'programs', label: 'Language programs', page: 'ProviderLanguagePrograms' },
-      { feature: 'communication', label: 'Support', page: 'SupportChat' },
     ],
   },
   {
@@ -284,12 +282,16 @@ export const PROVIDER_NAV_GROUPS = [
   },
 ];
 
-export function getProviderNavGroups({ isManager = false } = {}) {
+export function getProviderNavGroups({ isManager = false, isSolo = false } = {}) {
   return PROVIDER_NAV_GROUPS.map((group) => {
     if (group.managerOnly && !isManager) return null;
-    const items = group.items.filter((item) => isFeatureEnabled(item.feature));
+    let items = group.items.filter((item) => isFeatureEnabled(item.feature));
+    if (isSolo) {
+      items = items.filter((item) => item.page !== 'SellerOrders');
+    }
     if (items.length === 0) return null;
-    return { title: group.title, items };
+    const title = isSolo && group.title === 'Grow' ? 'Your brand' : group.title;
+    return { title, items };
   }).filter(Boolean);
 }
 

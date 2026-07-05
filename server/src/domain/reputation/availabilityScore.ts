@@ -1,5 +1,10 @@
 import { prisma } from '../../db/prisma';
 import { isFinancialTrustSchemaError } from '../schemaGuard';
+import { Prisma } from '@prisma/client';
+
+function isMissingRecordError(err: unknown): boolean {
+    return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025';
+}
 
 /** Public availability score 0–100 for barber profiles */
 export async function computeAvailabilityScore(barberId: string): Promise<number> {
@@ -37,7 +42,7 @@ export async function syncAvailabilityScore(barberId: string) {
         });
         return score;
     } catch (err) {
-        if (isFinancialTrustSchemaError(err)) return null;
+        if (isFinancialTrustSchemaError(err) || isMissingRecordError(err)) return null;
         throw err;
     }
 }
