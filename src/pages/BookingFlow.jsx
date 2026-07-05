@@ -23,6 +23,7 @@ import PageContent from '@/components/layout/PageContent';
 import confetti from 'canvas-confetti';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import BookingServicesStep from '@/components/booking/BookingServicesStep';
+import BookingContextPicker from '@/components/booking/BookingContextPicker';
 import BookingDateTimeStep from '@/components/booking/BookingDateTimeStep';
 import BookingConfirmationStep from '@/components/booking/BookingConfirmationStep';
 import BookingWaitlistDialog from '@/components/booking/BookingWaitlistDialog';
@@ -271,8 +272,36 @@ export default function BookingFlow() {
 
   // GUARD: Context Resolution
   const [isContextValidating, setIsContextValidating] = useState(false);
+  const [contextPick, setContextPick] = useState(null);
+
+  const handleContextPick = (shopId, type) => {
+    sovereign.analytics.track({
+      eventName: 'select_booking_context',
+      properties: {
+        barber_id: tempBarberId,
+        context_type: type,
+        shop_id: shopId,
+      },
+    });
+
+    updateBooking({
+      ...(bookingState || {}),
+      barberId: tempBarberId,
+      shopId: shopId || undefined,
+      context: type === 'independent' ? 'independent' : 'shop',
+    });
+    setContextPick(null);
+
+    const params = new URLSearchParams(location.search);
+    if (shopId) params.set('shopId', shopId);
+    else params.delete('shopId');
+    if (type === 'independent') params.set('context', 'independent');
+    else params.delete('context');
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
 
   useEffect(() => {
+    if (contextPick) return;
     // Only run if we have a barber but no resolved shop context AND not explicitly independent
     // OR if we have a shopId but need to validate it
     if (!tempBarberId) return;
@@ -342,27 +371,35 @@ export default function BookingFlow() {
         }
 
         if (!hasShops && isIndependent) {
-          // Implicit independent
+          updateBooking({
+            ...(bookingState || {}),
+            barberId: tempBarberId,
+            shopId: undefined,
+            context: 'independent',
+          });
           return;
         }
 
-        // If we are here, it's ambiguous (Hybrid or Multi-Shop)
-        // Force redirect to Profile to choose
-        // toast.info("Please select a location to book.");
-        // navigate(createPageUrl(`BarberProfile?id=${tempBarberId}`));
-
-        // To prevent infinite loop if Profile redirects back here without params,
-        // Profile MUST ensure params are set.
-        // But we should check if we just came from there?
-        // For safety, we redirect.
+        // Ambiguous: multiple shops and/or hybrid independent — pick in-flow (no redirect)
         if (hasShops || isIndependent) {
-          toast.info("Please select a location.");
-          navigate(createPageUrl(`BarberProfile?id=${tempBarberId}`));
-        } else {
-          // Barber has no context at all? Dead end.
-          toast.error("This barber is not currently accepting bookings.");
-          navigate(createPageUrl('Home'));
+          const enrichedMemberships = await Promise.all(
+            memberships.map(async (m) => {
+              if (m.shop?.id) return m;
+              if (!m.shop_id) return m;
+              const shop = await sovereign.entities.Shop.get(m.shop_id).catch(() => null);
+              return { ...m, shop };
+            }),
+          );
+          setContextPick({
+            barber: barberData,
+            memberships: enrichedMemberships,
+            isIndependent,
+          });
+          return;
         }
+
+        toast.error('This barber is not currently accepting bookings.');
+        navigate(createPageUrl('Home'));
 
       } catch (e) {
         console.error("Context validation error", e);
@@ -372,7 +409,7 @@ export default function BookingFlow() {
     };
 
     validateContext();
-  }, [tempBarberId, urlShopId, context, bookingState?.shopId, bookingState?.context, locationType]);
+  }, [tempBarberId, urlShopId, context, bookingState?.shopId, bookingState?.context, locationType, contextPick]);
 
   const { data: staffConfig } = useQuery({
     queryKey: ['staffConfig', tempBarberId, bookingState?.shopId],
@@ -2066,6 +2103,12 @@ export default function BookingFlow() {
             <h2 className={cn(stb.uiHeading, 'text-xl mb-2')}>Verifying availability…</h2>
             <p className="text-muted-foreground">Checking barber schedule and location</p>
           </div>
+        ) : contextPick ? (
+          <BookingContextPicker
+            barber={contextPick.barber}
+            memberships={contextPick.memberships}
+            onSelect={handleContextPick}
+          />
         ) : (
           <AnimatePresence mode="wait">
             {/* STEP 1: Services */}
