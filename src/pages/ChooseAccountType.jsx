@@ -101,9 +101,9 @@ export default function ChooseAccountType() {
 
                 <div
                   className={cn(
-                    'grid gap-4 sm:gap-5',
+                    'grid gap-5 sm:gap-6',
                     section.types.length === 1
-                      ? 'grid-cols-1 sm:max-w-md'
+                      ? 'grid-cols-1 sm:max-w-sm'
                       : section.types.length === 2
                         ? 'sm:grid-cols-2'
                         : 'sm:grid-cols-2 lg:grid-cols-3',
@@ -120,7 +120,6 @@ export default function ChooseAccountType() {
                         selected={selected === card.id}
                         onSelect={() => setSelected(card.id)}
                         index={idx}
-                        className={section.types.length === 1 ? undefined : 'min-h-[17.5rem]'}
                       />
                     );
                   })}

@@ -1,87 +1,122 @@
 /**
- * Per-account-type visual identity — accents stay in the warm brand family with distinct hues.
+ * Per-account-type visual identity — solid platform palette only.
+ * Orange · black · white · grey · dark purple · royal dark green
  * @typedef {'client'|'solo_barber'|'shop'|'seller'|'company'|'blogger'} AccountType
  */
 
-/** @type {Record<AccountType, { image: string; imageAlt: string; accent: string; iconBg: string; iconText: string; tagBg: string; tagText: string; gradient: string; ring: string; border: string }>} */
+/** Canonical solid brand colors (match index.css + brand accents) */
+export const STB_SOLID_COLORS = {
+  orange: '#F05A1A',
+  black: '#0D0D0D',
+  white: '#FFFFFF',
+  grey: '#E8E4DE',
+  greyMuted: '#6B7280',
+  darkPurple: '#4A1F7A',
+  royalDarkGreen: '#0F5C36',
+};
+
+/**
+ * @typedef {{
+ *   image: string;
+ *   imageAlt: string;
+ *   cardBg: string;
+ *   titleColor: string;
+ *   subtitleColor: string;
+ *   bodyColor: string;
+ *   accentBar: string;
+ *   buttonBg: string;
+ *   buttonText: string;
+ *   buttonBorder?: string;
+ *   ring: string;
+ *   imageOverlay?: string;
+ * }} AccountTypeVisual
+ */
+
+/** @type {Record<AccountType, AccountTypeVisual>} */
 export const ACCOUNT_TYPE_VISUALS = {
   client: {
     image:
-      'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Client relaxing after a grooming appointment',
-    accent: 'Client',
-    iconBg: 'bg-sky-500/12',
-    iconText: 'text-sky-700 dark:text-sky-300',
-    tagBg: 'bg-sky-500/10',
-    tagText: 'text-sky-800 dark:text-sky-200',
-    gradient: 'from-sky-950/75 via-sky-900/40 to-transparent',
-    ring: 'ring-sky-500/35',
-    border: 'border-sky-500',
+    cardBg: STB_SOLID_COLORS.grey,
+    titleColor: STB_SOLID_COLORS.black,
+    subtitleColor: STB_SOLID_COLORS.greyMuted,
+    bodyColor: '#3D3D3D',
+    accentBar: STB_SOLID_COLORS.greyMuted,
+    buttonBg: STB_SOLID_COLORS.black,
+    buttonText: STB_SOLID_COLORS.white,
+    ring: STB_SOLID_COLORS.black,
   },
   solo_barber: {
     image:
-      'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Solo barber at work in the chair',
-    accent: 'Solo barber',
-    iconBg: 'bg-primary/15',
-    iconText: 'text-primary',
-    tagBg: 'bg-primary/10',
-    tagText: 'text-primary',
-    gradient: 'from-stone-950/80 via-primary/30 to-transparent',
-    ring: 'ring-primary/35',
-    border: 'border-primary',
+    cardBg: STB_SOLID_COLORS.orange,
+    titleColor: STB_SOLID_COLORS.black,
+    subtitleColor: 'rgba(13, 13, 13, 0.65)',
+    bodyColor: STB_SOLID_COLORS.black,
+    accentBar: STB_SOLID_COLORS.black,
+    buttonBg: STB_SOLID_COLORS.black,
+    buttonText: STB_SOLID_COLORS.white,
+    ring: STB_SOLID_COLORS.black,
+    imageOverlay: 'linear-gradient(to top, rgba(13,13,13,0.25), transparent)',
   },
   shop: {
     image:
-      'https://images.unsplash.com/photo-1503951914875-0ac7b1a3dffc?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1503951914875-0ac7b1a3dffc?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Busy barbershop with multiple chairs',
-    accent: 'Shop',
-    iconBg: 'bg-amber-700/12',
-    iconText: 'text-amber-900 dark:text-amber-200',
-    tagBg: 'bg-amber-700/10',
-    tagText: 'text-amber-900 dark:text-amber-100',
-    gradient: 'from-amber-950/75 via-amber-900/35 to-transparent',
-    ring: 'ring-amber-600/35',
-    border: 'border-amber-600',
+    cardBg: STB_SOLID_COLORS.black,
+    titleColor: STB_SOLID_COLORS.white,
+    subtitleColor: 'rgba(255, 255, 255, 0.65)',
+    bodyColor: 'rgba(255, 255, 255, 0.88)',
+    accentBar: STB_SOLID_COLORS.orange,
+    buttonBg: STB_SOLID_COLORS.white,
+    buttonText: STB_SOLID_COLORS.black,
+    ring: STB_SOLID_COLORS.orange,
+    imageOverlay: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)',
   },
   seller: {
     image:
-      'https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Grooming products on display',
-    accent: 'Seller',
-    iconBg: 'bg-emerald-600/12',
-    iconText: 'text-emerald-800 dark:text-emerald-200',
-    tagBg: 'bg-emerald-600/10',
-    tagText: 'text-emerald-900 dark:text-emerald-100',
-    gradient: 'from-emerald-950/75 via-emerald-900/30 to-transparent',
-    ring: 'ring-emerald-600/35',
-    border: 'border-emerald-600',
+    cardBg: STB_SOLID_COLORS.royalDarkGreen,
+    titleColor: STB_SOLID_COLORS.white,
+    subtitleColor: 'rgba(255, 255, 255, 0.7)',
+    bodyColor: 'rgba(255, 255, 255, 0.9)',
+    accentBar: STB_SOLID_COLORS.white,
+    buttonBg: STB_SOLID_COLORS.white,
+    buttonText: STB_SOLID_COLORS.royalDarkGreen,
+    ring: STB_SOLID_COLORS.white,
+    imageOverlay: 'linear-gradient(to top, rgba(15,92,54,0.65), transparent)',
   },
   company: {
     image:
-      'https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Team collaborating in a modern office',
-    accent: 'Company',
-    iconBg: 'bg-indigo-600/12',
-    iconText: 'text-indigo-800 dark:text-indigo-200',
-    tagBg: 'bg-indigo-600/10',
-    tagText: 'text-indigo-900 dark:text-indigo-100',
-    gradient: 'from-indigo-950/75 via-indigo-900/30 to-transparent',
-    ring: 'ring-indigo-500/35',
-    border: 'border-indigo-500',
+    cardBg: STB_SOLID_COLORS.darkPurple,
+    titleColor: STB_SOLID_COLORS.white,
+    subtitleColor: 'rgba(255, 255, 255, 0.7)',
+    bodyColor: 'rgba(255, 255, 255, 0.9)',
+    accentBar: STB_SOLID_COLORS.orange,
+    buttonBg: STB_SOLID_COLORS.white,
+    buttonText: STB_SOLID_COLORS.darkPurple,
+    ring: STB_SOLID_COLORS.orange,
+    imageOverlay: 'linear-gradient(to top, rgba(74,31,122,0.7), transparent)',
   },
   blogger: {
     image:
-      'https://images.unsplash.com/photo-1455390582260-0447de3cbe5d?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1455390582260-0447de3cbe5d?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Creator writing at a desk',
-    accent: 'Blogger',
-    iconBg: 'bg-violet-600/12',
-    iconText: 'text-violet-800 dark:text-violet-200',
-    tagBg: 'bg-violet-600/10',
-    tagText: 'text-violet-900 dark:text-violet-100',
-    gradient: 'from-violet-950/75 via-violet-900/30 to-transparent',
-    ring: 'ring-violet-500/35',
-    border: 'border-violet-500',
+    cardBg: STB_SOLID_COLORS.white,
+    titleColor: STB_SOLID_COLORS.black,
+    subtitleColor: STB_SOLID_COLORS.greyMuted,
+    bodyColor: '#3D3D3D',
+    accentBar: STB_SOLID_COLORS.black,
+    buttonBg: STB_SOLID_COLORS.white,
+    buttonText: STB_SOLID_COLORS.black,
+    buttonBorder: STB_SOLID_COLORS.black,
+    ring: STB_SOLID_COLORS.black,
+    imageOverlay: 'linear-gradient(to top, rgba(255,255,255,0.15), transparent)',
   },
 };
 
