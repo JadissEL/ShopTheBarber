@@ -32,6 +32,20 @@ export const STB_SOLID_COLORS = {
  * }} AccountTypeVisual
  */
 
+/** Shared white-card surface (seller, company, blogger). */
+const WHITE_CARD_VISUAL = {
+  cardBg: STB_SOLID_COLORS.white,
+  titleColor: STB_SOLID_COLORS.black,
+  subtitleColor: STB_SOLID_COLORS.greyMuted,
+  bodyColor: '#3D3D3D',
+  accentBar: STB_SOLID_COLORS.black,
+  buttonBg: STB_SOLID_COLORS.white,
+  buttonText: STB_SOLID_COLORS.black,
+  buttonBorder: STB_SOLID_COLORS.black,
+  ring: STB_SOLID_COLORS.black,
+  imageOverlay: 'linear-gradient(to top, rgba(255,255,255,0.15), transparent)',
+};
+
 /** @type {Record<AccountType, AccountTypeVisual>} */
 export const ACCOUNT_TYPE_VISUALS = {
   client: {
@@ -79,44 +93,19 @@ export const ACCOUNT_TYPE_VISUALS = {
     image:
       'https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Grooming products on display',
-    cardBg: STB_SOLID_COLORS.royalDarkGreen,
-    titleColor: STB_SOLID_COLORS.white,
-    subtitleColor: 'rgba(255, 255, 255, 0.7)',
-    bodyColor: 'rgba(255, 255, 255, 0.9)',
-    accentBar: STB_SOLID_COLORS.white,
-    buttonBg: STB_SOLID_COLORS.white,
-    buttonText: STB_SOLID_COLORS.royalDarkGreen,
-    ring: STB_SOLID_COLORS.white,
-    imageOverlay: 'linear-gradient(to top, rgba(15,92,54,0.65), transparent)',
+    ...WHITE_CARD_VISUAL,
   },
   company: {
     image:
       'https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Team collaborating in a modern office',
-    cardBg: STB_SOLID_COLORS.darkPurple,
-    titleColor: STB_SOLID_COLORS.white,
-    subtitleColor: 'rgba(255, 255, 255, 0.7)',
-    bodyColor: 'rgba(255, 255, 255, 0.9)',
-    accentBar: STB_SOLID_COLORS.orange,
-    buttonBg: STB_SOLID_COLORS.white,
-    buttonText: STB_SOLID_COLORS.darkPurple,
-    ring: STB_SOLID_COLORS.orange,
-    imageOverlay: 'linear-gradient(to top, rgba(74,31,122,0.7), transparent)',
+    ...WHITE_CARD_VISUAL,
   },
   blogger: {
     image:
       'https://images.unsplash.com/photo-1455390582260-0447de3cbe5d?q=80&w=900&auto=format&fit=crop',
     imageAlt: 'Creator writing at a desk',
-    cardBg: STB_SOLID_COLORS.white,
-    titleColor: STB_SOLID_COLORS.black,
-    subtitleColor: STB_SOLID_COLORS.greyMuted,
-    bodyColor: '#3D3D3D',
-    accentBar: STB_SOLID_COLORS.black,
-    buttonBg: STB_SOLID_COLORS.white,
-    buttonText: STB_SOLID_COLORS.black,
-    buttonBorder: STB_SOLID_COLORS.black,
-    ring: STB_SOLID_COLORS.black,
-    imageOverlay: 'linear-gradient(to top, rgba(255,255,255,0.15), transparent)',
+    ...WHITE_CARD_VISUAL,
   },
 };
 
