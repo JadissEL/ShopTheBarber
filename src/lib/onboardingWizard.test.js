@@ -135,10 +135,11 @@ describe('onboardingWizard', () => {
     expect(shouldShowOnboardingPrompt('a1', 'admin', progress)).toBe(true);
   });
 
-  it('resolves provider intent for new signups', () => {
-    expect(resolveOnboardingRole('client', 'client', 'barber')).toBe('provider');
-    expect(resolveOnboardingRole('client', 'client', 'shop')).toBe('shop_owner');
-    expect(resolveOnboardingRole('barber', 'barber', null)).toBe('provider');
+  it('resolves account type for onboarding role', () => {
+    expect(resolveOnboardingRole('client', 'client', null, 'solo_barber')).toBe('provider');
+    expect(resolveOnboardingRole('client', 'client', null, 'shop')).toBe('shop_owner');
+    expect(resolveOnboardingRole('barber', 'barber', null, 'solo_barber')).toBe('provider');
+    expect(resolveOnboardingRole('client', 'client', null, 'seller')).toBe('seller');
   });
 
   it('resumes at first incomplete step', () => {

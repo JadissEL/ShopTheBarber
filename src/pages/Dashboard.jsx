@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { sovereign } from '@/api/apiClient';
 import { getAnalyticsSessionId } from '@/lib/analyticsSession';
+import { dashboardPageForAccountType } from '@/lib/accountType';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import SearchField from '@/components/ui/search-field';
 import { Bell, Menu, Calendar, Award, MessageSquare, Check } from 'lucide-react';
@@ -36,7 +37,7 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { isProvider, isAdmin, isLoading: roleLoading } = useEffectiveRole();
+  const { isProvider, isAdmin, isLoading: roleLoading, accountType } = useEffectiveRole();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,10 +52,10 @@ export default function Dashboard() {
       navigate(createPageUrl('GlobalFinancials'), { replace: true });
       return;
     }
-    if (isProvider) {
-      navigate(createPageUrl('ProviderDashboard'), { replace: true });
+    if (accountType && accountType !== 'client') {
+      navigate(createPageUrl(dashboardPageForAccountType(accountType)), { replace: true });
     }
-  }, [roleLoading, isAdmin, isProvider, navigate]);
+  }, [roleLoading, isAdmin, accountType, navigate]);
 
   useEffect(() => {
     const status = searchParams.get('status');

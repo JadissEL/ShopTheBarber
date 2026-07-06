@@ -56,6 +56,7 @@ function mapClerkUser(clerkUser, serverUser) {
     full_name: serverUser?.full_name || clerkUser.fullName || clerkUser.firstName || 'User',
     avatar_url: serverUser?.avatar_url || clerkUser.imageUrl,
     role: serverUser?.role || clerkUser.publicMetadata?.role || 'client',
+    account_type: serverUser?.account_type || clerkUser.publicMetadata?.accountType || null,
     created_at: serverUser?.created_at || clerkUser.createdAt,
     phone: serverUser?.phone,
     stripe_connect_status: serverUser?.stripe_connect_status,
@@ -112,7 +113,15 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Could not obtain a Clerk session token. Try signing out and back in.');
       }
 
-      const { user: serverUser, error } = await sovereign.auth.meResult();
+      const { user: serverUser, error, needsProvision } = await sovereign.auth.meResult();
+
+      if (needsProvision) {
+        setUser(null);
+        setSyncStatus('needs_provision');
+        setSyncError(null);
+        syncedClerkIdRef.current = clerkId;
+        return;
+      }
 
       if (!serverUser?.id) {
         const message =
@@ -263,8 +272,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = await getToken();
       if (token) localStorage.setItem('clerk_token', token);
-      const serverUser = await sovereign.auth.me();
-      if (!serverUser?.id) return user;
+      const { user: serverUser, needsProvision } = await sovereign.auth.meResult();
+      if (needsProvision || !serverUser?.id) return user;
       const mappedUser = mapClerkUser(clerkUser, serverUser);
       setUser(mappedUser);
       setSyncStatus('ready');
@@ -276,13 +285,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const provisionAccount = useCallback(async (accountType, signupIntentToken) => {
+    const result = await sovereign.auth.provision(accountType, signupIntentToken);
+    if (!result.ok) {
+      setSyncError(result.message);
+      return result;
+    }
+    if (clerkUser && result.user) {
+      const mappedUser = mapClerkUser(clerkUser, result.user);
+      setUser(mappedUser);
+      setSyncStatus('ready');
+      setSyncError(null);
+      syncedClerkIdRef.current = clerkUser.id;
+    }
+    return result;
+  }, [clerkUser]);
+
   const checkAppState = async () => {};
 
   const role = user?.role ?? 'client';
   const clerkReady = sessionLoaded && userLoaded;
   const isLoading = !clerkReady;
   const isAuthenticated = !!isSignedIn && syncStatus === 'ready' && !!user?.id;
-  const isLoadingAuth = !clerkReady || (isSignedIn && (syncStatus === 'syncing' || syncStatus === 'idle'));
+  const isLoadingAuth = !clerkReady || (isSignedIn && (syncStatus === 'syncing' || syncStatus === 'idle' || syncStatus === 'needs_provision'));
 
   return (
     <AuthContext.Provider
@@ -296,6 +321,7 @@ export const AuthProvider = ({ children }) => {
         authError,
         appPublicSettings,
         role,
+        accountType: user?.account_type ?? null,
         syncStatus,
         syncError,
         retrySync,
@@ -306,6 +332,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         refreshUser,
+        provisionAccount,
       }}
     >
       {children}

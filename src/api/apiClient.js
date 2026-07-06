@@ -258,7 +258,10 @@ export const sovereign = {
                 });
                 const body = await res.json().catch(() => ({}));
                 if (res.ok) {
-                    return { user: body, error: null };
+                    if (body.needsProvision) {
+                        return { user: null, needsProvision: true, profile: body, error: null };
+                    }
+                    return { user: body, needsProvision: false, error: null };
                 }
                 if (res.status === 401) {
                     localStorage.removeItem('sovereign_token');
@@ -302,6 +305,26 @@ export const sovereign = {
                 await fetch(`${BASE_URL}/auth/logout`, { method: 'POST' });
             } catch { void 0; }
             return { success: true };
+        },
+        provision: async (accountType, signupIntentToken) => {
+            const headers = await resolveAuthHeaders();
+            if (!headers.Authorization) {
+                throw new Error('Sign in required');
+            }
+            const res = await fetch(`${BASE_URL}/auth/provision`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accountType, signupIntentToken }),
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return {
+                    ok: false,
+                    code: body.code || 'PROVISION_FAILED',
+                    message: body.error || 'Could not create account',
+                };
+            }
+            return { ok: true, user: body, accountType: body.account_type || accountType };
         },
         redirectToLogin: (returnPath) => {
             const signInPath = '/login';

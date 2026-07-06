@@ -1,0 +1,34 @@
+import { describe, it, expect } from 'vitest';
+import {
+  isAccountType,
+  dashboardPageForAccountType,
+  platformRoleForAccountType,
+  isBookingProviderAccountType,
+} from '@/lib/accountType';
+
+describe('accountType', () => {
+  it('validates account types', () => {
+    expect(isAccountType('client')).toBe(true);
+    expect(isAccountType('solo_barber')).toBe(true);
+    expect(isAccountType('invalid')).toBe(false);
+  });
+
+  it('maps account types to dashboard pages', () => {
+    expect(dashboardPageForAccountType('client')).toBe('Dashboard');
+    expect(dashboardPageForAccountType('solo_barber')).toBe('ProviderDashboard');
+    expect(dashboardPageForAccountType('seller')).toBe('SellerDashboard');
+    expect(dashboardPageForAccountType('company')).toBe('CompanyDashboard');
+    expect(dashboardPageForAccountType('blogger')).toBe('BloggerDashboard');
+  });
+
+  it('maps account types to platform roles', () => {
+    expect(platformRoleForAccountType('solo_barber')).toBe('barber');
+    expect(platformRoleForAccountType('shop')).toBe('shop_owner');
+    expect(platformRoleForAccountType('seller')).toBe('seller');
+  });
+
+  it('identifies booking providers', () => {
+    expect(isBookingProviderAccountType('solo_barber')).toBe(true);
+    expect(isBookingProviderAccountType('seller')).toBe(false);
+  });
+});

@@ -43,28 +43,25 @@ describe('appZone', () => {
       expect(resolveZoneFromPath('/HelpCenter')).toBe(APP_ZONES.PUBLIC);
     });
 
-    it('places authenticated clients in the client dashboard shell', () => {
+    it('places authenticated clients in client shell', () => {
       expect(
-        resolveZoneFromPath('/Explore', { isAuthenticated: true, role: 'client' }),
-      ).toBe(APP_ZONES.CLIENT);
-      expect(
-        resolveZoneFromPath('/Dashboard', { isAuthenticated: true, role: 'client' }),
+        resolveZoneFromPath('/Explore', { isAuthenticated: true, role: 'client', accountType: 'client' }),
       ).toBe(APP_ZONES.CLIENT);
     });
 
-    it('keeps authenticated providers in provider shell for all non-marketing routes', () => {
+    it('places authenticated solo barbers in provider shell', () => {
       expect(
-        resolveZoneFromPath('/Explore', { isAuthenticated: true, role: 'barber' }),
+        resolveZoneFromPath('/Explore', { isAuthenticated: true, role: 'barber', accountType: 'solo_barber' }),
       ).toBe(APP_ZONES.PROVIDER);
       expect(
-        resolveZoneFromPath('/Marketplace', { isAuthenticated: true, role: 'shop_owner' }),
+        resolveZoneFromPath('/Marketplace', { isAuthenticated: true, role: 'shop_owner', accountType: 'shop' }),
       ).toBe(APP_ZONES.PROVIDER);
+    });
+
+    it('places authenticated sellers in seller shell', () => {
       expect(
-        resolveZoneFromPath('/AccountSettings', { isAuthenticated: true, role: 'barber' }),
-      ).toBe(APP_ZONES.PROVIDER);
-      expect(
-        resolveZoneFromPath('/ProviderDashboard', { isAuthenticated: true, role: 'barber' }),
-      ).toBe(APP_ZONES.PROVIDER);
+        resolveZoneFromPath('/Marketplace', { isAuthenticated: true, role: 'seller', accountType: 'seller' }),
+      ).toBe(APP_ZONES.SELLER);
     });
 
     it('keeps authenticated admins in admin shell for all non-marketing routes', () => {
@@ -103,7 +100,7 @@ describe('appZone', () => {
         resolveZoneFromPath('/SetupGuide', { isAuthenticated: true, role: 'client' }),
       ).toBe(APP_ZONES.CLIENT);
       expect(
-        resolveZoneFromPath('/SetupGuide', { isAuthenticated: true, role: 'barber' }),
+        resolveZoneFromPath('/SetupGuide', { isAuthenticated: true, role: 'barber', accountType: 'solo_barber' }),
       ).toBe(APP_ZONES.PROVIDER);
       expect(
         resolveZoneFromPath('/SetupGuide', { isAuthenticated: true, role: 'admin' }),

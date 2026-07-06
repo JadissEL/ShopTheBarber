@@ -7,17 +7,22 @@ import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { getZoneFromPath, APP_ZONES } from '@/components/navigationConfig';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
-import { getProviderIntent } from '@/lib/bootstrapProvider';
-import { isAdminRole, dashboardPageForRole } from '@/lib/userRole';
+import {
+  isAdminRole,
+  canAccessBookingProviderTools,
+} from '@/lib/userRole';
+import { dashboardPageForAccountType as dashboardPage } from '@/lib/accountType';
 
-/** Build SignIn URL with return path so user is sent back after login */
 function buildSignInRedirect(currentPath) {
   return signInUrlWithReturn(currentPath || '/');
 }
 
-/** Clerk session exists but backend user is not ready, never send to SignIn (Clerk would bounce back). */
 function handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate }) {
   if (!isSignedIn) return false;
+
+  if (syncStatus === 'needs_provision' && path !== '/chooseaccounttype' && path !== '/register') {
+    return true;
+  }
 
   if (syncStatus === 'error' && path !== '/setupguide') {
     navigate(createPageUrl('SetupGuide'), { replace: true });
@@ -25,128 +30,162 @@ function handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate }) {
   return true;
 }
 
-/** Employer-only pages: require barber/shop_owner (job poster role) */
 const EMPLOYER_PATHS = ['/createjob', '/myjobs', '/applicantreview', '/scheduleinterview'];
+
+const BOOKING_PROVIDER_PATHS = [
+  '/providerdashboard',
+  '/providerbookings',
+  '/providermessages',
+  '/providersettings',
+  '/providerpayouts',
+  '/clientlist',
+  '/staffroster',
+  '/staffschedule',
+];
+
+const EMPLOYER_ACCOUNT_TYPES = new Set(['solo_barber', 'shop', 'seller', 'company']);
 
 export default function RouteGuard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isLoadingAuth, isSignedIn, syncStatus } = useAuth();
-  const { effectiveRole, isProvider, isAdmin, isLoading: roleLoading, workspace } = useEffectiveRole();
+  const {
+    effectiveRole,
+    accountType,
+    isProvider,
+    isAdmin,
+    isBookingProvider,
+    isLoading: roleLoading,
+  } = useEffectiveRole();
   const { bookingState } = useBooking();
   const path = location.pathname.toLowerCase();
   const zone = getZoneFromPath(path, {
     isAuthenticated: !!user,
     role: effectiveRole,
+    accountType,
   });
+
+  const homeDashboard = accountType
+    ? createPageUrl(dashboardPage(accountType))
+    : createPageUrl('Dashboard');
 
   const { data: isManager, isLoading: isManagerLoading } = useQuery({
     queryKey: ['isManager', user?.id],
     queryFn: async () => {
-        if (!user) return false;
-        const members = await sovereign.entities.ShopMember.filter({ user_id: user.id });
-        return members.some(m => ['owner', 'manager'].includes(m.role));
+      if (!user) return false;
+      const members = await sovereign.entities.ShopMember.filter({ user_id: user.id });
+      return members.some((m) => ['owner', 'manager'].includes(m.role));
     },
-    enabled: !!user
+    enabled: !!user,
   });
 
   useEffect(() => {
     if (isLoadingAuth || isManagerLoading || roleLoading) return;
 
-    const providerIntent = getProviderIntent();
-    const hasProviderWorkspace = Boolean(workspace?.barber || workspace?.ownerMembership);
-
-    // Platform admins: redirect legacy dashboard entry points to admin console
     if (isAdmin) {
-      if (path === '/dashboard' || path === '/providerdashboard') {
+      if (path === '/dashboard' || path === '/providerdashboard' || path === '/sellerdashboard' || path === '/companydashboard' || path === '/bloggerdashboard') {
         navigate(createPageUrl('GlobalFinancials'), { replace: true });
         return;
       }
     }
 
-    // 1. Booking Flow Protection
-    if (path.includes('/payment') || path.includes('/bookingconfirm')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasUrlState = urlParams.has('bookingId') || (urlParams.has('amount') && urlParams.has('serviceName'));
-        if (!hasUrlState && !bookingState.selectedService) {
-           // Optional: redirect to Explore if no booking context
-        }
+    const protectedZones = [
+      APP_ZONES.CLIENT,
+      APP_ZONES.PROVIDER,
+      APP_ZONES.SELLER,
+      APP_ZONES.COMPANY,
+      APP_ZONES.BLOGGER,
+      APP_ZONES.ADMIN,
+    ];
+
+    if (protectedZones.includes(zone) && !user) {
+      if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
+      navigate(buildSignInRedirect(location.pathname + location.search), { replace: true });
+      return;
     }
 
-    // 2. CLIENT ZONE: Require authentication (dashboard, account, bookings, cart, etc.)
-    if (zone === APP_ZONES.CLIENT) {
-      if (!user) {
-        if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
-        navigate(buildSignInRedirect(location.pathname + location.search), { replace: true });
+    if (zone === APP_ZONES.PROVIDER && user && !isBookingProvider) {
+      navigate(homeDashboard, { replace: true });
+      return;
+    }
+
+    if (zone === APP_ZONES.ADMIN && user && !isAdminRole(effectiveRole)) {
+      navigate(createPageUrl('Home'), { replace: true });
+      return;
+    }
+
+    if (user && accountType && !canAccessBookingProviderTools(accountType)) {
+      if (BOOKING_PROVIDER_PATHS.some((p) => path === p || path.startsWith(`${p}/`))) {
+        navigate(homeDashboard, { replace: true });
         return;
       }
     }
 
-    // 3. PROVIDER ZONE: Require auth + provider role (or active provider workspace)
-    if (zone === APP_ZONES.PROVIDER) {
-      if (!user) {
-        if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
-        navigate(buildSignInRedirect(location.pathname), { replace: true });
-        return;
-      }
-      if (!isProvider) {
-        if (providerIntent && !hasProviderWorkspace) {
-          navigate(createPageUrl('SetupGuide'), { replace: true });
-          return;
-        }
-        navigate(createPageUrl(dashboardPageForRole('client')), { replace: true });
-        return;
-      }
-      const managerPages = [
-        '/staffroster',
-        '/staffschedule',
-        '/shopemployeemanagement',
-        '/networkownerdashboard',
-        '/shopinventorymanagement',
-        '/shopexpensetracking',
-        '/shopbrandingmanagement',
-        '/shopanalytics',
-      ];
-      if (managerPages.some((p) => path.includes(p)) && isManager === false) {
-          navigate(createPageUrl('ProviderDashboard'), { replace: true });
-      }
-    }
-
-    // 4. ADMIN ZONE: Require auth + admin role
-    if (zone === APP_ZONES.ADMIN) {
-      if (!user) {
-        if (handleMissingBackendUser({ isSignedIn, syncStatus, path, navigate })) return;
-        navigate(buildSignInRedirect(location.pathname), { replace: true });
-        return;
-      }
-      if (!isAdminRole(effectiveRole)) {
-        navigate(createPageUrl('Home'), { replace: true });
-      }
-    }
-
-    // 6. Providers on client chat route → canonical provider messages URL
     if (path === '/chat' && user && isProvider) {
       const search = location.search || '';
       navigate(`${createPageUrl('ProviderMessages')}${search}`, { replace: true });
       return;
     }
 
-    // 7. Employer-only routes: require provider role
-    const isEmployerRoute = EMPLOYER_PATHS.some(p => path === p || path.startsWith(`${p  }/`));
-    if (isEmployerRoute && user && !isProvider) {
+    const isEmployerRoute = EMPLOYER_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+    if (isEmployerRoute && user && accountType && !EMPLOYER_ACCOUNT_TYPES.has(accountType)) {
       navigate(createPageUrl('CareerHub'), { replace: true });
+      return;
     }
 
-    // 8. Providers must not land on the client dashboard
-    if (path === '/dashboard' && isProvider) {
-        navigate(createPageUrl('ProviderDashboard'), { replace: true });
+    if (user && accountType) {
+      const expected = createPageUrl(dashboardPage(accountType)).toLowerCase();
+      const legacyRedirects = [
+        ['/dashboard', ['solo_barber', 'shop', 'seller', 'company', 'blogger']],
+        ['/providerdashboard', ['seller', 'company', 'blogger', 'client']],
+        ['/sellerdashboard', ['solo_barber', 'shop', 'company', 'blogger', 'client']],
+        ['/companydashboard', ['solo_barber', 'shop', 'seller', 'blogger', 'client']],
+        ['/bloggerdashboard', ['solo_barber', 'shop', 'seller', 'company', 'client']],
+      ];
+      for (const [legacyPath, wrongTypes] of legacyRedirects) {
+        if (path === legacyPath && wrongTypes.includes(accountType)) {
+          navigate(homeDashboard, { replace: true });
+          return;
+        }
+      }
+      if (path !== expected.replace(/\/$/, '') && legacyRedirects.some(([lp]) => lp === path)) {
+        /* handled above */
+      }
     }
 
-    // 9. Clients without provider workspace should not stay on provider dashboard
-    if (path === '/providerdashboard' && user && !isProvider && !providerIntent && !hasProviderWorkspace) {
-        navigate(createPageUrl(dashboardPageForRole('client')), { replace: true });
+    const managerPages = [
+      '/staffroster',
+      '/staffschedule',
+      '/shopemployeemanagement',
+      '/networkownerdashboard',
+      '/shopinventorymanagement',
+      '/shopexpensetracking',
+      '/shopbrandingmanagement',
+      '/shopanalytics',
+    ];
+    if (managerPages.some((p) => path.includes(p)) && isManager === false) {
+      navigate(createPageUrl('ProviderDashboard'), { replace: true });
     }
-  }, [location, user, effectiveRole, isProvider, isAdmin, roleLoading, workspace, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
+  }, [
+    location,
+    user,
+    accountType,
+    effectiveRole,
+    isProvider,
+    isAdmin,
+    isBookingProvider,
+    roleLoading,
+    isLoadingAuth,
+    isSignedIn,
+    syncStatus,
+    isManagerLoading,
+    isManager,
+    bookingState,
+    navigate,
+    path,
+    zone,
+    homeDashboard,
+  ]);
 
   return null;
 }

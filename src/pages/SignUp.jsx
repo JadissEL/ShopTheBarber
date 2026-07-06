@@ -1,10 +1,12 @@
 import { SignUp as ClerkSignUp, ClerkLoaded, ClerkLoading } from '@clerk/react';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { PageLoading } from '@/components/ui/page-loading';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { createPageUrl } from '@/utils';
-import { setProviderIntent } from '@/lib/bootstrapProvider';
+import { isAccountType } from '@/lib/accountType';
+import { getPendingAccountType, setPendingAccountType } from '@/lib/signupIntent';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import {
@@ -18,27 +20,43 @@ const REF_STORAGE_KEY = 'stb_referral_code';
 function getPostAuthUrl() {
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get('redirect') || params.get('return');
-    return resolvePostAuthDestination(redirect);
+    return resolvePostAuthDestination(redirect, '/SetupGuide');
 }
 
 export default function SignUp() {
+    const navigate = useNavigate();
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const ref = params.get('ref');
         if (ref) localStorage.setItem(REF_STORAGE_KEY, ref.trim().toUpperCase());
-        const type = params.get('type');
-        if (type === 'barber' || type === 'shop') setProviderIntent(type);
-    }, []);
+
+        const fromUrl = params.get('accountType');
+        if (isAccountType(fromUrl)) {
+            setPendingAccountType(fromUrl);
+        }
+
+        const pending = getPendingAccountType();
+        if (!pending) {
+            const search = window.location.search || '';
+            navigate(`${createPageUrl('ChooseAccountType')}${search}`, { replace: true });
+        }
+    }, [navigate]);
 
     const afterSignUp = getPostAuthUrl();
+    const pendingType = getPendingAccountType();
+
+    if (!pendingType) {
+        return <PageLoading message="Redirecting…" />;
+    }
 
     return (
         <>
             <MetaTags
-                title="Join the Platform"
-                description="Create an account to book appointments and manage your style."
+                title="Create your account"
+                description="Create your ShopTheBarber account after choosing your workspace type."
             />
-            <AuthSplitLayout eyebrow="Join the platform">
+            <AuthSplitLayout eyebrow="Step 2 of 2">
                 <ClerkLoading>
                     <PageLoading message="Loading sign up…" />
                 </ClerkLoading>

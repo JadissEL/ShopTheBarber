@@ -22,7 +22,7 @@ vi.mock('@/hooks/useMediaQuery', () => ({
 vi.mock('@/components/routing/RouteGuard', () => ({ default: () => null }));
 vi.mock('@/components/routing/FeatureGuard', () => ({ default: () => null }));
 vi.mock('@/components/routing/OnboardingRedirect', () => ({ default: () => null }));
-vi.mock('@/components/onboarding/ProviderSignupBootstrap', () => ({ default: () => null }));
+vi.mock('@/components/auth/AccountProvisioner', () => ({ default: () => null }));
 vi.mock('@/components/notifications/RealTimeNotifications', () => ({ default: () => null }));
 vi.mock('@/components/booking/WaitlistOfferNotifier', () => ({ default: () => null }));
 vi.mock('@/components/pwa/InstallPrompt', () => ({ default: () => null }));
@@ -57,7 +57,7 @@ vi.mock('@/api/apiClient', () => ({
 
 function renderAuthenticatedRoute(path, roleConfig) {
   useAuth.mockReturnValue({
-    user: { id: 'user-1', role: roleConfig.authRole },
+    user: { id: 'user-1', role: roleConfig.authRole, account_type: roleConfig.accountType },
     isAuthenticated: true,
     isLoadingAuth: false,
     isSignedIn: true,
@@ -65,6 +65,7 @@ function renderAuthenticatedRoute(path, roleConfig) {
   });
   useEffectiveRole.mockReturnValue({
     effectiveRole: roleConfig.effectiveRole,
+    accountType: roleConfig.accountType ?? 'client',
     isLoading: false,
     isProvider: roleConfig.isProvider ?? false,
     isAdmin: roleConfig.isAdmin ?? false,
@@ -117,6 +118,7 @@ describe('dashboard navigation integration', () => {
     renderAuthenticatedRoute('/Marketplace', {
       authRole: 'barber',
       effectiveRole: 'barber',
+      accountType: 'solo_barber',
       isProvider: true,
     });
     expect(screen.getByTestId('provider-sidebar')).toBeInTheDocument();
@@ -128,6 +130,7 @@ describe('dashboard navigation integration', () => {
     renderAuthenticatedRoute('/Explore', {
       authRole: 'barber',
       effectiveRole: 'barber',
+      accountType: 'solo_barber',
       isProvider: true,
     });
     expect(screen.getByTestId('provider-sidebar')).toBeInTheDocument();
@@ -149,6 +152,7 @@ describe('dashboard navigation integration', () => {
     renderAuthenticatedRoute('/SetupGuide', {
       authRole: 'barber',
       effectiveRole: 'barber',
+      accountType: 'solo_barber',
       isProvider: true,
     });
     expect(screen.getByTestId('provider-sidebar')).toBeInTheDocument();

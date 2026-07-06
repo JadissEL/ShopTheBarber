@@ -9,6 +9,7 @@ export const MARKETING_ONLY_PATHS = [
   '/legaldocuments',
   '/offline',
   '/selectprovidertype',
+  '/chooseaccounttype',
   '/servicespricing',
   '/termsofservice',
   '/privacy',
@@ -107,6 +108,7 @@ function isAuthPath(path) {
   return (
     path === '/login' ||
     path === '/register' ||
+    path === '/chooseaccounttype' ||
     path === '/signin' ||
     path === '/signup' ||
     path === '/auth' ||
@@ -137,26 +139,31 @@ function isProviderPath(path) {
 }
 
 /**
- * Resolve layout zone for a route. When `isAuthenticated` is omitted, guest behavior applies.
- *
  * @param {string} pathname
- * @param {{ isAuthenticated?: boolean, role?: string | null }} [options]
- * @returns {import('@/components/navigationConfig').APP_ZONES[keyof import('@/components/navigationConfig').APP_ZONES]}
+ * @param {{ isAuthenticated?: boolean, role?: string | null, accountType?: string | null }} [options]
  */
 export function resolveZoneFromPath(pathname, options = {}) {
   const path = normalizePath(pathname);
-  const { isAuthenticated = false, role = null } = options;
+  const { isAuthenticated = false, role = null, accountType = null } = options;
 
   if (isAuthPath(path)) return APP_ZONES.AUTH;
   if (isMarketingOnlyPath(path)) return APP_ZONES.PUBLIC;
 
-  // Authenticated users stay in their role-specific dashboard shell everywhere
-  // except marketing/auth flows above.
   if (isAuthenticated) {
     if (isAdminRole(role)) return APP_ZONES.ADMIN;
-    if (isProviderRole(role)) return APP_ZONES.PROVIDER;
-    if (isAuthAppModulePath(path)) return APP_ZONES.CLIENT;
-    return APP_ZONES.CLIENT;
+    switch (accountType) {
+      case 'solo_barber':
+      case 'shop':
+        return APP_ZONES.PROVIDER;
+      case 'seller':
+        return APP_ZONES.SELLER;
+      case 'company':
+        return APP_ZONES.COMPANY;
+      case 'blogger':
+        return APP_ZONES.BLOGGER;
+      default:
+        return APP_ZONES.CLIENT;
+    }
   }
 
   // Guest: path-based zones for discovery vs tool routes (RouteGuard handles auth).

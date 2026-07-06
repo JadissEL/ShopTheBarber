@@ -11,6 +11,7 @@ const HIDE_BOTTOM_NAV_PREFIXES = [
   '/signup',
   '/login',
   '/register',
+  '/chooseaccounttype',
 ];
 
 export function shouldHideBottomNav(pathname) {
@@ -67,6 +68,12 @@ export function shouldHideGlobalNavOnMobile({
     return true;
   }
   if (isProviderRole(role) && zone === APP_ZONES.PROVIDER) {
+    return true;
+  }
+  if (
+    (zone === APP_ZONES.SELLER || zone === APP_ZONES.COMPANY || zone === APP_ZONES.BLOGGER) &&
+    isAuthenticated
+  ) {
     return true;
   }
   if (isAdminRole(role) && zone === APP_ZONES.ADMIN) {

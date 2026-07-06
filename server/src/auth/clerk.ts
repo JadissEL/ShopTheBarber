@@ -14,6 +14,7 @@ export interface ClerkUser {
   id: string;
   email?: string;
   role?: string;
+  account_type?: string | null;
   full_name?: string;
   avatar_url?: string | null;
 }
@@ -53,6 +54,7 @@ export async function verifyClerkToken(token: string): Promise<ClerkUser | null>
       id: user.id,
       email: user.emailAddresses[0]?.emailAddress,
       role: (user.publicMetadata?.role as string) || 'client',
+      account_type: (user.publicMetadata?.accountType as string) || null,
       full_name: name,
       avatar_url: user.imageUrl,
     };

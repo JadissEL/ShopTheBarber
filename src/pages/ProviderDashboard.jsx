@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
+import { dashboardPageForAccountType, isBookingProviderAccountType } from '@/lib/accountType';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
@@ -27,7 +28,7 @@ import { cn } from '@/lib/utils';
 
 export default function ProviderDashboard() {
     const navigate = useNavigate();
-    const { isAdmin, isProvider, isLoading: roleLoading } = useEffectiveRole();
+    const { isAdmin, isLoading: roleLoading, accountType } = useEffectiveRole();
 
     useEffect(() => {
         if (roleLoading) return;
@@ -35,10 +36,10 @@ export default function ProviderDashboard() {
             navigate(createPageUrl('GlobalFinancials'), { replace: true });
             return;
         }
-        if (!isProvider) {
-            navigate(createPageUrl('Dashboard'), { replace: true });
+        if (accountType && !isBookingProviderAccountType(accountType)) {
+            navigate(createPageUrl(dashboardPageForAccountType(accountType)), { replace: true });
         }
-    }, [roleLoading, isAdmin, isProvider, navigate]);
+    }, [roleLoading, isAdmin, accountType, navigate]);
 
     const { data: user, isLoading: isUserLoading } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
     const [reviewPage, _setReviewPage] = useState(1);

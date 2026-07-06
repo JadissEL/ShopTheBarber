@@ -4,7 +4,7 @@
 
 import { createPageUrl } from '@/utils';
 import { isFeatureEnabled } from '@/lib/featureRegistry';
-import { dashboardPageForRole } from '@/lib/userRole';
+import { dashboardPageForAccountType, accountTypeFromRole } from '@/lib/accountType';
 
 /** @typedef {'client'|'barber'|'shop_owner'|'provider'|'admin'} OnboardingRole */
 
@@ -17,6 +17,9 @@ export function normalizeOnboardingRole(role) {
   if (role === 'admin') return 'admin';
   if (role === 'shop_owner') return 'shop_owner';
   if (role === 'barber' || role === 'provider') return 'provider';
+  if (role === 'seller') return 'seller';
+  if (role === 'company') return 'company';
+  if (role === 'blogger') return 'blogger';
   return 'client';
 }
 
@@ -144,14 +147,17 @@ export function getInitialStepIndex(steps, completion) {
   return anyIdx >= 0 ? anyIdx : 0;
 }
 
-/** Resolve onboarding role including provider signup intent */
-export function resolveOnboardingRole(userRole, authRole, providerIntent) {
+/** Resolve onboarding role from account type (canonical) or legacy role */
+export function resolveOnboardingRole(userRole, authRole, _providerIntent, accountType) {
   const dbRole = userRole || authRole || 'client';
-  if (['admin', 'barber', 'shop_owner', 'provider'].includes(dbRole)) {
+  if (['admin', 'barber', 'shop_owner', 'provider', 'seller', 'company', 'blogger'].includes(dbRole)) {
     return normalizeOnboardingRole(dbRole);
   }
-  if (providerIntent === 'shop') return 'shop_owner';
-  if (providerIntent === 'barber') return 'provider';
+  if (accountType === 'shop') return 'shop_owner';
+  if (accountType === 'solo_barber') return 'provider';
+  if (accountType === 'seller') return 'seller';
+  if (accountType === 'company') return 'company';
+  if (accountType === 'blogger') return 'blogger';
   return 'client';
 }
 
@@ -464,7 +470,12 @@ export function shouldShowOnboardingPrompt(userId, role, progress) {
 }
 
 export function getDashboardPathForRole(role) {
-  return createPageUrl(dashboardPageForRole(role === 'provider' ? 'barber' : role));
+  const normalized = role === 'provider' ? 'barber' : role;
+  return createPageUrl(dashboardPageForAccountType(accountTypeFromRole(normalized)));
+}
+
+export function getDashboardPathForAccountType(accountType) {
+  return createPageUrl(dashboardPageForAccountType(accountType));
 }
 
 export function getSetupGuidePath() {

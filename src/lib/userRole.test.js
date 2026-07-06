@@ -6,6 +6,7 @@ import {
   resolveEffectiveRole,
   dashboardPageForRole,
   settingsPageForRole,
+  canAccessBookingProviderTools,
 } from '@/lib/userRole';
 
 describe('userRole', () => {
@@ -23,41 +24,31 @@ describe('userRole', () => {
     expect(canAccessProviderTools('barber')).toBe(true);
   });
 
-  it('infers barber from workspace when auth role is client', () => {
+  it('uses account type as canonical routing identity', () => {
     expect(
       resolveEffectiveRole({
+        accountType: 'solo_barber',
         authRole: 'client',
-        barber: { title: 'Independent Barber' },
-        ownerMembership: true,
-        providerIntent: 'barber',
       }),
     ).toBe('barber');
-  });
-
-  it('infers shop_owner from workspace title', () => {
     expect(
       resolveEffectiveRole({
+        accountType: 'seller',
         authRole: 'client',
-        barber: { title: 'Shop Owner' },
-        ownerMembership: true,
       }),
-    ).toBe('shop_owner');
-  });
-
-  it('uses provider intent before workspace exists', () => {
-    expect(
-      resolveEffectiveRole({
-        authRole: 'client',
-        providerIntent: 'barber',
-      }),
-    ).toBe('barber');
+    ).toBe('seller');
   });
 
   it('routes each role to its dashboard and settings', () => {
     expect(dashboardPageForRole('barber')).toBe('ProviderDashboard');
+    expect(dashboardPageForRole('seller')).toBe('SellerDashboard');
     expect(dashboardPageForRole('client')).toBe('Dashboard');
     expect(dashboardPageForRole('admin')).toBe('GlobalFinancials');
-    expect(settingsPageForRole('admin')).toBe('AdminPlatformHealth');
-    expect(settingsPageForRole('client')).toBe('AccountSettings');
+    expect(settingsPageForRole('seller')).toBe('ProviderMarketplaceProducts');
+  });
+
+  it('restricts booking tools to barber account types', () => {
+    expect(canAccessBookingProviderTools('solo_barber')).toBe(true);
+    expect(canAccessBookingProviderTools('seller')).toBe(false);
   });
 });

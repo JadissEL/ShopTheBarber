@@ -49,7 +49,7 @@ export default function SignIn() {
                     <ClerkSignIn
                         routing="path"
                         path="/login"
-                        signUpUrl={createPageUrl('SignUp')}
+                        signUpUrl={createPageUrl('ChooseAccountType')}
                         fallbackRedirectUrl={afterSignIn}
                         signUpFallbackRedirectUrl="/SetupGuide"
                         appearance={clerkAuthAppearance}

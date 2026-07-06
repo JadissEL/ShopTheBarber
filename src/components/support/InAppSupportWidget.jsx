@@ -13,11 +13,12 @@ import { APP_ZONES, getZoneFromPath } from '@/components/navigationConfig';
  */
 export default function InAppSupportWidget() {
     const { isAuthenticated, user } = useAuth();
-    const { effectiveRole } = useEffectiveRole();
+    const { effectiveRole, accountType } = useEffectiveRole();
     const location = useLocation();
     const zone = getZoneFromPath(location.pathname, {
         isAuthenticated: isAuthenticated && !!user,
         role: effectiveRole,
+        accountType,
     });
     const path = location.pathname.toLowerCase();
 

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
-import { getProviderIntent } from '@/lib/bootstrapProvider';
+import { accountTypeFromRole } from '@/lib/accountType';
 import {
   getOnboardingSteps,
   computeStepCompletion,
@@ -20,13 +20,14 @@ export function useOnboardingProgress() {
   const {
     user: authUser,
     role: authRole,
+    accountType: authAccountType,
     syncStatus,
     syncError,
     isSignedIn,
     retrySync,
   } = useAuth();
-  const providerIntent = getProviderIntent();
-  const role = resolveOnboardingRole(authUser?.role, authRole, providerIntent);
+  const onboardingAccountType = authAccountType || accountTypeFromRole(authRole);
+  const role = resolveOnboardingRole(authUser?.role, authRole, null, onboardingAccountType);
   const isProviderFlow = role === 'provider' || role === 'shop_owner';
   const authReady = syncStatus === 'ready' && !!authUser?.id;
 
@@ -99,7 +100,7 @@ export function useOnboardingProgress() {
   const { data: bookings = [] } = useQuery({
     queryKey: ['onboarding-bookings', user?.email],
     queryFn: () => sovereign.entities.Booking.filter({ created_by: user.email }),
-    enabled: !!user?.email && !!user?.id && role === 'client' && !providerIntent,
+    enabled: !!user?.email && !!user?.id && (role === 'client' || role === 'blogger'),
   });
 
   const completion = useMemo(
@@ -137,8 +138,7 @@ export function useOnboardingProgress() {
 
   const showPrompt = user?.id ? shouldShowOnboardingPrompt(user.id, role, progress) : false;
 
-  const needsProviderBootstrap =
-    isProviderFlow && !!user?.id && !barber && !shopMembership && !shopId;
+  const needsProviderBootstrap = false;
 
   const syncBlocked = syncStatus === 'error';
 
@@ -150,7 +150,7 @@ export function useOnboardingProgress() {
 
   return {
     role,
-    providerIntent,
+    accountType: onboardingAccountType,
     steps,
     completion,
     progress,

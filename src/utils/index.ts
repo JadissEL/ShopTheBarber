@@ -3,6 +3,7 @@ import { stashAuthReturn } from '@/lib/authReturn';
 const AUTH_PATH_ALIASES: Record<string, string> = {
   SignIn: '/login',
   SignUp: '/register',
+  ChooseAccountType: '/chooseaccounttype',
 };
 
 export function createPageUrl(pageName: string): string {

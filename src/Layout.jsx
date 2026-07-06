@@ -7,6 +7,9 @@ import AppLayout from '@/components/layout/AppLayout';
 import ClientLayout from '@/components/layout/ClientLayout';
 import ProviderLayout from '@/components/layout/ProviderLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
+import AccountTypeLayout from '@/components/layout/AccountTypeLayout';
+import { SELLER_NAV, COMPANY_NAV, BLOGGER_NAV } from '@/lib/accountTypeNav';
+import AccountProvisioner from '@/components/auth/AccountProvisioner';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryOptimizer } from '@/components/QueryOptimizer';
@@ -18,7 +21,6 @@ import { WishlistProvider } from '@/components/wishlist/WishlistContext';
 import RouteGuard from '@/components/routing/RouteGuard';
 import FeatureGuard from '@/components/routing/FeatureGuard';
 import OnboardingRedirect from '@/components/routing/OnboardingRedirect';
-import ProviderSignupBootstrap from '@/components/onboarding/ProviderSignupBootstrap';
 import { SkipLink } from '@/components/ui/SkipLink';
 import ErrorBoundary from '@/components/ui/error-boundary';
 import RealTimeNotifications from '@/components/notifications/RealTimeNotifications';
@@ -30,11 +32,12 @@ import InAppSupportWidget from '@/components/support/InAppSupportWidget';
 export default function Layout({ children, currentPageName: _currentPageName }) {
   const location = useLocation();
   const path = location.pathname;
-  const { user, isAuthenticated } = useAuth();
-  const { effectiveRole } = useEffectiveRole();
+  const { user, isAuthenticated, syncStatus } = useAuth();
+  const { effectiveRole, accountType } = useEffectiveRole();
   const zone = getZoneFromPath(path, {
     isAuthenticated: isAuthenticated && !!user,
     role: effectiveRole,
+    accountType,
   });
   const branding = ZONE_BRANDING[zone] || ZONE_BRANDING[APP_ZONES.PUBLIC];
   const menuItems = NAV_MENUS[zone] || [];
@@ -47,7 +50,7 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
           <RouteGuard />
           <FeatureGuard />
           <OnboardingRedirect />
-          <ProviderSignupBootstrap />
+          <AccountProvisioner />
           <ThemeProvider
             attribute="class"
             forcedTheme="light"
@@ -82,6 +85,18 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
                     <ProviderLayout>{children}</ProviderLayout>
                   ) : zone === APP_ZONES.ADMIN ? (
                     <AdminLayout>{children}</AdminLayout>
+                  ) : zone === APP_ZONES.SELLER ? (
+                    <AccountTypeLayout navItems={SELLER_NAV} brandLabel="Seller Hub">
+                      {children}
+                    </AccountTypeLayout>
+                  ) : zone === APP_ZONES.COMPANY ? (
+                    <AccountTypeLayout navItems={COMPANY_NAV} brandLabel="Company Hub">
+                      {children}
+                    </AccountTypeLayout>
+                  ) : zone === APP_ZONES.BLOGGER ? (
+                    <AccountTypeLayout navItems={BLOGGER_NAV} brandLabel="Creator Hub">
+                      {children}
+                    </AccountTypeLayout>
                   ) : (
                     <main id="main-content" className="flex-1">
                       {children}

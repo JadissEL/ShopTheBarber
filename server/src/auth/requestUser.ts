@@ -1,6 +1,6 @@
 /**
- * Clerk-only authentication. Verifies the Bearer token with Clerk, then maps it to the
- * Neon `users` row (provisioning or linking by email) so FK scopes use the internal users.id.
+ * Clerk-only authentication. Verifies Bearer token and maps to Neon users row.
+ * New users are NOT auto-created — they must call POST /api/auth/provision first.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -8,65 +8,69 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../db/prisma';
 import { verifyClerkToken } from './clerk';
 import { resolveAndSyncUserRole } from './resolveUserRole';
+import { findUserByClerkProfile } from './provisionUser';
 
-export type ResolvedRequestUser = { id: string; email?: string; role?: string };
+export type ResolvedRequestUser = {
+    id: string;
+    email?: string;
+    role?: string;
+    account_type?: string | null;
+};
 
-async function ensureDbUserFromClerk(profile: {
+export type ClerkProfilePayload = {
     clerk_user_id: string;
     email: string;
     role: string;
+    account_type?: string | null;
     full_name?: string | null;
     avatar_url?: string | null;
-}) {
-    const existingByClerk = await prisma.users.findUnique({
-        where: { clerk_user_id: profile.clerk_user_id },
-    });
-    if (existingByClerk) return existingByClerk;
+};
 
-    const existingByEmail = await prisma.users.findUnique({ where: { email: profile.email } });
-    if (existingByEmail) {
-        return prisma.users.update({
-            where: { id: existingByEmail.id },
-            data: {
-                clerk_user_id: profile.clerk_user_id,
-                avatar_url: existingByEmail.avatar_url || profile.avatar_url || undefined,
-                full_name: existingByEmail.full_name || profile.full_name || undefined,
-                updated_at: new Date().toISOString(),
-            },
-        });
-    }
+/** Resolve Clerk JWT claims without requiring a DB user (for provision flow). */
+export async function resolveClerkProfileFromBearer(
+    token: string,
+): Promise<ClerkProfilePayload | null> {
+    const clerkClaims = await verifyClerkToken(token);
+    if (!clerkClaims?.id || !clerkClaims.email) return null;
 
-    const roleSafe = ['client', 'barber', 'admin', 'shop_owner'].includes(profile.role)
-        ? profile.role
-        : 'client';
-    const avatar =
-        profile.avatar_url ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email.split('@')[0] || 'User')}&background=random`;
+    return {
+        clerk_user_id: clerkClaims.id,
+        email: clerkClaims.email,
+        role: clerkClaims.role || 'client',
+        account_type: clerkClaims.account_type ?? null,
+        full_name: clerkClaims.full_name,
+        avatar_url: clerkClaims.avatar_url,
+    };
+}
 
-    return prisma.users.create({
+async function linkClerkToExistingUser(
+    existing: { id: string; clerk_user_id: string | null },
+    profile: ClerkProfilePayload,
+) {
+    if (existing.clerk_user_id === profile.clerk_user_id) return existing;
+
+    return prisma.users.update({
+        where: { id: existing.id },
         data: {
             clerk_user_id: profile.clerk_user_id,
-            email: profile.email,
-            full_name: profile.full_name || profile.email.split('@')[0] || 'User',
-            role: roleSafe,
-            avatar_url: avatar,
+            avatar_url: profile.avatar_url || undefined,
+            full_name: profile.full_name || undefined,
+            updated_at: new Date().toISOString(),
         },
     });
 }
 
-/** Resolve a Bearer token to a DB-backed user (Clerk only). Returns null if invalid. */
+/** Resolve Bearer token to DB user. Returns null if valid Clerk session but not provisioned. */
 export async function resolveUserFromBearer(token: string): Promise<ResolvedRequestUser | null> {
-    const clerkClaims = await verifyClerkToken(token);
-    if (!clerkClaims?.id || !clerkClaims.email) return null;
+    const profile = await resolveClerkProfileFromBearer(token);
+    if (!profile) return null;
 
-    const resolved = await ensureDbUserFromClerk({
-        clerk_user_id: clerkClaims.id,
-        email: clerkClaims.email,
-        role: clerkClaims.role || 'client',
-        full_name: clerkClaims.full_name,
-        avatar_url: clerkClaims.avatar_url,
-    });
+    let resolved = await findUserByClerkProfile(profile);
     if (!resolved) return null;
+
+    if (!resolved.clerk_user_id) {
+        resolved = await linkClerkToExistingUser(resolved, profile);
+    }
 
     const syncedRole = await resolveAndSyncUserRole(resolved.id, resolved.role ?? 'client');
 
@@ -74,6 +78,7 @@ export async function resolveUserFromBearer(token: string): Promise<ResolvedRequ
         id: resolved.id,
         email: resolved.email ?? undefined,
         role: syncedRole,
+        account_type: resolved.account_type,
     };
 }
 
@@ -97,7 +102,11 @@ export async function authenticateRequest(request: FastifyRequest, reply: Fastif
     }
     const user = await resolveUserFromBearer(authHeader.slice(7));
     if (!user) {
-        void reply.code(401).send({ error: 'Unauthorized', hint: 'Invalid or missing auth token.' });
+        void reply.code(401).send({
+            error: 'Account not provisioned',
+            code: 'NEEDS_PROVISION',
+            hint: 'Complete account setup by choosing your account type.',
+        });
         return false;
     }
     (request as any).user = user;

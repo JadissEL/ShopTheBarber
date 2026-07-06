@@ -16,6 +16,9 @@ model users {
   email                 String   @unique
   full_name             String?
   role                  String?  @default("client")
+  /// Immutable account type chosen at signup (client | solo_barber | shop | seller | company | blogger)
+  account_type          String?
+  account_type_locked_at String?
   avatar_url            String?
   phone                 String?
   /// SMS appointment reminders via Twilio
@@ -87,6 +90,9 @@ model users {
   product_analytics_events  product_analytics_events[]
   marketplace_reservations marketplace_reservations[]
   reputation_events     reputation_events[]
+  seller_profile        seller_profiles?
+  company_account       company_accounts?
+  author_profile        author_profiles?
   ad_credit_wallets     ad_credit_wallets?
   dispute_appeals       dispute_appeals[]
   financing_applications financing_applications[]
@@ -1161,6 +1167,47 @@ model companies {
   created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   jobs        jobs[]
+  company_accounts company_accounts[]
+}
+
+model seller_profiles {
+  id                 String  @id @default(uuid())
+  user_id            String  @unique
+  display_name       String
+  seller_type        String  @default("vendor")
+  stripe_account_id  String?
+  created_at         String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user               users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model company_accounts {
+  id          String    @id @default(uuid())
+  user_id     String    @unique
+  company_id  String
+  created_at  String?   @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company     companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model author_profiles {
+  id          String  @id @default(uuid())
+  user_id     String  @unique
+  pen_name    String?
+  bio         String?
+  created_at  String? @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user        users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model signup_intents {
+  id            String    @id @default(uuid())
+  token_hash    String    @unique
+  account_type  String
+  expires_at    DateTime  @db.Timestamp(3)
+  consumed_at   DateTime? @db.Timestamp(3)
+  created_at    DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp(3)
 }
 
 model jobs {

@@ -22,8 +22,11 @@ export const APP_ZONES = {
   PUBLIC: 'public',
   CLIENT: 'client',
   PROVIDER: 'provider',
+  SELLER: 'seller',
+  COMPANY: 'company',
+  BLOGGER: 'blogger',
   ADMIN: 'admin',
-  AUTH: 'auth'
+  AUTH: 'auth',
 };
 
 // Define branding for each zone
@@ -31,6 +34,9 @@ export const ZONE_BRANDING = {
   [APP_ZONES.PUBLIC]: { name: 'ShopTheBarber', dark: true },
   [APP_ZONES.CLIENT]: { name: 'ShopTheBarber', dark: false },
   [APP_ZONES.PROVIDER]: { name: 'ShopTheBarber', dark: false },
+  [APP_ZONES.SELLER]: { name: 'ShopTheBarber', dark: false },
+  [APP_ZONES.COMPANY]: { name: 'ShopTheBarber', dark: false },
+  [APP_ZONES.BLOGGER]: { name: 'ShopTheBarber', dark: false },
   [APP_ZONES.ADMIN]: { name: 'ShopTheBarber', dark: false },
   [APP_ZONES.AUTH]: { name: 'ShopTheBarber', dark: true },
 };
