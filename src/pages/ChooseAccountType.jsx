@@ -1,34 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  Scissors,
-  Store,
-  ShoppingBag,
-  Building2,
-  PenLine,
-  User,
-  Check,
-  Sparkles,
-} from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
+import { AccountTypeOptionCard } from '@/components/auth/AccountTypeOptionCard';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { ACCOUNT_TYPE_CARDS, isAccountType } from '@/lib/accountType';
+import { ACCOUNT_TYPE_SECTIONS } from '@/lib/accountTypeVisuals';
 import { createServerSignupIntent } from '@/lib/signupIntent';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import { toast } from 'sonner';
 
-const ICONS = {
-  client: User,
-  solo_barber: Scissors,
-  shop: Store,
-  seller: ShoppingBag,
-  company: Building2,
-  blogger: PenLine,
-};
+const CARD_BY_ID = Object.fromEntries(ACCOUNT_TYPE_CARDS.map((c) => [c.id, c]));
 
 export default function ChooseAccountType() {
   const navigate = useNavigate();
@@ -57,6 +41,8 @@ export default function ChooseAccountType() {
     }
   };
 
+  let cardIndex = 0;
+
   return (
     <>
       <MetaTags
@@ -64,6 +50,7 @@ export default function ChooseAccountType() {
         description="Select how you want to use ShopTheBarber before creating your account."
       />
       <AuthSplitLayout
+        contentClassName="max-w-3xl xl:max-w-4xl"
         eyebrow="Create account"
         heroTitle={
           <>
@@ -74,78 +61,94 @@ export default function ChooseAccountType() {
         }
         heroDescription="Each account type unlocks a tailored dashboard, permissions, and workflows. This choice is permanent for your email."
       >
-        <div className="space-y-6 max-w-3xl mx-auto">
-          <div className="space-y-2 text-center lg:text-left">
+        <div className="space-y-10 sm:space-y-12">
+          <header className="space-y-3 text-center lg:text-left">
             <p className={cn(stb.overline, 'text-primary')}>Step 1 of 2</p>
-            <h1 className={cn(stb.uiHeading, 'text-2xl md:text-3xl')}>
+            <h1 className={cn(stb.uiHeading, 'text-2xl sm:text-3xl tracking-tight')}>
               What would you like to do on ShopTheBarber?
             </h1>
-            <p className={stb.body}>
+            <p className={cn(stb.body, 'max-w-2xl text-muted-foreground')}>
               Pick the workspace that matches how you&apos;ll use the platform. You&apos;ll create your login next.
             </p>
-          </div>
+          </header>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {ACCOUNT_TYPE_CARDS.map((card, index) => {
-              const Icon = ICONS[card.id] || Sparkles;
-              const active = selected === card.id;
-              return (
-                <motion.button
-                  key={card.id}
-                  type="button"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.04 }}
-                  onClick={() => setSelected(card.id)}
-                  aria-pressed={active}
+          <div className="space-y-10">
+            {ACCOUNT_TYPE_SECTIONS.map((section) => (
+              <section key={section.id} className="space-y-4">
+                <div className="space-y-1 border-b border-border/60 pb-3">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    {section.label}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">{section.description}</p>
+                </div>
+
+                <div
                   className={cn(
-                    stb.surfaceHover,
-                    'text-left p-5 relative border-2 transition-all',
-                    active ? 'border-primary ring-2 ring-primary/20' : 'border-transparent',
+                    'grid gap-4 sm:gap-5',
+                    section.types.length === 1
+                      ? 'grid-cols-1 sm:max-w-md'
+                      : section.types.length === 2
+                        ? 'sm:grid-cols-2'
+                        : 'sm:grid-cols-2 lg:grid-cols-3',
                   )}
                 >
-                  {active && (
-                    <span className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-                  <div className="flex items-start gap-3">
-                    <div className={cn(stb.iconBox, 'w-11 h-11 shrink-0')}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={cn(stb.overline, 'mb-0.5')}>{card.subtitle}</p>
-                      <h2 className={cn(stb.uiHeading, 'text-lg')}>{card.title}</h2>
-                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{card.description}</p>
-                      <ul className="mt-3 flex flex-wrap gap-1.5">
-                        {card.features.slice(0, 3).map((f) => (
-                          <li
-                            key={f}
-                            className="text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
-                          >
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </motion.button>
-              );
-            })}
+                  {section.types.map((typeId) => {
+                    const card = CARD_BY_ID[typeId];
+                    if (!card) return null;
+                    const idx = cardIndex++;
+                    return (
+                      <AccountTypeOptionCard
+                        key={card.id}
+                        card={card}
+                        selected={selected === card.id}
+                        onSelect={() => setSelected(card.id)}
+                        index={idx}
+                        className={section.types.length === 1 ? undefined : 'min-h-[17.5rem]'}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div
+            className={cn(
+              'sticky bottom-0 z-10 -mx-1 flex flex-col gap-3 border-t border-border/60 bg-background/95 px-1 py-5 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none',
+            )}
+          >
+            {selected && CARD_BY_ID[selected] && (
+              <p className="text-center sm:text-left text-sm text-muted-foreground sm:order-first">
+                Selected workspace:{' '}
+                <span className="font-semibold text-foreground">{CARD_BY_ID[selected].title}</span>
+                <span className="hidden sm:inline text-muted-foreground/80">
+                  {' '}
+                  — {CARD_BY_ID[selected].subtitle}
+                </span>
+              </p>
+            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
-              className="flex-1"
+              className="flex-1 h-12 text-base"
               size="lg"
               disabled={!selected || loading}
               onClick={() => void handleContinue()}
             >
-              {loading ? 'Preparing…' : selected ? ACCOUNT_TYPE_CARDS.find((c) => c.id === selected)?.cta : 'Select an account type'}
+              {loading
+                ? 'Preparing…'
+                : selected
+                  ? CARD_BY_ID[selected]?.cta
+                  : 'Select an account type'}
             </Button>
-            <Button variant="outline" size="lg" onClick={() => navigate(createPageUrl('SignIn'))}>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 sm:flex-none sm:min-w-[10rem]"
+              onClick={() => navigate(createPageUrl('SignIn'))}
+            >
               Sign in instead
             </Button>
+            </div>
           </div>
         </div>
       </AuthSplitLayout>

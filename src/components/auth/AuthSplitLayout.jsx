@@ -21,6 +21,7 @@ export default function AuthSplitLayout({
   heroDescription = 'Book elite barbers, manage your chair, and earn rewards — all in one sharp platform.',
   children,
   className,
+  contentClassName,
 }) {
   return (
     <div className={cn('stb-page flex min-h-[calc(100vh-4rem)] lg:min-h-screen', className)}>
@@ -61,7 +62,7 @@ export default function AuthSplitLayout({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="w-full max-w-md py-8 lg:py-12"
+          className={cn('w-full max-w-md py-8 lg:py-12', contentClassName)}
         >
           <div className="lg:hidden mb-8">
             <Link
