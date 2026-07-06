@@ -265,6 +265,116 @@ export function getOnboardingSteps(role) {
     ]);
   }
 
+  if (normalized === 'seller') {
+    return /** @type {OnboardingStep[]} */ ([
+      {
+        id: 'welcome',
+        title: 'Welcome to your seller workspace',
+        description: 'List grooming products, manage orders, and track sales — without appointment booking tools.',
+      },
+      {
+        id: 'profile',
+        title: 'Seller profile',
+        description: 'Add your business name and seller details so buyers recognize your brand on the marketplace.',
+        href: 'SellerDashboard',
+        required: true,
+      },
+      {
+        id: 'products',
+        title: 'Add your first product',
+        description: 'Create a draft listing with photos, pricing, and inventory before submitting for review.',
+        href: 'MarketplaceSeller',
+        optional: !isFeatureEnabled('marketplace'),
+      },
+      {
+        id: 'stripe',
+        title: 'Payout setup',
+        description: 'Connect Stripe so you receive payouts when orders ship.',
+        href: 'SellerDashboard',
+        optional: true,
+      },
+      {
+        id: 'dashboard',
+        title: 'Seller dashboard',
+        description: 'Orders, analytics, and catalog management live on your seller home.',
+        href: 'SellerDashboard',
+      },
+    ]).filter((s) => !s.optional);
+  }
+
+  if (normalized === 'company') {
+    return /** @type {OnboardingStep[]} */ ([
+      {
+        id: 'welcome',
+        title: 'Welcome to your company workspace',
+        description: 'Build your employer brand, post open roles, and manage candidates in one place.',
+      },
+      {
+        id: 'profile',
+        title: 'Company profile',
+        description: 'Add your company name, logo, and description so candidates know who you are.',
+        href: 'CompanyDashboard',
+        required: true,
+      },
+      {
+        id: 'jobs',
+        title: 'Post your first job',
+        description: 'Create a role listing with requirements, location, and compensation details.',
+        href: 'EmployerJobs',
+        optional: !isFeatureEnabled('careers'),
+      },
+      {
+        id: 'products',
+        title: 'Optional product sales',
+        description: 'Companies can also sell products on the marketplace alongside recruitment.',
+        href: 'MarketplaceSeller',
+        optional: !isFeatureEnabled('marketplace'),
+      },
+      {
+        id: 'dashboard',
+        title: 'Company dashboard',
+        description: 'Track applications, job performance, and employer analytics from home.',
+        href: 'CompanyDashboard',
+      },
+    ]).filter((s) => !s.optional);
+  }
+
+  if (normalized === 'blogger') {
+    return /** @type {OnboardingStep[]} */ ([
+      {
+        id: 'welcome',
+        title: 'Welcome, creator',
+        description: 'Publish articles, grow your audience, and optionally sell products — with full client booking abilities.',
+      },
+      {
+        id: 'profile',
+        title: 'Author profile',
+        description: 'Set your pen name and bio so readers recognize your byline across the blog.',
+        href: 'BloggerDashboard',
+        required: true,
+      },
+      {
+        id: 'article',
+        title: 'Write your first article',
+        description: 'Draft a post with photos and categories, then submit for editorial review.',
+        href: 'BlogArticleEditor',
+        optional: !isFeatureEnabled('content'),
+      },
+      {
+        id: 'explore',
+        title: 'Book services as a client',
+        description: 'Blogger accounts include client booking — find barbers and manage your own appointments.',
+        href: 'Explore',
+      },
+      {
+        id: 'dashboard',
+        title: 'Blogger dashboard',
+        description: 'Content stats, drafts, and quick actions live on your creator home.',
+        href: 'BloggerDashboard',
+      },
+    ]).filter((s) => !s.optional);
+  }
+
   // Client
   const clientSteps = /** @type {OnboardingStep[]} */ ([
     {

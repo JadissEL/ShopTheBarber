@@ -4,7 +4,6 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { PageLoading } from '@/components/ui/page-loading';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { createPageUrl } from '@/utils';
-import { setProviderIntent } from '@/lib/bootstrapProvider';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import {
@@ -20,8 +19,6 @@ function useAuthIntentFromUrl() {
         const params = new URLSearchParams(window.location.search);
         const ref = params.get('ref');
         if (ref) localStorage.setItem(REF_STORAGE_KEY, ref.trim().toUpperCase());
-        const type = params.get('type');
-        if (type === 'barber' || type === 'shop') setProviderIntent(type);
     }, []);
 }
 

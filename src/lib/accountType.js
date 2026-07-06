@@ -127,6 +127,27 @@ export function dashboardPageForAccountType(accountType) {
   }
 }
 
+/** Legacy ?type=barber|shop query params from marketing pages */
+export function accountTypeFromLegacySignupType(type) {
+  if (type === 'barber') return 'solo_barber';
+  if (type === 'shop') return 'shop';
+  return null;
+}
+
+/**
+ * Build URL for account-type selection (step 1 of signup).
+ * @param {AccountType | null | undefined} accountType
+ * @param {{ redirect?: string; ref?: string }} [extra]
+ */
+export function buildChooseAccountTypeUrl(accountType, extra = {}) {
+  const qs = new URLSearchParams();
+  if (accountType && isAccountType(accountType)) qs.set('accountType', accountType);
+  if (extra.redirect) qs.set('redirect', extra.redirect);
+  if (extra.ref) qs.set('ref', extra.ref);
+  const q = qs.toString();
+  return `/chooseaccounttype${q ? `?${q}` : ''}`;
+}
+
 /** @param {string | null | undefined} role */
 export function accountTypeFromRole(role) {
   if (role === 'barber') return 'solo_barber';

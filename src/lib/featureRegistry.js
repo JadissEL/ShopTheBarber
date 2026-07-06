@@ -23,7 +23,7 @@ export const FEATURE_MODULES = {
     pages: [
       'Home', 'Explore', 'Barbers', 'BarberProfile', 'ShopProfile', 'BookingFlow',
       'ConfirmBooking', 'SelectServices', 'Dashboard', 'UserBookings', 'AccountSettings',
-      'SignIn', 'SignUp', 'Auth', 'Onboarding', 'SetupGuide', 'SelectProviderType', 'HelpCenter', 'StatusPage',
+      'SignIn', 'SignUp', 'ChooseAccountType', 'Auth', 'Onboarding', 'SetupGuide', 'SelectProviderType', 'HelpCenter', 'StatusPage',
       'About', 'Privacy', 'TermsOfService', 'ServicesPricing', 'ProviderTermsOfService',
       'NotificationSettings', 'Review', 'PaymentSuccess', 'PaymentError', 'Offline',
       'LegalDocuments', 'LaunchChecklist', 'CityLanding', 'CitiesDirectory', 'InviteLanding',

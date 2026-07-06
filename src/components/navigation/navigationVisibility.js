@@ -43,6 +43,7 @@ const ROOT_PATHS = [
     '/signup',
     '/login',
     '/register',
+    '/chooseaccounttype',
     '/onboarding',
     '/selectprovidertype',
 ];
@@ -63,6 +64,7 @@ const PUBLIC_PATHS = [
     '/signup',
     '/login',
     '/register',
+    '/chooseaccounttype',
     '/selectprovidertype',
     '/servicespricing',
     '/termsofservice',
@@ -91,7 +93,7 @@ export function getNavigationVisibility({ pathname, isAuthenticated, role, zone:
     const path = pathname.toLowerCase();
     const _isPublicPath = PUBLIC_PATHS.includes(path);
     const isRootPath = ROOT_PATHS.includes(path);
-    const isAuthPage = path === '/signin' || path === '/signup' || path === '/login' || path === '/register';
+    const isAuthPage = path === '/signin' || path === '/signup' || path === '/login' || path === '/register' || path === '/chooseaccounttype';
 
     // Base visibility - always shown
     const visibility = {

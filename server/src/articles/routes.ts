@@ -27,8 +27,8 @@ async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
 async function requireAuthor(request: any, reply: any): Promise<AuthUser | null> {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!canAuthorArticles(user.role)) {
-        reply.status(403).send({ error: 'Only barbers, shop owners, and admins can manage blog articles' });
+    if (!canAuthorArticles(user.role, user.account_type)) {
+        reply.status(403).send({ error: 'Author access required to manage blog articles' });
         return null;
     }
     return user;

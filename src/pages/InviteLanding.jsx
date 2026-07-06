@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Gift, Loader2, Users } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import { buildChooseAccountTypeUrl } from '@/lib/accountType';
 import { stb } from '@/lib/stbUi';
 
 const REF_STORAGE_KEY = 'stb_referral_code';
@@ -41,7 +42,9 @@ export default function InviteLanding() {
             });
     }, [code]);
 
-    const signupUrl = `/register?ref=${encodeURIComponent((code || '').trim().toUpperCase())}`;
+    const signupUrl = buildChooseAccountTypeUrl('client', {
+        ref: (code || '').trim().toUpperCase(),
+    });
 
     return (
         <div className={stb.page}>
@@ -87,7 +90,7 @@ export default function InviteLanding() {
                             <h1 className="text-xl font-bold">Invite link expired</h1>
                             <p className="text-muted-foreground text-sm">{state.error}</p>
                             <Button asChild className="w-full rounded-lg">
-                                <Link to="/register">Sign up without a code</Link>
+                                <Link to={buildChooseAccountTypeUrl('client')}>Sign up without a code</Link>
                             </Button>
                         </>
                     )}

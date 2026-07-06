@@ -1,7 +1,7 @@
 import { type FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest, resolveOptionalUserId } from '../auth/requestUser';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import { getManagedShopIdsForUser } from '../entityScope';
 import {
     calculateBookingQuote,
@@ -11,7 +11,7 @@ import {
     validateBundleWriteInput,
 } from './logic';
 
-type AuthUser = { id: string; role?: string };
+type AuthUser = { id: string; role?: string; account_type?: string | null };
 
 async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
     const ok = await authenticateRequest(request, reply);
@@ -22,8 +22,8 @@ async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
 async function requireProvider(request: any, reply: any): Promise<AuthUser | null> {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!isProviderRole(user.role)) {
-        reply.status(403).send({ error: 'Only providers can manage pricing bundles' });
+    if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+        reply.status(403).send({ error: 'Only booking providers can manage pricing bundles' });
         return null;
     }
     return user;

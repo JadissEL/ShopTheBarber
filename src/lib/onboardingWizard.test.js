@@ -140,6 +140,13 @@ describe('onboardingWizard', () => {
     expect(resolveOnboardingRole('client', 'client', null, 'shop')).toBe('shop_owner');
     expect(resolveOnboardingRole('barber', 'barber', null, 'solo_barber')).toBe('provider');
     expect(resolveOnboardingRole('client', 'client', null, 'seller')).toBe('seller');
+    expect(resolveOnboardingRole('client', 'client', null, 'blogger')).toBe('blogger');
+  });
+
+  it('returns seller-specific onboarding steps', () => {
+    const steps = getOnboardingSteps('seller');
+    expect(steps.some((s) => s.id === 'products')).toBe(true);
+    expect(steps[0].id).toBe('welcome');
   });
 
   it('resumes at first incomplete step', () => {

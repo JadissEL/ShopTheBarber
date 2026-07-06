@@ -1,7 +1,7 @@
 /**
  * Spoken languages for barbers and shops.
  */
-import { describe, it, expect, afterAll, vi } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
 const PROVIDER_CLERK = `clerk_lang_provider_${Date.now()}`;
@@ -20,6 +20,7 @@ vi.mock('../auth/clerk', () => ({
 import { prisma } from '../db/prisma';
 import { fastify as app } from '../index';
 import { normalizeLanguageInput, parseSpokenLanguages } from '../languages/logic';
+import { seedProvisionedUser } from './helpers/integrationUser';
 
 describe('languages logic', () => {
     it('normalizeLanguageInput validates supported codes', () => {
@@ -37,6 +38,15 @@ describe('integration: languages API', () => {
     let barberId: string;
     let shopId: string;
     const authHeaders = { authorization: 'Bearer test-token' };
+
+    beforeAll(async () => {
+        await seedProvisionedUser({
+            clerkUserId: PROVIDER_CLERK,
+            email: PROVIDER_EMAIL,
+            accountType: 'solo_barber',
+            fullName: 'Lang Barber',
+        });
+    });
 
     afterAll(async () => {
         if (barberId) await prisma.barbers.deleteMany({ where: { id: barberId } });

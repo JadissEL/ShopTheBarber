@@ -1,6 +1,6 @@
 import { type FastifyInstance } from 'fastify';
 import { authenticateRequest } from '../auth/requestUser';
-import { isAdminRole, isProviderRole } from '../auth/platformRbac';
+import { isAdminRole, canAccessBookingProviderTools } from '../auth/platformRbac';
 import { prisma } from '../db/prisma';
 import {
     getPublicBarberStats,
@@ -21,7 +21,7 @@ import {
 async function requireAuth(request: any, reply: any) {
     const ok = await authenticateRequest(request, reply);
     if (!ok) return null;
-    return request.user as { id: string; role?: string };
+    return request.user as { id: string; role?: string; account_type?: string | null };
 }
 
 async function requireAdmin(request: any, reply: any) {
@@ -37,8 +37,8 @@ async function requireAdmin(request: any, reply: any) {
 async function requireProvider(request: any, reply: any) {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!isProviderRole(user.role)) {
-        reply.status(403).send({ error: 'Provider access required' });
+    if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+        reply.status(403).send({ error: 'Booking provider access required' });
         return null;
     }
     return user;

@@ -33,8 +33,8 @@ async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
 async function requireSeller(request: any, reply: any): Promise<AuthUser | null> {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!canListProducts(user.role)) {
-        reply.status(403).send({ error: 'Only barbers, shop owners, and admins can list marketplace products' });
+    if (!canListProducts(user.role, user.account_type)) {
+        reply.status(403).send({ error: 'Marketplace seller access required' });
         return null;
     }
     return user;

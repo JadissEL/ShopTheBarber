@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import {
     assertAtLeastOneServiceLocation,
     offersShopService,
@@ -20,7 +20,7 @@ export async function mobileServiceRoutes(fastify: FastifyInstance) {
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
         const user = request.user!;
-        if (!isProviderRole(user.role)) {
+        if (!canAccessBookingProviderTools(user.role, user.account_type)) {
             return reply.status(403).send({ error: 'Provider access required' });
         }
 

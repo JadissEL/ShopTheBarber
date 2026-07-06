@@ -9,12 +9,15 @@ import {
 } from '../articles/logic';
 
 describe('articles/logic', () => {
-    it('canAuthorArticles allows provider roles only', () => {
+    it('canAuthorArticles allows author roles', () => {
         expect(canAuthorArticles('barber')).toBe(true);
         expect(canAuthorArticles('shop_owner')).toBe(true);
         expect(canAuthorArticles('provider')).toBe(true);
+        expect(canAuthorArticles('blogger')).toBe(true);
         expect(canAuthorArticles('admin')).toBe(false);
         expect(canAuthorArticles('client')).toBe(false);
+        expect(canAuthorArticles('seller')).toBe(false);
+        expect(canAuthorArticles(null, 'blogger')).toBe(true);
     });
 
     it('authorCanEdit and authorCanSubmit match draft/rejected', () => {

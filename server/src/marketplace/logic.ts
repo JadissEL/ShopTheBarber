@@ -1,6 +1,6 @@
 import type { products } from '@prisma/client';
 import { prisma } from '../db/prisma';
-import { isProviderRole } from '../auth/platformRbac';
+import { canListMarketplaceProducts } from '../auth/platformRbac';
 
 export const PRODUCT_STATUSES = ['draft', 'pending_review', 'published', 'rejected'] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
@@ -10,12 +10,12 @@ export const PRODUCT_CATEGORIES = ['hair', 'skincare', 'beard', 'tools', 'fragra
 export const SELLER_TYPES = ['barber', 'shop', 'platform', 'vendor'] as const;
 export type SellerType = (typeof SELLER_TYPES)[number];
 
-export const PRODUCT_SELLER_ROLES = ['barber', 'shop_owner', 'provider'] as const;
+export const PRODUCT_SELLER_ROLES = ['barber', 'shop_owner', 'provider', 'seller', 'company', 'blogger'] as const;
 
-export type AuthUser = { id: string; email?: string; role?: string };
+export type AuthUser = { id: string; email?: string; role?: string; account_type?: string | null };
 
-export function canListProducts(role?: string | null): boolean {
-    return isProviderRole(role);
+export function canListProducts(role?: string | null, accountType?: string | null): boolean {
+    return canListMarketplaceProducts(role, accountType);
 }
 
 export function isAdmin(role?: string | null): boolean {
@@ -38,14 +38,32 @@ export function serializeProduct(row: products & { vendor_name?: string | null }
     return row;
 }
 
-export async function getSellerProfiles(userId: string): Promise<{ barberIds: string[]; shopIds: string[] }> {
-    const [barberRows, shopRows] = await Promise.all([
+export async function getSellerProfiles(userId: string): Promise<{
+    barberIds: string[];
+    shopIds: string[];
+    vendorName: string | null;
+}> {
+    const [barberRows, shopRows, sellerProfile, companyAccount, authorProfile, user] = await Promise.all([
         prisma.barbers.findMany({ where: { user_id: userId }, select: { id: true } }),
         prisma.shops.findMany({ where: { owner_id: userId }, select: { id: true } }),
+        prisma.seller_profiles.findUnique({ where: { user_id: userId }, select: { display_name: true } }),
+        prisma.company_accounts.findUnique({
+            where: { user_id: userId },
+            include: { company: { select: { name: true } } },
+        }),
+        prisma.author_profiles.findUnique({ where: { user_id: userId }, select: { pen_name: true } }),
+        prisma.users.findUnique({ where: { id: userId }, select: { full_name: true } }),
     ]);
+    const vendorName =
+        sellerProfile?.display_name ||
+        companyAccount?.company?.name ||
+        authorProfile?.pen_name ||
+        user?.full_name ||
+        null;
     return {
         barberIds: barberRows.map((r) => r.id),
         shopIds: shopRows.map((r) => r.id),
+        vendorName,
     };
 }
 
@@ -212,7 +230,21 @@ export async function resolveSellerFields(
         };
     }
 
-    throw new Error('Only barbers, shop owners, and admins can list marketplace products');
+    if (user.role === 'seller' || user.role === 'company' || user.role === 'blogger') {
+        const vendorName = (input.vendor_name || profiles.vendorName || '').trim();
+        if (!vendorName) {
+            throw new Error('Complete your seller profile with a business or display name before listing products');
+        }
+        return {
+            seller_type: 'vendor',
+            barber_id: null,
+            shop_id: null,
+            vendor_name: vendorName,
+            brand_id: input.brand_id ?? null,
+        };
+    }
+
+    throw new Error('Only marketplace sellers and admins can list products');
 }
 
 export async function userOwnsProduct(user: AuthUser, row: products): Promise<boolean> {
@@ -221,6 +253,7 @@ export async function userOwnsProduct(user: AuthUser, row: products): Promise<bo
     const profiles = await getSellerProfiles(user.id);
     if (row.barber_id && profiles.barberIds.includes(row.barber_id)) return true;
     if (row.shop_id && profiles.shopIds.includes(row.shop_id)) return true;
+    if (row.vendor_name && profiles.vendorName && row.vendor_name === profiles.vendorName) return true;
     return false;
 }
 

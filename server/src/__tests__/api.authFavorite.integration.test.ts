@@ -6,7 +6,7 @@
  * verifyClerkToken is mocked so no live Clerk session is needed. Runs against the
  * isolated Neon test branch (NODE_ENV=test → TEST_DATABASE_URL).
  */
-import { describe, it, expect, afterAll, vi } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
 const CLERK_ID = `clerk_test_${Date.now()}`;
@@ -24,10 +24,20 @@ vi.mock('../auth/clerk', () => ({
 
 import { prisma } from '../db/prisma';
 import { fastify as app } from '../index';
+import { seedProvisionedUser } from './helpers/integrationUser';
 
 describe('integration: Clerk Bearer → GET /auth/me → POST /favorites', () => {
     let userId: string;
     let favoriteId: string | undefined;
+
+    beforeAll(async () => {
+        await seedProvisionedUser({
+            clerkUserId: CLERK_ID,
+            email: EMAIL,
+            accountType: 'client',
+            fullName: 'API Integration User',
+        });
+    });
 
     afterAll(async () => {
         if (favoriteId) await prisma.favorites.deleteMany({ where: { id: favoriteId } });

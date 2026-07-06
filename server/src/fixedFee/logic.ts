@@ -12,7 +12,7 @@ import {
     type BillingCycle,
     type PlanScope,
 } from './config';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 
 export type AuthUser = { id: string; role?: string | null; full_name?: string | null; email?: string | null };
 
@@ -213,7 +213,7 @@ export async function shouldWaiveCommissionForBooking(barberId: string, shopId: 
 }
 
 export async function getProviderFixedFeeStatus(userId: string, role?: string | null, shopId?: string) {
-    if (!isProviderRole(role)) throw new Error('Provider access only');
+    if (!canAccessBookingProviderTools(role)) throw new Error('Booking provider access only');
 
     const barberPlan = await getActiveFixedFeePlanForProvider(userId, 'barber');
     let shopPlan: ReturnType<typeof serializePlan> | null = null;
@@ -253,7 +253,7 @@ export async function createFixedFeeCheckout(
     shopId?: string,
     options?: { allowRenewal?: boolean; at?: Date }
 ) {
-    if (!isProviderRole(role)) throw new Error('Provider access required');
+    if (!canAccessBookingProviderTools(role)) throw new Error('Booking provider access required');
 
     const at = options?.at ?? new Date();
     const coverageYear = getCoverageYear(at);

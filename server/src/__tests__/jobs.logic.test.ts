@@ -11,12 +11,15 @@ import {
 } from '../jobs/logic';
 
 describe('jobs logic', () => {
-    it('canPostJobs allows provider roles only', () => {
+    it('canPostJobs allows employer roles', () => {
         expect(canPostJobs('barber')).toBe(true);
         expect(canPostJobs('shop_owner')).toBe(true);
         expect(canPostJobs('provider')).toBe(true);
+        expect(canPostJobs('company')).toBe(true);
+        expect(canPostJobs('seller')).toBe(true);
         expect(canPostJobs('admin')).toBe(false);
         expect(canPostJobs('client')).toBe(false);
+        expect(canPostJobs(null, 'company')).toBe(true);
     });
 
     it('authorCanEdit only draft and rejected', () => {

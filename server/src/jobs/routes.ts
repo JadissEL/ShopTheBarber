@@ -30,8 +30,8 @@ async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
 async function requireEmployer(request: any, reply: any): Promise<AuthUser | null> {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!canPostJobs(user.role)) {
-        reply.status(403).send({ error: 'Only barbers, shop owners, and admins can manage job postings' });
+    if (!canPostJobs(user.role, user.account_type)) {
+        reply.status(403).send({ error: 'Employer access required to manage job postings' });
         return null;
     }
     return user;

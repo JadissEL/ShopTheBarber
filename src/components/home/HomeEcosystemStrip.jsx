@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { buildChooseAccountTypeUrl } from '@/lib/accountType';
 import { Briefcase, PenLine, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,7 +25,7 @@ const ECOSYSTEM_CARDS = [
     title: 'Beauty & styling bloggers & journalists',
     description:
       'Publish your articles here. Create your account to share trends, tutorials, and industry insight with our community.',
-    href: 'SignUp?redirect=/BlogArticleEditor',
+    href: buildChooseAccountTypeUrl('blogger', { redirect: '/BlogArticleEditor' }),
     cta: 'Create your account',
     secondaryHref: 'Blog',
     secondaryCta: 'Read the blog',
@@ -42,7 +43,7 @@ function EcosystemCard({ item }) {
         <p className="text-sm text-muted-foreground leading-relaxed flex-1">{item.description}</p>
         <div className="flex flex-wrap items-center gap-2 mt-5">
           <Button asChild size="sm" className="h-10 px-5">
-            <Link to={createPageUrl(item.href)}>
+            <Link to={item.href.startsWith('/') ? item.href : createPageUrl(item.href)}>
               {item.cta}
               <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Link>

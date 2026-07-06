@@ -8,12 +8,16 @@ import {
 } from '../marketplace/logic';
 
 describe('marketplace/logic', () => {
-    it('canListProducts allows provider roles only', () => {
+    it('canListProducts allows marketplace seller roles', () => {
         expect(canListProducts('barber')).toBe(true);
         expect(canListProducts('shop_owner')).toBe(true);
         expect(canListProducts('provider')).toBe(true);
+        expect(canListProducts('seller')).toBe(true);
+        expect(canListProducts('company')).toBe(true);
+        expect(canListProducts('blogger')).toBe(true);
         expect(canListProducts('admin')).toBe(false);
         expect(canListProducts('client')).toBe(false);
+        expect(canListProducts(null, 'seller')).toBe(true);
     });
 
     it('validateDraftPayload validates price and name', () => {

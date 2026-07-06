@@ -1,9 +1,10 @@
 import { Scissors } from 'lucide-react';
 import { IcpPageLayout } from '@/components/gtm/IcpPageLayout';
 import { createPageUrl } from '@/utils';
+import { buildChooseAccountTypeUrl } from '@/lib/accountType';
 
 export default function ForSoloBarbers() {
-  const signUp = `${createPageUrl('SignUp')}?type=barber`;
+  const signUp = buildChooseAccountTypeUrl('solo_barber');
 
   return (
     <IcpPageLayout

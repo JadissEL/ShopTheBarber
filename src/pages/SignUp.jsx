@@ -5,7 +5,7 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { PageLoading } from '@/components/ui/page-loading';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { createPageUrl } from '@/utils';
-import { isAccountType } from '@/lib/accountType';
+import { isAccountType, accountTypeFromLegacySignupType, buildChooseAccountTypeUrl } from '@/lib/accountType';
 import { getPendingAccountType, setPendingAccountType } from '@/lib/signupIntent';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
@@ -34,6 +34,15 @@ export default function SignUp() {
         const fromUrl = params.get('accountType');
         if (isAccountType(fromUrl)) {
             setPendingAccountType(fromUrl);
+        }
+
+        const legacyType = accountTypeFromLegacySignupType(params.get('type'));
+        if (legacyType && !getPendingAccountType()) {
+            const search = new URLSearchParams(window.location.search);
+            search.delete('type');
+            search.set('accountType', legacyType);
+            navigate(`${createPageUrl('ChooseAccountType')}?${search.toString()}`, { replace: true });
+            return;
         }
 
         const pending = getPendingAccountType();

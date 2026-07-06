@@ -4,7 +4,7 @@
 
  */
 
-import { describe, it, expect, afterAll, vi } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, vi } from 'vitest';
 
 import type { FastifyInstance } from 'fastify';
 
@@ -38,6 +38,7 @@ vi.mock('../auth/clerk', () => ({
 
 import { prisma } from '../db/prisma';
 import { fastify as app } from '../index';
+import { seedProvisionedUser } from './helpers/integrationUser';
 
 async function deleteBookingCascade(bookingId: string) {
     await prisma.group_booking_guests.deleteMany({ where: { booking_id: bookingId } });
@@ -57,7 +58,14 @@ describe('integration: group booking API', () => {
 
     const authHeaders = { authorization: 'Bearer test-token' };
 
-
+    beforeAll(async () => {
+        await seedProvisionedUser({
+            clerkUserId: CLERK_ID,
+            email: EMAIL,
+            accountType: 'solo_barber',
+            fullName: 'Group Barber',
+        });
+    });
 
     afterAll(async () => {
 

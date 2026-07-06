@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { authenticateRequest } from '../auth/requestUser';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import {
     getPublicBarberShowcase,
     getPublicShopShowcase,
@@ -21,9 +21,9 @@ import { getBatchDiscoveryPreviews } from './discoveryPreviews';
 async function requireProvider(request: unknown, reply: unknown) {
     const ok = await authenticateRequest(request as Parameters<typeof authenticateRequest>[0], reply as Parameters<typeof authenticateRequest>[1]);
     if (!ok) return null;
-    const user = (request as { user?: { id: string; role?: string } }).user!;
-    if (!isProviderRole(user.role)) {
-        (reply as { status: (n: number) => { send: (b: unknown) => void } }).status(403).send({ error: 'Provider access required' });
+    const user = (request as { user?: { id: string; role?: string; account_type?: string | null } }).user!;
+    if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+        (reply as { status: (n: number) => { send: (b: unknown) => void } }).status(403).send({ error: 'Booking provider access required' });
         return null;
     }
     return user;

@@ -1,7 +1,7 @@
 /**
  * Admin promotions with audience targeting.
  */
-import { describe, it, expect, afterAll, vi } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
 const CLERK_ID = `clerk_promo_admin_${Date.now()}`;
@@ -23,6 +23,7 @@ import {
     resolveAudience,
 } from '../promotions/targeting';
 import { validatePromoCode } from '../logic/promoCode';
+import { seedProvisionedUser } from './helpers/integrationUser';
 
 describe('promotions targeting helpers', () => {
     it('resolveAudience maps legacy shop_id to specific_shops', () => {
@@ -41,6 +42,16 @@ describe('integration: admin promotions API', () => {
     let promoEveryoneId: string;
     let promoBarberId: string;
     const authHeaders = { authorization: 'Bearer test-token' };
+
+    beforeAll(async () => {
+        await seedProvisionedUser({
+            clerkUserId: CLERK_ID,
+            email: EMAIL,
+            role: 'admin',
+            accountType: 'client',
+            fullName: 'Promo Admin',
+        });
+    });
 
     afterAll(async () => {
         if (promoEveryoneId) {

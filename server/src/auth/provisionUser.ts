@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'crypto';
 import { prisma } from '../db/prisma';
 import {
     type AccountType,
+    inferAccountTypeFromLegacyRole,
     isAccountType,
     platformRoleForAccountType,
 } from './accountType';
@@ -244,6 +245,17 @@ export async function provisionUser(params: {
         where: { clerk_user_id: profile.clerk_user_id },
     });
     if (existingByClerk) {
+        if (
+            existingByClerk.account_type_locked_at &&
+            existingByClerk.account_type &&
+            existingByClerk.account_type !== accountType
+        ) {
+            return {
+                ok: false,
+                code: 'ACCOUNT_TYPE_CONFLICT',
+                message: `This email is already registered as a ${existingByClerk.account_type.replace('_', ' ')}. Each email can only have one account type.`,
+            };
+        }
         return { ok: true, user: existingByClerk };
     }
 
@@ -308,5 +320,34 @@ export async function findUserByClerkProfile(profile: ClerkProfile) {
     });
     if (byClerk) return byClerk;
 
-    return prisma.users.findUnique({ where: { email: profile.email } });
+    const byEmail = await prisma.users.findUnique({ where: { email: profile.email } });
+    if (byEmail) return byEmail;
+
+    return null;
+}
+
+/** Vitest integration tests: auto-provision on protected routes only (not /api/auth/me). */
+export async function ensureTestProvisionedUser(profile: ClerkProfile) {
+    const accountType: AccountType =
+        profile.role === 'admin'
+            ? 'client'
+            : inferAccountTypeFromLegacyRole(profile.role);
+    const role =
+        profile.role === 'admin'
+            ? 'admin'
+            : platformRoleForAccountType(accountType);
+    const now = new Date().toISOString();
+
+    return prisma.users.create({
+        data: {
+            id: crypto.randomUUID(),
+            clerk_user_id: profile.clerk_user_id,
+            email: profile.email,
+            full_name: profile.full_name || profile.email.split('@')[0] || 'Test User',
+            role,
+            account_type: accountType,
+            account_type_locked_at: now,
+            updated_at: now,
+        },
+    });
 }

@@ -1,9 +1,9 @@
 import { Store } from 'lucide-react';
 import { IcpPageLayout } from '@/components/gtm/IcpPageLayout';
-import { createPageUrl } from '@/utils';
+import { buildChooseAccountTypeUrl } from '@/lib/accountType';
 
 export default function ForShopOwners() {
-  const signUp = `${createPageUrl('SignUp')}?type=shop`;
+  const signUp = buildChooseAccountTypeUrl('shop');
 
   return (
     <IcpPageLayout

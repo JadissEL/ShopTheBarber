@@ -253,7 +253,7 @@ function ClerkAppShell({ clerkPubKey }) {
     <ClerkProvider
       publishableKey={clerkPubKey}
       signInUrl="/login"
-      signUpUrl="/register"
+      signUpUrl="/chooseaccounttype"
       signInFallbackRedirectUrl="/SetupGuide"
       signUpFallbackRedirectUrl="/SetupGuide"
       appearance={clerkAuthAppearance}

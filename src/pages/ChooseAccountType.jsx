@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -15,7 +15,7 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
-import { ACCOUNT_TYPE_CARDS } from '@/lib/accountType';
+import { ACCOUNT_TYPE_CARDS, isAccountType } from '@/lib/accountType';
 import { createServerSignupIntent } from '@/lib/signupIntent';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
@@ -34,6 +34,12 @@ export default function ChooseAccountType() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const preselect = params.get('accountType');
+    if (isAccountType(preselect)) setSelected(preselect);
+  }, []);
 
   const handleContinue = async () => {
     if (!selected) return;

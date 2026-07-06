@@ -1,6 +1,6 @@
 import { type FastifyInstance } from 'fastify';
 import { authenticateRequest } from '../auth/requestUser';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import {
     assertShopManager,
     addShopTeamMember,
@@ -13,7 +13,7 @@ import {
     upsertStaffServiceConfigs,
 } from './logic';
 
-type AuthUser = { id: string; role?: string };
+type AuthUser = { id: string; role?: string; account_type?: string | null };
 
 async function requireManager(
     request: { user?: AuthUser; entityScopeCache?: unknown },
@@ -23,8 +23,8 @@ async function requireManager(
     const ok = await authenticateRequest(request as Parameters<typeof authenticateRequest>[0], reply as Parameters<typeof authenticateRequest>[1]);
     if (!ok) return null;
     const user = (request as { user: AuthUser }).user;
-    if (!isProviderRole(user.role)) {
-        reply.status(403).send({ error: 'Provider access required' });
+    if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+        reply.status(403).send({ error: 'Booking provider access required' });
         return null;
     }
     try {

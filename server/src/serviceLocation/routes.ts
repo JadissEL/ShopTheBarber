@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import { assertShopManager } from '../shop/logic';
 import {
     assertAtLeastOneServiceLocation,
@@ -72,8 +72,8 @@ export async function serviceLocationRoutes(fastify: FastifyInstance) {
         if (!ok) return;
         const user = request.user!;
 
-        if (!isProviderRole(user.role)) {
-            return reply.status(403).send({ error: 'Provider access required' });
+        if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+            return reply.status(403).send({ error: 'Booking provider access required' });
         }
 
         const barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
@@ -105,7 +105,7 @@ export async function serviceLocationRoutes(fastify: FastifyInstance) {
         const wantsMobile = request.body?.offers_mobile_service;
 
         let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
-        if (!barber && isProviderRole(user.role)) {
+        if (!barber && canAccessBookingProviderTools(user.role, user.account_type)) {
             barber = await prisma.barbers.create({
                 data: {
                     user_id: user.id,

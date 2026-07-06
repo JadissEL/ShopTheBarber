@@ -1,7 +1,7 @@
 /**
  * Provider attestation (Licensed / Insured) for barbers and shops.
  */
-import { describe, it, expect, afterAll, vi } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
 const CLERK_ID = `clerk_att_${Date.now()}`;
@@ -20,6 +20,7 @@ vi.mock('../auth/clerk', () => ({
 import { prisma } from '../db/prisma';
 import { fastify as app } from '../index';
 import { effectiveAttestation } from '../providerAttestation/logic';
+import { seedProvisionedUser } from './helpers/integrationUser';
 
 describe('providerAttestation logic', () => {
     it('effectiveAttestation is true if barber OR shop declares flag', () => {
@@ -34,6 +35,15 @@ describe('integration: provider attestation API', () => {
     let barberId: string;
     let shopId: string;
     const authHeaders = { authorization: 'Bearer test-token' };
+
+    beforeAll(async () => {
+        await seedProvisionedUser({
+            clerkUserId: CLERK_ID,
+            email: EMAIL,
+            accountType: 'solo_barber',
+            fullName: 'Attestation Barber',
+        });
+    });
 
     afterAll(async () => {
         if (barberId) await prisma.barbers.deleteMany({ where: { id: barberId } });

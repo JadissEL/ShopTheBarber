@@ -15,6 +15,7 @@ import {
   mergePricingConfig,
 } from '@/lib/gtmPricing';
 import { createPageUrl } from '@/utils';
+import { buildChooseAccountTypeUrl } from '@/lib/accountType';
 import { ArrowLeft, Check, Scissors, Store, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
@@ -62,8 +63,8 @@ export default function PlatformPricing() {
   const pricing = mergePricingConfig(apiConfig);
   const currency = pricing.currency;
 
-  const barberSignUp = `${createPageUrl('SignUp')}?type=barber`;
-  const shopSignUp = `${createPageUrl('SignUp')}?type=shop`;
+  const barberSignUp = buildChooseAccountTypeUrl('solo_barber');
+  const shopSignUp = buildChooseAccountTypeUrl('shop');
 
   return (
     <div className="stb-page">

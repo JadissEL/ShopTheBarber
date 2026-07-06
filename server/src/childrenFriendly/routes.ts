@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import { assertShopManager } from '../shop/logic';
 import {
     getChildrenFriendlyConfig,
@@ -9,7 +9,7 @@ import {
     serializeEffectiveChildrenFriendly,
 } from './logic';
 
-type AuthUser = { id: string; email?: string; role?: string; full_name?: string };
+type AuthUser = { id: string; email?: string; role?: string; full_name?: string; account_type?: string | null };
 
 type AuthedRequest = {
     user?: AuthUser;
@@ -37,8 +37,8 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
     fastify.get('/api/provider/children-friendly', async (request, reply) => {
         const user = await requireAuth(request, reply);
         if (!user) return;
-        if (!isProviderRole(user.role)) {
-            return reply.status(403).send({ error: 'Provider access required' });
+        if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+            return reply.status(403).send({ error: 'Booking provider access required' });
         }
 
         const barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });

@@ -1,6 +1,6 @@
 import type { jobs } from '@prisma/client';
 import { prisma } from '../db/prisma';
-import { isProviderRole } from '../auth/platformRbac';
+import { canPostJobs as rbacCanPostJobs } from '../auth/platformRbac';
 
 export const JOB_STATUSES = ['draft', 'pending_review', 'published', 'rejected', 'closed'] as const;
 export type JobStatus = (typeof JOB_STATUSES)[number];
@@ -17,12 +17,12 @@ export const JOB_CATEGORIES = [
 export const EMPLOYER_TYPES = ['shop', 'company'] as const;
 export type EmployerType = (typeof EMPLOYER_TYPES)[number];
 
-export const EMPLOYER_ROLES = ['barber', 'shop_owner', 'provider'] as const;
+export const EMPLOYER_ROLES = ['barber', 'shop_owner', 'provider', 'company', 'seller'] as const;
 
-export type AuthUser = { id: string; email?: string; role?: string; full_name?: string | null };
+export type AuthUser = { id: string; email?: string; role?: string; full_name?: string | null; account_type?: string | null };
 
-export function canPostJobs(role?: string | null): boolean {
-    return isProviderRole(role);
+export function canPostJobs(role?: string | null, accountType?: string | null): boolean {
+    return rbacCanPostJobs(role, accountType);
 }
 
 export function isAdmin(role?: string | null): boolean {

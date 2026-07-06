@@ -4,6 +4,8 @@ import {
   dashboardPageForAccountType,
   platformRoleForAccountType,
   isBookingProviderAccountType,
+  buildChooseAccountTypeUrl,
+  accountTypeFromLegacySignupType,
 } from '@/lib/accountType';
 
 describe('accountType', () => {
@@ -30,5 +32,18 @@ describe('accountType', () => {
   it('identifies booking providers', () => {
     expect(isBookingProviderAccountType('solo_barber')).toBe(true);
     expect(isBookingProviderAccountType('seller')).toBe(false);
+  });
+
+  it('builds choose-account-type URLs', () => {
+    expect(buildChooseAccountTypeUrl('seller')).toBe('/chooseaccounttype?accountType=seller');
+    expect(buildChooseAccountTypeUrl('blogger', { redirect: '/BlogArticleEditor' })).toBe(
+      '/chooseaccounttype?accountType=blogger&redirect=%2FBlogArticleEditor',
+    );
+  });
+
+  it('maps legacy signup types', () => {
+    expect(accountTypeFromLegacySignupType('barber')).toBe('solo_barber');
+    expect(accountTypeFromLegacySignupType('shop')).toBe('shop');
+    expect(accountTypeFromLegacySignupType('client')).toBe(null);
   });
 });
