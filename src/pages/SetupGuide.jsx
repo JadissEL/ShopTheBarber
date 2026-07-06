@@ -3,15 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard';
-import SetupGuideHeader from '@/components/onboarding/SetupGuideHeader';
+import SetupGuideProgress from '@/components/onboarding/SetupGuideProgress';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/layout/PageHeader';
+import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
 import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { getDashboardPathForRole } from '@/lib/onboardingWizard';
+import { isProviderRole } from '@/lib/userRole';
 
 const SETUP_LOADING_TIMEOUT_MS = 15_000;
 
@@ -20,8 +22,8 @@ const DEFAULT_SYNC_ERROR =
 
 function SetupGuideSyncError({ message, onRetry, onSignOut }) {
   return (
-    <div className="stb-page flex items-center justify-center px-4 py-12">
-      <div className={cn(stb.panel, 'max-w-lg w-full shadow-lg border-destructive/30')}>
+    <PageContent narrow className="py-12">
+      <div className={cn(stb.panel, 'max-w-lg mx-auto shadow-lg border-destructive/30')}>
         <div className="p-8 space-y-5 text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertCircle className="w-6 h-6 text-destructive" />
@@ -36,21 +38,21 @@ function SetupGuideSyncError({ message, onRetry, onSignOut }) {
             <li>Restart the API after changing env vars, then retry.</li>
           </ul>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button type="button" onClick={onRetry} className="">
+            <Button type="button" onClick={onRetry}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
-            <Button type="button" variant="outline" onClick={onSignOut} className="">
+            <Button type="button" variant="outline" onClick={onSignOut}>
               Sign out
             </Button>
           </div>
         </div>
       </div>
-    </div>
+    </PageContent>
   );
 }
 
-/** Full-page setup guide, role-aware; requires sign-in */
+/** Role-aware setup guide inside the dashboard shell; requires sign-in */
 export default function SetupGuide() {
   const {
     isAuthenticated,
@@ -69,6 +71,7 @@ export default function SetupGuide() {
   const stillSyncing =
     isSignedIn && syncStatus !== 'ready' && syncStatus !== 'error';
   const syncFailed = syncStatus === 'error' || timedOut;
+  const isProvider = isProviderRole(role) || role === 'provider';
 
   useEffect(() => {
     if (!stillSyncing) {
@@ -114,8 +117,15 @@ export default function SetupGuide() {
 
   if (syncFailed) {
     return (
-      <>
-        <SetupGuideHeader />
+      <div className={stb.page}>
+        <PageHeader
+          label="Setup"
+          title="Account setup"
+          subtitle="We could not finish connecting your account"
+          compact
+          variant="light"
+          tier="app"
+        />
         <SetupGuideSyncError
           message={syncError || DEFAULT_SYNC_ERROR}
           onRetry={() => {
@@ -124,7 +134,7 @@ export default function SetupGuide() {
           }}
           onSignOut={() => void logout(true)}
         />
-      </>
+      </div>
     );
   }
 
@@ -139,14 +149,21 @@ export default function SetupGuide() {
 
   if (!isAuthenticated) {
     return (
-      <>
-        <SetupGuideHeader />
+      <div className={stb.page}>
+        <PageHeader
+          label="Setup"
+          title="Account setup"
+          subtitle="We could not finish connecting your account"
+          compact
+          variant="light"
+          tier="app"
+        />
         <SetupGuideSyncError
           message={syncError || DEFAULT_SYNC_ERROR}
           onRetry={() => void retrySync()}
           onSignOut={() => void logout(true)}
         />
-      </>
+      </div>
     );
   }
 
@@ -155,13 +172,19 @@ export default function SetupGuide() {
       <PageHeader
         label="Setup"
         title="Account setup"
-        subtitle="Complete your profile to get the most from ShopTheBarber"
+        subtitle={
+          isProvider
+            ? 'Complete your profile and payout details to start earning'
+            : 'Complete your profile to get the most from ShopTheBarber'
+        }
         compact
         variant="light"
         tier="app"
       />
-      <SetupGuideHeader />
-      <OnboardingWizard mode="page" />
+      <PageContent>
+        <SetupGuideProgress className="mb-6" />
+        <OnboardingWizard mode="page" />
+      </PageContent>
     </div>
   );
 }

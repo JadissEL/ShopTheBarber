@@ -13,6 +13,8 @@ import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { EmptyState } from '@/components/ui/empty-state';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import { useDashboardShell } from '@/components/layout/DashboardShellContext';
+import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 
 const CATEGORIES = [
@@ -50,6 +52,7 @@ function formatSalary(job) {
 }
 
 export default function CareerHub() {
+  const inDashboardShell = useDashboardShell();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'explore';
@@ -106,7 +109,16 @@ export default function CareerHub() {
         tier="display"
         variant="dark"
       >
-        <Link to={createPageUrl('AccountSettings')} className="p-2 rounded-full text-white/70 hover:bg-white/10" aria-label="Profile">
+        <Link
+          to={createPageUrl('AccountSettings')}
+          className={cn(
+            'p-2 rounded-full',
+            inDashboardShell
+              ? 'text-muted-foreground hover:bg-muted'
+              : 'text-white/70 hover:bg-white/10',
+          )}
+          aria-label="Profile"
+        >
           <User className="w-5 h-5" />
         </Link>
       </PageHeader>

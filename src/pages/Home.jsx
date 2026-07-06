@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
+import { dashboardPageForRole } from '@/lib/userRole';
 import { Button } from '@/components/ui/button';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { SchemaMarkup } from '@/components/seo/SchemaMarkup';
@@ -21,6 +23,10 @@ import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 
 function AuthenticatedHomeQuickStart() {
+  const { effectiveRole } = useEffectiveRole();
+  const dashboardPage = dashboardPageForRole(effectiveRole);
+  const dashboardLabel = dashboardPage === 'GlobalFinancials' ? 'Admin' : 'Dashboard';
+
   return (
     <section className="py-10 bg-background border-b border-foreground/10">
       <div className="container mx-auto px-6 max-w-6xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -33,7 +39,7 @@ function AuthenticatedHomeQuickStart() {
             <Link to={createPageUrl('Explore')}>Book a barber</Link>
           </Button>
           <Button asChild variant="outline" className="bg-card/80">
-            <Link to={createPageUrl('Dashboard')}>Dashboard</Link>
+            <Link to={createPageUrl(dashboardPage)}>{dashboardLabel}</Link>
           </Button>
         </div>
       </div>

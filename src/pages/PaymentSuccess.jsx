@@ -4,6 +4,9 @@ import { useSearchParams, Link } from 'react-router-dom';
 
 import { createPageUrl } from '@/utils';
 
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
+import { dashboardPageForRole } from '@/lib/userRole';
+
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 import { sovereign } from '@/api/apiClient';
@@ -37,6 +40,9 @@ import { stb } from '@/lib/stbUi';
 export default function PaymentSuccess() {
 
   const [searchParams] = useSearchParams();
+  const { effectiveRole } = useEffectiveRole();
+  const dashboardPage = dashboardPageForRole(effectiveRole);
+  const dashboardLabel = dashboardPage === 'GlobalFinancials' ? 'Admin' : 'Dashboard';
 
   const orderId = searchParams.get('orderId');
 
@@ -437,13 +443,13 @@ export default function PaymentSuccess() {
 
           <div className="text-center">
 
-            <Link to={createPageUrl("Dashboard")}>
+            <Link to={createPageUrl(dashboardPage)}>
 
               <Button variant="ghost" className="text-foreground/90 hover:bg-muted">
 
                 <Home className="w-4 h-4 mr-2" />
 
-                Back to dashboard
+                Back to {dashboardLabel.toLowerCase()}
 
               </Button>
 

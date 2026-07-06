@@ -2,14 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import ModerationActions from '@/components/moderation/ModerationActions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Mail, Calendar, Shield, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { AlertCircle, Mail, Calendar, Shield } from 'lucide-react';
 import { MetaTags } from '@/components/seo/MetaTags';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 import { stb } from '@/lib/stbUi';
 
 export default function UserModerationDetail() {
@@ -37,6 +36,8 @@ export default function UserModerationDetail() {
   const status = targetUser?.moderation_status || 'active';
   const config = statusConfig[status];
 
+  useSetBreadcrumbTitle(targetUser?.full_name ?? null);
+
   if (currentUser?.role !== 'admin') {
     return (
       <div className="stb-page flex items-center justify-center p-4">
@@ -58,9 +59,7 @@ export default function UserModerationDetail() {
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground mb-4">User not found</p>
-            <Link to={createPageUrl('AdminUserModeration')}>
-              <Button>Back to Moderation</Button>
-            </Link>
+            <ContextualBackLink label="Back to moderation" />
           </CardContent>
         </Card>
       </div>
@@ -86,13 +85,6 @@ export default function UserModerationDetail() {
       </PageHeader>
 
       <PageContent narrow>
-        <Link
-          to={createPageUrl('AdminUserModeration')}
-          className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to moderation
-        </Link>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">

@@ -21,6 +21,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { toast } from 'sonner';
 import PageHeader from '@/components/layout/PageHeader';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 import { stb } from '@/lib/stbUi';
 
 const ACCOLADE_ICONS = {
@@ -86,6 +87,8 @@ export default function BrandProfile() {
     queryFn: () => (brandId ? sovereign.entities.Brand.get(brandId) : Promise.resolve(null)),
     enabled: !!brandId,
   });
+
+  useSetBreadcrumbTitle(brand?.name ?? null);
 
   const { data: accolades = [] } = useQuery({
     queryKey: ['brand-accolades', brandId],

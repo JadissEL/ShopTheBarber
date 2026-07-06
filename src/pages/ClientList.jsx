@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
-import { ArrowLeft, DollarSign, Calendar } from 'lucide-react';
+import { DollarSign, Calendar } from 'lucide-react';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
@@ -105,10 +105,6 @@ export default function ClientList() {
       />
 
       <PageContent narrow>
-        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </Link>
-
         {loading ? (
           <PageLoading message="Loading clients…" />
         ) : soloClients.length === 0 ? (

@@ -1,16 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { ArrowLeft, AlertCircle, CheckCircle2, MessageSquare, Clock } from 'lucide-react';
+import { AlertCircle, CheckCircle2, MessageSquare, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { MetaTags } from '@/components/seo/MetaTags';
 import ResolutionActions from '@/components/dispute/ResolutionActions';
 import { disputeStatusLabel } from '@/utils/disputeStatus';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 import { stb } from '@/lib/stbUi';
 
 export default function DisputeDetail() {
@@ -39,6 +41,10 @@ export default function DisputeDetail() {
       }
     : null;
 
+  useSetBreadcrumbTitle(
+    disputeForUi ? `${disputeForUi.client_name} vs ${disputeForUi.barber_name}` : null,
+  );
+
   const { data: booking } = useQuery({
     queryKey: ['dispute-booking', dispute?.booking_id],
     queryFn: () => sovereign.entities.Booking.get(dispute?.booking_id),
@@ -63,9 +69,7 @@ export default function DisputeDetail() {
         <MetaTags title="Dispute Not Found" />
         <div className={`${stb.panel  } p-8 text-center`}>
             <p className="text-muted-foreground mb-4">Dispute not found</p>
-            <Link to={createPageUrl('AdminDisputes')}>
-              <Button>Back to Disputes</Button>
-            </Link>
+            <ContextualBackLink label="Back to disputes" />
         </div>
       </div>
     );
@@ -101,10 +105,6 @@ export default function DisputeDetail() {
       </PageHeader>
 
       <PageContent narrow>
-        <Link to={createPageUrl('AdminDisputes')} className="inline-flex items-center gap-2 text-sm text-primary mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to disputes
-        </Link>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">

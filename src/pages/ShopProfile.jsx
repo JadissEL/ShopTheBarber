@@ -25,6 +25,7 @@ import { parseChildrenFriendly } from '@/lib/childrenFriendly';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 export default function ShopProfile() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -41,6 +42,8 @@ export default function ShopProfile() {
         queryFn: () => shopId ? sovereign.entities.Shop.get(shopId) : Promise.resolve(null),
         enabled: !!shopId
     });
+
+    useSetBreadcrumbTitle(shop?.name ?? null);
 
     const { data: shopShowcase } = useQuery({
         queryKey: ['shop-showcase', shopId],

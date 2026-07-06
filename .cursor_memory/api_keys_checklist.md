@@ -1,5 +1,9 @@
 # API keys & secrets — finalization checklist
 
+**Local vault (gitignored):** [`secrets.local.env`](../secrets.local.env) — master copy of all keys.  
+**Render deploy:** [`render.secrets.local.env`](../render.secrets.local.env) → `node scripts/apply-render-env.mjs`  
+**Never commit** real values; only `.env.example` files are tracked.
+
 **Purpose:** Single reference for a later guided walkthrough (“set all keys at once”).  
 **Last updated:** 2026-06-26  
 **Rule:** Never commit real values. Only `.env.example` files are tracked.

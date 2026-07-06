@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import ContextualBackLink from '@/components/ui/ContextualBackLink';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
 import { useManagedShop } from '@/hooks/useManagedShop';
@@ -34,7 +35,7 @@ export default function StaffSchedule() {
         <MetaTags title="Schedules" description="Manage shop availability" />
         <PageContent narrow className="py-20 text-center">
           <p className="text-muted-foreground mb-4">Shop owner or manager access is required.</p>
-          <Link to={createPageUrl('ProviderDashboard')} className="text-primary font-bold">Back to dashboard</Link>
+          <ContextualBackLink className="text-primary font-bold" />
         </PageContent>
       </div>
     );
@@ -62,10 +63,6 @@ export default function StaffSchedule() {
       </PageHeader>
 
       <PageContent>
-        <Link to={createPageUrl('StaffRoster')} className="inline-flex items-center gap-2 text-sm text-primary mb-6">
-          ← Team roster
-        </Link>
-
         <div className="mb-10">
         <AvailabilityManager barber={barber} shopId={shopId} />
       </div>

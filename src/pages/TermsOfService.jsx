@@ -1,6 +1,7 @@
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import RoleDashboardLink from '@/components/navigation/RoleDashboardLink';
 import { Card, CardContent } from '@/components/ui/card';
 import ContextualBackLink from '@/components/ui/ContextualBackLink';
 import PageHeader from '@/components/layout/PageHeader';
@@ -280,7 +281,7 @@ export default function TermsOfService() {
             Are you a service provider? <Link to={createPageUrl('ProviderTermsOfService')} className="text-primary-text hover:underline">View Provider Terms of Service</Link>
           </p>
           <p className="text-sm text-muted-foreground">
-            <Link to={createPageUrl('Dashboard')} className="text-primary-text hover:underline">Return to Dashboard</Link>
+            <RoleDashboardLink className="text-primary-text hover:underline" />
           </p>
         </div>
       </PageContent>

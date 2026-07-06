@@ -1,6 +1,8 @@
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import ContextualBackLink from '@/components/ui/ContextualBackLink';
+import RoleDashboardLink from '@/components/navigation/RoleDashboardLink';
 import { Card, CardContent } from '@/components/ui/card';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
@@ -24,9 +26,7 @@ export default function ProviderTermsOfService() {
       />
 
       <PageContent narrow>
-        <Link to={createPageUrl('ProviderDashboard')} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-6 text-sm">
-          ← Back to Provider Dashboard
-        </Link>
+        <ContextualBackLink className="mb-6" />
 
         <Card className="prose prose-sm max-w-none">
           <CardContent className="prose prose-sm prose-headings:font-bold prose-headings:mt-6 prose-headings:mb-3 pt-6 space-y-4">
@@ -314,7 +314,7 @@ export default function ProviderTermsOfService() {
             Are you a customer? <Link to={createPageUrl('TermsOfService')} className="text-primary hover:underline">View Customer Terms of Service</Link>
           </p>
           <p className="text-sm text-muted-foreground">
-            <Link to={createPageUrl('ProviderDashboard')} className="text-primary hover:underline">Return to Provider Dashboard</Link>
+            <RoleDashboardLink />
           </p>
         </div>
       </PageContent>

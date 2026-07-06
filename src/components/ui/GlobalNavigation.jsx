@@ -42,10 +42,14 @@ export default function GlobalNavigation() {
   const { effectiveRole } = useEffectiveRole();
   const role = effectiveRole;
   const path = location.pathname.toLowerCase();
-  const zone = getZoneFromPath(path);
+  const zone = getZoneFromPath(path, {
+    isAuthenticated,
+    role: effectiveRole,
+  });
   const isDesktop = useIsDesktop();
 
-  if (zone === APP_ZONES.CLIENT && isDesktop) {
+  const dashboardZones = [APP_ZONES.CLIENT, APP_ZONES.PROVIDER, APP_ZONES.ADMIN];
+  if (dashboardZones.includes(zone) && isDesktop) {
     return null;
   }
 

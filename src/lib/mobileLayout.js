@@ -1,5 +1,5 @@
 import { APP_ZONES } from '@/components/navigationConfig';
-import { isProviderRole } from '@/lib/userRole';
+import { isAdminRole, isClientRole, isProviderRole } from '@/lib/userRole';
 /** Paths where the fixed bottom nav would clash with full-screen flows */
 const HIDE_BOTTOM_NAV_PREFIXES = [
   '/bookingflow',
@@ -11,7 +11,6 @@ const HIDE_BOTTOM_NAV_PREFIXES = [
   '/signup',
   '/login',
   '/register',
-  '/careerhub',
 ];
 
 export function shouldHideBottomNav(pathname) {
@@ -32,7 +31,7 @@ export function shouldShowClientBottomNav({ pathname, isAuthenticated, isDesktop
 }
 
 /**
- * Provider bottom tab bar on public/mobile discovery pages.
+ * Provider bottom tab bar — authenticated providers on mobile in provider shell or public discovery.
  */
 export function shouldShowProviderBottomNav({ pathname, isAuthenticated, isDesktop, role }) {
   if (isDesktop) return false;
@@ -42,7 +41,17 @@ export function shouldShowProviderBottomNav({ pathname, isAuthenticated, isDeskt
 }
 
 /**
- * Top GlobalNavigation duplicates bottom nav on mobile client/public pages.
+ * Admin bottom tab bar — authenticated admins on mobile in admin shell.
+ */
+export function shouldShowAdminBottomNav({ pathname, isAuthenticated, isDesktop, role }) {
+  if (isDesktop) return false;
+  if (!isAuthenticated) return false;
+  if (!isAdminRole(role)) return false;
+  return !shouldHideBottomNav(pathname);
+}
+
+/**
+ * Hide duplicate top nav when the role-specific bottom tab bar is active.
  */
 export function shouldHideGlobalNavOnMobile({
   pathname,
@@ -52,8 +61,16 @@ export function shouldHideGlobalNavOnMobile({
   role,
 }) {
   if (isDesktop || !isAuthenticated) return false;
-  const isClientRole = !role || role === 'client' || role === 'guest';
-  if (!isClientRole) return false;
-  if (zone !== APP_ZONES.CLIENT && zone !== APP_ZONES.PUBLIC) return false;
-  return !shouldHideBottomNav(pathname);
+  if (shouldHideBottomNav(pathname)) return false;
+
+  if (isClientRole(role) && (zone === APP_ZONES.CLIENT || zone === APP_ZONES.PUBLIC)) {
+    return true;
+  }
+  if (isProviderRole(role) && zone === APP_ZONES.PROVIDER) {
+    return true;
+  }
+  if (isAdminRole(role) && zone === APP_ZONES.ADMIN) {
+    return true;
+  }
+  return false;
 }

@@ -60,7 +60,7 @@ export default function AdminDesktopSidebar() {
   return (
     <aside className="w-64 shrink-0 border-r border-border bg-card flex flex-col min-h-screen sticky top-0 font-sans">
       <div className="p-4 border-b border-border">
-        <Link to={createPageUrl('GlobalFinancials')} className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" aria-label="ShopTheBarber home">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <Shield className="w-4 h-4 text-white" />
           </div>

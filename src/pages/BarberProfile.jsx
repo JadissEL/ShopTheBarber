@@ -28,6 +28,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 export default function BarberProfile() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -138,6 +139,8 @@ export default function BarberProfile() {
         retry: 2,
         retryDelay: (i) => (i + 1) * 1000,
     });
+
+    useSetBreadcrumbTitle(barber?.name ?? null);
 
     // Fetch all shop memberships for this barber (New Architecture)
     const { data: memberships = [] } = useQuery({

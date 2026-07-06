@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import PageContent from "@/components/layout/PageContent";
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 import { cn } from "@/lib/utils";
 import { stb } from "@/lib/stbUi";
 
@@ -26,6 +27,8 @@ export default function ArticleDetail() {
     queryFn: () => sovereign.articles.getPublic(articleId),
     enabled: !!articleId
   });
+
+  useSetBreadcrumbTitle(article?.title ?? null);
 
   const incrementViewMutation = useMutation({
     mutationFn: async () => { if (articleId) await sovereign.articles.recordView(articleId); },

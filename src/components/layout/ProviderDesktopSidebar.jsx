@@ -68,7 +68,7 @@ export default function ProviderDesktopSidebar() {
   return (
     <aside className="w-64 shrink-0 border-r border-white/10 bg-[hsl(var(--navy))] text-white flex flex-col min-h-screen sticky top-0 font-sans">
       <div className="p-4 border-b border-white/10">
-        <Link to={createPageUrl('ProviderDashboard')} className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" aria-label="ShopTheBarber home">
           <div className="w-8 h-8 rounded-lg bg-primary border border-white/20 flex items-center justify-center">
             <BarChart3 className="w-4 h-4 text-primary-foreground" />
           </div>

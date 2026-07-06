@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 
 import { stb, HEADER_TIER, headerTitleClasses } from '@/lib/stbUi';
+import { useDashboardShell } from '@/components/layout/DashboardShellContext';
 
 
 
@@ -36,9 +37,14 @@ export default function PageHeader({
 
 }) {
 
-  const isImmersive = tier === HEADER_TIER.IMMERSIVE;
+  const inDashboardShell = useDashboardShell();
+  const useAppChrome =
+    inDashboardShell && tier === HEADER_TIER.DISPLAY && variant === 'dark';
+  const resolvedTier = useAppChrome ? HEADER_TIER.APP : tier;
+  const resolvedVariant = useAppChrome ? 'light' : variant;
 
-  const isDark = isImmersive || variant === 'dark';
+  const isImmersive = resolvedTier === HEADER_TIER.IMMERSIVE;
+  const isDark = isImmersive || resolvedVariant === 'dark';
 
 
 
@@ -88,7 +94,7 @@ export default function PageHeader({
 
 
 
-      {isDark && tier === HEADER_TIER.DISPLAY && !isImmersive && (
+      {isDark && resolvedTier === HEADER_TIER.DISPLAY && !isImmersive && (
 
         <div
 
@@ -114,7 +120,7 @@ export default function PageHeader({
 
             )}
 
-            <h1 className={cn(headerTitleClasses(tier, compact), isImmersive && 'drop-shadow-sm')}>
+            <h1 className={cn(headerTitleClasses(resolvedTier, compact), isImmersive && 'drop-shadow-sm')}>
 
               {title}
 

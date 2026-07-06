@@ -8,7 +8,7 @@ import { sovereign } from '@/api/apiClient';
 import { getZoneFromPath, APP_ZONES } from '@/components/navigationConfig';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { getProviderIntent } from '@/lib/bootstrapProvider';
-import { isAdminRole } from '@/lib/userRole';
+import { isAdminRole, dashboardPageForRole } from '@/lib/userRole';
 
 /** Build SignIn URL with return path so user is sent back after login */
 function buildSignInRedirect(currentPath) {
@@ -35,7 +35,10 @@ export default function RouteGuard() {
   const { effectiveRole, isProvider, isAdmin, isLoading: roleLoading, workspace } = useEffectiveRole();
   const { bookingState } = useBooking();
   const path = location.pathname.toLowerCase();
-  const zone = getZoneFromPath(path);
+  const zone = getZoneFromPath(path, {
+    isAuthenticated: !!user,
+    role: effectiveRole,
+  });
 
   const { data: isManager, isLoading: isManagerLoading } = useQuery({
     queryKey: ['isManager', user?.id],
@@ -53,13 +56,9 @@ export default function RouteGuard() {
     const providerIntent = getProviderIntent();
     const hasProviderWorkspace = Boolean(workspace?.barber || workspace?.ownerMembership);
 
-    // Platform admins: admin console only — never client or provider dashboards/tools
+    // Platform admins: redirect legacy dashboard entry points to admin console
     if (isAdmin) {
       if (path === '/dashboard' || path === '/providerdashboard') {
-        navigate(createPageUrl('GlobalFinancials'), { replace: true });
-        return;
-      }
-      if (zone === APP_ZONES.PROVIDER) {
         navigate(createPageUrl('GlobalFinancials'), { replace: true });
         return;
       }
@@ -95,7 +94,7 @@ export default function RouteGuard() {
           navigate(createPageUrl('SetupGuide'), { replace: true });
           return;
         }
-        navigate(createPageUrl('Dashboard'), { replace: true });
+        navigate(createPageUrl(dashboardPageForRole('client')), { replace: true });
         return;
       }
       const managerPages = [
@@ -125,20 +124,27 @@ export default function RouteGuard() {
       }
     }
 
-    // 5. Employer-only routes: require provider role
+    // 6. Providers on client chat route → canonical provider messages URL
+    if (path === '/chat' && user && isProvider) {
+      const search = location.search || '';
+      navigate(`${createPageUrl('ProviderMessages')}${search}`, { replace: true });
+      return;
+    }
+
+    // 7. Employer-only routes: require provider role
     const isEmployerRoute = EMPLOYER_PATHS.some(p => path === p || path.startsWith(`${p  }/`));
     if (isEmployerRoute && user && !isProvider) {
       navigate(createPageUrl('CareerHub'), { replace: true });
     }
 
-    // 6. Providers must not land on the client dashboard
+    // 8. Providers must not land on the client dashboard
     if (path === '/dashboard' && isProvider) {
         navigate(createPageUrl('ProviderDashboard'), { replace: true });
     }
 
-    // 7. Clients without provider workspace should not stay on provider dashboard
+    // 9. Clients without provider workspace should not stay on provider dashboard
     if (path === '/providerdashboard' && user && !isProvider && !providerIntent && !hasProviderWorkspace) {
-        navigate(createPageUrl('Dashboard'), { replace: true });
+        navigate(createPageUrl(dashboardPageForRole('client')), { replace: true });
     }
   }, [location, user, effectiveRole, isProvider, isAdmin, roleLoading, workspace, isLoadingAuth, isSignedIn, syncStatus, isManagerLoading, isManager, bookingState, navigate, path, zone]);
 

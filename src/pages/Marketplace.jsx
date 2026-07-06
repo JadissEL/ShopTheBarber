@@ -11,6 +11,7 @@ import { createPageUrl } from '@/utils';
 import { useCart } from '@/components/context/CartContext';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import { useDashboardShell } from '@/components/layout/DashboardShellContext';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 
@@ -23,6 +24,7 @@ const CATEGORIES = [
 ];
 
 export default function Marketplace() {
+  const inDashboardShell = useDashboardShell();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const { itemCount } = useCart();
@@ -70,7 +72,13 @@ export default function Marketplace() {
         subtitle="Premium grooming essentials from barbers and brands you trust."
       >
         <Link to={createPageUrl('ShoppingBag')} className="relative">
-          <Button variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white h-11">
+          <Button
+            variant="outline"
+            className={cn(
+              'h-11',
+              !inDashboardShell && 'border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white',
+            )}
+          >
             <ShoppingCart className="w-5 h-5 mr-2" />
             Bag
             {itemCount > 0 && (

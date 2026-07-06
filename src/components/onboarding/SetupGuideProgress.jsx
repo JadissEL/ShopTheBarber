@@ -1,0 +1,17 @@
+import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
+import { isProviderRole } from '@/lib/userRole';
+import { cn } from '@/lib/utils';
+
+/** Inline provider payout progress — shown inside the dashboard shell on Setup Guide. */
+export default function SetupGuideProgress({ className }) {
+  const { role, payoutReady } = useOnboardingProgress();
+
+  if (!isProviderRole(role) && role !== 'provider') return null;
+
+  return (
+    <p className={cn('text-sm text-muted-foreground', className)}>
+      Payout setup:{' '}
+      <span className="text-foreground font-medium">{payoutReady.percent}% complete</span>
+    </p>
+  );
+}

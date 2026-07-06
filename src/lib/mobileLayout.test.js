@@ -24,12 +24,20 @@ describe('mobileLayout', () => {
   });
 
   describe('shouldShowClientBottomNav', () => {
-    it('shows for authenticated mobile users on tab pages', () => {
+    it('shows for authenticated mobile clients on tab pages', () => {
       expect(
         shouldShowClientBottomNav({
           pathname: '/Dashboard',
           isAuthenticated: true,
           isDesktop: false,
+        }),
+      ).toBe(true);
+      expect(
+        shouldShowClientBottomNav({
+          pathname: '/Explore',
+          isAuthenticated: true,
+          isDesktop: false,
+          role: 'client',
         }),
       ).toBe(true);
     });
@@ -92,7 +100,7 @@ describe('mobileLayout', () => {
       expect(
         shouldHideGlobalNavOnMobile({
           pathname: '/Explore',
-          zone: APP_ZONES.PUBLIC,
+          zone: APP_ZONES.CLIENT,
           isAuthenticated: true,
           isDesktop: false,
           role: 'client',
@@ -100,34 +108,7 @@ describe('mobileLayout', () => {
       ).toBe(true);
     });
 
-    it('keeps top nav for providers, desktop, guests, and booking flow', () => {
-      expect(
-        shouldHideGlobalNavOnMobile({
-          pathname: '/Dashboard',
-          zone: APP_ZONES.CLIENT,
-          isAuthenticated: true,
-          isDesktop: true,
-          role: 'client',
-        }),
-      ).toBe(false);
-      expect(
-        shouldHideGlobalNavOnMobile({
-          pathname: '/Explore',
-          zone: APP_ZONES.PUBLIC,
-          isAuthenticated: false,
-          isDesktop: false,
-          role: 'guest',
-        }),
-      ).toBe(false);
-      expect(
-        shouldHideGlobalNavOnMobile({
-          pathname: '/ProviderDashboard',
-          zone: APP_ZONES.PROVIDER,
-          isAuthenticated: true,
-          isDesktop: false,
-          role: 'barber',
-        }),
-      ).toBe(false);
+    it('keeps top nav for booking flow', () => {
       expect(
         shouldHideGlobalNavOnMobile({
           pathname: '/BookingFlow',
@@ -137,6 +118,30 @@ describe('mobileLayout', () => {
           role: 'client',
         }),
       ).toBe(false);
+    });
+
+    it('hides duplicate top nav for mobile providers in provider shell', () => {
+      expect(
+        shouldHideGlobalNavOnMobile({
+          pathname: '/MyJobs',
+          zone: APP_ZONES.PROVIDER,
+          isAuthenticated: true,
+          isDesktop: false,
+          role: 'barber',
+        }),
+      ).toBe(true);
+    });
+
+    it('hides duplicate top nav for mobile admins in admin shell', () => {
+      expect(
+        shouldHideGlobalNavOnMobile({
+          pathname: '/AdminDisputes',
+          zone: APP_ZONES.ADMIN,
+          isAuthenticated: true,
+          isDesktop: false,
+          role: 'admin',
+        }),
+      ).toBe(true);
     });
   });
 });

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Headphones } from 'lucide-react';
 import { sovereign } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
 import { APP_ZONES, getZoneFromPath } from '@/components/navigationConfig';
@@ -12,8 +13,12 @@ import { APP_ZONES, getZoneFromPath } from '@/components/navigationConfig';
  */
 export default function InAppSupportWidget() {
     const { isAuthenticated, user } = useAuth();
+    const { effectiveRole } = useEffectiveRole();
     const location = useLocation();
-    const zone = getZoneFromPath(location.pathname);
+    const zone = getZoneFromPath(location.pathname, {
+        isAuthenticated: isAuthenticated && !!user,
+        role: effectiveRole,
+    });
     const path = location.pathname.toLowerCase();
 
     const hidden =

@@ -9,6 +9,7 @@ import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 import { PageError } from '@/components/ui/page-error';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 import { stb } from '@/lib/stbUi';
 
 function formatSalary(job) {
@@ -40,6 +41,8 @@ export default function JobDetail() {
     },
     enabled: !!jobId,
   });
+
+  useSetBreadcrumbTitle(job?.title ?? null);
 
   const saveJobMutation = useMutation({
     mutationFn: () => sovereign.applicant.saveJob(jobId),

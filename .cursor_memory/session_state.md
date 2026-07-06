@@ -10,6 +10,7 @@
   - Hero spacing + subtitle copy; simplified results bar + sort UI
   - Minimal site `Footer` (single copyright line)
 - **Next (optional):** Featured row at top of grid; “Use my location” CTA for distance sort; verify footer in browser on mobile guest vs auth.
+- **2026-06-30:** AUTH zone + feedback states migrated to Complete Visual System v2 (AuthSplitLayout, clerkAppearance tokens, PageLoading/EmptyState patterns).
 
 ## Archive
 

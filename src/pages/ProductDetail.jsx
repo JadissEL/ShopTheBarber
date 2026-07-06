@@ -24,6 +24,7 @@ import { useCart } from '@/components/context/CartContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 import { stb } from '@/lib/stbUi';
 
 // Default specs for API products missing detail fields
@@ -77,6 +78,8 @@ export default function ProductDetail() {
   });
 
   const product = getProductById(productId, apiProduct);
+
+  useSetBreadcrumbTitle(product?.name ?? null);
 
   if (!productId) {
     return (

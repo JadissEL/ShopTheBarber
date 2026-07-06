@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import { HERO_THEMES } from '@/lib/explorePageConfig';
 import SearchField from '@/components/ui/search-field';
+import PageHeader from '@/components/layout/PageHeader';
+import { useDashboardShell } from '@/components/layout/DashboardShellContext';
 function formatCount(n) {
   const num = Number(n) || 0;
   if (num >= 1000) return `${(num / 1000).toFixed(1).replace(/\.0$/, '')}k+`;
@@ -19,6 +21,7 @@ export default function HeroSection({
   locationLabel,
   spotlight = null,
 }) {
+  const inDashboardShell = useDashboardShell();
   const theme = HERO_THEMES[pageConfig.heroTheme] ?? HERO_THEMES.emerald;
   const barberCount = formatCount(platformStats?.barber_count);
   const reviewHint = platformStats?.avg_rating
@@ -46,6 +49,23 @@ export default function HeroSection({
       </div>
     </div>
   );
+
+  if (inDashboardShell) {
+    return (
+      <PageHeader
+        label={pageConfig.heroBadge}
+        title={pageConfig.heroTitle(cityFilter)}
+        subtitle={pageConfig.heroSubtitle(cityFilter)}
+        tier="app"
+        variant="light"
+        compact
+        className="border-foreground/10"
+      >
+        {searchBlock}
+      </PageHeader>
+    );
+  }
+
   return (
     <header className="relative border-b border-white/10 stb-explore-hero overflow-hidden text-white">
       <div

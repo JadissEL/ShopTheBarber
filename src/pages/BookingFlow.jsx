@@ -52,6 +52,7 @@ import {
   isGuestBookingBlocked,
 } from '@/lib/guestBooking';
 import { useBookingDraftSync } from '@/hooks/useBookingDraftSync';
+import { useSetBreadcrumbTitle } from '@/components/layout/DashboardBreadcrumbContext';
 
 export default function BookingFlow() {
   const navigate = useNavigate();
@@ -559,6 +560,17 @@ export default function BookingFlow() {
       is_vip: nested.is_vip ?? selectedBarber.is_vip,
     };
   }, [selectedBarber]);
+
+  const bookingBreadcrumbTitle = React.useMemo(() => {
+    if (normalizedSelectedBarber?.name) return normalizedSelectedBarber.name;
+    if (isShopContext && activeShopId) {
+      const shop = bookingShopById[activeShopId];
+      if (shop?.name) return shop.name;
+    }
+    return null;
+  }, [normalizedSelectedBarber?.name, isShopContext, activeShopId, bookingShopById]);
+
+  useSetBreadcrumbTitle(bookingBreadcrumbTitle);
 
   const barberServiceModes = React.useMemo(
     () => getServiceLocationModes(normalizedSelectedBarber),
