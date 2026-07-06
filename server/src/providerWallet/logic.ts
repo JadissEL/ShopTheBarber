@@ -8,7 +8,7 @@ import {
     DEFAULT_MINIMUM_BALANCE,
     MIN_TOP_UP_AMOUNT,
 } from './config';
-import { isProviderRole } from '../auth/platformRbac';
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
 import { getStripeApiKey, isUsableStripeApiKey } from '../config/stripeKeys';
 import { shouldWaiveCommissionForBooking, getActiveFixedFeePlanForProvider } from '../fixedFee/logic';
 import { blocksCashBookings, computeWalletHealthStatus, walletHealthLabel } from '../domain/wallet/health';
@@ -21,7 +21,13 @@ import {
 } from '../domain/wallet/credits';
 import { appendLedgerEntry } from '../domain/ledger/append';
 
-export type AuthUser = { id: string; role?: string | null };
+export type AuthUser = { id: string; role?: string | null; account_type?: string | null };
+
+function assertBookingProviderAccess(role?: string | null, accountType?: string | null) {
+    if (!canAccessBookingProviderTools(role, accountType)) {
+        throw new Error('Provider access only');
+    }
+}
 
 function nowIso(): string {
     return new Date().toISOString();
@@ -233,8 +239,13 @@ export async function assertCanAcceptCashBooking(
     return { platform_fee: fee, wallet_id: wallet!.id };
 }
 
-export async function getProviderWalletDashboard(userId: string, role?: string | null, shopId?: string | null) {
-    if (!isProviderRole(role)) throw new Error('Provider access only');
+export async function getProviderWalletDashboard(
+    userId: string,
+    role?: string | null,
+    shopId?: string | null,
+    accountType?: string | null,
+) {
+    assertBookingProviderAccess(role, accountType);
 
     const barberWallet = await getOrCreateWallet(userId, null);
     let shopWallet = null as Awaited<ReturnType<typeof getOrCreateWallet>> | null;
@@ -335,9 +346,10 @@ function serializeWallet(
 export async function updateCashSettings(
     userId: string,
     role: string | null | undefined,
-    input: { accepts_cash_in_store: boolean; scope: 'barber' | 'shop'; shop_id?: string }
+    input: { accepts_cash_in_store: boolean; scope: 'barber' | 'shop'; shop_id?: string },
+    accountType?: string | null,
 ) {
-    if (!isProviderRole(role)) throw new Error('Provider access only');
+    assertBookingProviderAccess(role, accountType);
 
     if (input.scope === 'shop') {
         const shopId = input.shop_id;
@@ -595,8 +607,13 @@ export async function deductPlatformFeeForCashBooking(bookingId: string) {
     return { success: true, fee_deducted: fee, new_balance: deduction.buckets.balance };
 }
 
-export async function confirmCashBookingAsProvider(bookingId: string, userId: string, role?: string | null) {
-    if (!isProviderRole(role)) throw new Error('Forbidden');
+export async function confirmCashBookingAsProvider(
+    bookingId: string,
+    userId: string,
+    role?: string | null,
+    accountType?: string | null,
+) {
+    assertBookingProviderAccess(role, accountType);
 
     const booking = await prisma.bookings.findUnique({
         where: { id: bookingId },

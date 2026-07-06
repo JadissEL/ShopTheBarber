@@ -7,7 +7,7 @@ import {
   getSignupIntentToken,
   clearSignupSession,
 } from '@/lib/signupIntent';
-import { dashboardPageForAccountType } from '@/lib/accountType';
+import { getSetupGuidePath } from '@/lib/onboardingWizard';
 import { PageLoading } from '@/components/ui/page-loading';
 import { toast } from 'sonner';
 
@@ -44,8 +44,7 @@ export default function AccountProvisioner() {
     void provisionAccount(accountType, token).then((result) => {
       if (result?.ok) {
         clearSignupSession();
-        const page = dashboardPageForAccountType(result.accountType || accountType);
-        navigate(createPageUrl(page), { replace: true });
+        navigate(getSetupGuidePath(), { replace: true });
       } else if (result?.code === 'ACCOUNT_TYPE_CONFLICT') {
         clearSignupSession();
         navigate(`${createPageUrl('SignIn')}?error=account_type_conflict`, { replace: true });

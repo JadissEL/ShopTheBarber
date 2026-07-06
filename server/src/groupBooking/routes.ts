@@ -93,7 +93,7 @@ export async function groupBookingRoutes(fastify: FastifyInstance) {
         }
 
         let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
-        if (!barber && ['barber', 'shop_owner', 'provider'].includes(user.role ?? '')) {
+        if (!barber && canAccessBookingProviderTools(user.role, user.account_type)) {
             barber = await prisma.barbers.create({
                 data: {
                     user_id: user.id,

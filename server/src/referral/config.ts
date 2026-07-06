@@ -2,6 +2,8 @@
  * Referral program configs, role-aware, double-sided rewards (Fresha/Booksy patterns).
  */
 
+import { canAccessBookingProviderTools } from '../auth/platformRbac';
+
 export type ReferralProgramType = 'client_b2c' | 'provider_client' | 'pro_b2b';
 
 export type ReferralProgramConfig = {
@@ -46,21 +48,22 @@ export const REFERRAL_PROGRAMS: Record<ReferralProgramType, ReferralProgramConfi
     },
 };
 
-export function resolveProgramType(referrerRole: string, refereeRole: string): ReferralProgramType {
-    const proRoles = ['barber', 'shop_owner', 'provider'];
-    const referrerIsPro = proRoles.includes(referrerRole);
-    const refereeIsPro = proRoles.includes(refereeRole);
+export function resolveProgramType(
+    referrerRole: string,
+    refereeRole: string,
+    referrerAccountType?: string | null,
+    refereeAccountType?: string | null,
+): ReferralProgramType {
+    const referrerIsPro = canAccessBookingProviderTools(referrerRole, referrerAccountType);
+    const refereeIsPro = canAccessBookingProviderTools(refereeRole, refereeAccountType);
     if (referrerIsPro && refereeIsPro) return 'pro_b2b';
     if (referrerIsPro) return 'provider_client';
     return 'client_b2c';
 }
 
-export function programForRole(role: string): ReferralProgramConfig[] {
-    if (role === 'client') {
-        return [REFERRAL_PROGRAMS.client_b2c];
-    }
-    if (['barber', 'shop_owner', 'provider'].includes(role)) {
+export function programForRole(role: string, accountType?: string | null): ReferralProgramConfig[] {
+    if (canAccessBookingProviderTools(role, accountType)) {
         return [REFERRAL_PROGRAMS.provider_client, REFERRAL_PROGRAMS.pro_b2b];
     }
-    return [REFERRAL_PROGRAMS.client_b2c, REFERRAL_PROGRAMS.provider_client, REFERRAL_PROGRAMS.pro_b2b];
+    return [REFERRAL_PROGRAMS.client_b2c];
 }

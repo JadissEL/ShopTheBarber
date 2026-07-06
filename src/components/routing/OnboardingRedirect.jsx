@@ -9,6 +9,9 @@ const ENTRY_PATHS = new Set([
   '/dashboard',
   '/providerdashboard',
   '/globalfinancials',
+  '/sellerdashboard',
+  '/companydashboard',
+  '/bloggerdashboard',
 ]);
 
 /**

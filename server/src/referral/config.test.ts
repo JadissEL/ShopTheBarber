@@ -25,6 +25,16 @@ describe('referral config', () => {
         expect(programs.map((p) => p.type)).toEqual(['provider_client', 'pro_b2b']);
     });
 
+    it('programForRole returns client program for seller account type', () => {
+        const programs = programForRole('seller', 'seller');
+        expect(programs).toHaveLength(1);
+        expect(programs[0].type).toBe('client_b2c');
+    });
+
+    it('resolveProgramType uses account_type for booking providers', () => {
+        expect(resolveProgramType('seller', 'client', 'solo_barber', 'client')).toBe('provider_client');
+    });
+
     it('all programs define referrer and referee benefits', () => {
         for (const cfg of Object.values(REFERRAL_PROGRAMS)) {
             expect(cfg.referrer_benefit.length).toBeGreaterThan(5);

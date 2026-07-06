@@ -37,6 +37,9 @@ export async function mobileServiceRoutes(fastify: FastifyInstance) {
             const ok = await authenticateRequest(request, reply);
             if (!ok) return;
             const user = request.user!;
+            if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+                return reply.status(403).send({ error: 'Booking provider access required' });
+            }
             const flag = request.body?.offers_mobile_service === true;
 
             let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
@@ -49,7 +52,7 @@ export async function mobileServiceRoutes(fastify: FastifyInstance) {
                 return reply.status(400).send({ error: msg });
             }
 
-            if (!barber && ['barber', 'shop_owner', 'provider'].includes(user.role ?? '')) {
+            if (!barber && canAccessBookingProviderTools(user.role, user.account_type)) {
                 barber = await prisma.barbers.create({
                     data: {
                         user_id: user.id,

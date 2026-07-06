@@ -9,9 +9,11 @@ import { programForRole, REFERRAL_PROGRAMS } from './config';
 
 export async function referralRoutes(fastify: FastifyInstance) {
     fastify.get('/api/referral/programs', async (request) => {
-        const role = (request.query as { role?: string })?.role ?? 'client';
+        const query = request.query as { role?: string; accountType?: string };
+        const role = query.role ?? 'client';
+        const accountType = query.accountType ?? null;
         return {
-            programs: programForRole(role),
+            programs: programForRole(role, accountType),
             note: 'Double-sided rewards pay after your friend completes their qualifying action.',
         };
     });
@@ -22,7 +24,7 @@ export async function referralRoutes(fastify: FastifyInstance) {
             return {
                 valid: true,
                 referrer_name: referrer.full_name?.split(' ')[0] ?? 'A friend',
-                programs: programForRole(referrer.role ?? 'client'),
+                programs: programForRole(referrer.role ?? 'client', referrer.account_type),
             };
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : 'Invalid code';

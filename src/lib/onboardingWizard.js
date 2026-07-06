@@ -483,6 +483,36 @@ export function computeStepCompletion(ctx) {
   const profileOk = Boolean(user?.full_name?.trim()) && Boolean(user?.phone?.trim());
   const visited = new Set(readOnboardingState(user?.id, role).visitedSteps ?? []);
 
+  if (normalized === 'seller') {
+    return {
+      welcome: true,
+      profile: profileOk,
+      products: visited.has('products'),
+      stripe: user?.stripe_connect_status === 'active',
+      dashboard: visited.has('dashboard') || profileOk,
+    };
+  }
+
+  if (normalized === 'company') {
+    return {
+      welcome: true,
+      profile: profileOk,
+      jobs: visited.has('jobs'),
+      products: visited.has('products'),
+      dashboard: visited.has('dashboard') || profileOk,
+    };
+  }
+
+  if (normalized === 'blogger') {
+    return {
+      welcome: true,
+      profile: profileOk,
+      article: visited.has('article'),
+      explore: visited.has('explore') || bookingsCount > 0,
+      dashboard: visited.has('dashboard') || profileOk,
+    };
+  }
+
   return {
     welcome: true,
     profile: profileOk,
@@ -590,6 +620,27 @@ export function getDashboardPathForAccountType(accountType) {
 
 export function getSetupGuidePath() {
   return createPageUrl('SetupGuide');
+}
+
+/** Role-specific subtitle for the setup guide page header */
+export function getSetupGuideSubtitle(role) {
+  const normalized = normalizeOnboardingRole(role);
+  if (normalized === 'provider' || role === 'shop_owner') {
+    return 'Complete your profile and payout details to start earning';
+  }
+  if (normalized === 'seller') {
+    return 'Set up your seller profile and catalog to start selling';
+  }
+  if (normalized === 'company') {
+    return 'Build your company profile and post roles to attract talent';
+  }
+  if (normalized === 'blogger') {
+    return 'Complete your author profile and publish your first story';
+  }
+  if (normalized === 'admin') {
+    return 'Tour the admin console and key tools';
+  }
+  return 'Complete your profile to get the most from ShopTheBarber';
 }
 
 export const ONBOARDING_REDIRECT_ONCE_KEY = 'stb_onboarding_redirect_once';

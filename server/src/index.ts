@@ -72,6 +72,7 @@ import { sendEmail } from './logic/email';
 import { createEntityScopeCache, getEntityScopeCondition, getManagedShopIdsForUser, rowInScope } from './entityScope';
 import { authenticateRequest } from './auth/requestUser';
 import { requireAuthPreHandler, requireAdminPreHandler } from './auth/authPreHandlers';
+import { canAccessBookingProviderTools } from './auth/platformRbac';
 import { runHealthCheck } from './observability/health';
 import { serializeBookingRow, serializeBookingRows } from './logic/bookingSerialize';
 import {
@@ -797,11 +798,14 @@ fastify.post('/api/admin/backup/verify', { preHandler: [requireAdminPreHandler] 
 import { getProviderAnalytics } from './provider/analytics';
 fastify.post('/api/functions/provider-analytics', { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
     try {
+        const currentUser = request.user as { id: string; role?: string; account_type?: string | null };
+        if (!canAccessBookingProviderTools(currentUser.role, currentUser.account_type)) {
+            return reply.status(403).send({ error: 'Booking provider access required' });
+        }
         const { shopId, barberId } = request.body as { shopId?: string; barberId?: string };
         if (!shopId && !barberId) {
             return reply.status(400).send({ error: 'shopId or barberId required' });
         }
-        const currentUser = request.user as { id: string; role?: string };
         if (currentUser.role === 'admin') {
             return reply.status(403).send({ error: 'Use platform financial analytics for admin reporting' });
         }

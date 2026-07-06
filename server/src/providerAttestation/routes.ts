@@ -63,10 +63,13 @@ export async function providerAttestationRoutes(fastify: FastifyInstance) {
             const ok = await authenticateRequest(request, reply);
             if (!ok) return;
             const user = request.user!;
+            if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+                return reply.status(403).send({ error: 'Booking provider access required' });
+            }
             const flags = parseAttestationBody(request.body ?? {});
 
             let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
-            if (!barber && ['barber', 'shop_owner', 'provider'].includes(user.role ?? '')) {
+            if (!barber && canAccessBookingProviderTools(user.role, user.account_type)) {
                 barber = await prisma.barbers.create({
                     data: {
                         user_id: user.id,

@@ -46,7 +46,7 @@ export async function providerWalletRoutes(fastify: FastifyInstance) {
         const user = await requireAuth(request, reply);
         if (!user) return;
         try {
-            return await getProviderWalletDashboard(user.id, user.role, request.query.shop_id);
+            return await getProviderWalletDashboard(user.id, user.role, request.query.shop_id, user.account_type);
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : 'Failed to load wallet';
             return reply.status(403).send({ error: msg });
@@ -59,7 +59,7 @@ export async function providerWalletRoutes(fastify: FastifyInstance) {
             const user = await requireAuth(request, reply);
             if (!user) return;
             try {
-                return await updateCashSettings(user.id, user.role, request.body);
+                return await updateCashSettings(user.id, user.role, request.body, user.account_type);
             } catch (e: unknown) {
                 const msg = e instanceof Error ? e.message : 'Failed to update settings';
                 return reply.status(400).send({ error: msg });
@@ -93,7 +93,12 @@ export async function providerWalletRoutes(fastify: FastifyInstance) {
             const user = await requireAuth(request, reply);
             if (!user) return;
             try {
-                return await confirmCashBookingAsProvider(request.params.bookingId, user.id, user.role);
+                return await confirmCashBookingAsProvider(
+                    request.params.bookingId,
+                    user.id,
+                    user.role,
+                    user.account_type,
+                );
             } catch (e: unknown) {
                 const msg = e instanceof Error ? e.message : 'Confirm failed';
                 return reply.status(400).send({ error: msg });

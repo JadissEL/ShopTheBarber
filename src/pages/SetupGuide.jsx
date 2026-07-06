@@ -12,8 +12,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
 import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
-import { getDashboardPathForRole } from '@/lib/onboardingWizard';
-import { isProviderRole } from '@/lib/userRole';
+import { getDashboardPathForRole, getSetupGuideSubtitle } from '@/lib/onboardingWizard';
 
 const SETUP_LOADING_TIMEOUT_MS = 15_000;
 
@@ -71,8 +70,6 @@ export default function SetupGuide() {
   const stillSyncing =
     isSignedIn && syncStatus !== 'ready' && syncStatus !== 'error';
   const syncFailed = syncStatus === 'error' || timedOut;
-  const isProvider = isProviderRole(role) || role === 'provider';
-
   useEffect(() => {
     if (!stillSyncing) {
       setTimedOut(false);
@@ -172,11 +169,7 @@ export default function SetupGuide() {
       <PageHeader
         label="Setup"
         title="Account setup"
-        subtitle={
-          isProvider
-            ? 'Complete your profile and payout details to start earning'
-            : 'Complete your profile to get the most from ShopTheBarber'
-        }
+        subtitle={getSetupGuideSubtitle(role)}
         compact
         variant="light"
         tier="app"

@@ -22,6 +22,7 @@ import {
   getPayoutReadyProgress,
   shouldShowPayoutSetupOnDashboard,
   PAYOUT_READY_STEP_IDS,
+  getSetupGuideSubtitle,
 } from '@/lib/onboardingWizard';
 
 describe('onboardingWizard', () => {
@@ -147,6 +148,44 @@ describe('onboardingWizard', () => {
     const steps = getOnboardingSteps('seller');
     expect(steps.some((s) => s.id === 'products')).toBe(true);
     expect(steps[0].id).toBe('welcome');
+  });
+
+  it('computes seller completion from profile and visits', () => {
+    markGuideStepVisited('s1', 'seller', 'products');
+    const completion = computeStepCompletion({
+      role: 'seller',
+      user: { id: 's1', full_name: 'Shop Co', phone: '+15551234', stripe_connect_status: 'active' },
+    });
+    expect(completion.profile).toBe(true);
+    expect(completion.products).toBe(true);
+    expect(completion.stripe).toBe(true);
+  });
+
+  it('computes company completion from profile and visits', () => {
+    markGuideStepVisited('c1', 'company', 'jobs');
+    const completion = computeStepCompletion({
+      role: 'company',
+      user: { id: 'c1', full_name: 'Acme Salon', phone: '+15559999' },
+    });
+    expect(completion.profile).toBe(true);
+    expect(completion.jobs).toBe(true);
+  });
+
+  it('computes blogger completion with client booking signals', () => {
+    const completion = computeStepCompletion({
+      role: 'blogger',
+      user: { id: 'b1', full_name: 'Writer', phone: '+15550001' },
+      bookingsCount: 1,
+    });
+    expect(completion.profile).toBe(true);
+    expect(completion.explore).toBe(true);
+  });
+
+  it('returns role-specific setup guide subtitles', () => {
+    expect(getSetupGuideSubtitle('seller')).toMatch(/seller/i);
+    expect(getSetupGuideSubtitle('company')).toMatch(/company/i);
+    expect(getSetupGuideSubtitle('blogger')).toMatch(/author/i);
+    expect(getSetupGuideSubtitle('barber')).toMatch(/payout/i);
   });
 
   it('resumes at first incomplete step', () => {

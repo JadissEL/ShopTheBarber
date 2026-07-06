@@ -74,10 +74,13 @@ export async function childrenFriendlyRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const user = await requireAuth(request, reply);
             if (!user) return;
+            if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+                return reply.status(403).send({ error: 'Booking provider access required' });
+            }
             const flag = parseBodyFlag(request.body ?? {});
 
             let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
-            if (!barber && ['barber', 'shop_owner', 'provider'].includes(user.role ?? '')) {
+            if (!barber && canAccessBookingProviderTools(user.role, user.account_type)) {
                 barber = await prisma.barbers.create({
                     data: {
                         user_id: user.id,

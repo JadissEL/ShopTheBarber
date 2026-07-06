@@ -107,7 +107,7 @@ export async function validateReferralCode(code: string) {
 
     const referrer = await prisma.users.findFirst({
         where: { referral_code: normalized },
-        select: { id: true, full_name: true, role: true, referral_code: true },
+        select: { id: true, full_name: true, role: true, account_type: true, referral_code: true },
     });
     if (!referrer) throw new Error('Invalid referral code');
 
@@ -134,7 +134,12 @@ export async function claimReferralCode(refereeUserId: string, code: string) {
         throw new Error('You cannot use your own referral code');
     }
 
-    const programType = resolveProgramType(referrer.role ?? 'client', referee.role ?? 'client');
+    const programType = resolveProgramType(
+        referrer.role ?? 'client',
+        referee.role ?? 'client',
+        referrer.account_type,
+        referee.account_type,
+    );
     const program = REFERRAL_PROGRAMS[programType];
 
     let refereePromoCode: string | null = null;
@@ -308,7 +313,7 @@ export async function processReferralOnCompletedBooking(bookingId: string) {
 export async function getReferralDashboard(userId: string) {
     const user = await prisma.users.findUnique({
         where: { id: userId },
-        select: { role: true, referral_code: true, referred_by_user_id: true },
+        select: { role: true, account_type: true, referral_code: true, referred_by_user_id: true },
     });
     if (!user) throw new Error('User not found');
 
@@ -339,7 +344,7 @@ export async function getReferralDashboard(userId: string) {
         referral_code: code,
         share_url: `/signup?ref=${code}`,
         role: user.role ?? 'client',
-        programs: (await import('./config')).programForRole(user.role ?? 'client'),
+        programs: (await import('./config')).programForRole(user.role ?? 'client', user.account_type),
         stats: {
             total_referrals: referralsMade.length,
             pending: pending.length,

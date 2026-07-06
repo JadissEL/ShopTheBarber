@@ -63,11 +63,14 @@ export async function languagesRoutes(fastify: FastifyInstance) {
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
         const user = request.user!;
+        if (!canAccessBookingProviderTools(user.role, user.account_type)) {
+            return reply.status(403).send({ error: 'Booking provider access required' });
+        }
         const body = request.body;
         try {
             const codes = normalizeLanguageInput(body.languages ?? []);
             let barber = await prisma.barbers.findFirst({ where: { user_id: user.id } });
-            if (!barber && ['barber', 'shop_owner'].includes(user.role ?? '')) {
+            if (!barber && canAccessBookingProviderTools(user.role, user.account_type)) {
                 barber = await prisma.barbers.create({
                     data: {
                         user_id: user.id,
