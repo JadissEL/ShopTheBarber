@@ -5,8 +5,9 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { PageLoading } from '@/components/ui/page-loading';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { createPageUrl } from '@/utils';
-import { isAccountType, accountTypeFromLegacySignupType, buildChooseAccountTypeUrl } from '@/lib/accountType';
+import { isAccountType, accountTypeFromLegacySignupType } from '@/lib/accountType';
 import { getPendingAccountType, setPendingAccountType } from '@/lib/signupIntent';
+import { SignupWorkspaceBanner } from '@/components/auth/SignupWorkspaceBanner';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import {
@@ -66,6 +67,9 @@ export default function SignUp() {
                 description="Create your ShopTheBarber account after choosing your workspace type."
             />
             <AuthSplitLayout eyebrow="Step 2 of 2">
+                <div className="space-y-6 mb-6">
+                    <SignupWorkspaceBanner accountType={pendingType} />
+                </div>
                 <ClerkLoading>
                     <PageLoading message="Loading sign up…" />
                 </ClerkLoading>

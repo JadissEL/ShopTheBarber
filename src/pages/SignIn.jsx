@@ -1,5 +1,7 @@
 import { SignIn as ClerkSignIn, ClerkLoaded, ClerkLoading } from '@clerk/react';
 import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { PageLoading } from '@/components/ui/page-loading';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
@@ -30,7 +32,21 @@ function getPostSignInUrl() {
 
 export default function SignIn() {
     useAuthIntentFromUrl();
+    const [searchParams, setSearchParams] = useSearchParams();
     const afterSignIn = getPostSignInUrl();
+
+    useEffect(() => {
+        if (searchParams.get('error') !== 'account_type_conflict') return;
+        toast.error(
+            'This email is already linked to a different workspace type. Sign in with the account type you originally chose.',
+            { duration: 8000 },
+        );
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('error');
+            return next;
+        }, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     return (
         <>

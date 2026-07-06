@@ -43,6 +43,7 @@ export function AccountTypeOptionCard({ card, selected, onSelect, index = 0, cla
       transition={{ delay: index * 0.05, duration: 0.35 }}
       onClick={onSelect}
       aria-pressed={selected}
+      id={`account-type-${card.id}`}
       className={cn(
         'group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border-2 bg-card text-left shadow-sm transition-all duration-200',
         'hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',

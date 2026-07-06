@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MetaTags } from '@/components/seo/MetaTags';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
@@ -18,11 +18,28 @@ export default function ChooseAccountType() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const scrolledToPreselect = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preselect = params.get('accountType');
-    if (isAccountType(preselect)) setSelected(preselect);
+    if (!isAccountType(preselect)) return;
+
+    setSelected(preselect);
+
+    if (scrolledToPreselect.current) return;
+    scrolledToPreselect.current = true;
+
+    const scrollToCard = () => {
+      document
+        .getElementById(`account-type-${preselect}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    requestAnimationFrame(() => {
+      scrollToCard();
+      window.setTimeout(scrollToCard, 400);
+    });
   }, []);
 
   const handleContinue = async () => {

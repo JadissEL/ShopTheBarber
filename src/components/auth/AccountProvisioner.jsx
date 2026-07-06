@@ -9,6 +9,7 @@ import {
 } from '@/lib/signupIntent';
 import { dashboardPageForAccountType } from '@/lib/accountType';
 import { PageLoading } from '@/components/ui/page-loading';
+import { toast } from 'sonner';
 
 const AUTH_FLOW_PATHS = new Set(['/chooseaccounttype', '/register', '/login', '/setupguide']);
 
@@ -48,6 +49,10 @@ export default function AccountProvisioner() {
       } else if (result?.code === 'ACCOUNT_TYPE_CONFLICT') {
         clearSignupSession();
         navigate(`${createPageUrl('SignIn')}?error=account_type_conflict`, { replace: true });
+      } else {
+        toast.error(result?.message || 'Could not finish account setup. Please choose your workspace again.');
+        clearSignupSession();
+        navigate(createPageUrl('ChooseAccountType'), { replace: true });
       }
     });
   }, [isSignedIn, syncStatus, user, provisionAccount, navigate, path]);
