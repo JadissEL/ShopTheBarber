@@ -11,6 +11,7 @@ export type QaProfile = {
     full_name: string;
     role: string;
     label?: string;
+    account_type?: string;
     barber_id?: string;
     shop_id?: string;
     shop_name?: string;
@@ -20,6 +21,10 @@ export type QaProfile = {
     is_vip?: boolean;
     offers_group_booking?: boolean;
     offers_mobile_service?: boolean;
+    store_name?: string;
+    company_id?: string;
+    company_name?: string;
+    pen_name?: string;
 };
 
 const SHOP_PHOTOS = [
@@ -82,6 +87,7 @@ export async function seedQaProfiles(): Promise<void> {
     }
 
     let barberPhotoIdx = 0;
+    const now = new Date().toISOString();
     for (const p of profiles) {
         await prisma.users.upsert({
             where: { id: p.id },
@@ -90,12 +96,17 @@ export async function seedQaProfiles(): Promise<void> {
                 email: p.email,
                 full_name: p.full_name,
                 role: p.role,
+                account_type: p.account_type ?? null,
+                account_type_locked_at: p.account_type ? now : null,
                 avatar_url: BARBER_PHOTOS[barberPhotoIdx % BARBER_PHOTOS.length],
             },
             update: {
                 email: p.email,
                 full_name: p.full_name,
                 role: p.role,
+                ...(p.account_type
+                    ? { account_type: p.account_type, account_type_locked_at: now }
+                    : {}),
             },
         });
         barberPhotoIdx += 1;
@@ -171,6 +182,53 @@ export async function seedQaProfiles(): Promise<void> {
                     status: 'active',
                 },
                 update: { role: 'owner', status: 'active', barber_id: p.barber_id ?? undefined },
+            });
+        }
+
+        if (p.account_type === 'seller' && p.store_name) {
+            await prisma.seller_profiles.upsert({
+                where: { user_id: p.id },
+                create: {
+                    id: `seller-${p.id}`,
+                    user_id: p.id,
+                    display_name: p.store_name,
+                    seller_type: 'vendor',
+                },
+                update: { display_name: p.store_name },
+            });
+        }
+
+        if (p.account_type === 'company' && p.company_id && p.company_name) {
+            await prisma.companies.upsert({
+                where: { id: p.company_id },
+                create: {
+                    id: p.company_id,
+                    name: p.company_name,
+                    description: `QA demo company — ${p.company_name}`,
+                },
+                update: { name: p.company_name },
+            });
+            await prisma.company_accounts.upsert({
+                where: { user_id: p.id },
+                create: {
+                    id: `ca-${p.id}`,
+                    user_id: p.id,
+                    company_id: p.company_id,
+                },
+                update: { company_id: p.company_id },
+            });
+        }
+
+        if (p.account_type === 'blogger') {
+            await prisma.author_profiles.upsert({
+                where: { user_id: p.id },
+                create: {
+                    id: `author-${p.id}`,
+                    user_id: p.id,
+                    pen_name: p.pen_name ?? p.full_name,
+                    bio: 'QA blogger profile for creator studio journeys.',
+                },
+                update: { pen_name: p.pen_name ?? p.full_name },
             });
         }
     }

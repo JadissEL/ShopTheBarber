@@ -76,6 +76,9 @@ const pwEnv = {
   E2E_CLERK_USER_EMAIL: process.env.E2E_CLERK_USER_EMAIL || profileEmail('qa-c1'),
   E2E_CLERK_PROVIDER_EMAIL: process.env.E2E_CLERK_PROVIDER_EMAIL || profileEmail('qa-b1'),
   E2E_CLERK_ADMIN_EMAIL: process.env.E2E_CLERK_ADMIN_EMAIL || profileEmail('qa-admin'),
+  E2E_CLERK_SELLER_EMAIL: process.env.E2E_CLERK_SELLER_EMAIL || profileEmail('qa-seller'),
+  E2E_CLERK_COMPANY_EMAIL: process.env.E2E_CLERK_COMPANY_EMAIL || profileEmail('qa-company'),
+  E2E_CLERK_BLOGGER_EMAIL: process.env.E2E_CLERK_BLOGGER_EMAIL || profileEmail('qa-blogger'),
   QA_SKIP_AUTH_JOURNEYS:
     process.env.QA_SKIP_AUTH_JOURNEYS ??
     (localServers || process.env.QA_AUTH_JOURNEYS === '1' ? '0' : '1'),

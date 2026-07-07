@@ -115,5 +115,36 @@
     "location": "Miami, Wynwood",
     "is_vip": false,
     "offers_mobile_service": true
+  },
+  {
+    "id": "qa-seller",
+    "email": "qa.priya.seller@shopthebarber.com",
+    "password": "Stb!Seller2026",
+    "full_name": "Priya Kapoor",
+    "role": "seller",
+    "account_type": "seller",
+    "label": "Seller — marketplace vendor",
+    "store_name": "Priya's Pro Supply"
+  },
+  {
+    "id": "qa-company",
+    "email": "qa.deniz.company@shopthebarber.com",
+    "password": "Stb!Company2026",
+    "full_name": "Deniz Oka",
+    "role": "company",
+    "account_type": "company",
+    "label": "Company — recruitment hub",
+    "company_id": "qa-company-1",
+    "company_name": "BarberCo Studios"
+  },
+  {
+    "id": "qa-blogger",
+    "email": "qa.taylor.blogger@shopthebarber.com",
+    "password": "Stb!Blogger2026",
+    "full_name": "Taylor Brooks",
+    "role": "blogger",
+    "account_type": "blogger",
+    "label": "Blogger — creator studio",
+    "pen_name": "Taylor Cutz"
   }
 ]

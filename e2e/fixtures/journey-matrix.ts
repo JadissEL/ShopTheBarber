@@ -6,8 +6,12 @@ export const JOURNEY_PERSONAS = {
   guest: 'guest',
   client: 'client',
   provider: 'provider',
+  seller: 'seller',
+  company: 'company',
+  blogger: 'blogger',
   admin: 'admin',
   mobileClient: 'mobile-client',
+  roleRbac: 'role-rbac',
 } as const;
 
 export type JourneyPersona = (typeof JOURNEY_PERSONAS)[keyof typeof JOURNEY_PERSONAS];
@@ -41,6 +45,31 @@ export const PROVIDER_STEPS = [
   'Provider bookings',
   'Provider settings',
   'Provider payouts',
+] as const;
+
+export const SELLER_STEPS = [
+  'Seller dashboard',
+  'Seller products',
+  'Seller orders',
+  'Seller settings',
+] as const;
+
+export const COMPANY_STEPS = [
+  'Company hub dashboard',
+  'Company jobs',
+  'Company applicants',
+] as const;
+
+export const BLOGGER_STEPS = [
+  'Blogger dashboard',
+  'Blogger articles',
+  'Blogger marketplace products',
+] as const;
+
+export const ROLE_RBAC_STEPS = [
+  'Seller blocked from provider settings',
+  'Company blocked from provider dashboard',
+  'Blogger blocked from provider settings',
 ] as const;
 
 export const ADMIN_STEPS = [

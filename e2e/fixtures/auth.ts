@@ -103,6 +103,24 @@ export async function signInAdmin(page: Page): Promise<void> {
   await signInClerkAndSync(page, email);
 }
 
+export async function signInSeller(page: Page): Promise<void> {
+  const email = process.env.E2E_CLERK_SELLER_EMAIL || emailForProfile('qa-seller');
+  if (!email) throw new Error('E2E_CLERK_SELLER_EMAIL is required');
+  await signInClerkAndSync(page, email);
+}
+
+export async function signInCompany(page: Page): Promise<void> {
+  const email = process.env.E2E_CLERK_COMPANY_EMAIL || emailForProfile('qa-company');
+  if (!email) throw new Error('E2E_CLERK_COMPANY_EMAIL is required');
+  await signInClerkAndSync(page, email);
+}
+
+export async function signInBlogger(page: Page): Promise<void> {
+  const email = process.env.E2E_CLERK_BLOGGER_EMAIL || emailForProfile('qa-blogger');
+  if (!email) throw new Error('E2E_CLERK_BLOGGER_EMAIL is required');
+  await signInClerkAndSync(page, email);
+}
+
 /** Sign in via Clerk UI and wait until /api/auth/me succeeds. */
 export async function signInClerkAndSync(page: Page, email: string): Promise<void> {
   await signInClerkUser(page, email);

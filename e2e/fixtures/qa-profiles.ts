@@ -24,7 +24,10 @@ export function passwordForEmail(email: string): string | undefined {
     process.env[`E2E_CLERK_PASSWORD_${email.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}`] ||
     (email === process.env.E2E_CLERK_USER_EMAIL ? process.env.E2E_CLERK_USER_PASSWORD : undefined) ||
     (email === process.env.E2E_CLERK_PROVIDER_EMAIL ? process.env.E2E_CLERK_PROVIDER_PASSWORD : undefined) ||
-    (email === process.env.E2E_CLERK_ADMIN_EMAIL ? process.env.E2E_CLERK_ADMIN_PASSWORD : undefined);
+    (email === process.env.E2E_CLERK_ADMIN_EMAIL ? process.env.E2E_CLERK_ADMIN_PASSWORD : undefined) ||
+    (email === process.env.E2E_CLERK_SELLER_EMAIL ? process.env.E2E_CLERK_SELLER_PASSWORD : undefined) ||
+    (email === process.env.E2E_CLERK_COMPANY_EMAIL ? process.env.E2E_CLERK_COMPANY_PASSWORD : undefined) ||
+    (email === process.env.E2E_CLERK_BLOGGER_EMAIL ? process.env.E2E_CLERK_BLOGGER_PASSWORD : undefined);
 
   if (fromEnv) return fromEnv;
   return loadProfiles().find((p) => p.email === email)?.password;
