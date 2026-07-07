@@ -1,6 +1,6 @@
 # Role-Based System V2 — Architecture Specification
 
-> **Status:** Draft for review · **Owner:** Platform · **Last updated:** 2026-07-08
+> **Status:** Approved (decisions locked) · **Owner:** Platform · **Last updated:** 2026-07-08
 > **Authority:** This document is the **single source of truth** for the account system: account types, dashboards, navigation, permissions, onboarding, and the RBAC architecture. Any route, API, page, or action that conflicts with this document is a bug.
 > **Related:** `docs/AUTH_ACCOUNT_TYPE_ARCHITECTURE.md`, `docs/ACCESS_RULES_BY_ROLE.md`, `src/lib/accountType.js`, `server/src/auth/accountType.ts`, `server/src/auth/platformRbac.ts`.
 
@@ -47,7 +47,7 @@ One email = one `account_type`, locked at provision time (`account_type_locked_a
 
 | Future type | Likely evolution | Notes |
 |-------------|------------------|-------|
-| **Supplier** | `seller` evolves / splits into `supplier` (B2B wholesale to shops) vs `seller` (B2C marketplace) | Keep `seller` capabilities isolated behind `canListMarketplaceProducts` so a future split only adds a new type + capability flags. |
+| **Supplier** | `seller` stays **B2C** for now; future `supplier` type handles **B2B wholesale** — tracking sales to business buyers on the platform (companies, solo barbers, barber shops) | Keep `seller` capabilities isolated behind `canListMarketplaceProducts` so a future split only adds a new type + capability flags. Supplier dashboards would include B2B order tracking, buyer accounts, and wholesale catalog — distinct from consumer marketplace. |
 | **Academy** | New `academy` type: training courses, certifications, student enrollment | Would introduce entities: `course`, `enrollment`, `certificate`, `instructor`. New zone `ACADEMY`. Reuse the same RBAC + dashboard-registry architecture below so it is additive. |
 
 **Extensibility requirement:** The architecture in §4 must make adding a 7th type a matter of (a) adding the type to the enum, (b) adding a capability row, (c) registering a dashboard + nav + onboarding module — **no changes to guard logic**.
@@ -61,22 +61,21 @@ One email = one `account_type`, locked at provision time (`account_type_locked_a
 | Type | Who they are | Purpose on platform | Value received |
 |------|--------------|---------------------|----------------|
 | **Client** | End customer seeking grooming | Discover barbers, book, pay, review, shop | Convenience, loyalty rewards, trust |
-| **Solo Barber** | Independent professional (one chair) | Run calendar, clients, payouts; optional selling/content | Bookings, income, CRM, growth tools |
-| **Barber Shop** | Multi-chair business / owner | Manage staff, schedules, shop ops, analytics | Team ops, shop-level revenue & insight |
-| **Seller** | Product merchant (no chair) | Sell grooming products on marketplace | Sales channel, orders, payouts |
-| **Company** | Industry employer / brand | Recruit talent, employer branding, optional product sales | Hiring pipeline, brand reach |
-| **Blogger** | Content creator | Publish articles, grow audience; full client booking | Audience, influence, monetization |
+| **Solo Barber** | Independent professional (one chair) | Run calendar, clients, payouts; sell products on marketplace | Bookings, income, CRM, product sales |
+| **Barber Shop** | Multi-chair business / owner | Manage staff, schedules, shop ops, analytics; sell products | Team ops, shop-level revenue, retail |
+| **Seller** | Product merchant (no chair) | Sell grooming products on marketplace (B2C) | Sales channel, orders, payouts |
+| **Company** | Industry employer / brand | Recruit talent, employer branding, sell products, manage orders, company analytics | Hiring pipeline, brand reach, commerce (on request) |
+| **Blogger** | Content creator | Publish articles, grow audience, sell products; full client booking | Audience, influence, monetization |
 
 ### 2.2 Dashboard identity (summary — full design in §5)
 
 | Type | Dashboard name | Primary KPIs | Key widgets | Primary actions | Empty state |
 |------|----------------|--------------|-------------|-----------------|-------------|
 | Client | "Your hub" | Next appt, loyalty points, monthly spend | Next appointment, loyalty goal, barber picks, reputation | Book, rebook, explore | "No bookings yet → Find a barber" |
-| Solo Barber | "Chair overview" | Today's bookings, revenue, rating, payout status | Schedule, payout progress, trust score, reviews | Add service, set availability, open payouts | "No services yet → Add first service" |
-| Barber Shop | "Shop command" | Shop revenue, chair utilization, staff count, bookings | Staff roster, shop analytics, schedule, inventory | Add staff, manage schedule, view analytics | "No staff yet → Invite team" |
+| Provider (solo + shop) | "Provider command" *(adaptive)* | Today's bookings, revenue, rating, payout status; shop adds utilization & staff | Schedule, payout progress, trust score, reviews; shop adds staff roster & expenses | Add service, set availability, manage products, open payouts | Solo: "No services yet → Add first service" · Shop: "No staff yet → Invite team" |
 | Seller | "Sales overview" | Revenue, orders pending, units sold, low-stock | Sales chart, pending orders, inventory alerts, top products | Add product, fulfill order, restock | "No products → List first product" |
-| Company | "Recruitment hub" | Open roles, applicants, interviews, brand views | Job pipeline, applicant funnel, upcoming interviews | Post job, review applicants, edit brand | "No jobs → Post first role" |
-| Blogger | "Creator studio" | Views, engagement, drafts, published | Article performance, drafts, audience, next appointment | New draft, publish, view stats | "No articles → Write first post" |
+| Company | "Company hub" | Open roles, applicants, product revenue, order volume, brand views | Job pipeline, applicant funnel, product sales, orders queue, company analytics | Post job, review applicants, list product, view analytics | "No jobs yet → Post first role" |
+| Blogger | "Creator studio" | Views, engagement, product sales, drafts, published | Article performance, product performance, drafts, audience, next appointment | New draft, publish, add product, view stats | "No articles yet → Write your first post" |
 
 ### 2.3 Navigation matrix (target)
 
@@ -94,8 +93,8 @@ Legend: ✅ owned page · 🔁 shared common page (intentional) · ➖ not shown
 | Staff | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | Schedule / Roster | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ |
 | Reviews | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ |
-| Products | ➖ | 🔁 (opt) | 🔁 (opt) | ✅ | ✅ | ➖ |
-| Orders | ➖ | ➖ | ➖ | ✅ | ✅ (opt) | ➖ |
+| Products | ➖ | ✅ | ✅ | ✅ | ✅ *(on request)* | ✅ |
+| Orders | ➖ | ✅ | ✅ | ✅ | ✅ *(on request)* | ✅ |
 | Inventory | ➖ | ➖ | ✅ | ✅ | ➖ | ➖ |
 | Jobs | ➖ | 🔁 | 🔁 | 🔁 | ✅ | ➖ |
 | Applicants | ➖ | 🔁 | 🔁 | 🔁 | ✅ | ➖ |
@@ -124,23 +123,23 @@ CRUD legend: **C**reate · **R**ead (own/scope) · **U**pdate (own) · **D**elet
 | **Service** | R\* | C R U D | C R U D | ➖ | ➖ | ➖ | CRUD |
 | **Appointment/Booking** | C R U(cancel) | R U (manage) | R U (manage) | ➖ | ➖ | C R U(cancel) | CRUD |
 | **Client profile** (own) | R U | R U | R U | R U | R U | R U | CRUD |
-| **Products** | R\* | C R U D (opt) | C R U D (opt) | C R U D | C R U D | ➖ | CRUD |
+| **Products** | R\* | C R U D | C R U D | C R U D | C R U D *(on request)* | C R U D | CRUD |
 | **Articles** | R\* | C R U D (opt) | C R U D (opt) | C R U D (opt) | ➖ | C R U D | CRUD |
 | **Jobs** | R\* + apply | C R U D | C R U D | C R U D | C R U D | ➖ | CRUD |
 | **Reviews** | C (as client) | R (received) | R (received) | ➖ | ➖ | C (as client) | CRUD |
 | **Expenses** | ➖ | ➖ | C R U D | ➖ | ➖ | ➖ | R |
 | **Inventory** | ➖ | ➖ | C R U D | C R U D | ➖ | ➖ | R |
 | **Staff** (shop_member) | ➖ | ➖ | C R U D | ➖ | ➖ | ➖ | CRUD |
-| **Analytics** | ➖ | R (own) | R (shop) | R (own) | R (own) | R (own) | R (all) |
+| **Analytics** | ➖ | R (own) | R (shop) | R (own) | R (company suite) *(on request)* | R (own) | R (all) |
 | **Events** | R + register | R + register | R + register | ➖ | ➖ | R + register | CRUD |
 | **Promotions** | R\* (redeem) | C R U D (own) | C R U D (shop) | ➖ | ➖ | ➖ | CRUD |
 
 Notes:
-- "(opt)" = capability granted by business model but currently secondary; nav exposure decided per §2.3.
-- **Booking-provider tools** (calendar, services, availability, payouts, provider settings) are `solo_barber` + `shop` only → `canAccessBookingProviderTools`.
-- **Marketplace listing** → `canListMarketplaceProducts` (seller, solo_barber, shop, company, blogger per current model — see open question OQ-2).
+- **Booking-provider tools** (calendar, services, availability, provider settings) are `solo_barber` + `shop` only → `canAccessBookingProviderTools`.
+- **Marketplace listing** → `canListMarketplaceProducts` (**seller, solo_barber, shop, blogger** always; **company** via on-request activation — see §8).
 - **Job posting** → `canPostJobs` (company, seller, solo_barber, shop).
 - **Article authoring** → `canAuthorArticles` (blogger, solo_barber, shop).
+- **Company commerce & analytics** (products, orders, company-specific analytics) are **on-request features**: capability-gated, company-owned pages — not reused Seller/Provider dashboards and not enabled for other account types.
 
 ### 3.2 Single permission model (shared FE/BE)
 
@@ -150,7 +149,7 @@ One declarative source defines the matrix; both runtimes consume it:
 - **Frontend (UX mirror):** `src/lib/capabilities.js` (new) — generated from / kept in lockstep with the backend map (identical keys), used to hide nav/actions.
 - A **contract test** asserts the FE and BE capability keys are identical so they cannot drift.
 
-Capability keys (initial): `booking.provider.tools`, `service.write`, `barber.write`, `shop.write`, `staff.manage`, `inventory.manage`, `expenses.manage`, `product.write`, `article.write`, `job.write`, `promotion.write`, `booking.create`, `review.create`, `analytics.view.own`, `analytics.view.shop`.
+Capability keys (initial): `booking.provider.tools`, `service.write`, `barber.write`, `shop.write`, `staff.manage`, `inventory.manage`, `expenses.manage`, `product.write`, `order.manage`, `article.write`, `job.write`, `promotion.write`, `booking.create`, `review.create`, `analytics.view.own`, `analytics.view.shop`, `analytics.view.company`, `payment.provider_wallet`, `payment.stripe_connect`, `company.commerce` *(on request)*.
 
 ---
 
@@ -202,26 +201,40 @@ barber_video → 'booking.provider.tools'
 inspiration_post → 'article.write' or provider tools
 ```
 
-Every generic `POST`/`PATCH`/`DELETE` runs: `requireCapability(map[entity])` → then existing ownership scope. Result: **`client`/`seller`/`company`/`blogger` POST `/api/services` → 403.**
+Every generic `POST`/`PATCH`/`DELETE` runs: `requireCapability(map[entity])` → then existing ownership scope. Result: **`client` POST `/api/services` → 403**; **`seller`/`company`/`blogger` POST `/api/services` → 403**; **`solo_barber`/`shop`/`blogger`/`seller` POST `/api/products` → 200** (company when `company.commerce` is active).
 
-### 4.6 How dashboards are dynamically loaded
+### 4.6 Payment architecture (dual rails for booking providers)
+
+Booking providers (`solo_barber`, `shop`) support **both** payment options — not either/or:
+
+| Rail | Purpose | When used |
+|------|---------|-----------|
+| **Provider wallet** | In-shop / cash payments at the chair | Client pays at the shop; provider confirms cash booking via wallet flow |
+| **Stripe Connect** | Card payments at booking time | Client pays by card when booking online |
+
+- Provider wallet and Stripe Connect are **complementary**: wallet handles on-site cash; Connect handles card capture during booking.
+- **Sellers** (and marketplace sellers among providers/bloggers) use **Stripe Connect** for marketplace payouts — separate from the provider cash wallet, which is booking-specific.
+- Capability gates: `payment.provider_wallet` (booking providers), `payment.stripe_connect` (booking providers + marketplace sellers).
+
+### 4.7 How dashboards are dynamically loaded
 
 - A **dashboard registry** maps `account_type → DashboardComponent`:
 
 ```
 src/lib/dashboardRegistry.js
   client      → ClientDashboard
-  solo_barber → SoloBarberDashboard
-  shop        → ShopDashboard
-  seller      → SellerDashboard   (real, not generic)
-  company     → CompanyDashboard  (real)
-  blogger     → BloggerDashboard  (real)
+  solo_barber → ProviderDashboard   (adaptive — same component)
+  shop        → ProviderDashboard   (adaptive — same component)
+  seller      → SellerDashboard     (real, not generic)
+  company     → CompanyDashboard    (real, not generic)
+  blogger     → BloggerDashboard    (real, not generic)
 ```
 
+- **`ProviderDashboard`** is one adaptive dashboard: solo barber surfaces chair/schedule widgets; shop surfaces staff/roster/expense widgets. Same route zone (`PROVIDER`), different sections rendered by `account_type`.
 - `AccountTypeDashboard` (generic button grid) is **deleted**.
 - Each dashboard is a first-class page with its own data hooks, widgets, empty states.
 
-### 4.7 Layered enforcement summary
+### 4.8 Layered enforcement summary
 
 | Layer | Mechanism | Authority |
 |-------|-----------|-----------|
@@ -244,38 +257,43 @@ src/lib/dashboardRegistry.js
 - **Journey:** login → see next appointment → rebook or discover → loyalty progress.
 - **Empty:** "No bookings yet → Find a barber."
 
-### 5.2 Solo Barber — "Chair overview"
-- **Header:** today's date, payout status chip, setup progress (if incomplete).
-- **Sections:** Today's schedule · Payout-ready progress · Trust score · Revenue chart (7/30d) · Latest reviews · Service quick-manage.
-- **Quick actions:** Add service, Set availability, Open payouts, Message client.
-- **Journey:** login → today's bookings → fill gaps / add service → check payouts → respond to reviews.
+### 5.2 Provider — "Provider command" *(adaptive: solo barber + barber shop)*
+
+One dashboard component; sections shown/hidden by `account_type`.
+
+**Shared (solo + shop):**
+- **Header:** today's date, payout status (Stripe Connect + wallet), setup progress if incomplete.
+- **Sections:** Today's schedule · Revenue chart (7/30d) · Trust score · Latest reviews · Product sales snapshot · Payout-ready progress.
+- **Quick actions:** Add service, Set availability, Manage products, Open payouts/wallet, Message client.
+
+**Solo barber adds:** Service quick-manage · Chair utilization.
+- **Journey:** login → today's bookings → fill gaps / add service → product sales → check payouts → respond to reviews.
 - **Empty:** "No services yet → Add your first service."
 
-### 5.3 Barber Shop — "Shop command"
-- **Header:** shop switcher (if multiple), staff online count.
-- **Sections:** Shop revenue & utilization · Staff roster snapshot · Team schedule · Inventory alerts · Shop reviews · Expenses summary.
-- **Quick actions:** Invite staff, Manage schedule, Add inventory, View analytics.
-- **Journey:** login → shop KPIs → staffing/schedule → inventory → analytics.
+**Barber shop adds:** Shop switcher · Staff roster snapshot · Team schedule · Inventory alerts · Expenses summary.
+- **Quick actions (shop):** Invite staff, Manage schedule, Add inventory, View shop analytics.
+- **Journey:** login → shop KPIs → staffing/schedule → inventory → product sales → analytics.
 - **Empty:** "No staff yet → Invite your team."
 
-### 5.4 Seller — "Sales overview"
+### 5.3 Seller — "Sales overview"
 - **Header:** store status, add-product CTA.
 - **Sections:** Sales chart · Pending orders queue · Inventory/low-stock alerts · Top products · Marketplace recommendations · Payout status.
 - **Quick actions:** Add product, Fulfill order, Restock, Edit store.
 - **Journey:** login → sales overview → product performance → pending orders → inventory alerts → recommendations.
 - **Empty:** "No products yet → List your first product."
 
-### 5.5 Company — "Recruitment hub"
-- **Header:** company brand, post-job CTA.
-- **Sections:** Open roles · Applicant funnel · Upcoming interviews · Job performance · Brand profile views · (optional) product sales.
-- **Quick actions:** Post job, Review applicants, Schedule interview, Edit brand.
-- **Journey:** login → open roles → applicant pipeline → interviews → brand.
+### 5.4 Company — "Company hub"
+- **Header:** company brand, post-job CTA, commerce status (if activated).
+- **Sections:** Open roles · Applicant funnel · Upcoming interviews · Job performance · Brand profile views · Product sales & orders *(on request)* · Company analytics *(on request)*.
+- **Quick actions:** Post job, Review applicants, Schedule interview, Edit brand, List product *(when commerce active)*, View company analytics.
+- **Journey:** login → recruitment pipeline → (when enabled) product performance → orders → company analytics.
 - **Empty:** "No jobs yet → Post your first role."
+- **Note:** Commerce and company analytics modules are **company-owned** — not Seller dashboard reuse. Enabled via on-request activation (`company.commerce`).
 
-### 5.6 Blogger — "Creator studio"
+### 5.5 Blogger — "Creator studio"
 - **Header:** author identity, new-draft CTA.
-- **Sections:** Article performance (views/engagement) · Draft queue · Audience growth · Content suggestions · Publishing workflow · Next appointment (client ability).
-- **Quick actions:** New draft, Publish, View stats, Book service.
+- **Sections:** Article performance (views/engagement) · Product performance · Draft queue · Audience growth · Content suggestions · Publishing workflow · Next appointment (client ability).
+- **Quick actions:** New draft, Publish, Add product, View stats, Book service.
 - **Journey:** login → article performance → drafts → engagement → suggestions → publish.
 - **Empty:** "No articles yet → Write your first post."
 
@@ -294,13 +312,13 @@ Each role gets a dedicated 4-stage flow (Purpose → Data collected → Configur
 ### 6.2 Solo Barber
 1. **Purpose:** get chair booking-ready.
 2. **Data:** professional profile, location, specialties.
-3. **Config:** services + pricing, availability, Stripe Connect.
-4. **Activation:** payout-ready → publish profile.
+3. **Config:** services + pricing, availability, Stripe Connect (card at booking), provider wallet (in-shop cash).
+4. **Activation:** payout-ready → publish profile; optional first marketplace product.
 
 ### 6.3 Barber Shop
 1. **Purpose:** stand up shop operations.
 2. **Data:** shop profile, address, hours.
-3. **Config:** staff invites, services, schedule, Stripe.
+3. **Config:** staff invites, services, schedule, Stripe Connect + provider wallet, optional product catalog.
 4. **Activation:** shop live + first staff added.
 
 ### 6.4 Seller
@@ -310,22 +328,22 @@ Each role gets a dedicated 4-stage flow (Purpose → Data collected → Configur
 4. **Activation:** list first products → submit for review.
 
 ### 6.5 Company
-1. **Purpose:** start recruiting / branding.
-2. **Data:** company name, logo, description.
-3. **Config:** employer brand, (optional) product sales.
-4. **Activation:** post first job.
+1. **Purpose:** start recruiting / branding; commerce & analytics available on request.
+2. **Data:** company name, logo, description, industry.
+3. **Config:** employer brand; request commerce activation (products, orders, company analytics) when needed.
+4. **Activation:** post first job; commerce modules unlock after on-request approval.
 
 ### 6.6 Blogger
-1. **Purpose:** launch as a creator.
+1. **Purpose:** launch as a creator and optional product seller.
 2. **Data:** author profile, bio, content niche.
-3. **Config:** social links, categories.
-4. **Activation:** write & submit first article (client booking enabled by default).
+3. **Config:** social links, categories, Stripe Connect for product payouts.
+4. **Activation:** write & submit first article; optional first product listing (client booking enabled by default).
 
 ---
 
 ## 7. Implementation roadmap
 
-> Phased. Each phase ends with tests + a GitHub push. Do not start until this spec is approved.
+> Phased. Each phase ends with tests + a GitHub push. **Decisions locked in §8 — implementation may begin with Phase 1.**
 
 ### PHASE 1 — Security foundation *(Critical)*
 - Create shared capability model: `server/src/auth/capabilities.ts` + `src/lib/capabilities.js` + contract test (keys match).
@@ -336,7 +354,7 @@ Each role gets a dedicated 4-stage flow (Purpose → Data collected → Configur
 
 ### PHASE 2 — Dashboard redesign *(High)*
 - Delete `AccountTypeDashboard`; add `dashboardRegistry`.
-- Build real `SellerDashboard`, `CompanyDashboard`, `BloggerDashboard` (and split provider into `SoloBarberDashboard` / `ShopDashboard` if warranted).
+- Build real `SellerDashboard`, `CompanyDashboard`, `BloggerDashboard`, and one adaptive `ProviderDashboard` (solo barber + shop).
 - Wire data hooks + empty states per §5.
 
 ### PHASE 3 — Onboarding redesign *(High)*
@@ -359,24 +377,33 @@ Representative scenarios (must all pass):
 | Seller | `GET /api/provider-wallet/me` | **403** (unless seller wallet defined) |
 | Seller | `POST /api/products` | **200** |
 | Solo Barber | `POST /api/services` | **200** |
+| Solo Barber | `POST /api/products` | **200** |
 | Solo Barber | `POST /api/jobs` | **200** |
+| Shop | `POST /api/products` | **200** |
 | Company | `POST /api/jobs` | **200** |
+| Company | `POST /api/products` (commerce active) | **200** |
+| Company | `POST /api/products` (commerce inactive) | **403** |
 | Company | `POST /api/services` | **403** |
 | Blogger | `POST /api/articles` | **200** |
+| Blogger | `POST /api/products` | **200** |
 | Blogger | `POST /api/services` | **403** |
+| Solo Barber | pay booking by card (Stripe Connect) | **200** |
+| Solo Barber | confirm cash booking (provider wallet) | **200** |
 | Any non-admin | `POST /api/admin/*` | **403** |
 
 Plus: FE/BE capability contract test; per-role dashboard render tests; per-role onboarding completion tests.
 
 ---
 
-## 8. Open questions (resolve before/along Phase 1)
+## 8. Resolved decisions (locked 2026-07-08)
 
-- **OQ-1:** Split `PROVIDER` zone into distinct Solo Barber vs Shop dashboards, or one provider dashboard that adapts? (Spec assumes two dashboards; low cost to keep one adaptive.)
-- **OQ-2:** Should **Blogger** and **Solo Barber/Shop** actually sell products? Current backend allows it (`isMarketplaceSellerAccountType`) but UI hides it. Decide: grant nav or revoke capability.
-- **OQ-3:** Does **Company** get product selling + orders, or recruitment only? (Matrix marks products as optional.)
-- **OQ-4:** Seller payouts — reuse provider wallet or a dedicated seller payout model?
-- **OQ-5:** Confirm `seller` stays B2C now; `supplier` (B2B) deferred (§1.3).
+| ID | Question | Decision |
+|----|----------|----------|
+| **OQ-1** | Provider dashboards: split vs adaptive? | **One adaptive `ProviderDashboard`** for both `solo_barber` and `shop`. Same component; sections adapt by `account_type`. |
+| **OQ-2** | Can Blogger and Solo Barber/Shop sell products? | **Yes.** Grant `product.write` + nav for solo barber, shop, and blogger. UI must expose marketplace product management (currently hidden). |
+| **OQ-3** | Company scope? | **Full company suite:** recruitment + product selling + orders + company-specific analytics. These are **on-request activations** (`company.commerce`), company-owned pages — **not** reused Seller/Provider implementations and **not** enabled for other account types. |
+| **OQ-4** | Payment / payout model? | **Dual rails for booking providers:** (1) **Provider wallet** — in-shop/cash payments at the chair; (2) **Stripe Connect** — card payments at booking time. Both coexist. Marketplace sellers (seller, and providers/bloggers selling products) use **Stripe Connect** for product payouts — separate from the cash provider wallet. |
+| **OQ-5** | Seller vs Supplier? | **Confirmed:** `seller` remains **B2C** now. Future `supplier` type handles **B2B wholesale**, tracking sales to business buyers (companies, solo barbers, barber shops). Not implemented in V2. |
 
 ---
 
