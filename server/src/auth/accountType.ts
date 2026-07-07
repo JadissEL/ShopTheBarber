@@ -62,9 +62,17 @@ export function isMarketplaceSellerAccountType(accountType: string | null | unde
         accountType === 'seller' ||
         accountType === 'solo_barber' ||
         accountType === 'shop' ||
-        accountType === 'company' ||
         accountType === 'blogger'
     );
+}
+
+/** Company may sell when commerce is activated on request (see companyCommerce.ts). */
+export function isMarketplaceSellerAccountTypeWithCommerce(
+    accountType: string | null | undefined,
+    companyCommerceEnabled?: boolean,
+): boolean {
+    if (accountType === 'company') return companyCommerceEnabled === true;
+    return isMarketplaceSellerAccountType(accountType);
 }
 
 export function canReceiveAppointments(accountType: string | null | undefined): boolean {

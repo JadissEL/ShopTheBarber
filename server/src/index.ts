@@ -72,6 +72,7 @@ import { sendEmail } from './logic/email';
 import { createEntityScopeCache, getEntityScopeCondition, getManagedShopIdsForUser, rowInScope } from './entityScope';
 import { authenticateRequest } from './auth/requestUser';
 import { requireAuthPreHandler, requireAdminPreHandler } from './auth/authPreHandlers';
+import { denyGenericEntityWriteUnlessCapable } from './auth/entityWriteCapabilities';
 import { canAccessBookingProviderTools } from './auth/platformRbac';
 import { runHealthCheck } from './observability/health';
 import { serializeBookingRow, serializeBookingRows } from './logic/bookingSerialize';
@@ -1211,6 +1212,9 @@ entities.forEach(entity => {
         const writeOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
         fastify.post(routeBase, writeOpts, async (request, reply) => {
             if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+            if (AUTH_WRITE_ENTITIES.has(entity)) {
+                if (await denyGenericEntityWriteUnlessCapable(entity, request, reply)) return;
+            }
         if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
                 return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
             }
@@ -1253,6 +1257,7 @@ entities.forEach(entity => {
 
     if (entity === 'promo_code') {
         fastify.post(routeBase, { preHandler: [requireAuthPreHandler] }, async (request, reply) => {
+            if (await denyGenericEntityWriteUnlessCapable('promo_code', request, reply)) return;
             const body = request.body;
             if (!body || typeof body !== 'object' || Array.isArray(body)) {
                 return reply.status(400).send({ error: 'Request body must be a JSON object' });
@@ -1305,6 +1310,9 @@ entities.forEach(entity => {
     fastify.patch(`${routeBase}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
         if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+        if (AUTH_WRITE_ENTITIES.has(entity)) {
+            if (await denyGenericEntityWriteUnlessCapable(entity, request, reply)) return;
+        }
         if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
             return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
         }
@@ -1449,6 +1457,9 @@ entities.forEach(entity => {
     fastify.delete(`${routeBase}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
         if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+        if (AUTH_WRITE_ENTITIES.has(entity)) {
+            if (await denyGenericEntityWriteUnlessCapable(entity, request, reply)) return;
+        }
         if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
             return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
         }

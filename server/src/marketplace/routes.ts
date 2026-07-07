@@ -7,7 +7,6 @@ import {
     authorCanEdit,
     authorCanSubmit,
     type AuthUser,
-    canListProducts,
     enrichProducts,
     getProductForUser,
     getSellerProfiles,
@@ -19,6 +18,8 @@ import {
     validateSubmitReady,
     type ProductStatus,
 } from './logic';
+import { buildCapabilityContextForUser } from '../auth/entityWriteCapabilities';
+import { hasCapability } from '../auth/capabilities';
 import {
     marketplaceLegalConfig,
     requireSellerTermsAccepted,
@@ -30,10 +31,11 @@ async function requireAuth(request: any, reply: any): Promise<AuthUser | null> {
     return request.user as AuthUser;
 }
 
-async function requireSeller(request: any, reply: any): Promise<AuthUser | null> {
+async function requireProductWrite(request: any, reply: any): Promise<AuthUser | null> {
     const user = await requireAuth(request, reply);
     if (!user) return null;
-    if (!canListProducts(user.role, user.account_type)) {
+    const ctx = await buildCapabilityContextForUser(user);
+    if (!hasCapability(ctx, 'product.write')) {
         reply.status(403).send({ error: 'Marketplace seller access required' });
         return null;
     }
@@ -104,7 +106,7 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
 
     /** GET /api/products/seller-profiles, barber/shop ids for listing form */
     fastify.get('/api/products/seller-profiles', async (request, reply) => {
-        const user = await requireSeller(request, reply);
+        const user = await requireProductWrite(request, reply);
         if (!user) return;
         try {
             const profiles = await getSellerProfiles(user.id);
@@ -131,7 +133,7 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
 
     /** GET /api/products/mine */
     fastify.get('/api/products/mine', async (request, reply) => {
-        const user = await requireSeller(request, reply);
+        const user = await requireProductWrite(request, reply);
         if (!user) return;
         try {
             if (isAdmin(user.role)) {
@@ -172,7 +174,7 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
 
     /** POST /api/products */
     fastify.post('/api/products', async (request, reply) => {
-        const user = await requireSeller(request, reply);
+        const user = await requireProductWrite(request, reply);
         if (!user) return;
         const body = request.body;
         if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -213,7 +215,7 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
 
     /** PATCH /api/products/:id */
     fastify.patch<{ Params: { id: string } }>('/api/products/:id', async (request, reply) => {
-        const user = await requireSeller(request, reply);
+        const user = await requireProductWrite(request, reply);
         if (!user) return;
         const { id } = request.params;
         const body = request.body;
@@ -259,7 +261,7 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
         Params: { id: string };
         Body: { seller_terms_accepted?: boolean; seller_terms_version?: string };
     }>('/api/products/:id/submit', async (request, reply) => {
-        const user = await requireSeller(request, reply);
+        const user = await requireProductWrite(request, reply);
         if (!user) return;
         const { id } = request.params;
         try {
@@ -295,7 +297,7 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
 
     /** DELETE /api/products/:id */
     fastify.delete<{ Params: { id: string } }>('/api/products/:id', async (request, reply) => {
-        const user = await requireSeller(request, reply);
+        const user = await requireProductWrite(request, reply);
         if (!user) return;
         const { id } = request.params;
         try {

@@ -8,6 +8,8 @@ import {
     accountTypeAllows,
 } from './platformRbac';
 import type { AccountType } from './accountType';
+import { hasAnyCapability, type CapabilityKey } from './capabilities';
+import { buildCapabilityContextForUser } from './entityWriteCapabilities';
 
 export type AuthedRequest = FastifyRequest & {
     user?: { id: string; email?: string; role?: string; account_type?: string | null };
@@ -64,5 +66,22 @@ export function requireAccountTypes(...allowed: AccountType[]) {
         if (!accountTypeAllows(user?.account_type, allowed)) {
             return reply.status(403).send({ error: 'Account type not permitted for this action' });
         }
+    };
+}
+
+/** Require one or more capabilities (OR semantics when array). */
+export function requireCapability(capability: CapabilityKey | CapabilityKey[]) {
+    return async function requireCapabilityPreHandler(request: AuthedRequest, reply: FastifyReply) {
+        const ok = await authenticateRequest(request, reply);
+        if (!ok) return;
+        request.entityScopeCache = createEntityScopeCache();
+        const user = request.user;
+        if (!user?.id) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+        const caps = Array.isArray(capability) ? capability : [capability];
+        const ctx = await buildCapabilityContextForUser(user);
+        if (hasAnyCapability(ctx, caps)) return;
+        return reply.status(403).send({ error: 'Forbidden' });
     };
 }

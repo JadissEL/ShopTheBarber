@@ -5,6 +5,7 @@ import {
     isClientRole,
     canAccessProviderTools,
     isMarketplaceSellerRole,
+    canListMarketplaceProducts,
     canPostJobs,
     canAuthorArticles,
 } from './platformRbac';
@@ -29,6 +30,13 @@ describe('platformRbac', () => {
         expect(isMarketplaceSellerRole('company')).toBe(true);
         expect(isMarketplaceSellerRole('blogger')).toBe(true);
         expect(isMarketplaceSellerRole('client')).toBe(false);
+    });
+
+    it('gates marketplace product listing by capability', () => {
+        expect(canListMarketplaceProducts('seller', 'seller')).toBe(true);
+        expect(canListMarketplaceProducts('company', 'company')).toBe(false);
+        expect(canListMarketplaceProducts('company', 'company', true)).toBe(true);
+        expect(canListMarketplaceProducts('client', 'client')).toBe(false);
     });
 
     it('recognizes employer and author capabilities', () => {

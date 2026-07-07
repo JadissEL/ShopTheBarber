@@ -3,11 +3,11 @@
  * Admins are platform operators — not providers.
  */
 
+import { type AccountType } from './accountType';
 import {
-    isBookingProviderAccountType,
-    isMarketplaceSellerAccountType,
-    type AccountType,
-} from './accountType';
+    capabilityContextFromUser,
+    hasCapability,
+} from './capabilities';
 
 export const PLATFORM_PROVIDER_ROLES = new Set(['barber', 'shop_owner', 'provider']);
 export const PLATFORM_SELLER_ROLES = new Set(['seller', 'company', 'blogger']);
@@ -22,6 +22,10 @@ export type PlatformRole =
     | 'company'
     | 'blogger'
     | 'admin';
+
+function ctx(role?: string | null, accountType?: string | null, companyCommerceEnabled?: boolean) {
+    return capabilityContextFromUser({ role, accountType, companyCommerceEnabled });
+}
 
 export function isAdminRole(role?: string | null): boolean {
     return role === 'admin';
@@ -55,28 +59,24 @@ export function canAccessBookingProviderTools(
     role?: string | null,
     accountType?: string | null,
 ): boolean {
-    if (accountType) return isBookingProviderAccountType(accountType);
-    return isProviderRole(role);
+    if (accountType) return hasCapability(ctx(role, accountType), 'booking.provider.tools');
+    return hasCapability(ctx(role), 'booking.provider.tools') || isProviderRole(role);
 }
 
 export function canListMarketplaceProducts(
     role?: string | null,
     accountType?: string | null,
+    companyCommerceEnabled?: boolean,
 ): boolean {
-    if (accountType) return isMarketplaceSellerAccountType(accountType);
-    return isMarketplaceSellerRole(role);
+    return hasCapability(ctx(role, accountType, companyCommerceEnabled), 'product.write');
 }
 
 export function canPostJobs(role?: string | null, accountType?: string | null): boolean {
-    if (accountType === 'company' || accountType === 'seller') return true;
-    if (accountType === 'solo_barber' || accountType === 'shop') return true;
-    return isEmployerRole(role);
+    return hasCapability(ctx(role, accountType), 'job.write');
 }
 
 export function canAuthorArticles(role?: string | null, accountType?: string | null): boolean {
-    if (accountType === 'blogger') return true;
-    if (accountType === 'solo_barber' || accountType === 'shop') return true;
-    return isProviderRole(role) || isBloggerRole(role);
+    return hasCapability(ctx(role, accountType), 'article.write');
 }
 
 export function accountTypeAllows(
