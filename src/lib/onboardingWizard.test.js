@@ -23,6 +23,9 @@ import {
   shouldShowPayoutSetupOnDashboard,
   PAYOUT_READY_STEP_IDS,
   getSetupGuideSubtitle,
+  getSetupGuideRoleLabel,
+  isPlaceholderCompanyDescription,
+  isDefaultSellerStoreName,
 } from '@/lib/onboardingWizard';
 
 describe('onboardingWizard', () => {
@@ -150,35 +153,64 @@ describe('onboardingWizard', () => {
     expect(steps[0].id).toBe('welcome');
   });
 
-  it('computes seller completion from profile and visits', () => {
-    markGuideStepVisited('s1', 'seller', 'products');
+  it('computes seller completion from typed profile and products', () => {
     const completion = computeStepCompletion({
       role: 'seller',
-      user: { id: 's1', full_name: 'Shop Co', phone: '+15551234', stripe_connect_status: 'active' },
+      user: { id: 's1', phone: '+15551234', stripe_connect_status: 'active' },
+      sellerProfile: { display_name: 'Groom Co' },
+      productsCount: 1,
     });
     expect(completion.profile).toBe(true);
     expect(completion.products).toBe(true);
     expect(completion.stripe).toBe(true);
   });
 
-  it('computes company completion from profile and visits', () => {
-    markGuideStepVisited('c1', 'company', 'jobs');
+  it('rejects default seller store name for profile completion', () => {
+    expect(isDefaultSellerStoreName('My Store')).toBe(true);
+    const completion = computeStepCompletion({
+      role: 'seller',
+      user: { id: 's2', phone: '+15551234' },
+      sellerProfile: { display_name: 'My Store' },
+    });
+    expect(completion.profile).toBe(false);
+  });
+
+  it('computes company completion from company profile and jobs', () => {
+    expect(isPlaceholderCompanyDescription('Complete your company profile to start hiring.')).toBe(true);
     const completion = computeStepCompletion({
       role: 'company',
-      user: { id: 'c1', full_name: 'Acme Salon', phone: '+15559999' },
+      user: { id: 'c1' },
+      companyProfile: {
+        name: 'Acme Salon',
+        description: 'We operate premium barbershops across the region with strong benefits.',
+      },
+      jobsCount: 1,
     });
     expect(completion.profile).toBe(true);
     expect(completion.jobs).toBe(true);
   });
 
-  it('computes blogger completion with client booking signals', () => {
+  it('computes blogger completion from author profile and articles', () => {
     const completion = computeStepCompletion({
       role: 'blogger',
-      user: { id: 'b1', full_name: 'Writer', phone: '+15550001' },
+      user: { id: 'b1' },
+      authorProfile: {
+        pen_name: 'Clip Chronicles',
+        bio: 'I write about grooming trends, chair culture, and product reviews for modern barbers.',
+      },
+      articlesCount: 1,
       bookingsCount: 1,
     });
     expect(completion.profile).toBe(true);
+    expect(completion.article).toBe(true);
     expect(completion.explore).toBe(true);
+  });
+
+  it('returns role-specific setup guide labels', () => {
+    expect(getSetupGuideRoleLabel('seller')).toBe('Seller');
+    expect(getSetupGuideRoleLabel('company')).toBe('Company');
+    expect(getSetupGuideRoleLabel('blogger')).toBe('Blogger');
+    expect(getSetupGuideRoleLabel('barber')).toBe('Provider');
   });
 
   it('returns role-specific setup guide subtitles', () => {

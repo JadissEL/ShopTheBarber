@@ -29,6 +29,9 @@ export function useOnboardingProgress() {
   const onboardingAccountType = authAccountType || accountTypeFromRole(authRole);
   const role = resolveOnboardingRole(authUser?.role, authRole, null, onboardingAccountType);
   const isProviderFlow = role === 'provider' || role === 'shop_owner';
+  const isSellerFlow = role === 'seller';
+  const isCompanyFlow = role === 'company';
+  const isBloggerFlow = role === 'blogger';
   const authReady = syncStatus === 'ready' && !!authUser?.id;
 
   const user = useMemo(() => {
@@ -103,6 +106,42 @@ export function useOnboardingProgress() {
     enabled: !!user?.email && !!user?.id && (role === 'client' || role === 'blogger'),
   });
 
+  const { data: sellerProfile, isLoading: sellerProfileLoading } = useQuery({
+    queryKey: ['onboarding-seller-profile', user?.id],
+    queryFn: () => sovereign.onboarding.getSellerProfile(),
+    enabled: !!user?.id && isSellerFlow,
+  });
+
+  const { data: companyProfile, isLoading: companyProfileLoading } = useQuery({
+    queryKey: ['onboarding-company-profile', user?.id],
+    queryFn: () => sovereign.onboarding.getCompanyProfile(),
+    enabled: !!user?.id && isCompanyFlow,
+  });
+
+  const { data: authorProfile, isLoading: authorProfileLoading } = useQuery({
+    queryKey: ['onboarding-author-profile', user?.id],
+    queryFn: () => sovereign.onboarding.getAuthorProfile(),
+    enabled: !!user?.id && isBloggerFlow,
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['onboarding-products', user?.id],
+    queryFn: () => sovereign.products.mine(),
+    enabled: !!user?.id && isSellerFlow,
+  });
+
+  const { data: jobs = [] } = useQuery({
+    queryKey: ['onboarding-jobs', user?.id],
+    queryFn: () => sovereign.jobs.my(),
+    enabled: !!user?.id && isCompanyFlow,
+  });
+
+  const { data: articles = [] } = useQuery({
+    queryKey: ['onboarding-articles', user?.id],
+    queryFn: () => sovereign.articles.mine(),
+    enabled: !!user?.id && isBloggerFlow,
+  });
+
   const completion = useMemo(
     () =>
       computeStepCompletion({
@@ -113,8 +152,28 @@ export function useOnboardingProgress() {
         servicesCount: services.length,
         shiftsCount: shifts.length,
         bookingsCount: bookings.length,
+        sellerProfile,
+        companyProfile,
+        authorProfile,
+        productsCount: products.length,
+        jobsCount: jobs.length,
+        articlesCount: articles.length,
       }),
-    [role, user, barber, shop, services.length, shifts.length, bookings.length],
+    [
+      role,
+      user,
+      barber,
+      shop,
+      services.length,
+      shifts.length,
+      bookings.length,
+      sellerProfile,
+      companyProfile,
+      authorProfile,
+      products.length,
+      jobs.length,
+      articles.length,
+    ],
   );
 
   const progress = useMemo(
@@ -146,7 +205,10 @@ export function useOnboardingProgress() {
     (isSignedIn && !authReady && syncStatus !== 'error') ||
     (isProviderFlow &&
       !!user?.id &&
-      (barberLoading || membershipLoading || (shopId ? shopLoading : false)));
+      (barberLoading || membershipLoading || (shopId ? shopLoading : false))) ||
+    (isSellerFlow && !!user?.id && sellerProfileLoading) ||
+    (isCompanyFlow && !!user?.id && companyProfileLoading) ||
+    (isBloggerFlow && !!user?.id && authorProfileLoading);
 
   return {
     role,
@@ -170,6 +232,12 @@ export function useOnboardingProgress() {
     shopId,
     services,
     shifts,
+    sellerProfile,
+    companyProfile,
+    authorProfile,
+    products,
+    jobs,
+    articles,
     refetchBarber,
     refresh: () => {
       queryClient.invalidateQueries({ queryKey: ['onboarding-barber'] });
@@ -177,6 +245,13 @@ export function useOnboardingProgress() {
       queryClient.invalidateQueries({ queryKey: ['onboarding-shop'] });
       queryClient.invalidateQueries({ queryKey: ['onboarding-services'] });
       queryClient.invalidateQueries({ queryKey: ['onboarding-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-seller-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-company-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-author-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-products'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-articles'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-bookings'] });
     },
   };
 }

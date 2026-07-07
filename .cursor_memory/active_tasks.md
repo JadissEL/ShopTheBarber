@@ -2,7 +2,11 @@
 
 | ID | Task | Status | Priority | Depends on | Notes |
 |----|------|--------|----------|------------|-------|
-| keys-finalization | Guided walkthrough: set all API keys/secrets (Render, Vercel, GitHub, Stripe, Clerk, Sentry, Neon) | done | high | — | `docs/KEYS_FINALIZATION_WALKTHROUGH.md`, `npm run verify:secrets`, `/AdminKeysWalkthrough` |
+| rbac-v2-phase1 | V2 RBAC Phase 1 — security foundation | done | critical | spec approved | capabilities.ts, entity write gates, tests |
+| rbac-v2-phase2 | V2 RBAC Phase 2 — dashboard redesign | done | high | phase1 | Real role dashboards + registry |
+| rbac-v2-phase3 | V2 RBAC Phase 3 — onboarding redesign | pending | high | phase2 | Role-specific embed forms |
+| rbac-v2-phase4 | V2 RBAC Phase 4 — navigation cleanup | pending | high | phase2 | Seller settings, capability-filtered nav |
+| rbac-v2-phase5 | V2 RBAC Phase 5 — full test pass | pending | high | phase4 | End-to-end role scenarios |
 
 **Status:** `pending` | `in_progress` | `done` | `cancelled`  
 **Priority:** `low` | `medium` | `high`

@@ -107,6 +107,18 @@ export function isPlaceholderAddress(value) {
   return v.includes('add your address');
 }
 
+const PLACEHOLDER_COMPANY_DESCRIPTION = 'Complete your company profile to start hiring.';
+
+export function isPlaceholderCompanyDescription(value) {
+  if (!value?.trim()) return true;
+  return value.trim() === PLACEHOLDER_COMPANY_DESCRIPTION;
+}
+
+export function isDefaultSellerStoreName(value) {
+  if (!value?.trim()) return true;
+  return value.trim() === 'My Store';
+}
+
 /** @param {OnboardingStep[]} steps */
 export function getResumeStepIndex(steps, completion, storageState) {
   if (storageState?.finishedAt || storageState?.dismissed) {
@@ -275,15 +287,17 @@ export function getOnboardingSteps(role) {
       {
         id: 'profile',
         title: 'Seller profile',
-        description: 'Add your business name and seller details so buyers recognize your brand on the marketplace.',
+        description: 'Add your business name and contact details so buyers recognize your brand on the marketplace.',
         href: 'SellerDashboard',
+        embed: 'profile',
         required: true,
       },
       {
         id: 'products',
         title: 'Add your first product',
-        description: 'Create a draft listing with photos, pricing, and inventory before submitting for review.',
-        href: 'MarketplaceSeller',
+        description: 'Create a draft listing with name, price, and category before submitting for review.',
+        href: 'MarketplaceProductEditor',
+        embed: 'products',
         optional: !isFeatureEnabled('marketplace'),
       },
       {
@@ -291,6 +305,7 @@ export function getOnboardingSteps(role) {
         title: 'Payout setup',
         description: 'Connect Stripe so you receive payouts when orders ship.',
         href: 'SellerDashboard',
+        embed: 'stripe',
         optional: true,
       },
       {
@@ -314,20 +329,22 @@ export function getOnboardingSteps(role) {
         title: 'Company profile',
         description: 'Add your company name, logo, and description so candidates know who you are.',
         href: 'CompanyDashboard',
+        embed: 'profile',
         required: true,
       },
       {
         id: 'jobs',
         title: 'Post your first job',
         description: 'Create a role listing with requirements, location, and compensation details.',
-        href: 'EmployerJobs',
+        href: 'CreateJob',
+        embed: 'jobs',
         optional: !isFeatureEnabled('careers'),
       },
       {
         id: 'products',
         title: 'Optional product sales',
         description: 'Companies can also sell products on the marketplace alongside recruitment.',
-        href: 'MarketplaceSeller',
+        href: 'ProviderMarketplaceProducts',
         optional: !isFeatureEnabled('marketplace'),
       },
       {
@@ -351,6 +368,7 @@ export function getOnboardingSteps(role) {
         title: 'Author profile',
         description: 'Set your pen name and bio so readers recognize your byline across the blog.',
         href: 'BloggerDashboard',
+        embed: 'profile',
         required: true,
       },
       {
@@ -358,6 +376,7 @@ export function getOnboardingSteps(role) {
         title: 'Write your first article',
         description: 'Draft a post with photos and categories, then submit for editorial review.',
         href: 'BlogArticleEditor',
+        embed: 'article',
         optional: !isFeatureEnabled('content'),
       },
       {
@@ -445,6 +464,12 @@ export function computeStepCompletion(ctx) {
     servicesCount = 0,
     shiftsCount = 0,
     bookingsCount = 0,
+    sellerProfile,
+    companyProfile,
+    authorProfile,
+    productsCount = 0,
+    jobsCount = 0,
+    articlesCount = 0,
   } = ctx;
 
   const normalized = normalizeOnboardingRole(role);
@@ -484,32 +509,44 @@ export function computeStepCompletion(ctx) {
   const visited = new Set(readOnboardingState(user?.id, role).visitedSteps ?? []);
 
   if (normalized === 'seller') {
+    const sellerProfileOk =
+      Boolean(sellerProfile?.display_name?.trim()) &&
+      !isDefaultSellerStoreName(sellerProfile.display_name) &&
+      Boolean(user?.phone?.trim());
     return {
       welcome: true,
-      profile: profileOk,
-      products: visited.has('products'),
+      profile: sellerProfileOk,
+      products: productsCount > 0,
       stripe: user?.stripe_connect_status === 'active',
-      dashboard: visited.has('dashboard') || profileOk,
+      dashboard: sellerProfileOk && productsCount > 0,
     };
   }
 
   if (normalized === 'company') {
+    const companyProfileOk =
+      Boolean(companyProfile?.name?.trim()) &&
+      Boolean(companyProfile?.description?.trim()) &&
+      !isPlaceholderCompanyDescription(companyProfile.description);
     return {
       welcome: true,
-      profile: profileOk,
-      jobs: visited.has('jobs'),
+      profile: companyProfileOk,
+      jobs: jobsCount > 0,
       products: visited.has('products'),
-      dashboard: visited.has('dashboard') || profileOk,
+      dashboard: companyProfileOk && jobsCount > 0,
     };
   }
 
   if (normalized === 'blogger') {
+    const authorProfileOk =
+      Boolean(authorProfile?.pen_name?.trim()) &&
+      Boolean(authorProfile?.bio?.trim()) &&
+      authorProfile.bio.trim().length >= 20;
     return {
       welcome: true,
-      profile: profileOk,
-      article: visited.has('article'),
+      profile: authorProfileOk,
+      article: articlesCount > 0,
       explore: visited.has('explore') || bookingsCount > 0,
-      dashboard: visited.has('dashboard') || profileOk,
+      dashboard: authorProfileOk && articlesCount > 0,
     };
   }
 
@@ -641,6 +678,17 @@ export function getSetupGuideSubtitle(role) {
     return 'Tour the admin console and key tools';
   }
   return 'Complete your profile to get the most from ShopTheBarber';
+}
+
+/** Human-readable role label for the setup guide badge */
+export function getSetupGuideRoleLabel(role) {
+  const normalized = normalizeOnboardingRole(role);
+  if (normalized === 'admin') return 'Admin';
+  if (normalized === 'provider' || role === 'shop_owner') return 'Provider';
+  if (normalized === 'seller') return 'Seller';
+  if (normalized === 'company') return 'Company';
+  if (normalized === 'blogger') return 'Blogger';
+  return 'Client';
 }
 
 export const ONBOARDING_REDIRECT_ONCE_KEY = 'stb_onboarding_redirect_once';

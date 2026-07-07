@@ -333,6 +333,75 @@ export const sovereign = {
         }
     },
 
+    onboarding: {
+        getSellerProfile: async () => {
+            const headers = getAuthHeaders();
+            const res = await fetch(`${BASE_URL}/onboarding/seller-profile`, { headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to load seller profile');
+            }
+            return res.json();
+        },
+        updateSellerProfile: async (payload) => {
+            const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+            const res = await fetch(`${BASE_URL}/onboarding/seller-profile`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to save seller profile');
+            }
+            return res.json();
+        },
+        getCompanyProfile: async () => {
+            const headers = getAuthHeaders();
+            const res = await fetch(`${BASE_URL}/onboarding/company-profile`, { headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to load company profile');
+            }
+            return res.json();
+        },
+        updateCompanyProfile: async (payload) => {
+            const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+            const res = await fetch(`${BASE_URL}/onboarding/company-profile`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to save company profile');
+            }
+            return res.json();
+        },
+        getAuthorProfile: async () => {
+            const headers = getAuthHeaders();
+            const res = await fetch(`${BASE_URL}/onboarding/author-profile`, { headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to load author profile');
+            }
+            return res.json();
+        },
+        updateAuthorProfile: async (payload) => {
+            const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+            const res = await fetch(`${BASE_URL}/onboarding/author-profile`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to save author profile');
+            }
+            return res.json();
+        },
+    },
+
     /** Anonymous endpoints; use BASE_URL so production calls VITE_API_URL (same as entities/functions). */
     public: {
         getActivePromotions: async (barberId) => {

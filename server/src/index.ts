@@ -283,6 +283,9 @@ fastify.get('/api/admin/config-readiness', { preHandler: [requireAdminPreHandler
 import { authRoutes } from './auth/routes';
 fastify.register(authRoutes);
 
+import { onboardingRoutes } from './onboarding/routes';
+fastify.register(onboardingRoutes);
+
 // 0.1 Payment Routes (Stripe Integration)
 import { paymentRoutes } from './payments/routes';
 fastify.register(paymentRoutes);

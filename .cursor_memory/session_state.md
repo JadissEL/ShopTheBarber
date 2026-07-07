@@ -2,15 +2,13 @@
 
 ## Current snapshot
 
-- **Last session date:** 2026-06-26
-- **Current focus:** Explore / Top Rated — premium marketplace v3 rebuild — **done**.
-- **Completed:**
-  - Image-first `BarberCard` (single rating, one location line, one CTA, deduped tags)
-  - `StickyFilterBar` with horizontal scroll chips, sticky below navbar, stronger active states
-  - Hero spacing + subtitle copy; simplified results bar + sort UI
-  - Minimal site `Footer` (single copyright line)
-- **Next (optional):** Featured row at top of grid; “Use my location” CTA for distance sort; verify footer in browser on mobile guest vs auth.
-- **2026-06-30:** AUTH zone + feedback states migrated to Complete Visual System v2 (AuthSplitLayout, clerkAppearance tokens, PageLoading/EmptyState patterns).
+- **Last session date:** 2026-07-08
+- **Current focus:** V2 Role-Based System — **Phase 2 (Dashboard redesign) complete**.
+- **Completed (2026-07-08):**
+  - Phase 1: centralized capability RBAC (`bc42b4c`)
+  - Phase 2: `dashboardRegistry.js`; real Seller/Company/Blogger dashboards; adaptive Provider dashboard with product snapshot; deleted `AccountTypeDashboard`
+  - Tests: `dashboardRegistry.test.js`, `SellerDashboard.test.jsx`
+- **Next:** Phase 3 — Onboarding redesign (role-specific embed forms)
 
 ## Archive
 

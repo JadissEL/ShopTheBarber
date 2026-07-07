@@ -31,9 +31,13 @@ import {
   persistOnboardingStep,
   canAdvanceFromStep,
   markOnboardingRedirectComplete,
+  getSetupGuideRoleLabel,
 } from '@/lib/onboardingWizard';
 import { OnboardingProviderEmbed } from '@/components/onboarding/OnboardingProviderEmbed';
 import { OnboardingClientEmbed } from '@/components/onboarding/OnboardingClientEmbed';
+import { OnboardingSellerEmbed } from '@/components/onboarding/OnboardingSellerEmbed';
+import { OnboardingCompanyEmbed } from '@/components/onboarding/OnboardingCompanyEmbed';
+import { OnboardingBloggerEmbed } from '@/components/onboarding/OnboardingBloggerEmbed';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
 import { toast } from 'sonner';
@@ -71,6 +75,9 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
   const stepComplete = step ? completion[step.id] : false;
   const href = step ? getStepHref(step) : null;
   const isProviderFlow = role === 'provider' || role === 'shop_owner';
+  const isSellerFlow = role === 'seller';
+  const isCompanyFlow = role === 'company';
+  const isBloggerFlow = role === 'blogger';
   const _canAdvance = canAdvanceFromStep(step, completion);
 
   // Resume once per user/role, never jump when completion updates mid-step
@@ -202,8 +209,14 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
 
   if (!step) return null;
 
-  const roleLabel =
-    role === 'admin' ? 'Admin' : isProviderFlow ? 'Provider' : 'Client';
+  const roleLabel = getSetupGuideRoleLabel(role);
+
+  const headerTitle =
+    isProviderFlow ? 'Open in ~5 minutes'
+    : isSellerFlow ? 'Launch your store'
+    : isCompanyFlow ? 'Build your employer brand'
+    : isBloggerFlow ? 'Start creating'
+    : 'Getting started';
 
   const shell = (
     <div className={cn('flex flex-col', mode === 'page' ? 'min-h-[calc(100vh-4rem)]' : '')}>
@@ -212,7 +225,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
           <div>
             <Badge variant="secondary" className="mb-2">{roleLabel} setup</Badge>
             <h1 className="text-2xl font-bold tracking-tight">
-              {isProviderFlow ? 'Open in ~5 minutes' : 'Getting started'}
+              {headerTitle}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {isProviderFlow
@@ -317,7 +330,7 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
                     </div>
                   )}
 
-                  {href && step.id !== 'welcome' && !step.embed && step.id !== 'profile' && (
+                  {href && step.id !== 'welcome' && !step.embed && (
                     <Button asChild variant="outline" className="">
                       <Link to={href} onClick={() => trackStep('onboarding_open_in_app', step.id)}>
                         Open in app <ExternalLink className="w-4 h-4 ml-2" />
@@ -329,6 +342,22 @@ export default function OnboardingWizard({ mode = 'page', onClose, initialStep }
 
               {role === 'client' && step.id === 'profile' && user && (
                 <OnboardingClientEmbed user={user} onSaved={() => refresh()} />
+              )}
+
+              {step.embed && isSellerFlow && user && (
+                <OnboardingSellerEmbed
+                  stepId={step.id}
+                  user={user}
+                  onSaved={() => refresh()}
+                />
+              )}
+
+              {step.embed && isCompanyFlow && (
+                <OnboardingCompanyEmbed stepId={step.id} onSaved={() => refresh()} />
+              )}
+
+              {step.embed && isBloggerFlow && (
+                <OnboardingBloggerEmbed stepId={step.id} onSaved={() => refresh()} />
               )}
 
               {step.embed && isProviderFlow && (
