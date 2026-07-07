@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { dashboardPageForAccountType, isBookingProviderAccountType } from '@/lib/accountType';
+import { hasCapability, capabilityContextFromUser } from '@/lib/capabilities';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Calendar, DollarSign, TrendingUp, Clock, Download, UserCheck, Heart, Scissors, Ban, Scale } from 'lucide-react';
+import { Calendar, DollarSign, TrendingUp, Clock, Download, UserCheck, Heart, Scissors, Ban, Scale, Package, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -23,12 +24,13 @@ import ProviderSetupProgressCard from '@/components/onboarding/ProviderSetupProg
 import ProviderTrustScoreCard from '@/components/provider/ProviderTrustScoreCard';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
+import DashboardSection from '@/components/dashboard/shared/DashboardSection';
 import { stb, chartColor } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
 
 export default function ProviderDashboard() {
     const navigate = useNavigate();
-    const { isAdmin, isLoading: roleLoading, accountType } = useEffectiveRole();
+    const { isAdmin, isLoading: roleLoading, accountType, role } = useEffectiveRole();
 
     useEffect(() => {
         if (roleLoading) return;
@@ -74,6 +76,22 @@ export default function ProviderDashboard() {
     });
 
     const shopId = myShopMembership?.shop_id;
+
+    const canSellProducts = hasCapability(
+        capabilityContextFromUser({ accountType, role }),
+        'product.write',
+    );
+
+    const { data: marketplaceProducts = [] } = useQuery({
+        queryKey: ['provider-dashboard-products'],
+        queryFn: () => sovereign.products.mine(),
+        enabled: !!user && canSellProducts,
+    });
+
+    const publishedProducts = marketplaceProducts.filter((p) => p.status === 'published');
+    const lowStockProducts = marketplaceProducts.filter(
+        (p) => typeof p.stock === 'number' && p.stock >= 0 && p.stock <= 5,
+    );
 
     // 2. Fetch Provider Analytics
     const { data: operationalStats } = useQuery({
@@ -127,7 +145,8 @@ export default function ProviderDashboard() {
 
     if (isUserLoading || roleLoading) return <PageLoading message="Loading dashboard..." />;
 
-    const isShopConsole = Boolean(shopId);
+    const isShopConsole = accountType === 'shop' || Boolean(shopId);
+    const isSoloBarber = accountType === 'solo_barber' && !shopId;
     const upcomingToday = bookings
         .filter(b => b.status === 'confirmed' && new Date(b.start_time) >= new Date())
         .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
@@ -139,16 +158,23 @@ export default function ProviderDashboard() {
 
             <PageHeader
                 label="Provider"
-                title={isShopConsole ? 'Shop console' : 'Your business'}
+                title="Provider command"
                 subtitle={
                     isShopConsole
-                        ? 'Team performance, revenue, and today\'s appointments.'
-                        : 'Today\'s schedule, earnings, and client reviews.'
+                        ? 'Shop revenue, team performance, product sales, and today\'s schedule.'
+                        : 'Today\'s chair, earnings, product sales, and client reviews.'
                 }
                 compact
                 variant="light"
                 tier="app"
             >
+                {canSellProducts ? (
+                    <Button asChild variant="outline" className="h-11">
+                        <Link to={createPageUrl('MarketplaceProductEditor')}>
+                            <Plus className="w-4 h-4 mr-2 inline" /> Add product
+                        </Link>
+                    </Button>
+                ) : null}
                 <Button onClick={handleExport} variant="outline" className="h-11">
                     <Download className="w-4 h-4 mr-2" /> Export
                 </Button>
@@ -182,6 +208,48 @@ export default function ProviderDashboard() {
                             ))}
                         </div>
                     </section>
+                ) : isSoloBarber && !myBarberProfile ? (
+                    <section className="mb-8">
+                        <Card className="border-border bg-card p-6 text-center">
+                            <Scissors className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground mb-4">No services yet — add your first service to start taking bookings.</p>
+                            <Button asChild>
+                                <Link to={createPageUrl('ProviderSettings')}>Add your first service</Link>
+                            </Button>
+                        </Card>
+                    </section>
+                ) : null}
+
+                {canSellProducts ? (
+                    <DashboardSection
+                        title="Product sales"
+                        subtitle="Marketplace listings tied to your provider account."
+                        actionLabel="Manage products"
+                        actionPage="ProviderMarketplaceProducts"
+                    >
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            <MetricCard
+                                title="Live products"
+                                value={String(publishedProducts.length)}
+                                subValue={`${marketplaceProducts.length} total`}
+                                icon={Package}
+                            />
+                            <MetricCard
+                                title="Low stock"
+                                value={String(lowStockProducts.length)}
+                                subValue="At or below 5 units"
+                                icon={Package}
+                            />
+                        </div>
+                        {marketplaceProducts.length === 0 ? (
+                            <Card className="border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                                No marketplace products yet.{' '}
+                                <Link to={createPageUrl('MarketplaceProductEditor')} className="text-primary font-semibold hover:underline">
+                                    List your first product
+                                </Link>
+                            </Card>
+                        ) : null}
+                    </DashboardSection>
                 ) : null}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
