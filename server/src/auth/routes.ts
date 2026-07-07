@@ -12,6 +12,7 @@ import {
 import { resolveAndSyncUserRole } from './resolveUserRole';
 import { isAccountType, ACCOUNT_TYPES, dashboardPathForAccountType } from './accountType';
 import { createSignupIntent, findUserByClerkProfile, provisionUser } from './provisionUser';
+import { resolveCompanyCommerceEnabled } from './companyCommerce';
 
 export async function authRoutes(fastify: FastifyInstance) {
     /** Public — create short-lived signup intent after account type selection */
@@ -116,6 +117,10 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
 
         const role = await resolveAndSyncUserRole(user.id, user.role);
+        const company_commerce_enabled = await resolveCompanyCommerceEnabled({
+            id: user.id,
+            account_type: user.account_type,
+        });
         return {
             ...user,
             role,
@@ -124,6 +129,7 @@ export async function authRoutes(fastify: FastifyInstance) {
             phone: user.phone,
             sms_reminders_enabled: user.sms_reminders_enabled !== false,
             email_reminders_enabled: user.email_reminders_enabled !== false,
+            company_commerce_enabled,
         };
     });
 

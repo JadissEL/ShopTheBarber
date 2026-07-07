@@ -10,6 +10,7 @@
 
 import { getFeatureFlagOverride } from '@/lib/featureFlagOverrides';
 import { DISCOVERY_ROUTES } from '@/lib/discoveryRoutes';
+import { hasCapability } from '@/lib/capabilities';
 
 /** @typedef {'core'|'marketplace'|'careers'|'content'|'engagement'|'communication'|'programs'|'shop_ops'|'admin'} FeatureId */
 
@@ -38,7 +39,7 @@ export const FEATURE_MODULES = {
     pages: [
       'Marketplace', 'ProductDetail', 'BrandProfile', 'ShoppingBag', 'Checkout',
       'Wishlist', 'MyOrders', 'OrderTracking', 'GroomingVault', 'ClientWallet',
-      'ProviderMarketplaceProducts', 'MarketplaceProductEditor', 'SellerOrders',
+      'ProviderMarketplaceProducts', 'MarketplaceProductEditor', 'SellerOrders', 'SellerSettings',
       'AdminMarketplaceManagement', 'AdminOrders',
     ],
   },
@@ -252,10 +253,10 @@ export const PROVIDER_NAV_GROUPS = [
   {
     title: 'Grow',
     items: [
-      { feature: 'marketplace', label: 'Marketplace', page: 'ProviderMarketplaceProducts' },
-      { feature: 'marketplace', label: 'Orders to ship', page: 'SellerOrders' },
-      { feature: 'content', label: 'Blog', page: 'ProviderBlogArticles' },
-      { feature: 'careers', label: 'My Jobs', page: 'MyJobs' },
+      { feature: 'marketplace', label: 'Marketplace', page: 'ProviderMarketplaceProducts', capability: 'product.write' },
+      { feature: 'marketplace', label: 'Orders to ship', page: 'SellerOrders', capability: 'order.manage' },
+      { feature: 'content', label: 'Blog', page: 'ProviderBlogArticles', capability: 'article.write' },
+      { feature: 'careers', label: 'My Jobs', page: 'MyJobs', capability: 'job.write' },
     ],
   },
   {
@@ -282,10 +283,15 @@ export const PROVIDER_NAV_GROUPS = [
   },
 ];
 
-export function getProviderNavGroups({ isManager = false, isSolo = false } = {}) {
+export function getProviderNavGroups({ isManager = false, isSolo = false, capabilityContext = null } = {}) {
   return PROVIDER_NAV_GROUPS.map((group) => {
     if (group.managerOnly && !isManager) return null;
     let items = group.items.filter((item) => isFeatureEnabled(item.feature));
+    if (capabilityContext) {
+      items = items.filter(
+        (item) => !item.capability || hasCapability(capabilityContext, item.capability),
+      );
+    }
     if (isSolo) {
       items = items.filter((item) => item.page !== 'SellerOrders');
     }

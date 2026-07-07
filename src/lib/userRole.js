@@ -101,7 +101,7 @@ export { dashboardPageForAccountType };
 export function settingsPageForRole(role) {
   if (isAdminRole(role)) return 'AdminPlatformHealth';
   if (isProviderRole(role)) return 'ProviderSettings';
-  if (role === 'seller') return 'ProviderMarketplaceProducts';
+  if (role === 'seller') return 'SellerSettings';
   if (role === 'company') return 'MyJobs';
   if (role === 'blogger') return 'ProviderBlogArticles';
   return 'AccountSettings';

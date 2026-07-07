@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { sovereign } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
-import { canAccessProviderTools } from '@/lib/userRole';
+import { useCapabilityContext } from '@/hooks/useCapabilityContext';
+import { hasCapability } from '@/lib/capabilities';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +26,9 @@ const STATUS_LABELS = {
 export default function ProviderMarketplaceProducts() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAuthenticated, role } = useAuth();
-  const canSell = canAccessProviderTools(role);
+  const { isAuthenticated } = useAuth();
+  const capabilityContext = useCapabilityContext();
+  const canSell = hasCapability(capabilityContext, 'product.write');
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products-mine'],

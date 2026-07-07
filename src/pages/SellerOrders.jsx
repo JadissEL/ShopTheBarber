@@ -9,7 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, Truck, MapPin, Loader } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { canAccessProviderTools } from '@/lib/userRole';
+import { useCapabilityContext } from '@/hooks/useCapabilityContext';
+import { hasCapability } from '@/lib/capabilities';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -28,15 +29,16 @@ const STATUS_OPTIONS = [
 export default function SellerOrders() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { isAuthenticated, role } = useAuth();
-    const canSell = canAccessProviderTools(role);
+    const { isAuthenticated } = useAuth();
+    const capabilityContext = useCapabilityContext();
+    const canManageOrders = hasCapability(capabilityContext, 'order.manage');
     const [expandedId, setExpandedId] = useState(null);
     const [trackingForms, setTrackingForms] = useState({});
 
     const { data: orders = [], isLoading } = useQuery({
         queryKey: ['seller-orders'],
         queryFn: () => sovereign.shipping.listSellerOrders(),
-        enabled: isAuthenticated && canSell,
+        enabled: isAuthenticated && canManageOrders,
     });
 
     const updateMutation = useMutation({
@@ -48,7 +50,7 @@ export default function SellerOrders() {
         onError: (e) => toast.error(e.message),
     });
 
-    if (!isAuthenticated || !canSell) {
+    if (!isAuthenticated || !canManageOrders) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4">
                 <MetaTags title="Seller orders" />

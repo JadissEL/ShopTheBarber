@@ -61,6 +61,7 @@ function mapClerkUser(clerkUser, serverUser) {
     phone: serverUser?.phone,
     stripe_connect_status: serverUser?.stripe_connect_status,
     stripe_account_id: serverUser?.stripe_account_id,
+    company_commerce_enabled: serverUser?.company_commerce_enabled === true,
   };
 }
 

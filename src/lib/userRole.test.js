@@ -44,7 +44,7 @@ describe('userRole', () => {
     expect(dashboardPageForRole('seller')).toBe('SellerDashboard');
     expect(dashboardPageForRole('client')).toBe('Dashboard');
     expect(dashboardPageForRole('admin')).toBe('GlobalFinancials');
-    expect(settingsPageForRole('seller')).toBe('ProviderMarketplaceProducts');
+    expect(settingsPageForRole('seller')).toBe('SellerSettings');
   });
 
   it('restricts booking tools to barber account types', () => {

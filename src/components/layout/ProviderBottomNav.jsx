@@ -26,6 +26,7 @@ import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useManagedShop } from '@/hooks/useManagedShop';
 import { shouldShowProviderBottomNav } from '@/lib/mobileLayout';
 import { getProviderMobileNav } from '@/lib/dashboardNav';
+import { useCapabilityContext } from '@/hooks/useCapabilityContext';
 import { isNavActive } from '@/lib/navActive';
 import { cn } from '@/lib/utils';
 import { stb } from '@/lib/stbUi';
@@ -83,11 +84,13 @@ export default function ProviderBottomNav() {
   const { isAuthenticated } = useAuth();
   const { effectiveRole } = useEffectiveRole();
   const { isManager, shopId } = useManagedShop();
+  const capabilityContext = useCapabilityContext();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const { primary, more, groups } = getProviderMobileNav({
     isManager,
     isSolo: !shopId,
+    capabilityContext,
   });
 
   if (

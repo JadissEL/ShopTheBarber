@@ -3,6 +3,7 @@ import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useManagedShop } from '@/hooks/useManagedShop';
+import { useCapabilityContext } from '@/hooks/useCapabilityContext';
 import { getProviderNavGroups } from '@/lib/featureRegistry';
 import { stb } from '@/lib/stbUi';
 import {
@@ -59,11 +60,16 @@ export default function ProviderDesktopSidebar() {
   const location = useLocation();
   const { logout, user, role } = useAuth();
   const { isManager, shopId } = useManagedShop();
+  const capabilityContext = useCapabilityContext();
   const isDesktop = useIsDesktop();
 
   if (!isDesktop) return null;
 
-  const navGroups = getProviderNavGroups({ isManager, isSolo: !shopId });
+  const navGroups = getProviderNavGroups({
+    isManager,
+    isSolo: !shopId,
+    capabilityContext,
+  });
 
   return (
     <aside className="w-64 shrink-0 border-r border-white/10 bg-[hsl(var(--navy))] text-white flex flex-col min-h-screen sticky top-0 font-sans">

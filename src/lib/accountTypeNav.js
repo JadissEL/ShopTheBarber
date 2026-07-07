@@ -1,25 +1,43 @@
-import { LayoutDashboard, ShoppingBag, Package, FileText, Briefcase, Users, PenLine, Search, MessageSquare } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
+  Briefcase,
+  Users,
+  PenLine,
+  Search,
+  MessageSquare,
+  Settings,
+} from 'lucide-react';
 
+/** @typedef {{ label: string, page: string, icon: import('lucide-react').LucideIcon, feature?: string, capability?: string }} AccountTypeNavItem */
+
+/** @type {AccountTypeNavItem[]} */
 export const SELLER_NAV = [
   { label: 'Dashboard', page: 'SellerDashboard', icon: LayoutDashboard },
-  { label: 'Products', page: 'ProviderMarketplaceProducts', icon: Package },
-  { label: 'Orders', page: 'SellerOrders', icon: ShoppingBag },
-  { label: 'Blog', page: 'ProviderBlogArticles', icon: FileText },
-  { label: 'Settings', page: 'ProviderSettings', icon: Users },
+  { label: 'Products', page: 'ProviderMarketplaceProducts', icon: Package, feature: 'marketplace', capability: 'product.write' },
+  { label: 'Orders', page: 'SellerOrders', icon: ShoppingBag, feature: 'marketplace', capability: 'order.manage' },
+  { label: 'Jobs', page: 'MyJobs', icon: Briefcase, feature: 'careers', capability: 'job.write' },
+  { label: 'Settings', page: 'SellerSettings', icon: Settings },
 ];
 
+/** @type {AccountTypeNavItem[]} */
 export const COMPANY_NAV = [
   { label: 'Dashboard', page: 'CompanyDashboard', icon: LayoutDashboard },
-  { label: 'Jobs', page: 'MyJobs', icon: Briefcase },
-  { label: 'Applicants', page: 'ApplicantReview', icon: Users },
-  { label: 'Products', page: 'ProviderMarketplaceProducts', icon: Package },
-  { label: 'Settings', page: 'AccountSettings', icon: Users },
+  { label: 'Jobs', page: 'MyJobs', icon: Briefcase, feature: 'careers', capability: 'job.write' },
+  { label: 'Applicants', page: 'ApplicantReview', icon: Users, feature: 'careers', capability: 'job.write' },
+  { label: 'Products', page: 'ProviderMarketplaceProducts', icon: Package, feature: 'marketplace', capability: 'company.commerce' },
+  { label: 'Settings', page: 'AccountSettings', icon: Settings },
 ];
 
+/** @type {AccountTypeNavItem[]} */
 export const BLOGGER_NAV = [
   { label: 'Dashboard', page: 'BloggerDashboard', icon: LayoutDashboard },
   { label: 'Explore', page: 'Explore', icon: Search },
-  { label: 'Articles', page: 'ProviderBlogArticles', icon: PenLine },
-  { label: 'Messages', page: 'Chat', icon: MessageSquare },
-  { label: 'Settings', page: 'AccountSettings', icon: Users },
+  { label: 'Articles', page: 'ProviderBlogArticles', icon: PenLine, feature: 'content', capability: 'article.write' },
+  { label: 'Products', page: 'ProviderMarketplaceProducts', icon: Package, feature: 'marketplace', capability: 'product.write' },
+  { label: 'Messages', page: 'Chat', icon: MessageSquare, feature: 'communication' },
+  { label: 'Settings', page: 'AccountSettings', icon: Settings },
 ];
+
+export { filterNavItemsByCapabilities } from '@/lib/navCapabilities';

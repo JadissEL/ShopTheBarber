@@ -8,7 +8,8 @@ import ClientLayout from '@/components/layout/ClientLayout';
 import ProviderLayout from '@/components/layout/ProviderLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
 import AccountTypeLayout from '@/components/layout/AccountTypeLayout';
-import { SELLER_NAV, COMPANY_NAV, BLOGGER_NAV } from '@/lib/accountTypeNav';
+import { SELLER_NAV, COMPANY_NAV, BLOGGER_NAV, filterNavItemsByCapabilities } from '@/lib/accountTypeNav';
+import { useCapabilityContext } from '@/hooks/useCapabilityContext';
 import AccountProvisioner from '@/components/auth/AccountProvisioner';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from "@/components/theme-provider"
@@ -34,6 +35,10 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
   const path = location.pathname;
   const { user, isAuthenticated, syncStatus } = useAuth();
   const { effectiveRole, accountType } = useEffectiveRole();
+  const capabilityContext = useCapabilityContext();
+  const sellerNav = filterNavItemsByCapabilities(SELLER_NAV, capabilityContext);
+  const companyNav = filterNavItemsByCapabilities(COMPANY_NAV, capabilityContext);
+  const bloggerNav = filterNavItemsByCapabilities(BLOGGER_NAV, capabilityContext);
   const zone = getZoneFromPath(path, {
     isAuthenticated: isAuthenticated && !!user,
     role: effectiveRole,
@@ -86,15 +91,15 @@ export default function Layout({ children, currentPageName: _currentPageName }) 
                   ) : zone === APP_ZONES.ADMIN ? (
                     <AdminLayout>{children}</AdminLayout>
                   ) : zone === APP_ZONES.SELLER ? (
-                    <AccountTypeLayout navItems={SELLER_NAV} brandLabel="Seller Hub">
+                    <AccountTypeLayout navItems={sellerNav} brandLabel="Seller Hub">
                       {children}
                     </AccountTypeLayout>
                   ) : zone === APP_ZONES.COMPANY ? (
-                    <AccountTypeLayout navItems={COMPANY_NAV} brandLabel="Company Hub">
+                    <AccountTypeLayout navItems={companyNav} brandLabel="Company Hub">
                       {children}
                     </AccountTypeLayout>
                   ) : zone === APP_ZONES.BLOGGER ? (
-                    <AccountTypeLayout navItems={BLOGGER_NAV} brandLabel="Creator Hub">
+                    <AccountTypeLayout navItems={bloggerNav} brandLabel="Creator Hub">
                       {children}
                     </AccountTypeLayout>
                   ) : (

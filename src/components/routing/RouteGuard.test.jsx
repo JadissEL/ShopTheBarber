@@ -73,6 +73,32 @@ describe('RouteGuard', () => {
     });
   });
 
+  it('redirects sellers away from provider settings', async () => {
+    useAuth.mockReturnValue({
+      user: { id: 'u1' },
+      isLoadingAuth: false,
+      isSignedIn: true,
+      syncStatus: 'ready',
+    });
+    useEffectiveRole.mockReturnValue({
+      effectiveRole: 'seller',
+      accountType: 'seller',
+      isProvider: false,
+      isAdmin: false,
+      isBookingProvider: false,
+      isLoading: false,
+    });
+
+    renderGuard('/ProviderSettings');
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        expect.stringMatching(/SellerDashboard/i),
+        { replace: true },
+      );
+    });
+  });
+
   it('redirects admins from client dashboard to GlobalFinancials', async () => {
     useAuth.mockReturnValue({
       user: { id: 'admin-1' },

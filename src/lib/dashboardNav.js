@@ -20,8 +20,8 @@ export function flattenNavGroups(groups) {
 }
 
 /** Provider mobile bar — Daily group primaries + More for Grow/Programs/Shop team. */
-export function getProviderMobileNav({ isManager = false, isSolo = false } = {}) {
-  const groups = getProviderNavGroups({ isManager, isSolo });
+export function getProviderMobileNav({ isManager = false, isSolo = false, capabilityContext = null } = {}) {
+  const groups = getProviderNavGroups({ isManager, isSolo, capabilityContext });
   const dailyGroup = groups.find((g) => g.title === 'Daily' || g.title === 'Your brand') ?? groups[0];
   const dailyItems = dailyGroup?.items ?? [];
 
