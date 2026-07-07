@@ -56,6 +56,104 @@ function accountTypeFromRoleHint(role?: string): AccountType {
     return 'client';
 }
 
+export async function seedSellerProfile(userId: string, displayName = 'Test Store') {
+    return prisma.seller_profiles.upsert({
+        where: { user_id: userId },
+        create: {
+            id: crypto.randomUUID(),
+            user_id: userId,
+            display_name: displayName,
+            seller_type: 'vendor',
+        },
+        update: { display_name: displayName },
+    });
+}
+
+export async function seedCompanyWorkspace(userId: string, companyName = 'Test Company') {
+    const existing = await prisma.company_accounts.findUnique({ where: { user_id: userId } });
+    if (existing) {
+        const company = await prisma.companies.findUnique({ where: { id: existing.company_id } });
+        return { companyId: existing.company_id, company };
+    }
+    const companyId = crypto.randomUUID();
+    await prisma.companies.create({
+        data: {
+            id: companyId,
+            name: companyName,
+            description: 'Integration test company with enough description text.',
+        },
+    });
+    await prisma.company_accounts.create({
+        data: {
+            id: crypto.randomUUID(),
+            user_id: userId,
+            company_id: companyId,
+        },
+    });
+    return { companyId };
+}
+
+export async function seedAuthorProfile(userId: string, penName = 'Test Author') {
+    return prisma.author_profiles.upsert({
+        where: { user_id: userId },
+        create: {
+            id: crypto.randomUUID(),
+            user_id: userId,
+            pen_name: penName,
+            bio: 'Integration test author bio with enough characters.',
+        },
+        update: { pen_name: penName },
+    });
+}
+
+export async function seedSoloBarberRecord(userId: string, name = 'Solo Barber') {
+    const existing = await prisma.barbers.findFirst({ where: { user_id: userId } });
+    if (existing) return existing;
+    return prisma.barbers.create({
+        data: {
+            user_id: userId,
+            name,
+            title: 'Independent Barber',
+            updated_at: new Date().toISOString(),
+        },
+    });
+}
+
+export async function seedShopWorkspace(userId: string, shopName = 'Test Shop') {
+    const existingShop = await prisma.shops.findFirst({ where: { owner_id: userId } });
+    if (existingShop) {
+        const barber = await prisma.barbers.findFirst({ where: { user_id: userId } });
+        return { shop: existingShop, barber, shopId: existingShop.id, barberId: barber?.id };
+    }
+    const shopId = crypto.randomUUID();
+    const barber = await seedSoloBarberRecord(userId, 'Shop Owner');
+    const shop = await prisma.shops.create({
+        data: {
+            id: shopId,
+            owner_id: userId,
+            name: shopName,
+            location: '123 Test St',
+            updated_at: new Date().toISOString(),
+        },
+    });
+    await prisma.shop_members.create({
+        data: {
+            id: crypto.randomUUID(),
+            shop_id: shopId,
+            barber_id: barber.id,
+            user_id: userId,
+            role: 'owner',
+            status: 'active',
+            booking_enabled: true,
+        },
+    });
+    await prisma.barbers.update({
+        where: { id: barber.id },
+        data: { shop_id: shopId },
+    });
+    return { shop, barber, shopId, barberId: barber.id };
+}
+
 /** Merge account_type fields into prisma.users.create data for legacy test seeds. */
 export function withProvisionedAccountFields<T extends { role?: string | null }>(
     data: T,

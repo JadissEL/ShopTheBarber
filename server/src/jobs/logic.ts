@@ -49,16 +49,25 @@ export function isPublicJob(job: Pick<jobs, 'status' | 'published'>): boolean {
     return job.status === 'published' && job.published === true;
 }
 
-export async function getEmployerProfiles(userId: string): Promise<{ shopIds: string[]; canUseCompany: boolean }> {
-    const [ownedShops, memberRows] = await Promise.all([
+export async function getEmployerProfiles(userId: string): Promise<{
+    shopIds: string[];
+    companyIds: string[];
+    canUseCompany: boolean;
+}> {
+    const [ownedShops, memberRows, companyAccount] = await Promise.all([
         prisma.shops.findMany({ where: { owner_id: userId }, select: { id: true } }),
         prisma.shop_members.findMany({
             where: { user_id: userId, role: { in: ['owner', 'manager'] } },
             select: { shop_id: true },
         }),
+        prisma.company_accounts.findUnique({
+            where: { user_id: userId },
+            select: { company_id: true },
+        }),
     ]);
     const shopIds = [...new Set([...ownedShops.map((s) => s.id), ...memberRows.map((m) => m.shop_id)])];
-    return { shopIds, canUseCompany: false };
+    const companyIds = companyAccount?.company_id ? [companyAccount.company_id] : [];
+    return { shopIds, companyIds, canUseCompany: companyIds.length > 0 };
 }
 
 export type JobWriteInput = {
@@ -192,7 +201,12 @@ export async function resolveEmployerFields(
     }
 
     if (employerType === 'company') {
-        throw new Error('Only admins can post jobs on behalf of a company');
+        const profiles = await getEmployerProfiles(user.id);
+        const companyId = input.company_id || profiles.companyIds[0];
+        if (!companyId || !profiles.companyIds.includes(companyId)) {
+            throw new Error('You must post jobs for your company profile');
+        }
+        return { employer_type: 'company', shop_id: null, company_id: companyId };
     }
 
     const profiles = await getEmployerProfiles(user.id);
@@ -213,6 +227,12 @@ export async function userCanManageJob(userId: string, job: jobs, role?: string 
             where: { shop_id: job.shop_id, user_id: userId, role: { in: ['owner', 'manager'] } },
         });
         return !!member;
+    }
+    if (job.employer_type === 'company' && job.company_id) {
+        const account = await prisma.company_accounts.findFirst({
+            where: { user_id: userId, company_id: job.company_id },
+        });
+        if (account) return true;
     }
     return false;
 }

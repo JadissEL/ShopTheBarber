@@ -164,13 +164,20 @@ export async function jobsRoutes(fastify: FastifyInstance) {
                       orderBy: { name: 'asc' },
                   })
                 : [];
-            const companies = isAdmin(user.role)
-                ? await prisma.companies.findMany({
-                      select: { id: true, name: true, logo_url: true },
-                      orderBy: { name: 'asc' },
-                  })
-                : [];
-            return { shops, companies, canUseCompany: isAdmin(user.role) };
+            const companies =
+                isAdmin(user.role)
+                    ? await prisma.companies.findMany({
+                          select: { id: true, name: true, logo_url: true },
+                          orderBy: { name: 'asc' },
+                      })
+                    : profiles.companyIds.length
+                      ? await prisma.companies.findMany({
+                            where: { id: { in: profiles.companyIds } },
+                            select: { id: true, name: true, logo_url: true },
+                            orderBy: { name: 'asc' },
+                        })
+                      : [];
+            return { shops, companies, canUseCompany: isAdmin(user.role) || profiles.canUseCompany };
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : 'Failed to load employer profiles';
             fastify.log.error(e);
@@ -187,14 +194,14 @@ export async function jobsRoutes(fastify: FastifyInstance) {
             if (isAdmin(user.role)) {
                 rows = await prisma.jobs.findMany({ orderBy: { updated_at: 'desc' } });
             } else {
-                const ownedShops = await prisma.shops.findMany({
-                    where: { owner_id: user.id },
-                    select: { id: true },
-                });
-                const shopIds = ownedShops.map((s) => s.id);
+                const profiles = await getEmployerProfiles(user.id);
                 rows = await prisma.jobs.findMany({
                     where: {
-                        OR: [{ created_by: user.id }, ...(shopIds.length ? [{ shop_id: { in: shopIds } }] : [])],
+                        OR: [
+                            { created_by: user.id },
+                            ...(profiles.shopIds.length ? [{ shop_id: { in: profiles.shopIds } }] : []),
+                            ...(profiles.companyIds.length ? [{ company_id: { in: profiles.companyIds } }] : []),
+                        ],
                     },
                     orderBy: { updated_at: 'desc' },
                 });
