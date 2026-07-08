@@ -500,9 +500,10 @@ Frontend path:
 
 Before claiming production-ready RBAC:
 
-- [ ] Remediate generic-router vulnerabilities V1–V4 (validation report §3)
-- [ ] Default-deny write policy for unmapped entities
-- [ ] FE/BE capability grant parity tests
-- [ ] Fix client dashboard Featured Studios crash (`MapPin` import)
+- [x] Remediate generic-router vulnerabilities V1–V4 (validation report §12, 2026-07-08)
+- [x] Default-deny write policy for unmapped generic CREATE (`isGenericCreateAllowed`)
+- [x] Fix client dashboard Featured Studios crash (`MapPin` import)
+- [ ] Full FE/BE capability grant parity tests (baseline matrix added; auto-sync TBD)
+- [ ] DB-backed company commerce activation
 - [ ] Run `npm run qa:provision` + `npm run test:e2e:journeys` on staging
 
