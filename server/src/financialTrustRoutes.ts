@@ -510,10 +510,20 @@ export async function financialTrustRoutes(fastify: FastifyInstance) {
         return finalizeSeasonAndHallOfFame(request.params.seasonId);
     });
 
-    // Sync barber scores on demand (provider)
+    // Sync barber scores on demand (provider/admin for own barber)
     fastify.post<{ Params: { barberId: string } }>('/api/barbers/:barberId/sync-trust', async (request, reply) => {
         const ok = await authenticateRequest(request, reply);
         if (!ok) return;
+        const user = request.user as { id: string; role?: string };
+        if (user.role !== 'admin') {
+            const barber = await prisma.barbers.findUnique({
+                where: { id: request.params.barberId },
+                select: { user_id: true },
+            });
+            if (!barber || barber.user_id !== user.id) {
+                return reply.status(403).send({ error: 'Forbidden' });
+            }
+        }
         const trust = await syncBarberTrustScore(request.params.barberId);
         const availability = await syncAvailabilityScore(request.params.barberId);
         return { trust_score: trust, availability_score: availability };

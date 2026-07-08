@@ -73,7 +73,8 @@ import { createEntityScopeCache, getEntityScopeCondition, getManagedShopIdsForUs
 import { authenticateRequest } from './auth/requestUser';
 import { requireAuthPreHandler, requireAdminPreHandler } from './auth/authPreHandlers';
 import { denyGenericEntityWriteUnlessCapable } from './auth/entityWriteCapabilities';
-import { canAccessBookingProviderTools } from './auth/platformRbac';
+import { denyWriteScopeOnCreate, denyWriteScopeOnPatch, isGenericCreateAllowed } from './auth/entityWriteScope';
+import { canAccessBookingProviderTools, isAdminRole } from './auth/platformRbac';
 import { runHealthCheck } from './observability/health';
 import { serializeBookingRow, serializeBookingRows } from './logic/bookingSerialize';
 import {
@@ -185,7 +186,11 @@ const AUTH_WRITE_ENTITIES = new Set([
 const GENERIC_WRITE_BLOCKED_ENTITIES = new Set(['booking', 'feature_flag']);
 
 /** Admin-only generic entity writes. */
-const ADMIN_ONLY_WRITE_ENTITIES = new Set(['pricing_rule']);
+const ADMIN_ONLY_WRITE_ENTITIES = new Set(['pricing_rule', 'brand', 'brand_accolade', 'brand_collection']);
+
+function requiresAuthForGenericWrite(entity: string, requireAuth: boolean): boolean {
+    return requireAuth || AUTH_WRITE_ENTITIES.has(entity) || ADMIN_ONLY_WRITE_ENTITIES.has(entity);
+}
 
 function blockGenericEntityWrite(
     entity: string,
@@ -1212,11 +1217,22 @@ entities.forEach(entity => {
 
     // CREATE (booking/review/promo_code have custom create paths)
     if (entity !== 'booking' && entity !== 'review' && entity !== 'promo_code') {
-        const writeOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
+        const writeOpts = requiresAuthForGenericWrite(entity, requireAuth)
+            ? { preHandler: [requireAuthPreHandler] }
+            : {};
         fastify.post(routeBase, writeOpts, async (request, reply) => {
             if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
+            if (!isGenericCreateAllowed(entity)) {
+                return reply.status(403).send({ error: 'Use the dedicated API for this resource' });
+            }
             if (AUTH_WRITE_ENTITIES.has(entity)) {
                 if (await denyGenericEntityWriteUnlessCapable(entity, request, reply)) return;
+            }
+            if (ADMIN_ONLY_WRITE_ENTITIES.has(entity)) {
+                const adminUser = request.user as { role?: string } | undefined;
+                if (!isAdminRole(adminUser?.role)) {
+                    return reply.status(403).send({ error: 'Admin access required for this resource' });
+                }
             }
         if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
                 return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
@@ -1238,6 +1254,24 @@ entities.forEach(entity => {
             }
             const data = validateEntityBody(request.body, reply);
             if (!data) return;
+            const writeUser = request.user as { id: string; role?: string };
+            if (
+                AUTH_WRITE_ENTITIES.has(entity) ||
+                entity === 'favorite' ||
+                entity === 'wishlist_item'
+            ) {
+                if (
+                    await denyWriteScopeOnCreate(
+                        entity,
+                        data,
+                        writeUser,
+                        request.entityScopeCache,
+                        reply,
+                    )
+                ) {
+                    return;
+                }
+            }
             if (entity === 'service') {
                 try {
                     await enforceServicePriceOnWrite(data);
@@ -1308,13 +1342,21 @@ entities.forEach(entity => {
     }
 
     // UPDATE, ownership check for AUTH_REQUIRED and AUTH_WRITE entities
-    const writeRouteOpts = (requireAuth || AUTH_WRITE_ENTITIES.has(entity)) ? { preHandler: [requireAuthPreHandler] } : {};
+    const writeRouteOpts = requiresAuthForGenericWrite(entity, requireAuth)
+        ? { preHandler: [requireAuthPreHandler] }
+        : {};
     const needsOwnershipCheck = requireAuth || AUTH_WRITE_ENTITIES.has(entity);
     fastify.patch(`${routeBase}/:id`, writeRouteOpts, async (request, reply) => {
         const { id } = request.params as any;
         if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
         if (AUTH_WRITE_ENTITIES.has(entity)) {
             if (await denyGenericEntityWriteUnlessCapable(entity, request, reply)) return;
+        }
+        if (ADMIN_ONLY_WRITE_ENTITIES.has(entity)) {
+            const adminUser = request.user as { role?: string } | undefined;
+            if (!isAdminRole(adminUser?.role)) {
+                return reply.status(403).send({ error: 'Admin access required for this resource' });
+            }
         }
         if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
             return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });
@@ -1333,15 +1375,12 @@ entities.forEach(entity => {
         }
         const data = validateEntityBody(request.body, reply);
         if (!data) return;
-        if (entity === 'promo_code' && data.shop_id !== undefined && needsOwnershipCheck) {
-            const u = request.user as { id: string; role?: string };
-            if (u?.role !== 'admin') {
-                const sid = data.shop_id as string | null;
-                if (sid == null || sid === '') {
-                    return reply.status(403).send({ error: 'Only admins may set platform-wide shop_id' });
-                }
-                const ids = await getManagedShopIdsForUser(u.id, request.entityScopeCache);
-                if (!ids.includes(String(sid))) return reply.status(403).send({ error: 'Invalid shop scope' });
+        const patchUser = request.user as { id: string; role?: string };
+        if (AUTH_WRITE_ENTITIES.has(entity) || entity === 'promo_code') {
+            if (
+                await denyWriteScopeOnPatch(entity, data, patchUser, request.entityScopeCache, reply)
+            ) {
+                return;
             }
         }
         if (needsOwnershipCheck) {
@@ -1462,6 +1501,12 @@ entities.forEach(entity => {
         if (blockGenericEntityWrite(entity, reply, request.user as { role?: string } | undefined)) return;
         if (AUTH_WRITE_ENTITIES.has(entity)) {
             if (await denyGenericEntityWriteUnlessCapable(entity, request, reply)) return;
+        }
+        if (ADMIN_ONLY_WRITE_ENTITIES.has(entity)) {
+            const adminUser = request.user as { role?: string } | undefined;
+            if (!isAdminRole(adminUser?.role)) {
+                return reply.status(403).send({ error: 'Admin access required for this resource' });
+            }
         }
         if (entity === 'loyalty_profile' || entity === 'loyalty_transaction') {
             return reply.status(403).send({ error: LOYALTY_WRITE_MESSAGE });

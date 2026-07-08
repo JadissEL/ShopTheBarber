@@ -7,7 +7,7 @@ import { getAnalyticsSessionId } from '@/lib/analyticsSession';
 import { dashboardPageForAccountType } from '@/lib/accountType';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import SearchField from '@/components/ui/search-field';
-import { Bell, Menu, Calendar, Award, MessageSquare, Check } from 'lucide-react';
+import { Bell, Menu, Calendar, Award, MessageSquare, Check, MapPin } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { stb } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';

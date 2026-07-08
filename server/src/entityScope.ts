@@ -142,8 +142,10 @@ export async function getEntityScopeCondition(
         }
         case 'shop_member': {
             const { shopIds } = await barberShopIdsForUser(userId, cache);
-            if (shopIds.length === 0) return { user_id: userId };
-            return { OR: [{ user_id: userId }, { shop_id: { in: shopIds } }] };
+            const ids = await getManagedShopIdsForUser(userId, cache);
+            const allShopIds = [...new Set([...shopIds, ...ids])];
+            if (allShopIds.length === 0) return { user_id: userId };
+            return { OR: [{ user_id: userId }, { shop_id: { in: allShopIds } }] };
         }
         case 'review':
             return { reviewer_id: userId };
@@ -250,8 +252,8 @@ export async function rowInScope(
         }
         case 'shop_member': {
             if (row.user_id === user.id) return true;
-            const { shopIds } = await barberShopIdsForUser(user.id, cache);
-            return shopIds.includes(row.shop_id as string);
+            const ids = await getManagedShopIdsForUser(user.id, cache);
+            return ids.includes(String(row.shop_id));
         }
         case 'review':
             return row.reviewer_id === user.id;

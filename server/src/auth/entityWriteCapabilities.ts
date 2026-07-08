@@ -10,7 +10,12 @@ import { isAdminRole } from './platformRbac';
 import type { AuthedRequest } from './authPreHandlers';
 
 /** Entities writable by platform admin only via generic router. */
-export const ADMIN_ONLY_ENTITY_WRITES = new Set(['legal_document']);
+export const ADMIN_ONLY_ENTITY_WRITES = new Set([
+    'legal_document',
+    'brand',
+    'brand_accolade',
+    'brand_collection',
+]);
 
 /** Maps generic entity names to required capability(ies). OR when array. */
 export const ENTITY_WRITE_CAPABILITY: Partial<Record<string, CapabilityKey | CapabilityKey[]>> = {
