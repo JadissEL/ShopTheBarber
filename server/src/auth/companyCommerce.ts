@@ -1,5 +1,5 @@
 /**
- * On-request company commerce activation (Phase 1: env allowlist until admin UI exists).
+ * On-request company commerce activation — DB flag with optional env override for ops.
  */
 import { prisma } from '../db/prisma';
 
@@ -15,14 +15,12 @@ export async function isCompanyCommerceEnabled(
 ): Promise<boolean> {
     if (accountType !== 'company') return false;
     if (envAllowlist().has(userId)) return true;
+
     const row = await prisma.company_accounts.findUnique({
         where: { user_id: userId },
-        select: { id: true },
+        select: { commerce_enabled: true },
     });
-    // Phase 1: no DB flag yet — commerce off unless env allowlisted.
-    // When company_accounts.commerce_enabled is added, check it here.
-    void row;
-    return false;
+    return row?.commerce_enabled === true;
 }
 
 export async function resolveCompanyCommerceEnabled(user: {
@@ -30,4 +28,37 @@ export async function resolveCompanyCommerceEnabled(user: {
     account_type?: string | null;
 }): Promise<boolean> {
     return isCompanyCommerceEnabled(user.id, user.account_type);
+}
+
+export async function setCompanyCommerceEnabled(
+    userId: string,
+    enabled: boolean,
+): Promise<{ user_id: string; commerce_enabled: boolean; commerce_enabled_at: string | null }> {
+    const account = await prisma.company_accounts.findUnique({
+        where: { user_id: userId },
+        select: { id: true },
+    });
+    if (!account) {
+        throw new Error('Company account not found for user');
+    }
+
+    const now = enabled ? new Date().toISOString() : null;
+    const updated = await prisma.company_accounts.update({
+        where: { user_id: userId },
+        data: {
+            commerce_enabled: enabled,
+            commerce_enabled_at: now,
+        },
+        select: {
+            user_id: true,
+            commerce_enabled: true,
+            commerce_enabled_at: true,
+        },
+    });
+
+    return {
+        user_id: updated.user_id,
+        commerce_enabled: updated.commerce_enabled === true,
+        commerce_enabled_at: updated.commerce_enabled_at,
+    };
 }

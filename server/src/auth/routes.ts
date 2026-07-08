@@ -12,7 +12,8 @@ import {
 import { resolveAndSyncUserRole } from './resolveUserRole';
 import { isAccountType, ACCOUNT_TYPES, dashboardPathForAccountType } from './accountType';
 import { createSignupIntent, findUserByClerkProfile, provisionUser } from './provisionUser';
-import { resolveCompanyCommerceEnabled } from './companyCommerce';
+import { resolveCompanyCommerceEnabled, setCompanyCommerceEnabled } from './companyCommerce';
+import { requireAdminPreHandler } from './authPreHandlers';
 
 export async function authRoutes(fastify: FastifyInstance) {
     /** Public — create short-lived signup intent after account type selection */
@@ -136,4 +137,35 @@ export async function authRoutes(fastify: FastifyInstance) {
     fastify.post('/api/auth/logout', async () => {
         return { success: true };
     });
+
+    /** Admin — activate/deactivate company marketplace commerce for a user */
+    fastify.patch<{ Params: { userId: string }; Body: { enabled?: boolean } }>(
+        '/api/admin/company-commerce/:userId',
+        { preHandler: [requireAdminPreHandler] },
+        async (request, reply) => {
+            const enabled = request.body?.enabled;
+            if (typeof enabled !== 'boolean') {
+                return reply.status(400).send({ error: 'enabled (boolean) is required' });
+            }
+
+            const user = await prisma.users.findUnique({
+                where: { id: request.params.userId },
+                select: { id: true, account_type: true },
+            });
+            if (!user) {
+                return reply.status(404).send({ error: 'User not found' });
+            }
+            if (user.account_type !== 'company') {
+                return reply.status(400).send({ error: 'User is not a company account' });
+            }
+
+            try {
+                const result = await setCompanyCommerceEnabled(user.id, enabled);
+                return result;
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Failed to update commerce flag';
+                return reply.status(404).send({ error: msg });
+            }
+        },
+    );
 }

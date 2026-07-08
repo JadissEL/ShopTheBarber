@@ -20,21 +20,26 @@ vi.mock('../auth/clerk', () => ({
 
 import { prisma } from '../db/prisma';
 import { fastify as app } from '../index';
-import { seedProvisionedUser } from './helpers/integrationUser';
+import { seedCompanyWorkspace, seedProvisionedUser } from './helpers/integrationUser';
 
 describe('integration: company product write RBAC', () => {
     const authHeaders = { authorization: 'Bearer test-token', 'content-type': 'application/json' };
+    let userId: string;
 
     beforeAll(async () => {
-        await seedProvisionedUser({
+        delete process.env.COMPANY_COMMERCE_USER_IDS;
+        const user = await seedProvisionedUser({
             clerkUserId: CLERK_ID,
             email: EMAIL,
             accountType: 'company',
             fullName: 'Company Product',
         });
+        userId = user.id;
+        await seedCompanyWorkspace(userId, 'Company Product Co', { commerceEnabled: false });
     });
 
     afterAll(async () => {
+        await prisma.company_accounts.deleteMany({ where: { user_id: userId } }).catch(() => undefined);
         await prisma.users.deleteMany({ where: { email: EMAIL } });
         await (app as FastifyInstance).close();
     });

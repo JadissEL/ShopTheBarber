@@ -1,37 +1,35 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { createRequire } from 'module';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import {
     CAPABILITY_KEYS as SERVER_KEYS,
-    capabilityContextFromUser,
-    hasCapability,
-    type CapabilityKey,
+    capabilityContextFromUser as beContext,
+    hasCapability as beHasCapability,
 } from './capabilities';
 
+const require = createRequire(import.meta.url);
+const feCaps = require(join(dirname(fileURLToPath(import.meta.url)), '../../../src/lib/capabilities.js'));
+
 function extractFeCapabilityKeys(): string[] {
-    const fePath = join(__dirname, '../../../src/lib/capabilities.js');
-    const content = readFileSync(fePath, 'utf8');
-    const match = content.match(/export const CAPABILITY_KEYS = \[([\s\S]*?)\];/);
-    if (!match) throw new Error('CAPABILITY_KEYS not found in src/lib/capabilities.js');
-    const inner = match[1];
-    return [...inner.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    return [...feCaps.CAPABILITY_KEYS];
 }
 
-/** Sample matrix — extend when grants change. */
-const GRANT_PARITY_CASES: Array<{
+/** Representative contexts — legacy role-only + canonical account_type. */
+const PARITY_CONTEXTS: Array<{
     label: string;
-    ctx: Parameters<typeof capabilityContextFromUser>[0];
-    cap: CapabilityKey;
-    expected: boolean;
+    ctx: Parameters<typeof beContext>[0];
 }> = [
-    { label: 'client service.write', ctx: { role: 'client', accountType: 'client' }, cap: 'service.write', expected: false },
-    { label: 'seller service.write', ctx: { role: 'seller', accountType: 'seller' }, cap: 'service.write', expected: false },
-    { label: 'seller product.write', ctx: { role: 'seller', accountType: 'seller' }, cap: 'product.write', expected: true },
-    { label: 'solo barber service.write', ctx: { role: 'barber', accountType: 'solo_barber' }, cap: 'service.write', expected: true },
-    { label: 'company job.write', ctx: { role: 'company', accountType: 'company' }, cap: 'job.write', expected: true },
-    { label: 'company product.write inactive', ctx: { role: 'company', accountType: 'company', companyCommerceEnabled: false }, cap: 'product.write', expected: false },
-    { label: 'blogger article.write', ctx: { role: 'blogger', accountType: 'blogger' }, cap: 'article.write', expected: true },
-    { label: 'blogger booking.provider.tools', ctx: { role: 'blogger', accountType: 'blogger' }, cap: 'booking.provider.tools', expected: false },
+    { label: 'client', ctx: { role: 'client', accountType: 'client' } },
+    { label: 'solo_barber', ctx: { role: 'barber', accountType: 'solo_barber' } },
+    { label: 'shop', ctx: { role: 'shop_owner', accountType: 'shop' } },
+    { label: 'seller', ctx: { role: 'seller', accountType: 'seller' } },
+    { label: 'company commerce off', ctx: { role: 'company', accountType: 'company', companyCommerceEnabled: false } },
+    { label: 'company commerce on', ctx: { role: 'company', accountType: 'company', companyCommerceEnabled: true } },
+    { label: 'blogger', ctx: { role: 'blogger', accountType: 'blogger' } },
+    { label: 'admin', ctx: { role: 'admin', accountType: 'client' } },
+    { label: 'legacy barber role only', ctx: { role: 'barber' } },
+    { label: 'legacy shop_owner role only', ctx: { role: 'shop_owner' } },
 ];
 
 describe('capabilities FE/BE contract', () => {
@@ -40,7 +38,11 @@ describe('capabilities FE/BE contract', () => {
         expect(feKeys).toEqual([...SERVER_KEYS]);
     });
 
-    it.each(GRANT_PARITY_CASES)('BE grant parity baseline: $label', ({ ctx, cap, expected }) => {
-        expect(hasCapability(capabilityContextFromUser(ctx), cap)).toBe(expected);
+    it.each(PARITY_CONTEXTS)('grant parity for all keys: $label', ({ ctx }) => {
+        const beCtx = beContext(ctx);
+        const feCtx = feCaps.capabilityContextFromUser(ctx);
+        for (const key of SERVER_KEYS) {
+            expect(feCaps.hasCapability(feCtx, key)).toBe(beHasCapability(beCtx, key));
+        }
     });
 });

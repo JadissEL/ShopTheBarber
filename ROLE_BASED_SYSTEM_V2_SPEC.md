@@ -503,7 +503,7 @@ Before claiming production-ready RBAC:
 - [x] Remediate generic-router vulnerabilities V1–V4 (validation report §12, 2026-07-08)
 - [x] Default-deny write policy for unmapped generic CREATE (`isGenericCreateAllowed`)
 - [x] Fix client dashboard Featured Studios crash (`MapPin` import)
-- [ ] Full FE/BE capability grant parity tests (baseline matrix added; auto-sync TBD)
-- [ ] DB-backed company commerce activation
+- [x] Full FE/BE capability grant parity tests (20 keys × 10 contexts via `capabilities.contract.test.ts`)
+- [x] DB-backed company commerce activation (`commerce_enabled` on `company_accounts`; admin `PATCH /api/admin/company-commerce/:userId`; env allowlist retained as ops override)
 - [ ] Run `npm run qa:provision` + `npm run test:e2e:journeys` on staging
 

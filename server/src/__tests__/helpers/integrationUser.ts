@@ -69,13 +69,27 @@ export async function seedSellerProfile(userId: string, displayName = 'Test Stor
     });
 }
 
-export async function seedCompanyWorkspace(userId: string, companyName = 'Test Company') {
+export async function seedCompanyWorkspace(
+    userId: string,
+    companyName = 'Test Company',
+    options?: { commerceEnabled?: boolean },
+) {
     const existing = await prisma.company_accounts.findUnique({ where: { user_id: userId } });
     if (existing) {
+        if (options?.commerceEnabled) {
+            await prisma.company_accounts.update({
+                where: { user_id: userId },
+                data: {
+                    commerce_enabled: true,
+                    commerce_enabled_at: new Date().toISOString(),
+                },
+            });
+        }
         const company = await prisma.companies.findUnique({ where: { id: existing.company_id } });
         return { companyId: existing.company_id, company };
     }
     const companyId = crypto.randomUUID();
+    const now = new Date().toISOString();
     await prisma.companies.create({
         data: {
             id: companyId,
@@ -88,6 +102,8 @@ export async function seedCompanyWorkspace(userId: string, companyName = 'Test C
             id: crypto.randomUUID(),
             user_id: userId,
             company_id: companyId,
+            commerce_enabled: options?.commerceEnabled ?? false,
+            commerce_enabled_at: options?.commerceEnabled ? now : null,
         },
     });
     return { companyId };

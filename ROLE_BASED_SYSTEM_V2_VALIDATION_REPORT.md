@@ -362,8 +362,8 @@ Recommended follow-up docs (not created in this pass):
 | **P0** | V3/V4 — Create/PATCH FK scope validation | Generic router |
 | **P0** | Client dashboard `MapPin` import crash | `src/pages/Dashboard.jsx` |
 | **P1** | Default-deny policy for all `ENTITY_TABLE` writes | Architecture |
-| **P1** | FE/BE capability grant parity test (table-driven) | Tests |
-| **P1** | DB-backed company commerce activation | `companyCommerce.ts` + admin UI |
+| **P1** | FE/BE capability grant parity test (table-driven) | Tests — ✅ fixed 2026-07-08 |
+| **P1** | DB-backed company commerce activation | `companyCommerce.ts` + admin API — ✅ fixed 2026-07-08 (admin UI TBD) |
 | **P2** | Seller “Catalog value” → rename or replace with real revenue KPI | Dashboard |
 | **P2** | Run full Playwright journey suite on provisioned QA users | QA |
 
@@ -407,7 +407,7 @@ Recommended follow-up docs (not created in this pass):
 | Suite | Count (approx) | Proves | Does not prove |
 |-------|----------------|--------|----------------|
 | Spec §7 integration tests | 25+ | Role write allow/deny on dedicated + gated generic entities | Brand bypass, FK injection, shop_member takeover |
-| `capabilities.contract.test.ts` | 1 | Capability **key names** match FE/BE | Grant logic parity |
+| `capabilities.contract.test.ts` | 11 | Full FE/BE grant parity (20 keys × 10 contexts) | Runtime capability enforcement on every route |
 | Dashboard unit tests | 3 | Static render with mocks | Real data, UX quality |
 | `onboardingWizard.test.js` | 25 | Wizard logic/completion rules | Live Stripe/Clerk |
 | `RouteGuard.test.jsx` | 3 | Redirect rules | All routes |
@@ -440,10 +440,12 @@ Recommended follow-up docs (not created in this pass):
 | V6 | `sync-trust` scoped to barber owner or admin | ✅ Fixed |
 | UX P0 | Client dashboard `MapPin` import | ✅ Fixed |
 | P1 | Default-deny generic CREATE via `isGenericCreateAllowed` | ✅ Fixed |
-| P1 | Expanded capability contract baseline tests | ✅ Partial (BE matrix; full FE parity TBD) |
+| P1 | Expanded capability contract baseline tests | ✅ Fixed — full FE/BE grant matrix |
+| P1 | DB-backed company commerce (`commerce_enabled`, admin PATCH) | ✅ Fixed |
+| P1 | Admin UI for company commerce toggle | ⏳ Open (API only) |
 
-**New tests:** `api.genericEntityWriteScope.integration.test.ts`, `entityWriteScope.test.ts`
+**New tests:** `api.genericEntityWriteScope.integration.test.ts`, `entityWriteScope.test.ts`, `companyCommerce.test.ts`; integration tests use DB flag via `seedCompanyWorkspace(..., { commerceEnabled })`
 
 ---
 
-*Report generated from codebase state at commit `85d441c` (main). Re-validate after security fixes.*
+*Report generated from codebase state at commit `85d441c` (main). Updated 2026-07-08 after P0 security fixes and P1 company commerce + capability parity.*

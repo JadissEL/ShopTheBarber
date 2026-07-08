@@ -1182,10 +1182,12 @@ model seller_profiles {
 }
 
 model company_accounts {
-  id          String    @id @default(uuid())
-  user_id     String    @unique
-  company_id  String
-  created_at  String?   @default(dbgenerated("CURRENT_TIMESTAMP"))
+  id                   String    @id @default(uuid())
+  user_id              String    @unique
+  company_id           String
+  commerce_enabled     Boolean?  @default(false)
+  commerce_enabled_at  String?
+  created_at           String?   @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   user        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   company     companies @relation(fields: [company_id], references: [id], onDelete: Cascade)

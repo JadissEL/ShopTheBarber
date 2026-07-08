@@ -28,9 +28,9 @@ describe('integration: company role scenarios (spec §7)', () => {
     let productId: string | undefined;
     let userId: string;
     let companyId: string;
-    let prevCommerceEnv: string | undefined;
 
     beforeAll(async () => {
+        delete process.env.COMPANY_COMMERCE_USER_IDS;
         const user = await seedProvisionedUser({
             clerkUserId: CLERK_ID,
             email: EMAIL,
@@ -48,8 +48,6 @@ describe('integration: company role scenarios (spec §7)', () => {
         await prisma.company_accounts.deleteMany({ where: { user_id: userId } }).catch(() => undefined);
         await prisma.companies.deleteMany({ where: { id: companyId } }).catch(() => undefined);
         await prisma.users.deleteMany({ where: { email: EMAIL } });
-        if (prevCommerceEnv === undefined) delete process.env.COMPANY_COMMERCE_USER_IDS;
-        else process.env.COMPANY_COMMERCE_USER_IDS = prevCommerceEnv;
         await (app as FastifyInstance).close();
     });
 
@@ -83,8 +81,10 @@ describe('integration: company role scenarios (spec §7)', () => {
     });
 
     it('rejects company POST /api/products when commerce inactive', async () => {
-        prevCommerceEnv = process.env.COMPANY_COMMERCE_USER_IDS;
-        process.env.COMPANY_COMMERCE_USER_IDS = '';
+        await prisma.company_accounts.update({
+            where: { user_id: userId },
+            data: { commerce_enabled: false, commerce_enabled_at: null },
+        });
         const res = await (app as FastifyInstance).inject({
             method: 'POST',
             url: '/api/products',
@@ -95,8 +95,13 @@ describe('integration: company role scenarios (spec §7)', () => {
     });
 
     it('allows company POST /api/products when commerce is active', async () => {
-        prevCommerceEnv = process.env.COMPANY_COMMERCE_USER_IDS;
-        process.env.COMPANY_COMMERCE_USER_IDS = userId;
+        await prisma.company_accounts.update({
+            where: { user_id: userId },
+            data: {
+                commerce_enabled: true,
+                commerce_enabled_at: new Date().toISOString(),
+            },
+        });
         const res = await (app as FastifyInstance).inject({
             method: 'POST',
             url: '/api/products',

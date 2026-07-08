@@ -4,9 +4,10 @@
 |----|------|--------|----------|------------|-------|
 | rbac-v2-phase1 | V2 RBAC Phase 1 — security foundation | done | critical | spec approved | capabilities.ts, entity write gates, tests |
 | rbac-v2-phase2 | V2 RBAC Phase 2 — dashboard redesign | done | high | phase1 | Real role dashboards + registry |
-| rbac-v2-phase3 | V2 RBAC Phase 3 — onboarding redesign | pending | high | phase2 | Role-specific embed forms |
-| rbac-v2-phase4 | V2 RBAC Phase 4 — navigation cleanup | pending | high | phase2 | Seller settings, capability-filtered nav |
-| rbac-v2-phase5 | V2 RBAC Phase 5 — full test pass | pending | high | phase4 | End-to-end role scenarios |
+| rbac-v2-phase3 | V2 RBAC Phase 3 — onboarding redesign | done | high | phase2 | Role-specific embed forms |
+| rbac-v2-phase4 | V2 RBAC Phase 4 — navigation cleanup | done | high | phase2 | Seller settings, capability-filtered nav |
+| rbac-v2-phase5 | V2 RBAC Phase 5 — full test pass | done | high | phase4 | Spec §7 integration + dashboard tests |
+| rbac-v2-p1-commerce | P1 DB-backed company commerce + capability parity | done | high | p0-security | migration, admin PATCH, contract tests |
 
 **Status:** `pending` | `in_progress` | `done` | `cancelled`  
 **Priority:** `low` | `medium` | `high`

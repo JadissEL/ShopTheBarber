@@ -118,3 +118,26 @@ Append-only log of **what was decided**, **why**, and **what was rejected**. New
 - **Decision:** **Late arrival:** slot held during 15 min grace; provider may mark no-show only after grace (`CLIENT_LATE_GRACE_MINUTES`); 30+ min strongly no-show eligible per payment protection. **Disputes:** admin resolves via existing dispute + support inbox; evidence = booking, messages, check-in, payments; one manual appeal within 7 days (Phase 2 structured appeals). **Promo credits:** expire via cron; non-transferable.
 - **Implementation:** `server/src/domain/booking/clientLatePolicy.ts`; `paymentProtection/noShow.ts` uses shared grace constant; promo expiry cron; questionnaire Part D gate updated.
 - **Status:** accepted
+
+### 2026-07-08 — Company accounts can post jobs for linked company
+
+- **Context:** V2 spec §7 requires `POST /api/jobs` → 200 for company role; prior logic threw "Only admins can post jobs on behalf of a company".
+- **Decision:** `getEmployerProfiles()` loads `company_accounts` → `companyIds`; `resolveEmployerFields()` allows non-admin company users to post for their linked company; `userCanManageJob()` grants manage access via company account link; employer-profiles and jobs/my routes include company scope.
+- **Rationale:** Aligns jobs API with company onboarding and dashboard without opening arbitrary company impersonation (company_id must match account link).
+- **Alternatives considered:** Admin-only company jobs (rejected — contradicts spec); allow any company_id for authenticated users (rejected — security hole).
+- **Status:** accepted
+
+### 2026-07-08 — V2 validation audit: not production-ready
+
+- **Context:** Phases 1–5 complete; user requested full validation before production.
+- **Decision:** V2 RBAC **feature scope is complete** but platform is **not production-ready** until generic entity router vulnerabilities (unauthenticated brand writes, unscoped shop_member create, FK injection on generic CREATE/PATCH) are fixed.
+- **Rationale:** Spec §7 tests cover representative paths; penetration audit found fail-open gaps outside that matrix.
+- **Deliverable:** `ROLE_BASED_SYSTEM_V2_VALIDATION_REPORT.md`; spec §10 updated with limitations and production gate.
+- **Status:** accepted
+
+### 2026-07-08 — P1 company commerce DB + FE/BE capability parity
+
+- **Decision:** Store company marketplace activation in `company_accounts.commerce_enabled` (with `commerce_enabled_at`); admin toggles via `PATCH /api/admin/company-commerce/:userId`; retain `COMPANY_COMMERCE_USER_IDS` env as ops override. Expand `capabilities.contract.test.ts` to full 20×10 grant matrix loading FE from `src/lib/capabilities.js`.
+- **Rationale:** Removes env-only allowlist as sole source of truth; closes validation audit P1 gaps; integration tests seed DB flag via `seedCompanyWorkspace(..., { commerceEnabled })`.
+- **Alternatives considered:** Admin UI only (deferred — API first); drop env override (kept for emergency ops).
+- **Status:** accepted
