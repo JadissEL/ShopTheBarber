@@ -5,9 +5,10 @@
  *   node scripts/provision-qa-profiles.mjs           # Clerk + DB upsert
  *   node scripts/provision-qa-profiles.mjs --db-only # DB only (no Clerk API)
  */
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 import { createClerkClient } from '@clerk/backend';
 import { hydrateE2eEnv, root } from './qa-e2e-env.mjs';
 
@@ -67,6 +68,30 @@ async function provisionClerk() {
   return results;
 }
 
+async function syncClerkIdsToDb(clerkResults) {
+  const { spawnSync } = await import('node:child_process');
+  const tmpFile = join(tmpdir(), `stb-clerk-sync-${Date.now()}.json`);
+  writeFileSync(
+    tmpFile,
+    JSON.stringify(clerkResults.map((r) => ({ email: r.email, clerkId: r.clerkId }))),
+  );
+  try {
+    const result = spawnSync('npx', ['tsx', 'src/db/syncQaClerkIds.ts', tmpFile], {
+      cwd: resolve(root, 'server'),
+      stdio: 'inherit',
+      shell: true,
+      env: { ...process.env, ...env },
+    });
+    if (result.status !== 0) process.exit(result.status ?? 1);
+  } finally {
+    try {
+      unlinkSync(tmpFile);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 console.log('\n=== ShopTheBarber QA Profile Provisioning ===\n');
 console.log(`Profiles: ${profiles.length}\n`);
 
@@ -78,6 +103,9 @@ if (!dbOnly) {
   for (const r of clerkResults) {
     console.log(`  [${r.action}] ${r.email} (${r.role}) → ${r.clerkId}`);
   }
+  console.log('\nSyncing clerk_user_id to database…\n');
+  await syncClerkIdsToDb(clerkResults);
+  console.log('  Done.\n');
 }
 
 console.log('\n--- Login credentials ---\n');

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:e2e": "node scripts/dev-e2e.mjs",
     "dev:server": "cd server && npm run dev",
     "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "vite build",
@@ -30,8 +31,9 @@
     "test:e2e:setup-guide": "playwright test e2e/setup-guide.browser.spec.ts --project=clerk-browser",
     "test:e2e:signup": "node scripts/e2e-signup-flow.mjs",
     "qa:provision": "node scripts/provision-qa-profiles.mjs",
+    "qa:verify": "node scripts/qa-verify.mjs",
     "qa:journeys": "node scripts/qa-journey-runner.mjs",
-    "test:e2e:journeys": "playwright test e2e/journeys --project=clerk-browser --workers=1",
+    "test:e2e:journeys": "node scripts/qa-e2e-journeys.mjs",
     "test:e2e:journeys:guest": "playwright test e2e/journeys/guest.journey.browser.spec.ts --project=clerk-browser",
     "qa:journey-audit": "node scripts/journey-audit.mjs",
     "qa:audit:full": "node scripts/qa-audit.mjs",

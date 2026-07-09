@@ -1,6 +1,15 @@
 /**
  * Playwright E2E environment guards. Specs skip gracefully when vars are unset.
  */
+import { emailForProfile } from './qa-profiles';
+
+function hasClerkBrowserBase(): boolean {
+    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_FRONTEND_URL);
+}
+
+function emailOrProfile(envKey: string, profileId: string): string | undefined {
+    return process.env[envKey] || emailForProfile(profileId);
+}
 
 export function hasApiBaseUrl(): boolean {
     return !!process.env.E2E_API_BASE_URL;
@@ -28,31 +37,34 @@ export function hasClerkProviderJwt(): boolean {
 
 export function hasClerkBrowserE2e(): boolean {
     return !!(
-        process.env.CLERK_SECRET_KEY &&
-        process.env.E2E_CLERK_USER_EMAIL &&
-        process.env.E2E_FRONTEND_URL &&
+        hasClerkBrowserBase() &&
+        emailOrProfile('E2E_CLERK_USER_EMAIL', 'qa-c1') &&
         (process.env.CLERK_TESTING_TOKEN || process.env.CLERK_FAPI)
     );
 }
 
 export function hasClerkProviderBrowser(): boolean {
-    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_CLERK_PROVIDER_EMAIL && process.env.E2E_FRONTEND_URL);
+    return !!(hasClerkBrowserBase() && emailOrProfile('E2E_CLERK_PROVIDER_EMAIL', 'qa-b1'));
+}
+
+export function hasClerkShopOwnerBrowser(): boolean {
+    return !!(hasClerkBrowserBase() && emailOrProfile('E2E_CLERK_SHOP_OWNER_EMAIL', 'qa-o1'));
 }
 
 export function hasClerkAdminBrowser(): boolean {
-    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_CLERK_ADMIN_EMAIL && process.env.E2E_FRONTEND_URL);
+    return !!(hasClerkBrowserBase() && emailOrProfile('E2E_CLERK_ADMIN_EMAIL', 'qa-admin'));
 }
 
 export function hasClerkSellerBrowser(): boolean {
-    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_CLERK_SELLER_EMAIL && process.env.E2E_FRONTEND_URL);
+    return !!(hasClerkBrowserBase() && emailOrProfile('E2E_CLERK_SELLER_EMAIL', 'qa-seller'));
 }
 
 export function hasClerkCompanyBrowser(): boolean {
-    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_CLERK_COMPANY_EMAIL && process.env.E2E_FRONTEND_URL);
+    return !!(hasClerkBrowserBase() && emailOrProfile('E2E_CLERK_COMPANY_EMAIL', 'qa-company'));
 }
 
 export function hasClerkBloggerBrowser(): boolean {
-    return !!(process.env.CLERK_SECRET_KEY && process.env.E2E_CLERK_BLOGGER_EMAIL && process.env.E2E_FRONTEND_URL);
+    return !!(hasClerkBrowserBase() && emailOrProfile('E2E_CLERK_BLOGGER_EMAIL', 'qa-blogger'));
 }
 
 /** Read-only audits (prod smoke / preview axe) skip auth — QA Clerk users need local dev servers. */

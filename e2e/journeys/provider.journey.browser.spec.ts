@@ -1,23 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-with-auth';
+import { authStoragePath, PERSONA_IDS } from '../fixtures/personas';
 import { hasClerkProviderBrowser, skipAuthenticatedJourneys } from '../fixtures/env';
-import { signInProvider } from '../fixtures/auth';
 import { JOURNEY_PERSONAS } from '../fixtures/journey-matrix';
 import { flushJourneyReport } from '../fixtures/journey-report';
-import { assertHealthyPage, assertNotSignInRedirect, journeyStep } from '../fixtures/journey-helpers';
+import { assertHealthyPage, assertNotSignInRedirect, gotoAuthenticated, journeyStep } from '../fixtures/journey-helpers';
 
 const PERSONA = JOURNEY_PERSONAS.provider;
 
-test.describe.serial('Provider user journey', () => {
-  test.beforeEach(async ({ page }) => {
+test.use({ storageState: authStoragePath(PERSONA_IDS.soloBarber) });
+
+test.describe('Provider user journey', () => {
+  test.beforeAll(() => {
     test.skip(
       skipAuthenticatedJourneys(),
       'Authenticated journeys require local dev servers (QA Clerk users are not on production)',
     );
-    test.skip(
-      !hasClerkProviderBrowser(),
-      'Set CLERK_SECRET_KEY, E2E_CLERK_PROVIDER_EMAIL, E2E_FRONTEND_URL',
-    );
-    await signInProvider(page);
+    test.skip(!hasClerkProviderBrowser(), 'Set CLERK_SECRET_KEY, E2E_FRONTEND_URL (qa-b1 profile)');
   });
 
   test.afterAll(() => {
@@ -58,10 +56,8 @@ test.describe.serial('Provider user journey', () => {
 
   test('Provider payouts', async ({ page }) => {
     await journeyStep(PERSONA, 'Provider payouts', page, async () => {
-      await page.goto('/ProviderPayouts');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await assertNotSignInRedirect(page);
-      await expect(page.getByRole('heading', { name: /Payouts/i })).toBeVisible({ timeout: 30_000 });
+      await gotoAuthenticated(page, '/ProviderPayouts');
+      await expect(page.getByRole('heading', { name: /Payouts & earnings/i })).toBeVisible({ timeout: 30_000 });
     });
   });
 });

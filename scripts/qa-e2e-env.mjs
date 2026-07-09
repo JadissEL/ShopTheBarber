@@ -44,6 +44,14 @@ export function hydrateE2eEnv() {
 
   for (const [key, val] of Object.entries(fileEnv)) {
     if (!inCi && LOCAL_FORCE_KEYS.has(key)) {
+      if (
+        key === 'VITE_API_URL' &&
+        (process.env.QA_AUTH_JOURNEYS === '1' ||
+          process.env.E2E_FORCE_LOCAL_API === '1' ||
+          process.env.E2E_START_SERVERS === '1')
+      ) {
+        continue;
+      }
       process.env[key] = val;
       continue;
     }
@@ -53,8 +61,18 @@ export function hydrateE2eEnv() {
   process.env.CLERK_PUBLISHABLE_KEY =
     process.env.CLERK_PUBLISHABLE_KEY ?? process.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-  if (process.env.E2E_START_SERVERS === '1' && !process.env.VITE_API_URL) {
-    process.env.VITE_API_URL = process.env.E2E_API_BASE_URL || 'http://127.0.0.1:3001';
+  const e2eLocalApi = (process.env.E2E_API_BASE_URL || 'http://127.0.0.1:3001').replace(/\/$/, '');
+
+  // Authenticated journeys must not use production VITE_API_URL from .env.local.
+  if (
+    process.env.QA_AUTH_JOURNEYS === '1' ||
+    process.env.E2E_START_SERVERS === '1' ||
+    process.env.E2E_FORCE_LOCAL_API === '1'
+  ) {
+    process.env.VITE_API_URL =
+      process.env.E2E_USE_LOCAL_API_ORIGIN === '1' ? e2eLocalApi : '';
+  } else if (process.env.E2E_START_SERVERS === '1' && !process.env.VITE_API_URL) {
+    process.env.VITE_API_URL = e2eLocalApi;
   }
 
   return fileEnv;

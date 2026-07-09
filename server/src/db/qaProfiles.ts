@@ -50,6 +50,27 @@ function primaryCity(location: string): string {
     return location.split(',')[0]?.trim() || location;
 }
 
+/** Canonical account_type for QA rows (immutable signup model). */
+function resolveAccountType(p: QaProfile): string | null {
+    if (p.account_type) return p.account_type;
+    switch (p.role) {
+        case 'barber':
+            return 'solo_barber';
+        case 'shop_owner':
+            return 'shop';
+        case 'client':
+            return 'client';
+        case 'seller':
+            return 'seller';
+        case 'company':
+            return 'company';
+        case 'blogger':
+            return 'blogger';
+        default:
+            return null;
+    }
+}
+
 function barberCoords(location: string, id: string) {
     return coordsForLocationText(location, id) ?? {};
 }
@@ -89,6 +110,7 @@ export async function seedQaProfiles(): Promise<void> {
     let barberPhotoIdx = 0;
     const now = new Date().toISOString();
     for (const p of profiles) {
+        const accountType = resolveAccountType(p);
         await prisma.users.upsert({
             where: { id: p.id },
             create: {
@@ -96,16 +118,16 @@ export async function seedQaProfiles(): Promise<void> {
                 email: p.email,
                 full_name: p.full_name,
                 role: p.role,
-                account_type: p.account_type ?? null,
-                account_type_locked_at: p.account_type ? now : null,
+                account_type: accountType,
+                account_type_locked_at: accountType ? now : null,
                 avatar_url: BARBER_PHOTOS[barberPhotoIdx % BARBER_PHOTOS.length],
             },
             update: {
                 email: p.email,
                 full_name: p.full_name,
                 role: p.role,
-                ...(p.account_type
-                    ? { account_type: p.account_type, account_type_locked_at: now }
+                ...(accountType
+                    ? { account_type: accountType, account_type_locked_at: now }
                     : {}),
             },
         });
@@ -233,5 +255,110 @@ export async function seedQaProfiles(): Promise<void> {
         }
     }
 
+    await seedE2eGuestBookingFixture();
+
     console.log('QA profiles seeded in database.');
+}
+
+/**
+ * Deterministic guest-booking fixture for Playwright (e2e/fixtures/seed-data.ts).
+ * Safe to call on every qa:provision — upserts only.
+ */
+export async function seedE2eGuestBookingFixture(): Promise<void> {
+    const shopId = 's1';
+    const barberId = 'gb1';
+    const serviceId = 'ser1';
+    const guestUserId = 'gu1';
+
+    await prisma.shops.upsert({
+        where: { id: shopId },
+        create: {
+            id: shopId,
+            name: 'Downtown Cuts',
+            location: 'Athens, Syntagma',
+            description: 'E2E guest booking shop',
+            image_url: SHOP_PHOTOS[0],
+        },
+        update: {
+            name: 'Downtown Cuts',
+            location: 'Athens, Syntagma',
+        },
+    });
+
+    await prisma.users.upsert({
+        where: { id: guestUserId },
+        create: {
+            id: guestUserId,
+            email: 'e2e-guest-barber-user@shopthebarber.local',
+            full_name: 'Nikos Papadopoulos',
+            role: 'barber',
+            account_type: 'solo_barber',
+            account_type_locked_at: new Date().toISOString(),
+        },
+        update: {
+            full_name: 'Nikos Papadopoulos',
+            role: 'barber',
+            account_type: 'solo_barber',
+        },
+    });
+
+    await prisma.barbers.upsert({
+        where: { id: barberId },
+        create: {
+            id: barberId,
+            user_id: guestUserId,
+            shop_id: shopId,
+            name: 'Nikos Papadopoulos',
+            title: 'Master Barber',
+            location: 'Athens, Syntagma',
+            city: 'Athens',
+            rating: 4.9,
+            review_count: 100,
+            status: 'active',
+            image_url: BARBER_PHOTOS[0],
+            ...barberCoords('Athens, Syntagma', barberId),
+        },
+        update: {
+            shop_id: shopId,
+            status: 'active',
+            name: 'Nikos Papadopoulos',
+        },
+    });
+
+    await prisma.shop_members.upsert({
+        where: { id: 'sm-gb1-e2e' },
+        create: {
+            id: 'sm-gb1-e2e',
+            shop_id: shopId,
+            user_id: guestUserId,
+            barber_id: barberId,
+            role: 'barber',
+            status: 'active',
+            booking_enabled: true,
+        },
+        update: {
+            shop_id: shopId,
+            barber_id: barberId,
+            status: 'active',
+            booking_enabled: true,
+        },
+    });
+
+    await prisma.services.upsert({
+        where: { id: serviceId },
+        create: {
+            id: serviceId,
+            shop_id: shopId,
+            name: 'Signature Cut',
+            price: 35,
+            duration_minutes: 30,
+            category: 'Hair',
+        },
+        update: {
+            shop_id: shopId,
+            name: 'Signature Cut',
+            price: 35,
+            duration_minutes: 30,
+        },
+    });
 }

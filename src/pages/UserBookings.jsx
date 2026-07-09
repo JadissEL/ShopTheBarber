@@ -152,7 +152,7 @@ export default function UserBookings() {
 
             <PageHeader
                 label="Appointments"
-                title="My bookings"
+                title="My Bookings"
                 subtitle="View and manage your upcoming and past appointments."
                 compact
                 variant="light"

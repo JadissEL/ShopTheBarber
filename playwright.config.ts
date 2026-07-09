@@ -34,7 +34,7 @@ export default defineConfig({
               webServer: [
                   {
                       command: 'npm run dev',
-                      url: process.env.E2E_FRONTEND_URL || 'http://127.0.0.1:3000',
+                      url: process.env.E2E_FRONTEND_URL || 'http://localhost:3000',
                       reuseExistingServer: process.env.E2E_REUSE_SERVERS === '1',
                       timeout: 120_000,
                       env: { ...process.env, ...localWebEnv },
@@ -50,6 +50,15 @@ export default defineConfig({
           }
         : {}),
     projects: [
+        {
+            name: 'setup-auth',
+            testMatch: /auth-personas\.setup\.ts/,
+            timeout: 120_000,
+            use: {
+                ...devices['Desktop Chrome'],
+                baseURL: process.env.E2E_FRONTEND_URL || 'http://localhost:3000',
+            },
+        },
         {
             name: 'api',
             testMatch: [
@@ -69,9 +78,10 @@ export default defineConfig({
                 '**/*.browser.spec.ts',
                 '**/*.journey.browser.spec.ts',
             ],
+            ...(process.env.QA_AUTH_JOURNEYS === '1' ? { dependencies: ['setup-auth'] } : {}),
             use: {
                 ...devices['Desktop Chrome'],
-                baseURL: process.env.E2E_FRONTEND_URL || 'http://127.0.0.1:3000',
+                baseURL: process.env.E2E_FRONTEND_URL || 'http://localhost:3000',
             },
             timeout: 90_000,
         },

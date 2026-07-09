@@ -1,22 +1,23 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-with-auth';
+import { authStoragePath, PERSONA_IDS } from '../fixtures/personas';
 import { hasClerkBrowserE2e, skipAuthenticatedJourneys } from '../fixtures/env';
-import { signInClient } from '../fixtures/auth';
 import { JOURNEY_PERSONAS, isJourneyReadonly } from '../fixtures/journey-matrix';
 import { flushJourneyReport } from '../fixtures/journey-report';
-import { assertHealthyPage, assertNotSignInRedirect, journeyStep } from '../fixtures/journey-helpers';
+import { assertHealthyPage, assertNotSignInRedirect, gotoAuthenticated, journeyStep } from '../fixtures/journey-helpers';
 import { bookingFlowUrl, completeBookingStepsToConfirmation } from '../fixtures/booking-helpers';
 import { SEED } from '../fixtures/seed-data';
 
 const PERSONA = JOURNEY_PERSONAS.client;
 
-test.describe.serial('Client user journey', () => {
-  test.beforeEach(async ({ page }) => {
+test.use({ storageState: authStoragePath(PERSONA_IDS.client) });
+
+test.describe('Client user journey', () => {
+  test.beforeAll(() => {
     test.skip(
       skipAuthenticatedJourneys(),
       'Authenticated journeys require local dev servers (QA Clerk users are not on production)',
     );
-    test.skip(!hasClerkBrowserE2e(), 'Set CLERK_SECRET_KEY, E2E_CLERK_USER_EMAIL, E2E_FRONTEND_URL');
-    await signInClient(page);
+    test.skip(!hasClerkBrowserE2e(), 'Set CLERK_SECRET_KEY, E2E_FRONTEND_URL, Clerk testing token');
   });
 
   test.afterAll(() => {
@@ -25,9 +26,8 @@ test.describe.serial('Client user journey', () => {
 
   test('Dashboard loads', async ({ page }) => {
     await journeyStep(PERSONA, 'Dashboard loads', page, async () => {
-      await page.goto('/Dashboard');
+      await gotoAuthenticated(page, '/Dashboard');
       await page.waitForLoadState('networkidle').catch(() => {});
-      await assertNotSignInRedirect(page);
       await assertHealthyPage(page);
       await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 30_000 });
     });
@@ -45,9 +45,7 @@ test.describe.serial('Client user journey', () => {
 
   test('My Bookings', async ({ page }) => {
     await journeyStep(PERSONA, 'My Bookings', page, async () => {
-      await page.goto('/UserBookings');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await assertNotSignInRedirect(page);
+      await gotoAuthenticated(page, '/UserBookings');
       await expect(page.getByRole('heading', { level: 1, name: 'My Bookings' })).toBeVisible({
         timeout: 30_000,
       });
@@ -56,9 +54,7 @@ test.describe.serial('Client user journey', () => {
 
   test('Wallet balance page', async ({ page }) => {
     await journeyStep(PERSONA, 'Wallet balance page', page, async () => {
-      await page.goto('/ClientWallet');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await assertNotSignInRedirect(page);
+      await gotoAuthenticated(page, '/ClientWallet');
       await expect(page.getByRole('heading', { name: 'Wallet' })).toBeVisible({ timeout: 30_000 });
     });
   });
@@ -74,9 +70,7 @@ test.describe.serial('Client user journey', () => {
 
   test('Shopping bag page', async ({ page }) => {
     await journeyStep(PERSONA, 'Shopping bag page', page, async () => {
-      await page.goto('/ShoppingBag');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await assertNotSignInRedirect(page);
+      await gotoAuthenticated(page, '/ShoppingBag');
       await expect(page.getByRole('heading', { name: 'Shopping Bag' })).toBeVisible({
         timeout: 30_000,
       });
@@ -85,12 +79,8 @@ test.describe.serial('Client user journey', () => {
 
   test('Favorites', async ({ page }) => {
     await journeyStep(PERSONA, 'Favorites', page, async () => {
-      await page.goto('/Favorites');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await assertNotSignInRedirect(page);
-      const text = await page.locator('body').innerText();
-      expect(text).not.toMatch(/Sign in for Favorites/i);
-      expect(text).toMatch(/favorite|barber|shop|save/i);
+      await gotoAuthenticated(page, '/Favorites');
+      await expect(page.getByRole('heading', { name: 'Favorites' })).toBeVisible({ timeout: 30_000 });
     });
   });
 
@@ -108,6 +98,17 @@ test.describe.serial('Client user journey', () => {
           timeout: 30_000,
         });
       }
+    });
+  });
+
+  test('Session persists across navigation', async ({ page }) => {
+    await journeyStep(PERSONA, 'Session persists across navigation', page, async () => {
+      await page.goto('/Dashboard');
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await assertNotSignInRedirect(page);
+      await page.goto('/Explore');
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await assertNotSignInRedirect(page);
     });
   });
 });

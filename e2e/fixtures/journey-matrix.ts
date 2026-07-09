@@ -6,6 +6,7 @@ export const JOURNEY_PERSONAS = {
   guest: 'guest',
   client: 'client',
   provider: 'provider',
+  shopOwner: 'shop-owner',
   seller: 'seller',
   company: 'company',
   blogger: 'blogger',
@@ -45,6 +46,14 @@ export const PROVIDER_STEPS = [
   'Provider bookings',
   'Provider settings',
   'Provider payouts',
+] as const;
+
+export const SHOP_OWNER_STEPS = [
+  'Provider dashboard (shop)',
+  'Staff schedule',
+  'Staff roster',
+  'Provider settings',
+  'Forbidden seller dashboard redirect',
 ] as const;
 
 export const SELLER_STEPS = [

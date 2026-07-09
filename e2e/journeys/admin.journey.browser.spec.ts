@@ -1,23 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-with-auth';
+import { authStoragePath, PERSONA_IDS } from '../fixtures/personas';
 import { hasClerkAdminBrowser, skipAuthenticatedJourneys } from '../fixtures/env';
-import { signInAdmin } from '../fixtures/auth';
 import { JOURNEY_PERSONAS } from '../fixtures/journey-matrix';
 import { flushJourneyReport } from '../fixtures/journey-report';
 import { assertHealthyPage, assertNotSignInRedirect, journeyStep } from '../fixtures/journey-helpers';
 
 const PERSONA = JOURNEY_PERSONAS.admin;
 
-test.describe.serial('Admin user journey', () => {
-  test.beforeEach(async ({ page }) => {
+test.use({ storageState: authStoragePath(PERSONA_IDS.admin) });
+
+test.describe('Admin user journey', () => {
+  test.beforeAll(() => {
     test.skip(
       skipAuthenticatedJourneys(),
       'Authenticated journeys require local dev servers (QA Clerk users are not on production)',
     );
-    test.skip(
-      !hasClerkAdminBrowser(),
-      'Set CLERK_SECRET_KEY, E2E_CLERK_ADMIN_EMAIL, E2E_FRONTEND_URL',
-    );
-    await signInAdmin(page);
+    test.skip(!hasClerkAdminBrowser(), 'Set CLERK_SECRET_KEY, E2E_FRONTEND_URL (qa-admin profile)');
   });
 
   test.afterAll(() => {
