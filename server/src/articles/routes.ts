@@ -1,4 +1,6 @@
 import { type FastifyInstance } from 'fastify';
+import fs from 'node:fs';
+import path from 'node:path';
 import { prisma } from '../db/prisma';
 import { authenticateRequest } from '../auth/requestUser';
 import {
@@ -10,6 +12,8 @@ import {
     canAuthorArticles,
     getArticleForUser,
     isAdmin,
+    resolveBlogImageAbsolutePath,
+    saveBlogImage,
     serializeArticle,
     stripPrivilegedFields,
     uniqueSlug,
@@ -297,6 +301,61 @@ export async function articlesRoutes(fastify: FastifyInstance) {
             return reply.status(500).send({ error: msg });
         }
     });
+
+    /** POST /api/articles/upload-image, upload image for blog (author) */
+    fastify.post('/api/articles/upload-image', async (request, reply) => {
+        const user = await requireAuthor(request, reply);
+        if (!user) return;
+        const body = request.body as {
+            file_name?: string;
+            file_base64?: string;
+            mime_type?: string;
+        };
+        if (!body?.file_name || !body?.file_base64 || !body?.mime_type) {
+            return reply.status(400).send({ error: 'file_name, file_base64, mime_type required' });
+        }
+        try {
+            const buffer = Buffer.from(body.file_base64, 'base64');
+            const relativePath = saveBlogImage(user.id, body.file_name, body.mime_type, buffer);
+            const url = `/api/articles/media/${relativePath.replace(/^blog-images\//, '')}`;
+            return { url, path: relativePath };
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : 'Upload failed';
+            return reply.status(400).send({ error: msg });
+        }
+    });
+
+    /** GET /api/articles/media/:userId/:file, serve uploaded blog image (public) */
+    fastify.get<{ Params: { userId: string; file: string } }>(
+        '/api/articles/media/:userId/:file',
+        async (request, reply) => {
+            const { userId, file } = request.params;
+            if (!userId || !file || file.includes('..')) {
+                return reply.status(400).send({ error: 'Invalid path' });
+            }
+            try {
+                const relativePath = path.posix.join('blog-images', userId, file);
+                const absolutePath = resolveBlogImageAbsolutePath(relativePath);
+                if (!fs.existsSync(absolutePath)) {
+                    return reply.status(404).send({ error: 'Image not found' });
+                }
+                const ext = path.extname(file).toLowerCase();
+                const mime =
+                    ext === '.png'
+                        ? 'image/png'
+                        : ext === '.webp'
+                          ? 'image/webp'
+                          : ext === '.gif'
+                            ? 'image/gif'
+                            : 'image/jpeg';
+                reply.header('Cache-Control', 'public, max-age=31536000, immutable');
+                return reply.type(mime).send(fs.createReadStream(absolutePath));
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Failed to load image';
+                return reply.status(400).send({ error: msg });
+            }
+        }
+    );
 
     /** GET /api/admin/articles, admin moderation queue */
     fastify.get<{ Querystring: { status?: string } }>('/api/admin/articles', async (request, reply) => {

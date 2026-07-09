@@ -1,4 +1,7 @@
 import type { articles } from '@prisma/client';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
 import { prisma } from '../db/prisma';
 import { canAuthorArticles as rbacCanAuthorArticles } from '../auth/platformRbac';
 
@@ -156,4 +159,39 @@ export function stripPrivilegedFields(data: Record<string, unknown>): Record<str
         if (!blocked.has(k)) out[k] = v;
     }
     return out;
+}
+
+const BLOG_IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const MAX_BLOG_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function blogImagesRoot(): string {
+    return path.join(process.cwd(), 'uploads', 'blog-images');
+}
+
+export function ensureBlogImagesDir(userId: string): string {
+    const dir = path.join(blogImagesRoot(), userId);
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+}
+
+export function saveBlogImage(userId: string, fileName: string, mimeType: string, buffer: Buffer): string {
+    if (!BLOG_IMAGE_MIME_TYPES.has(mimeType)) {
+        throw new Error('File type not allowed. Use PNG, JPG, WEBP, or GIF.');
+    }
+    if (buffer.length > MAX_BLOG_IMAGE_BYTES) {
+        throw new Error('Image too large (max 5 MB)');
+    }
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+    const stored = `${crypto.randomUUID()}-${safeName}`;
+    const dir = ensureBlogImagesDir(userId);
+    fs.writeFileSync(path.join(dir, stored), buffer);
+    return path.posix.join('blog-images', userId, stored);
+}
+
+export function resolveBlogImageAbsolutePath(relativePath: string): string {
+    const normalized = relativePath.replace(/\\/g, '/');
+    if (normalized.includes('..') || !normalized.startsWith('blog-images/')) {
+        throw new Error('Invalid path');
+    }
+    return path.join(process.cwd(), 'uploads', normalized);
 }

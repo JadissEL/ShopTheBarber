@@ -34,3 +34,16 @@ export function EmptyState({
     </div>
   );
 }
+
+/** Consistent empty panel inside tabbed dashboards — always visible when a tab has no data. */
+export function TabPanelEmptyState(props) {
+  return (
+    <EmptyState
+      {...props}
+      className={cn(
+        'min-h-[220px] border border-dashed border-border rounded-lg bg-muted/20 py-12',
+        props.className,
+      )}
+    />
+  );
+}

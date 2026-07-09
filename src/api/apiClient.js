@@ -1327,6 +1327,19 @@ export const sovereign = {
             }
             return res.json();
         },
+        uploadImage: async ({ file_name, file_base64, mime_type }) => {
+            const headers = { ...getAuthHeaders(), 'Content-Type': 'application/json' };
+            const res = await fetch(`${BASE_URL}/articles/upload-image`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ file_name, file_base64, mime_type }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to upload image');
+            }
+            return res.json();
+        },
         delete: async (id) => {
             const headers = getAuthHeaders();
             const res = await fetch(`${BASE_URL}/articles/${encodeURIComponent(id)}`, {

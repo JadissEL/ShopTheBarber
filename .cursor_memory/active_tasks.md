@@ -12,7 +12,8 @@
 | RS6 — Production gate re-run | GATE | in progress (46/53 journeys) |
 | Fix remaining 7 flaky journey steps | HIGH | pending |
 | Staging journey re-run | HIGH | pending |
-| Commit + push RS work | — | pending (user request) |
+| Dashboard tab empty states (Upcoming/History/Reviews) | HIGH | done (local) |
+| Blog: image upload + moderation UX | HIGH | done (local) |
 
 ## Standing rules
 

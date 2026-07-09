@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
@@ -12,11 +12,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MetaTags } from '@/components/seo/MetaTags';
 import PageHeader from '@/components/layout/PageHeader';
 import PageContent from '@/components/layout/PageContent';
 import { stb } from '@/lib/stbUi';
-import { Save, Send } from 'lucide-react';
+import { Save, Send, ImagePlus, Upload, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CATEGORIES = [
@@ -27,12 +28,42 @@ const CATEGORIES = [
   { id: 'lifestyle', label: 'Lifestyle' },
 ];
 
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
+async function fileToBase64(file) {
+  const buffer = await file.arrayBuffer();
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+async function uploadImageFile(file) {
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error('Use PNG, JPG, WEBP, or GIF (max 5 MB).');
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('Image too large (max 5 MB).');
+  }
+  const file_base64 = await fileToBase64(file);
+  return sovereign.articles.uploadImage({
+    file_name: file.name,
+    file_base64,
+    mime_type: file.type,
+  });
+}
+
 export default function BlogArticleEditor() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const articleId = searchParams.get('id');
   const queryClient = useQueryClient();
-  const { isAuthenticated, role } = useAuth();
+  const coverInputRef = useRef(null);
+  const inlineInputRef = useRef(null);
+  const contentRef = useRef(null);
+  const { isAuthenticated } = useAuth();
   const capabilityContext = useCapabilityContext();
   const canWrite = hasCapability(capabilityContext, 'article.write');
 
@@ -43,6 +74,8 @@ export default function BlogArticleEditor() {
     category: 'tips',
     image_url: '',
   });
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingInline, setUploadingInline] = useState(false);
 
   const { data: existing, isLoading } = useQuery({
     queryKey: ['article-edit', articleId],
@@ -115,6 +148,49 @@ export default function BlogArticleEditor() {
     onError: (e) => toast.error(e.message),
   });
 
+  const handleCoverUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const { url } = await uploadImageFile(file);
+      setForm((f) => ({ ...f, image_url: url }));
+      toast.success('Cover image uploaded');
+    } catch (e) {
+      toast.error(e.message || 'Upload failed');
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleInlineUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setUploadingInline(true);
+    try {
+      const { url } = await uploadImageFile(file);
+      const alt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      const snippet = `\n\n![${alt}](${url})\n\n`;
+      setForm((f) => {
+        const el = contentRef.current;
+        if (el && typeof el.selectionStart === 'number') {
+          const start = el.selectionStart;
+          const end = el.selectionEnd;
+          const next = f.content.slice(0, start) + snippet + f.content.slice(end);
+          return { ...f, content: next };
+        }
+        return { ...f, content: `${f.content}${snippet}` };
+      });
+      toast.success('Image inserted into article');
+    } catch (e) {
+      toast.error(e.message || 'Upload failed');
+    } finally {
+      setUploadingInline(false);
+    }
+  };
+
   if (!isAuthenticated || !canWrite) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -142,12 +218,30 @@ export default function BlogArticleEditor() {
       <PageHeader
         label="Provider"
         title={articleId ? 'Edit article' : 'New article'}
-        subtitle="Draft content for the ShopTheBarber blog. Submit when ready for review."
+        subtitle="Save a draft, then submit for review. An admin approves or sends it back with feedback — articles do not go live automatically."
         compact
         variant="light"
         tier="app"
       />
       <PageContent narrow>
+        {existing?.status === 'rejected' && existing.rejection_reason && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              <span className="font-semibold">Sent back for changes: </span>
+              {existing.rejection_reason}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card className="mb-4 border-dashed">
+          <CardContent className="p-4 text-sm text-muted-foreground space-y-1">
+            <p><strong className="text-foreground">How publishing works</strong></p>
+            <p>1. Write and save your draft (cover image and inline photos supported).</p>
+            <p>2. Submit for review — status becomes &quot;Pending review&quot;.</p>
+            <p>3. Admin approves → published on the blog, or rejects with a reason you can read and fix.</p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardContent className="p-6 space-y-5">
             <div>
@@ -187,25 +281,82 @@ export default function BlogArticleEditor() {
             </div>
 
             <div>
-              <Label htmlFor="content">Content (min. 100 characters to submit)</Label>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <Label htmlFor="content">Content (min. 100 characters to submit)</Label>
+                <div className="flex gap-2">
+                  <input
+                    ref={inlineInputRef}
+                    type="file"
+                    accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                    className="hidden"
+                    onChange={handleInlineUpload}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    disabled={uploadingInline}
+                    onClick={() => inlineInputRef.current?.click()}
+                  >
+                    {uploadingInline ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ImagePlus className="w-4 h-4" />
+                    )}
+                    Insert picture
+                  </Button>
+                </div>
+              </div>
               <Textarea
                 id="content"
+                ref={contentRef}
                 value={form.content}
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                placeholder="Write your article…"
-                className="mt-1 min-h-[240px]"
+                placeholder="Write your article… Use Insert picture to add photos in the body."
+                className="mt-1 min-h-[240px] font-mono text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="image_url">Cover image URL (optional)</Label>
-              <Input
-                id="image_url"
-                value={form.image_url}
-                onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                placeholder="https://…"
-                className="mt-1"
-              />
+              <Label htmlFor="image_url">Cover image</Label>
+              <div className="mt-1 flex flex-col sm:flex-row gap-2">
+                <Input
+                  id="image_url"
+                  value={form.image_url}
+                  onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
+                  placeholder="Paste a URL or upload a file"
+                  className="flex-1"
+                />
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                  className="hidden"
+                  onChange={handleCoverUpload}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 shrink-0"
+                  disabled={uploadingCover}
+                  onClick={() => coverInputRef.current?.click()}
+                >
+                  {uploadingCover ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  Upload
+                </Button>
+              </div>
+              {form.image_url && (
+                <img
+                  src={form.image_url}
+                  alt="Cover preview"
+                  className="mt-3 max-h-40 rounded-lg border object-cover"
+                />
+              )}
             </div>
 
             <div className="flex flex-wrap gap-3 pt-2">

@@ -7,7 +7,8 @@ import { MetaTags } from '@/components/seo/MetaTags';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabPanelContent } from '@/components/ui/tab-panel-content';
 import {
     Calendar, Video, MapPin, Users, CheckCircle2, Clock, ExternalLink, AlertCircle,
 } from 'lucide-react';
@@ -164,44 +165,57 @@ export default function ProviderEvents() {
                         <TabsTrigger value="past">Past</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="upcoming" className="grid gap-4 sm:grid-cols-2">
-                        {upcoming.length === 0 ? (
-                            <p className="text-muted-foreground col-span-2 text-center py-12">No upcoming events, check back soon.</p>
-                        ) : (
-                            upcoming.map((e) => (
-                                <EventCard key={e.id} event={e} busy={busy} onRegister={registerMutation.mutate} onCancel={cancelMutation.mutate} />
-                            ))
-                        )}
-                    </TabsContent>
+                    <TabPanelContent
+                        value="upcoming"
+                        className="grid gap-4 sm:grid-cols-2"
+                        isEmpty={upcoming.length === 0}
+                        emptyIcon={Calendar}
+                        emptyTitle="No upcoming events"
+                        emptyDescription="Industry workshops and webinars will appear here when scheduled. Check back soon."
+                    >
+                        {upcoming.map((e) => (
+                            <EventCard key={e.id} event={e} busy={busy} onRegister={registerMutation.mutate} onCancel={cancelMutation.mutate} />
+                        ))}
+                    </TabPanelContent>
 
-                    <TabsContent value="mine" className="space-y-4">
-                        {mine.length === 0 ? (
-                            <p className="text-muted-foreground text-center py-12">You have not registered for any events yet.</p>
-                        ) : (
-                            mine.map((r) => (
-                                <Card key={r.id}>
-                                    <CardContent className="p-4 flex flex-wrap justify-between gap-3 items-center">
-                                        <div>
-                                            <p className="font-semibold">{r.event?.title}</p>
-                                            <p className="text-sm text-muted-foreground">{fmt(r.event?.start_at)}</p>
-                                            <Badge variant="secondary" className="mt-1 capitalize">{r.status}</Badge>
-                                        </div>
-                                        {r.meeting_url && (
-                                            <a href={r.meeting_url} target="_blank" rel="noopener noreferrer">
-                                                <Button size="sm" variant="outline" className="gap-1">Join <ExternalLink className="w-3.5 h-3.5" /></Button>
-                                            </a>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))
-                        )}
-                    </TabsContent>
+                    <TabPanelContent
+                        value="mine"
+                        className="space-y-4"
+                        isEmpty={mine.length === 0}
+                        emptyIcon={CheckCircle2}
+                        emptyTitle="No registrations yet"
+                        emptyDescription="Browse upcoming events and register to see them here."
+                    >
+                        {mine.map((r) => (
+                            <Card key={r.id}>
+                                <CardContent className="p-4 flex flex-wrap justify-between gap-3 items-center">
+                                    <div>
+                                        <p className="font-semibold">{r.event?.title}</p>
+                                        <p className="text-sm text-muted-foreground">{fmt(r.event?.start_at)}</p>
+                                        <Badge variant="secondary" className="mt-1 capitalize">{r.status}</Badge>
+                                    </div>
+                                    {r.meeting_url && (
+                                        <a href={r.meeting_url} target="_blank" rel="noopener noreferrer">
+                                            <Button size="sm" variant="outline" className="gap-1">Join <ExternalLink className="w-3.5 h-3.5" /></Button>
+                                        </a>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </TabPanelContent>
 
-                    <TabsContent value="past" className="grid gap-4 sm:grid-cols-2">
+                    <TabPanelContent
+                        value="past"
+                        className="grid gap-4 sm:grid-cols-2"
+                        isEmpty={past.length === 0}
+                        emptyIcon={Clock}
+                        emptyTitle="No past events"
+                        emptyDescription="Events you attended or missed will be listed here after they end."
+                    >
                         {past.map((e) => (
                             <EventCard key={e.id} event={e} busy={busy} onRegister={registerMutation.mutate} onCancel={cancelMutation.mutate} />
                         ))}
-                    </TabsContent>
+                    </TabPanelContent>
                 </Tabs>
             </PageContent>
         </div>

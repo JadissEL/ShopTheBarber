@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
@@ -7,9 +7,10 @@ import { hasCapability, capabilityContextFromUser } from '@/lib/capabilities';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
-import { Calendar, DollarSign, TrendingUp, Clock, Download, UserCheck, Heart, Scissors, Ban, Scale, Package, Plus } from 'lucide-react';
+import { Calendar, DollarSign, TrendingUp, Clock, Download, UserCheck, Heart, Scissors, Ban, Scale, Package, Plus, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabPanelContent } from '@/components/ui/tab-panel-content';
 import { Card } from '@/components/ui/card';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { MetaTags } from '@/components/seo/MetaTags';
@@ -27,6 +28,8 @@ import PageContent from '@/components/layout/PageContent';
 import DashboardSection from '@/components/dashboard/shared/DashboardSection';
 import { stb, chartColor } from '@/lib/stbUi';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/AuthContext';
+import { useManagedShop } from '@/hooks/useManagedShop';
 
 export default function ProviderDashboard() {
     const navigate = useNavigate();
@@ -43,39 +46,11 @@ export default function ProviderDashboard() {
         }
     }, [roleLoading, isAdmin, accountType, navigate]);
 
-    const { data: user, isLoading: isUserLoading } = useQuery({ queryKey: ['currentUser'], queryFn: () => sovereign.auth.me() });
+    const { isLoadingAuth } = useAuth();
+    const { user, shopId, barber: myBarberProfile, isLoading: shopLoading } = useManagedShop();
     const [reviewPage, _setReviewPage] = useState(1);
     const [ratingFilter, _setRatingFilter] = useState(null);
     const pageSize = 5;
-
-    // 1. Resolve Shop Context
-    const { data: myBarberProfile } = useQuery({
-        queryKey: ['my-barber-profile', user?.email],
-        queryFn: async () => {
-            if (!user) return null;
-            const barbers = await sovereign.entities.Barber.filter({ created_by: user.email });
-            if (barbers.length > 0) return barbers[0];
-
-            if (user.id) {
-                const byUserId = await sovereign.entities.Barber.filter({ user_id: user.id });
-                if (byUserId.length > 0) return byUserId[0];
-            }
-            return null;
-        },
-        enabled: !!user
-    });
-
-    const { data: myShopMembership } = useQuery({
-        queryKey: ['my-shop-membership', myBarberProfile?.id],
-        queryFn: async () => {
-            if (!myBarberProfile) return null;
-            const members = await sovereign.entities.ShopMember.filter({ barber_id: myBarberProfile.id });
-            return members.find(m => ['owner', 'manager'].includes(m.role));
-        },
-        enabled: !!myBarberProfile
-    });
-
-    const shopId = myShopMembership?.shop_id;
 
     const canSellProducts = hasCapability(
         capabilityContextFromUser({ accountType, role }),
@@ -143,14 +118,39 @@ export default function ProviderDashboard() {
         toast.success("Analytics report exported");
     };
 
-    if (isUserLoading || roleLoading) return <PageLoading message="Loading dashboard..." />;
+    const upcomingList = useMemo(
+        () =>
+            bookings
+                .filter(
+                    (b) =>
+                        (b.status === 'confirmed' || b.status === 'pending') &&
+                        new Date(b.start_time) >= new Date(),
+                )
+                .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                .slice(0, 8),
+        [bookings],
+    );
+
+    const historyList = useMemo(
+        () =>
+            bookings
+                .filter(
+                    (b) =>
+                        b.status === 'completed' ||
+                        b.status === 'cancelled' ||
+                        b.status === 'no_show' ||
+                        (b.status === 'confirmed' && new Date(b.start_time) < new Date()),
+                )
+                .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+                .slice(0, 10),
+        [bookings],
+    );
+
+    if (isLoadingAuth || shopLoading || roleLoading) return <PageLoading message="Loading dashboard..." />;
 
     const isShopConsole = accountType === 'shop' || Boolean(shopId);
     const isSoloBarber = accountType === 'solo_barber' && !shopId;
-    const upcomingToday = bookings
-        .filter(b => b.status === 'confirmed' && new Date(b.start_time) >= new Date())
-        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-        .slice(0, 3);
+    const upcomingToday = upcomingList.slice(0, 3);
 
     return (
         <div className="stb-page pb-20 font-sans">
@@ -385,22 +385,38 @@ export default function ProviderDashboard() {
 
                 <Tabs defaultValue="upcoming" className="w-full">
                     <TabsList className="bg-muted p-1 rounded-lg mb-6">
-                        <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                        <TabsTrigger value="history">History</TabsTrigger>
-                        <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                        <TabsTrigger value="upcoming">Upcoming ({upcomingList.length})</TabsTrigger>
+                        <TabsTrigger value="history">History ({historyList.length})</TabsTrigger>
+                        <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="upcoming">
+                    <TabPanelContent
+                        value="upcoming"
+                        isEmpty={upcomingList.length === 0}
+                        emptyIcon={Calendar}
+                        emptyTitle="No upcoming appointments"
+                        emptyDescription="When clients book with you, confirmed appointments will show here."
+                        emptyActionLabel="Open calendar"
+                        emptyActionHref={createPageUrl('ProviderBookings')}
+                    >
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {bookings.filter(b => b.status === 'confirmed' && new Date(b.start_time) >= new Date()).slice(0, 8).map((b) => (
+                            {upcomingList.map((b) => (
                                 <BookingCard key={b.id} booking={b} />
                             ))}
                         </div>
-                    </TabsContent>
+                    </TabPanelContent>
 
-                    <TabsContent value="history">
+                    <TabPanelContent
+                        value="history"
+                        isEmpty={historyList.length === 0}
+                        emptyIcon={Clock}
+                        emptyTitle="No appointment history yet"
+                        emptyDescription="Completed visits and past bookings will appear here once you start serving clients."
+                        emptyActionLabel="View all bookings"
+                        emptyActionHref={createPageUrl('ProviderBookings')}
+                    >
                         <div className="space-y-4">
-                            {bookings.filter(b => b.status === 'completed' || (b.status === 'confirmed' && new Date(b.start_time) < new Date())).slice(0, 10).map((b) => (
+                            {historyList.map((b) => (
                                 <div key={b.id} className="flex items-center justify-between p-4 stb-panel">
                                     <div className="flex items-center gap-4">
                                         <UserAvatar user={{ full_name: b.created_by?.split('@')[0] }} className="w-10 h-10" />
@@ -416,15 +432,21 @@ export default function ProviderDashboard() {
                                 </div>
                             ))}
                         </div>
-                    </TabsContent>
+                    </TabPanelContent>
 
-                    <TabsContent value="reviews">
+                    <TabPanelContent
+                        value="reviews"
+                        isEmpty={reviews.length === 0}
+                        emptyIcon={Star}
+                        emptyTitle="No client reviews yet"
+                        emptyDescription="Reviews from completed bookings will show here. Encourage clients to leave feedback after their visit."
+                    >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {reviews.map((review) => (
                                 <ReviewCard key={review.id} review={review} />
                             ))}
                         </div>
-                    </TabsContent>
+                    </TabPanelContent>
                 </Tabs>
             </PageContent>
         </div>

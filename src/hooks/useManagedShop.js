@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { sovereign } from '@/api/apiClient';
+import { useAuth } from '@/lib/AuthContext';
 
 /**
  * Resolves the current provider's managed shop (owner or manager).
+ * Uses AuthContext (Clerk + backend sync) — not a raw auth.me() query that races on load.
  */
 export function useManagedShop() {
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => sovereign.auth.me(),
-  });
+  const { user, isLoadingAuth, isSignedIn } = useAuth();
 
   const { data: barber, isLoading: barberLoading } = useQuery({
     queryKey: ['my-barber-profile', user?.email, user?.id],
@@ -22,7 +21,7 @@ export function useManagedShop() {
       }
       return null;
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: membership, isLoading: memberLoading } = useQuery({
@@ -76,6 +75,10 @@ export function useManagedShop() {
     shopId,
     membership,
     isManager,
-    isLoading: userLoading || barberLoading || memberLoading || staffMemberLoading || shopLoading,
+    isSignedIn,
+    isLoadingAuth,
+    isLoading:
+      isLoadingAuth ||
+      (!!user && (barberLoading || memberLoading || staffMemberLoading || shopLoading)),
   };
 }

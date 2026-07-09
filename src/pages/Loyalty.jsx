@@ -5,7 +5,8 @@ import { Award, TrendingUp, Gift, History, Copy, Plane } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabPanelContent } from '@/components/ui/tab-panel-content';
 import { MetaTags } from '@/components/seo/MetaTags';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -185,7 +186,16 @@ export default function Loyalty() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="rewards" className="space-y-4">
+          <TabPanelContent
+            value="rewards"
+            className="space-y-4"
+            isEmpty={rewards.length === 0}
+            emptyIcon={Gift}
+            emptyTitle="No rewards available"
+            emptyDescription="Rewards will appear here as you earn points from bookings and marketplace purchases."
+            emptyActionLabel="Book an appointment"
+            emptyActionHref={createPageUrl('Explore')}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {rewards.map((reward) => {
                 const canRedeem = currentPoints >= reward.points_cost;
@@ -220,34 +230,36 @@ export default function Loyalty() {
                 );
               })}
             </div>
-          </TabsContent>
+          </TabPanelContent>
 
-          <TabsContent value="history" className="space-y-2">
-            {transactions.length > 0 ? (
-              <div className={cn(stb.panel, 'overflow-hidden')}>
-                  <div className="divide-y divide-border">
-                    {transactions.map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{tx.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {tx.date_text ? new Date(tx.date_text).toLocaleDateString() : '-'}
-                          </p>
-                        </div>
-                        <div className={`font-bold text-sm ${tx.points > 0 ? 'text-success' : 'text-destructive'}`}>
-                          {tx.points > 0 ? '+' : ''}{tx.points}
-                        </div>
+          <TabPanelContent
+            value="history"
+            className="space-y-2"
+            isEmpty={transactions.length === 0}
+            emptyIcon={History}
+            emptyTitle="No activity yet"
+            emptyDescription="Book your first appointment to start earning loyalty points."
+            emptyActionLabel="Find a barber"
+            emptyActionHref={createPageUrl('Explore')}
+          >
+            <div className={cn(stb.panel, 'overflow-hidden')}>
+                <div className="divide-y divide-border">
+                  {transactions.map((tx) => (
+                    <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{tx.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {tx.date_text ? new Date(tx.date_text).toLocaleDateString() : '-'}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-              </div>
-            ) : (
-              <div className={cn(stb.panel, 'py-8 text-center')}>
-                  <History className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className={cn(stb.body, 'text-muted-foreground')}>No activity yet. Book your first appointment to earn points!</p>
-              </div>
-            )}
-          </TabsContent>
+                      <div className={`font-bold text-sm ${tx.points > 0 ? 'text-success' : 'text-destructive'}`}>
+                        {tx.points > 0 ? '+' : ''}{tx.points}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+            </div>
+          </TabPanelContent>
         </Tabs>
 
         <section className={cn(stb.panel, 'mt-12 p-6')}>

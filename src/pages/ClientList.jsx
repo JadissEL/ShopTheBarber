@@ -19,7 +19,7 @@ import { canAccessProviderTools } from '@/lib/userRole';
 
 export default function ClientList() {
   const { effectiveRole } = useEffectiveRole();
-  const { user, shopId, isManager, isLoading: shopLoading } = useManagedShop();
+  const { user, shopId, isManager, isLoadingAuth, isSignedIn, isLoading: shopLoading } = useManagedShop();
   const isProvider = canAccessProviderTools(effectiveRole);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
@@ -39,7 +39,16 @@ export default function ClientList() {
     enabled: !!user && isProvider && !shopId,
   });
 
-  if (!user) {
+  if (isLoadingAuth || (isSignedIn && shopLoading)) {
+    return (
+      <div className="stb-page flex items-center justify-center p-4">
+        <MetaTags title="Client List" description="View your clients" />
+        <PageLoading message="Loading your account…" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn || !user) {
     return (
       <div className="stb-page flex items-center justify-center p-4">
         <MetaTags title="Client List" description="View your clients" />

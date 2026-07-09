@@ -4,7 +4,7 @@ import { sovereign } from '@/api/apiClient';
 import { Heart } from 'lucide-react';
 import SearchField from '@/components/ui/search-field';
 import { PageLoading } from '@/components/ui/page-loading';
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState, TabPanelEmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MetaTags } from '@/components/seo/MetaTags';
@@ -163,22 +163,34 @@ export default function Favorites() {
 
                             <TabsContent value="barbers" className="mt-0">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredBarbers.map(barber => (
-                                        <BarberCard key={barber.id} barber={barber} />
-                                    ))}
-                                    {filteredBarbers.length === 0 && (
-                                        <div className="col-span-full py-20 text-center text-muted-foreground italic">No favorite barbers found.</div>
+                                    {filteredBarbers.length === 0 ? (
+                                        <TabPanelEmptyState
+                                            icon={Heart}
+                                            title="No favorite barbers"
+                                            description="Save barbers you love to find them quickly here."
+                                            className="col-span-full"
+                                        />
+                                    ) : (
+                                        filteredBarbers.map(barber => (
+                                            <BarberCard key={barber.id} barber={barber} />
+                                        ))
                                     )}
                                 </div>
                             </TabsContent>
 
                             <TabsContent value="shops" className="mt-0">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredShops.map(shop => (
-                                        <ShopCard key={shop.id} shop={shop} />
-                                    ))}
-                                    {filteredShops.length === 0 && (
-                                        <div className="col-span-full py-20 text-center text-muted-foreground italic">No favorite shops found.</div>
+                                    {filteredShops.length === 0 ? (
+                                        <TabPanelEmptyState
+                                            icon={Heart}
+                                            title="No favorite shops"
+                                            description="Save shops you visit often to book faster next time."
+                                            className="col-span-full"
+                                        />
+                                    ) : (
+                                        filteredShops.map(shop => (
+                                            <ShopCard key={shop.id} shop={shop} />
+                                        ))
                                     )}
                                 </div>
                             </TabsContent>

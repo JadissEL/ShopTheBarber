@@ -61,7 +61,7 @@ export default function ProviderBlogArticles() {
       <PageHeader
         label="Provider"
         title="Blog articles"
-        subtitle="Write articles for the ShopTheBarber blog. An admin must approve before they go live."
+        subtitle="Draft → submit for review → admin approves or sends back with feedback. Nothing goes live without approval."
         compact
         variant="light"
         tier="app"
@@ -106,7 +106,15 @@ export default function ProviderBlogArticles() {
                         </span>
                       </div>
                       {article.status === 'rejected' && article.rejection_reason && (
-                        <p className="text-sm text-destructive mt-2">{article.rejection_reason}</p>
+                        <p className="text-sm text-destructive mt-2">
+                          <span className="font-medium">Admin feedback: </span>
+                          {article.rejection_reason}
+                        </p>
+                      )}
+                      {article.status === 'pending_review' && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Waiting for admin review — you will be able to edit again if changes are requested.
+                        </p>
                       )}
                     </div>
                     <div className="flex gap-2 shrink-0">

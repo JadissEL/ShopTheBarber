@@ -2,10 +2,16 @@
 
 ## Current snapshot
 
-- **Last session date:** 2026-07-09
-- **Current focus:** Release Stabilization Sprint (RS) — auth, provisioning, journeys, local API fix.
-- **Verdict:** **READY FOR STAGING (high confidence)** — journeys 46/53; `qa:verify` 7/7; guest 5/5. Not production yet.
-- **Next:** Stabilize remaining 7 flaky journey steps; run full suite on staging; commit RS changes when user requests.
+- **Last session date:** 2026-07-10
+- **Current focus:** Tab empty states on provider dashboard + prior auth/blog fixes (local, not deployed).
+- **Verdict:** RS pushed (`e89f946`); new fixes local, **not yet deployed**.
+- **Next:** Deploy fixes; verify shop owner on `/ProviderPayouts` and `/ClientList`; optional commit/push on user request.
+
+## Fixes in progress (local)
+
+- `useManagedShop` now uses `AuthContext` (no raw `auth.me()` race).
+- `ProviderPayouts` + `ClientList` wait for auth sync before sign-in gate.
+- Blog: `POST /api/articles/upload-image`, cover + inline picture upload, moderation copy clarified.
 
 ## Key commands
 
